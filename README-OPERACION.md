@@ -1,5 +1,9 @@
 # Operacion de Stack por Perfil
 
+## Version
+- Actual: `v0.1.0` (2026-03-08)
+- Al hacer release: actualizar versión aquí y en `README.md`, y crear tag `vX.Y.Z`.
+
 Scripts:
 - `scripts/up-profile.sh`
 - `scripts/down-profile.sh`
