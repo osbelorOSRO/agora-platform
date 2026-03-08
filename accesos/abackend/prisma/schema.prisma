@@ -1,0 +1,1174 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model clientes {
+  cliente_id         String           @id
+  nombre             String?
+  fecha_registro     DateTime?        @default(now()) @db.Timestamp(6)
+  estado_actual      Int?
+  fecha_actual       DateTime?        @db.Timestamp(6)
+  intervenida        Boolean          @default(false)
+  foto_perfil        String?
+  etiqueta_actual    String?
+  tipo_id            String           @default("jid") @db.VarChar(10)
+  creado_por_id      Int?
+  actualizado_por_id Int?
+  conversaciones     conversaciones[]
+  map_journey        map_journey[]
+
+  @@index([cliente_id, tipo_id], map: "idx_clientes_cliente_tipo")
+  @@index([tipo_id], map: "idx_clientes_tipo_id")
+  @@index([fecha_registro(sort: Desc)], map: "idx_clientes_fecha_registro")
+}
+
+model colores {
+  color_id   Int         @id @default(autoincrement())
+  bg_class   String?
+  text_class String?
+  etiquetas  etiquetas[]
+}
+
+model configuracion_bot {
+  id                 Int       @id @default(autoincrement())
+  tipo_configuracion String    @unique
+  activo             Boolean?  @default(true)
+  updated_at         DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model conversaciones {
+  id                Int       @id @default(autoincrement())
+  cliente_id        String?
+  contenido         String?
+  tipo              String?
+  url_archivo       String?
+  direccion_mensaje String?
+  origen            String?
+  fecha_envio       DateTime? @db.Timestamp(6)
+  etiqueta_id       Int?
+  fuente            String?
+  created_at        DateTime? @default(now()) @db.Timestamp(6)
+  clientes          clientes? @relation(fields: [cliente_id], references: [cliente_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model etiquetas {
+  etiqueta_id     Int           @id @default(autoincrement())
+  nombre_etiqueta String        @unique
+  color_id        Int?
+  colores         colores?      @relation(fields: [color_id], references: [color_id], onDelete: NoAction, onUpdate: NoAction)
+  map_journey     map_journey[]
+}
+
+model map_journey {
+  id              Int        @id @default(autoincrement())
+  cliente_id      String?
+  etiqueta_id     Int?
+  fuente          String?
+  fecha           DateTime?  @default(now()) @db.Timestamptz(6)
+  proceso_id      Int?
+  lead_calificado Boolean    @default(true)
+  clientes        clientes?  @relation(fields: [cliente_id], references: [cliente_id], onDelete: NoAction, onUpdate: NoAction)
+  etiquetas       etiquetas? @relation(fields: [etiqueta_id], references: [etiqueta_id], onDelete: NoAction, onUpdate: NoAction)
+  procesos        procesos?  @relation(fields: [proceso_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([cliente_id], map: "idx_map_journey_cliente_id")
+  @@index([proceso_id], map: "idx_map_journey_proceso_id")
+}
+
+model mensajes_buffer {
+  id           Int       @id @default(autoincrement())
+  cliente_id   String
+  contenido    String
+  fecha        DateTime? @default(now()) @db.Timestamp(6)
+  hash_mensaje String?   @unique(map: "idx_hash_mensaje")
+
+  @@unique([cliente_id, hash_mensaje], map: "mensajes_buffer_unique")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model n8n_chat_histories {
+  id         Int       @id @default(autoincrement())
+  session_id String
+  role       String
+  message    String
+  timestamp  DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model oficinas {
+  id       Int        @id @default(autoincrement())
+  nombre   String
+  region   String?    @default("Online")
+  usuarios usuarios[]
+}
+
+model permiso {
+  id          Int           @id @default(autoincrement())
+  nombre      String
+  rol_permiso rol_permiso[]
+}
+
+model procesos {
+  id                                          Int           @id @default(autoincrement())
+  cliente_id                                  String
+  fecha_inicio                                DateTime      @default(now()) @db.Timestamp(6)
+  fecha_fin                                   DateTime?     @db.Timestamp(6)
+  iniciado_por_id                             Int
+  cerrado_por_id                              Int?
+  tipo_proceso                                String?
+  tipo_cierre                                 String?
+  duracion_total                              Int?
+  sla_humano                                  Int?
+  tmo                                         Int?
+  delegado_humano                             Boolean?      @default(false)
+  abandono                                    Boolean?      @default(false)
+  duracion_valor                              BigInt?
+  duracion_unidad                             String?       @db.VarChar(10)
+  fecha_saludo                                DateTime?     @db.Timestamp(6)
+  session_mode                                String?       @db.VarChar(20)
+  map_journey                                 map_journey[]
+  usuarios_procesos_cerrado_por_idTousuarios  usuarios?     @relation("procesos_cerrado_por_idTousuarios", fields: [cerrado_por_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuarios_procesos_iniciado_por_idTousuarios usuarios      @relation("procesos_iniciado_por_idTousuarios", fields: [iniciado_por_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([cliente_id, fecha_fin], map: "idx_procesos_cliente_fecha")
+  @@index([cliente_id], map: "idx_procesos_cliente_id")
+}
+
+model procesos_en_curso {
+  cliente_id String    @id
+  creado_en  DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model rol {
+  id                                        Int           @id @default(autoincrement())
+  nombre                                    String
+  creado_en                                 DateTime?     @default(now()) @db.Timestamp(6)
+  creado_por_id                             Int?
+  actualizado_en                            DateTime?     @db.Timestamp(6)
+  actualizado_por_id                        Int?
+  usuarios_rol_actualizado_por_idTousuarios usuarios?     @relation("rol_actualizado_por_idTousuarios", fields: [actualizado_por_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rol_actualizado_por")
+  usuarios_rol_creado_por_idTousuarios      usuarios?     @relation("rol_creado_por_idTousuarios", fields: [creado_por_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rol_creado_por")
+  rol_permiso                               rol_permiso[]
+  usuarios_usuarios_rol_idTorol             usuarios[]    @relation("usuarios_rol_idTorol")
+}
+
+model rol_permiso {
+  rol_id     Int
+  permiso_id Int
+  permiso    permiso @relation(fields: [permiso_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  rol        rol     @relation(fields: [rol_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([rol_id, permiso_id])
+}
+
+model sesion {
+  id                Int      @id @default(autoincrement())
+  usuarioId         Int
+  ip                String
+  userAgent         String
+  horaLogin         DateTime
+  ultimaInteraccion DateTime
+  activo            Boolean
+  usuarios          usuarios @relation(fields: [usuarioId], references: [id])
+}
+
+model transiciones_comerciales {
+  id                 Int     @id @default(autoincrement())
+  etiqueta_id_origen Int     @unique(map: "idx_etiqueta_id_origen")
+  mensaje_bot        String?
+  opcion_1           String?
+  opcion_2           String?
+  opcion_3           String?
+  opcion_4           String?
+  destino_1          Int?
+  destino_2          Int?
+  destino_3          Int?
+  destino_4          Int?
+  fallback_texto     String?
+  etiqueta_anterior  String?
+  silent             Boolean @default(false)
+  sub_estado         String?
+  flujo_logico       String?
+  consulta_equipo    String?
+  fallback1          String?
+  fallback2          String?
+  destino_humano     String?
+  texto_rescate      String?
+  modo_default       String?
+  nueva_etiqueta1    Int?
+  nueva_etiqueta2    Int?
+  nueva_etiqueta3    Int?
+}
+
+model usuarios {
+  id                                                   Int         @id @default(autoincrement())
+  username                                             String      @unique
+  password                                             String
+  token_2fa                                            String
+  rol_id                                               Int?
+  oficina_id                                           Int?
+  nombre                                               String?
+  apellido                                             String?
+  run                                                  String?
+  telefono                                             String?
+  email                                                String?
+  creado_en                                            DateTime?   @default(now()) @db.Timestamp(6)
+  creado_por_id                                        Int?
+  actualizado_en                                       DateTime?   @db.Timestamp(6)
+  actualizado_por_id                                   Int?
+  contratos                                            contratos[]
+  procesos_procesos_cerrado_por_idTousuarios           procesos[]  @relation("procesos_cerrado_por_idTousuarios")
+  procesos_procesos_iniciado_por_idTousuarios          procesos[]  @relation("procesos_iniciado_por_idTousuarios")
+  rol_rol_actualizado_por_idTousuarios                 rol[]       @relation("rol_actualizado_por_idTousuarios")
+  rol_rol_creado_por_idTousuarios                      rol[]       @relation("rol_creado_por_idTousuarios")
+  sesion                                               sesion[]
+  usuarios_usuarios_actualizado_por_idTousuarios       usuarios?   @relation("usuarios_actualizado_por_idTousuarios", fields: [actualizado_por_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_actualizado_por")
+  other_usuarios_usuarios_actualizado_por_idTousuarios usuarios[]  @relation("usuarios_actualizado_por_idTousuarios")
+  usuarios_usuarios_creado_por_idTousuarios            usuarios?   @relation("usuarios_creado_por_idTousuarios", fields: [creado_por_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_creado_por")
+  other_usuarios_usuarios_creado_por_idTousuarios      usuarios[]  @relation("usuarios_creado_por_idTousuarios")
+  oficinas                                             oficinas?   @relation(fields: [oficina_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  rol_usuarios_rol_idTorol                             rol?        @relation("usuarios_rol_idTorol", fields: [rol_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model abonados {
+  id              Int       @id @default(autoincrement())
+  contrato_id     Int
+  creado_en       DateTime? @default(now()) @db.Timestamp(6)
+  plan_id         Int?
+  linea           String
+  empresa_donante String?
+  cap             String?
+  simcard         String?
+  estado          String?   @default("pendiente") @db.VarChar(20)
+  orden           String?
+  contratos       contratos @relation(fields: [contrato_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  planes          planes?   @relation(fields: [plan_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model contratos {
+  id              Int        @id @default(autoincrement())
+  rut_cliente     String     @db.VarChar(12)
+  creado_en       DateTime?  @default(now()) @db.Timestamp(6)
+  tipo            String     @db.VarChar(20)
+  modo            String     @db.VarChar(20)
+  plan_id         Int?
+  ciclo           Int?
+  cantidad_lineas Int?       @default(0)
+  message_id      String?
+  estado          String?    @default("pendiente") @db.VarChar(30)
+  creado_por_id   Int?
+  abonados        abonados[]
+  planes          planes?    @relation(fields: [plan_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  info            info       @relation(fields: [rut_cliente], references: [rut], onDelete: NoAction, onUpdate: NoAction)
+  usuarios        usuarios?  @relation(fields: [creado_por_id], references: [id], map: "fk_contratos_creado_por")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model envios_email_log {
+  id             Int       @id @default(autoincrement())
+  contrato_id    Int?
+  rut_cliente    String?   @db.VarChar(12)
+  tipo           String?   @db.VarChar(20)
+  asunto         String?
+  destinatario   String?
+  message_id     String?
+  in_reply_to    String?
+  enviado_por_id Int?
+  fecha_envio    DateTime? @default(now()) @db.Timestamp(6)
+  estado         String?   @db.VarChar(20)
+  mensaje_error  String?
+  url_adjunto    String?
+}
+
+model info {
+  rut                  String?     @unique(map: "rut_unico") @db.VarChar(12)
+  nombre               String
+  email                String?
+  direccion            String?
+  comuna               String?
+  region               String?
+  fono                 String?     @unique(map: "info_fono_unico")
+  fecha_registro       DateTime?   @default(now()) @db.Timestamp(6)
+  usuario_registro_id  Int?
+  fecha_actualizacion  DateTime?   @db.Timestamp(6)
+  usuario_actualiza_id Int?
+  id                   Int         @id @default(autoincrement())
+  contratos            contratos[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model planes {
+  id               Int         @id @default(autoincrement())
+  codigo           String      @unique
+  nombre           String
+  tipo             String?
+  puntos_por_linea Int?
+  valor_base       Int?
+  entrada_alta     Int?
+  entrada_porta    Int?
+  puntos_alta      Float?
+  puntos_salta     Float?
+  puntos_porta     Float?
+  alta_rango_1     Int?
+  alta_rango_2     Int?
+  alta_rango_3     Int?
+  porta_rango_1    Int?
+  porta_rango_2    Int?
+  porta_rango_3    Int?
+  abonados         abonados[]
+  contratos        contratos[]
+}
+
+model precios_planes {
+  codigo                        String   @id
+  nombre                        String?
+  precio_base                   Decimal? @db.Decimal
+  tipo                          String?
+  descripcion                   String?
+  lineas                        Int?
+  excluye_alta                  Boolean? @default(false)
+  excluye_portabilidad_postpago Boolean? @default(false)
+  url_archivo                   String?  @db.VarChar(255)
+  precio_normal                 Int?
+}
+
+model reglas_negocio {
+  codigo          String  @id
+  condicion       String?
+  valor_activador String?
+  accion          String?
+  observaciones   String?
+  consideraciones String?
+}
+
+model scraper_lotes {
+  id                  Int      @id @default(autoincrement())
+  tipo                String?
+  modo                String?
+  rut                 String?
+  linea_1             String?
+  linea_2             String?
+  linea_3             String?
+  linea_4             String?
+  linea_5             String?
+  estado              String?
+  rut_factible        Boolean?
+  limite_credito      String?
+  puntaje_riesgo      String?
+  linea_1_factible    Boolean?
+  linea_1_empresa     String?
+  linea_1_descripcion String?
+  linea_2_factible    Boolean?
+  linea_2_empresa     String?
+  linea_2_descripcion String?
+  linea_3_factible    Boolean?
+  linea_3_empresa     String?
+  linea_3_descripcion String?
+  linea_4_factible    Boolean?
+  linea_4_empresa     String?
+  linea_4_descripcion String?
+  linea_5_factible    Boolean?
+  linea_5_empresa     String?
+  linea_5_descripcion String?
+  nombre              String?
+}
+
+model input_chats_unicos {
+  id                Int       @id @default(autoincrement())
+  cliente_id        String
+  proceso_id        String
+  chat_hash         String    @unique
+  timestamp_inicio  DateTime  @default(dbgenerated("(now() AT TIME ZONE 'America/Santiago'::text)")) @db.Timestamptz(6)
+  timestamp_fin     DateTime? @db.Timestamptz(6)
+  duracion_segundos Int?
+  flujo_rama        String?
+}
+
+model respuestas_rapidas {
+  uuid  String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  atajo String @unique @db.VarChar(50)
+  texto String
+}
+
+model annotation_tag_entity {
+  id                        String                      @id(map: "PK_69dfa041592c30bbc0d4b84aa00") @db.VarChar(16)
+  name                      String                      @unique(map: "IDX_ae51b54c4bb430cf92f48b623f") @db.VarChar(24)
+  createdAt                 DateTime                    @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  updatedAt                 DateTime                    @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  execution_annotation_tags execution_annotation_tags[]
+}
+
+model auth_identity {
+  userId       String?  @db.Uuid
+  providerId   String   @db.VarChar(64)
+  providerType String   @db.VarChar(32)
+  createdAt    DateTime @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  updatedAt    DateTime @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  user         user?    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([providerId, providerType])
+}
+
+model auth_provider_sync_history {
+  id           Int      @id @default(autoincrement())
+  providerType String   @db.VarChar(32)
+  runMode      String
+  status       String
+  startedAt    DateTime @default(now()) @db.Timestamptz(3)
+  endedAt      DateTime @default(now()) @db.Timestamptz(3)
+  scanned      Int
+  created      Int
+  updated      Int
+  disabled     Int
+  error        String?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model chat_hub_messages {
+  id                                                                               String              @id(map: "PK_7704a5add6baed43eef835f0bfb") @db.Uuid
+  sessionId                                                                        String              @db.Uuid
+  previousMessageId                                                                String?             @db.Uuid
+  revisionOfMessageId                                                              String?             @db.Uuid
+  retryOfMessageId                                                                 String?             @db.Uuid
+  type                                                                             String              @db.VarChar(16)
+  name                                                                             String              @db.VarChar(128)
+  content                                                                          String
+  provider                                                                         String?             @db.VarChar(16)
+  model                                                                            String?             @db.VarChar(64)
+  workflowId                                                                       String?             @db.VarChar(36)
+  executionId                                                                      Int?
+  createdAt                                                                        DateTime            @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  updatedAt                                                                        DateTime            @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  status                                                                           String              @default("success") @db.VarChar(16)
+  chat_hub_messages_chat_hub_messages_revisionOfMessageIdTochat_hub_messages       chat_hub_messages?  @relation("chat_hub_messages_revisionOfMessageIdTochat_hub_messages", fields: [revisionOfMessageId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_1f4998c8a7dec9e00a9ab15550e")
+  other_chat_hub_messages_chat_hub_messages_revisionOfMessageIdTochat_hub_messages chat_hub_messages[] @relation("chat_hub_messages_revisionOfMessageIdTochat_hub_messages")
+  chat_hub_messages_chat_hub_messages_retryOfMessageIdTochat_hub_messages          chat_hub_messages?  @relation("chat_hub_messages_retryOfMessageIdTochat_hub_messages", fields: [retryOfMessageId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_25c9736e7f769f3a005eef4b372")
+  other_chat_hub_messages_chat_hub_messages_retryOfMessageIdTochat_hub_messages    chat_hub_messages[] @relation("chat_hub_messages_retryOfMessageIdTochat_hub_messages")
+  execution_entity                                                                 execution_entity?   @relation(fields: [executionId], references: [id], onUpdate: NoAction, map: "FK_6afb260449dd7a9b85355d4e0c9")
+  workflow_entity                                                                  workflow_entity?    @relation(fields: [workflowId], references: [id], onUpdate: NoAction, map: "FK_acf8926098f063cdbbad8497fd1")
+  chat_hub_sessions                                                                chat_hub_sessions   @relation(fields: [sessionId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_e22538eb50a71a17954cd7e076c")
+  chat_hub_messages_chat_hub_messages_previousMessageIdTochat_hub_messages         chat_hub_messages?  @relation("chat_hub_messages_previousMessageIdTochat_hub_messages", fields: [previousMessageId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_e5d1fa722c5a8d38ac204746662")
+  other_chat_hub_messages_chat_hub_messages_previousMessageIdTochat_hub_messages   chat_hub_messages[] @relation("chat_hub_messages_previousMessageIdTochat_hub_messages")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model chat_hub_sessions {
+  id                 String              @id(map: "PK_1eafef1273c70e4464fec703412") @db.Uuid
+  title              String              @db.VarChar(256)
+  ownerId            String              @db.Uuid
+  lastMessageAt      DateTime?           @db.Timestamptz(3)
+  credentialId       String?             @db.VarChar(36)
+  provider           String?             @db.VarChar(16)
+  model              String?             @db.VarChar(64)
+  workflowId         String?             @db.VarChar(36)
+  createdAt          DateTime            @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  updatedAt          DateTime            @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  chat_hub_messages  chat_hub_messages[]
+  credentials_entity credentials_entity? @relation(fields: [credentialId], references: [id], onUpdate: NoAction, map: "FK_7bc13b4c7e6afbfaf9be326c189")
+  workflow_entity    workflow_entity?    @relation(fields: [workflowId], references: [id], onUpdate: NoAction, map: "FK_9f9293d9f552496c40e0d1a8f80")
+  user               user                @relation(fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_e9ecf8ede7d989fcd18790fe36a")
+}
+
+model credentials_entity {
+  name               String               @db.VarChar(128)
+  data               String
+  type               String               @db.VarChar(128)
+  createdAt          DateTime             @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  updatedAt          DateTime             @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  id                 String               @id @unique(map: "pk_credentials_entity_id") @db.VarChar(36)
+  isManaged          Boolean              @default(false)
+  chat_hub_sessions  chat_hub_sessions[]
+  shared_credentials shared_credentials[]
+
+  @@index([type], map: "idx_07fde106c0b471d8cc80a64fc8")
+}
+
+model data_table {
+  id                String              @id(map: "PK_e226d0001b9e6097cbfe70617cb") @db.VarChar(36)
+  name              String              @db.VarChar(128)
+  projectId         String              @db.VarChar(36)
+  createdAt         DateTime            @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  updatedAt         DateTime            @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  project           project             @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_c2a794257dee48af7c9abf681de")
+  data_table_column data_table_column[]
+
+  @@unique([projectId, name], map: "UQ_b23096ef747281ac944d28e8b0d")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model data_table_column {
+  id          String     @id(map: "PK_673cb121ee4a8a5e27850c72c51") @db.VarChar(36)
+  name        String     @db.VarChar(128)
+  type        String     @db.VarChar(32)
+  index       Int
+  dataTableId String     @db.VarChar(36)
+  createdAt   DateTime   @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  updatedAt   DateTime   @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  data_table  data_table @relation(fields: [dataTableId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_930b6e8faaf88294cef23484160")
+
+  @@unique([dataTableId, name], map: "UQ_8082ec4890f892f0bc77473a123")
+}
+
+model event_destinations {
+  id          String   @id @db.Uuid
+  destination Json
+  createdAt   DateTime @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  updatedAt   DateTime @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+}
+
+model execution_annotation_tags {
+  annotationId          Int
+  tagId                 String                @db.VarChar(24)
+  annotation_tag_entity annotation_tag_entity @relation(fields: [tagId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_a3697779b366e131b2bbdae2976")
+  execution_annotations execution_annotations @relation(fields: [annotationId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_c1519757391996eb06064f0e7c8")
+
+  @@id([annotationId, tagId], map: "PK_979ec03d31294cca484be65d11f")
+  @@index([tagId], map: "IDX_a3697779b366e131b2bbdae297")
+  @@index([annotationId], map: "IDX_c1519757391996eb06064f0e7c")
+}
+
+model execution_annotations {
+  id                        Int                         @id(map: "PK_7afcf93ffa20c4252869a7c6a23") @default(autoincrement())
+  executionId               Int                         @unique(map: "IDX_97f863fa83c4786f1956508496")
+  vote                      String?                     @db.VarChar(6)
+  note                      String?
+  createdAt                 DateTime                    @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  updatedAt                 DateTime                    @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  execution_annotation_tags execution_annotation_tags[]
+  execution_entity          execution_entity            @relation(fields: [executionId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_97f863fa83c4786f19565084960")
+}
+
+model execution_data {
+  executionId      Int              @id
+  workflowData     Json             @db.Json
+  data             String
+  execution_entity execution_entity @relation(fields: [executionId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "execution_data_fk")
+}
+
+model execution_entity {
+  id                    Int                    @id(map: "pk_e3e63bbf986767844bbe1166d4e") @default(autoincrement())
+  finished              Boolean
+  mode                  String                 @db.VarChar
+  retryOf               String?                @db.VarChar
+  retrySuccessId        String?                @db.VarChar
+  startedAt             DateTime?              @db.Timestamptz(3)
+  stoppedAt             DateTime?              @db.Timestamptz(3)
+  waitTill              DateTime?              @db.Timestamptz(3)
+  status                String                 @db.VarChar
+  workflowId            String                 @db.VarChar(36)
+  deletedAt             DateTime?              @db.Timestamptz(3)
+  createdAt             DateTime               @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  chat_hub_messages     chat_hub_messages[]
+  execution_annotations execution_annotations?
+  execution_data        execution_data?
+  workflow_entity       workflow_entity        @relation(fields: [workflowId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_execution_entity_workflow_id")
+  execution_metadata    execution_metadata[]
+  test_case_execution   test_case_execution[]
+
+  @@index([deletedAt], map: "IDX_execution_entity_deletedAt")
+}
+
+model execution_metadata {
+  id               Int              @id(map: "PK_17a0b6284f8d626aae88e1c16e4") @default(autoincrement())
+  executionId      Int
+  key              String           @db.VarChar(255)
+  value            String
+  execution_entity execution_entity @relation(fields: [executionId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_31d0b4c93fb85ced26f6005cda3")
+
+  @@unique([executionId, key], map: "IDX_cec8eea3bf49551482ccb4933e")
+}
+
+model folder {
+  id              String            @id(map: "PK_6278a41a706740c94c02e288df8") @db.VarChar(36)
+  name            String            @db.VarChar(128)
+  parentFolderId  String?           @db.VarChar(36)
+  projectId       String            @db.VarChar(36)
+  createdAt       DateTime          @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  updatedAt       DateTime          @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  folder          folder?           @relation("folderTofolder", fields: [parentFolderId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_804ea52f6729e3940498bd54d78")
+  other_folder    folder[]          @relation("folderTofolder")
+  project         project           @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_a8260b0b36939c6247f385b8221")
+  folder_tag      folder_tag[]
+  workflow_entity workflow_entity[]
+
+  @@unique([projectId, id], map: "IDX_14f68deffaf858465715995508")
+}
+
+model folder_tag {
+  folderId   String     @db.VarChar(36)
+  tagId      String     @db.VarChar(36)
+  folder     folder     @relation(fields: [folderId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_94a60854e06f2897b2e0d39edba")
+  tag_entity tag_entity @relation(fields: [tagId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_dc88164176283de80af47621746")
+
+  @@id([folderId, tagId], map: "PK_27e4e00852f6b06a925a4d83a3e")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model insights_by_period {
+  id                Int               @id(map: "PK_b606942249b90cc39b0265f0575") @default(autoincrement())
+  metaId            Int
+  type              Int
+  value             BigInt
+  periodUnit        Int
+  periodStart       DateTime?         @default(now()) @db.Timestamptz(0)
+  insights_metadata insights_metadata @relation(fields: [metaId], references: [metaId], onDelete: Cascade, onUpdate: NoAction, map: "FK_6414cfed98daabbfdd61a1cfbc0")
+
+  @@unique([periodStart, type, periodUnit, metaId], map: "IDX_60b6a84299eeb3f671dfec7693")
+}
+
+model insights_metadata {
+  metaId             Int                  @id(map: "PK_f448a94c35218b6208ce20cf5a1") @default(autoincrement())
+  workflowId         String?              @unique(map: "IDX_1d8ab99d5861c9388d2dc1cf73") @db.VarChar(16)
+  projectId          String?              @db.VarChar(36)
+  workflowName       String               @db.VarChar(128)
+  projectName        String               @db.VarChar(255)
+  insights_by_period insights_by_period[]
+  workflow_entity    workflow_entity?     @relation(fields: [workflowId], references: [id], onUpdate: NoAction, map: "FK_1d8ab99d5861c9388d2dc1cf733")
+  project            project?             @relation(fields: [projectId], references: [id], onUpdate: NoAction, map: "FK_2375a1eda085adb16b24615b69c")
+  insights_raw       insights_raw[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model insights_raw {
+  id                Int               @id(map: "PK_ec15125755151e3a7e00e00014f") @default(autoincrement())
+  metaId            Int
+  type              Int
+  value             BigInt
+  timestamp         DateTime          @default(now()) @db.Timestamptz(0)
+  insights_metadata insights_metadata @relation(fields: [metaId], references: [metaId], onDelete: Cascade, onUpdate: NoAction, map: "FK_6e2e33741adef2a7c5d66befa4e")
+}
+
+model installed_nodes {
+  name               String             @id(map: "PK_8ebd28194e4f792f96b5933423fc439df97d9689") @db.VarChar(200)
+  type               String             @db.VarChar(200)
+  latestVersion      Int                @default(1)
+  package            String             @db.VarChar(241)
+  installed_packages installed_packages @relation(fields: [package], references: [packageName], onDelete: Cascade, map: "FK_73f857fc5dce682cef8a99c11dbddbc969618951")
+}
+
+model installed_packages {
+  packageName      String            @id(map: "PK_08cc9197c39b028c1e9beca225940576fd1a5804") @db.VarChar(214)
+  installedVersion String            @db.VarChar(50)
+  authorName       String?           @db.VarChar(70)
+  authorEmail      String?           @db.VarChar(70)
+  createdAt        DateTime          @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  updatedAt        DateTime          @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  installed_nodes  installed_nodes[]
+}
+
+model invalid_auth_token {
+  token     String   @id(map: "PK_5779069b7235b256d91f7af1a15") @db.VarChar(512)
+  expiresAt DateTime @db.Timestamptz(3)
+}
+
+model migrations {
+  id        Int    @id(map: "PK_8c82d7f526340ab734260ea46be") @default(autoincrement())
+  timestamp BigInt
+  name      String @db.VarChar
+}
+
+model preguntas_frecuentes {
+  id             Int     @id
+  categoria      String
+  pregunta       String
+  respuesta      String
+  prioridad      Int
+  palabras_clave String?
+}
+
+model processed_data {
+  workflowId      String          @db.VarChar(36)
+  context         String          @db.VarChar(255)
+  createdAt       DateTime        @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  updatedAt       DateTime        @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  value           String
+  workflow_entity workflow_entity @relation(fields: [workflowId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_06a69a7032c97a763c2c7599464")
+
+  @@id([workflowId, context], map: "PK_ca04b9d8dc72de268fe07a65773")
+}
+
+model project {
+  id                 String               @id(map: "PK_4d68b1358bb5b766d3e78f32f57") @db.VarChar(36)
+  name               String               @db.VarChar(255)
+  type               String               @db.VarChar(36)
+  createdAt          DateTime             @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  updatedAt          DateTime             @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  icon               Json?                @db.Json
+  description        String?              @db.VarChar(512)
+  data_table         data_table[]
+  folder             folder[]
+  insights_metadata  insights_metadata[]
+  project_relation   project_relation[]
+  shared_credentials shared_credentials[]
+  shared_workflow    shared_workflow[]
+  variables          variables[]
+}
+
+model project_relation {
+  projectId                        String   @db.VarChar(36)
+  userId                           String   @db.Uuid
+  role                             String   @db.VarChar
+  createdAt                        DateTime @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  updatedAt                        DateTime @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  user                             user     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_5f0643f6717905a05164090dde7")
+  project                          project  @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_61448d56d61802b5dfde5cdb002")
+  role_project_relation_roleTorole role     @relation("project_relation_roleTorole", fields: [role], references: [slug], onDelete: NoAction, onUpdate: NoAction, map: "FK_c6b99592dc96b0d836d7a21db91")
+
+  @@id([projectId, userId], map: "PK_1caaa312a5d7184a003be0f0cb6")
+  @@index([userId], map: "IDX_5f0643f6717905a05164090dde")
+  @@index([projectId], map: "IDX_61448d56d61802b5dfde5cdb00")
+  @@index([role])
+  @@index([projectId, role], map: "project_relation_role_project_idx")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model role {
+  slug                                         String             @id(map: "PK_35c9b140caaf6da09cfabb0d675") @db.VarChar(128)
+  displayName                                  String?            @unique(map: "IDX_UniqueRoleDisplayName")
+  description                                  String?
+  roleType                                     String?
+  systemRole                                   Boolean            @default(false)
+  createdAt                                    DateTime           @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  updatedAt                                    DateTime           @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  project_relation_project_relation_roleTorole project_relation[] @relation("project_relation_roleTorole")
+  role_scope                                   role_scope[]
+  user                                         user[]
+}
+
+model role_scope {
+  roleSlug  String @db.VarChar(128)
+  scopeSlug String @db.VarChar(128)
+  role      role   @relation(fields: [roleSlug], references: [slug], onDelete: Cascade, map: "FK_role")
+  scope     scope  @relation(fields: [scopeSlug], references: [slug], onDelete: Cascade, map: "FK_scope")
+
+  @@id([roleSlug, scopeSlug], map: "PK_role_scope")
+  @@index([scopeSlug], map: "IDX_role_scope_scopeSlug")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model scope {
+  slug        String       @id(map: "PK_bfc45df0481abd7f355d6187da1") @db.VarChar(128)
+  displayName String?
+  description String?
+  role_scope  role_scope[]
+}
+
+model settings {
+  key           String  @id(map: "PK_dc0fe14e6d9943f268e7b119f69ab8bd") @db.VarChar(255)
+  value         String
+  loadOnStartup Boolean @default(false)
+}
+
+model shared_credentials {
+  credentialsId      String             @db.VarChar(36)
+  projectId          String             @db.VarChar(36)
+  role               String
+  createdAt          DateTime           @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  updatedAt          DateTime           @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  credentials_entity credentials_entity @relation(fields: [credentialsId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_416f66fc846c7c442970c094ccf")
+  project            project            @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_812c2852270da1247756e77f5a4")
+
+  @@id([credentialsId, projectId], map: "PK_8ef3a59796a228913f251779cff")
+}
+
+model shared_workflow {
+  workflowId      String          @db.VarChar(36)
+  projectId       String          @db.VarChar(36)
+  role            String
+  createdAt       DateTime        @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  updatedAt       DateTime        @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  project         project         @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_a45ea5f27bcfdc21af9b4188560")
+  workflow_entity workflow_entity @relation(fields: [workflowId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_daa206a04983d47d0a9c34649ce")
+
+  @@id([workflowId, projectId], map: "PK_5ba87620386b847201c9531c58f")
+}
+
+model tag_entity {
+  name           String           @unique(map: "idx_812eb05f7451ca757fb98444ce") @db.VarChar(24)
+  createdAt      DateTime         @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  updatedAt      DateTime         @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  id             String           @id @unique(map: "pk_tag_entity_id") @db.VarChar(36)
+  folder_tag     folder_tag[]
+  workflows_tags workflows_tags[]
+}
+
+model test_case_execution {
+  id               String            @id(map: "PK_90c121f77a78a6580e94b794bce") @db.VarChar(36)
+  testRunId        String            @db.VarChar(36)
+  executionId      Int?
+  status           String            @db.VarChar
+  runAt            DateTime?         @db.Timestamptz(3)
+  completedAt      DateTime?         @db.Timestamptz(3)
+  errorCode        String?           @db.VarChar
+  errorDetails     Json?             @db.Json
+  metrics          Json?             @db.Json
+  createdAt        DateTime          @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  updatedAt        DateTime          @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  inputs           Json?             @db.Json
+  outputs          Json?             @db.Json
+  test_run         test_run          @relation(fields: [testRunId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_8e4b4774db42f1e6dda3452b2af")
+  execution_entity execution_entity? @relation(fields: [executionId], references: [id], onUpdate: NoAction, map: "FK_e48965fac35d0f5b9e7f51d8c44")
+
+  @@index([testRunId], map: "IDX_8e4b4774db42f1e6dda3452b2a")
+}
+
+model test_run {
+  id                  String                @id(map: "PK_011c050f566e9db509a0fadb9b9") @db.VarChar(36)
+  workflowId          String                @db.VarChar(36)
+  status              String                @db.VarChar
+  errorCode           String?               @db.VarChar
+  errorDetails        Json?                 @db.Json
+  runAt               DateTime?             @db.Timestamptz(3)
+  completedAt         DateTime?             @db.Timestamptz(3)
+  metrics             Json?                 @db.Json
+  createdAt           DateTime              @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  updatedAt           DateTime              @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  test_case_execution test_case_execution[]
+  workflow_entity     workflow_entity       @relation(fields: [workflowId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_d6870d3b6e4c185d33926f423c8")
+
+  @@index([workflowId], map: "IDX_d6870d3b6e4c185d33926f423c")
+}
+
+model transiciones_estados {
+  id_estado          Int      @id
+  descripcion_estado String
+  texto_principal    String?
+  item_1             String?
+  item_2             String?
+  item_3             String?
+  item_4             String?
+  item_5             String?
+  item_6             String?
+  new_id1            Int?
+  new_id2            Int?
+  new_id3            Int?
+  new_id4            Int?
+  new_id5            Int?
+  new_id6            Int?
+  estado_anterior    Int?
+  delegar_humano     Int?
+  modo_default       String?
+  sub_estado         String?
+  fallback_equipo    String?
+  fallback1          String?
+  fallback2          String?
+  texto_rescate      String?
+  silent             Boolean?
+}
+
+model user {
+  id                     String              @id(map: "PK_ea8f538c94b6e352418254ed6474a81f") @default(dbgenerated("uuid_in((OVERLAY(OVERLAY(md5((((random())::text || ':'::text) || (clock_timestamp())::text)) PLACING '4'::text FROM 13) PLACING to_hex((floor(((random() * (((11 - 8) + 1))::double precision) + (8)::double precision)))::integer) FROM 17))::cstring)")) @db.Uuid
+  email                  String?             @unique(map: "UQ_e12875dfb3b1d92d7d7c5377e2") @db.VarChar(255)
+  firstName              String?             @db.VarChar(32)
+  lastName               String?             @db.VarChar(32)
+  password               String?             @db.VarChar(255)
+  personalizationAnswers Json?               @db.Json
+  createdAt              DateTime            @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  updatedAt              DateTime            @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  settings               Json?               @db.Json
+  disabled               Boolean             @default(false)
+  mfaEnabled             Boolean             @default(false)
+  mfaSecret              String?
+  mfaRecoveryCodes       String?
+  lastActiveAt           DateTime?           @db.Date
+  roleSlug               String              @default("global:member") @db.VarChar(128)
+  auth_identity          auth_identity[]
+  chat_hub_sessions      chat_hub_sessions[]
+  project_relation       project_relation[]
+  role                   role                @relation(fields: [roleSlug], references: [slug], onDelete: NoAction, onUpdate: NoAction, map: "FK_eaea92ee7bfb9c1b6cd01505d56")
+  user_api_keys          user_api_keys[]
+
+  @@index([roleSlug], map: "user_role_idx")
+}
+
+model user_api_keys {
+  id        String   @id(map: "PK_978fa5caa3468f463dac9d92e69") @db.VarChar(36)
+  userId    String   @db.Uuid
+  label     String   @db.VarChar(100)
+  apiKey    String   @unique(map: "IDX_1ef35bac35d20bdae979d917a3") @db.VarChar
+  createdAt DateTime @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  updatedAt DateTime @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  scopes    Json?    @db.Json
+  audience  String   @default("public-api") @db.VarChar
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_e131705cbbc8fb589889b02d457")
+
+  @@unique([userId, label], map: "IDX_63d7bbae72c767cf162d459fcc")
+}
+
+model variables {
+  key       String   @db.VarChar(50)
+  type      String   @default("string") @db.VarChar(50)
+  value     String?  @db.VarChar(255)
+  id        String   @id @db.VarChar(36)
+  projectId String?  @db.VarChar(36)
+  project   project? @relation(fields: [projectId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_42f6c766f9f9d2edcc15bdd6e9b")
+}
+
+model webhook_entity {
+  webhookPath     String          @db.VarChar
+  method          String          @db.VarChar
+  node            String          @db.VarChar
+  webhookId       String?         @db.VarChar
+  pathLength      Int?
+  workflowId      String          @db.VarChar(36)
+  workflow_entity workflow_entity @relation(fields: [workflowId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_webhook_entity_workflow_id")
+
+  @@id([webhookPath, method], map: "PK_b21ace2e13596ccd87dc9bf4ea6")
+  @@index([webhookId, method, pathLength], map: "idx_16f4436789e804e3e1c9eeb240")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model workflow_dependency {
+  id                Int             @id(map: "PK_52325e34cd7a2f0f67b0f3cad65") @default(autoincrement())
+  workflowId        String          @db.VarChar(36)
+  workflowVersionId Int
+  dependencyType    String          @db.VarChar(32)
+  dependencyKey     String          @db.VarChar(255)
+  dependencyInfo    String?         @db.VarChar(255)
+  indexVersionId    Int             @default(1) @db.SmallInt
+  createdAt         DateTime        @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  workflow_entity   workflow_entity @relation(fields: [workflowId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_a4ff2d9b9628ea988fa9e7d0bf8")
+
+  @@index([workflowId], map: "IDX_a4ff2d9b9628ea988fa9e7d0bf")
+  @@index([dependencyKey], map: "IDX_e48a201071ab85d9d09119d640")
+  @@index([dependencyType], map: "IDX_e7fe1cfda990c14a445937d0b9")
+}
+
+model workflow_entity {
+  name                String                @db.VarChar(128)
+  active              Boolean
+  nodes               Json                  @db.Json
+  connections         Json                  @db.Json
+  createdAt           DateTime              @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  updatedAt           DateTime              @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  settings            Json?                 @db.Json
+  staticData          Json?                 @db.Json
+  pinData             Json?                 @db.Json
+  versionId           String?               @db.Char(36)
+  triggerCount        Int                   @default(0)
+  id                  String                @id @unique(map: "pk_workflow_entity_id") @db.VarChar(36)
+  meta                Json?                 @db.Json
+  parentFolderId      String?               @db.VarChar(36)
+  isArchived          Boolean               @default(false)
+  versionCounter      Int                   @default(1)
+  chat_hub_messages   chat_hub_messages[]
+  chat_hub_sessions   chat_hub_sessions[]
+  execution_entity    execution_entity[]
+  insights_metadata   insights_metadata?
+  processed_data      processed_data[]
+  shared_workflow     shared_workflow[]
+  test_run            test_run[]
+  webhook_entity      webhook_entity[]
+  workflow_dependency workflow_dependency[]
+  folder              folder?               @relation(fields: [parentFolderId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_workflow_parent_folder")
+  workflow_history    workflow_history[]
+  workflow_statistics workflow_statistics[]
+  workflows_tags      workflows_tags[]
+
+  @@index([name], map: "IDX_workflow_entity_name")
+}
+
+model workflow_history {
+  versionId       String          @id(map: "PK_b6572dd6173e4cd06fe79937b58") @db.VarChar(36)
+  workflowId      String          @db.VarChar(36)
+  authors         String          @db.VarChar(255)
+  createdAt       DateTime        @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  updatedAt       DateTime        @default(dbgenerated("CURRENT_TIMESTAMP(3)")) @db.Timestamptz(3)
+  nodes           Json            @db.Json
+  connections     Json            @db.Json
+  workflow_entity workflow_entity @relation(fields: [workflowId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_1e31657f5fe46816c34be7c1b4b")
+
+  @@index([workflowId], map: "IDX_1e31657f5fe46816c34be7c1b4")
+}
+
+model workflow_statistics {
+  count           Int?            @default(0)
+  latestEvent     DateTime?       @db.Timestamptz(3)
+  name            String          @db.VarChar(128)
+  workflowId      String          @db.VarChar(36)
+  rootCount       Int?            @default(0)
+  workflow_entity workflow_entity @relation(fields: [workflowId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_workflow_statistics_workflow_id")
+
+  @@id([workflowId, name], map: "pk_workflow_statistics")
+}
+
+model workflows_tags {
+  workflowId      String          @db.VarChar(36)
+  tagId           String          @db.VarChar(36)
+  tag_entity      tag_entity      @relation(fields: [tagId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_workflows_tags_tag_id")
+  workflow_entity workflow_entity @relation(fields: [workflowId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_workflows_tags_workflow_id")
+
+  @@id([workflowId, tagId], map: "pk_workflows_tags")
+  @@index([workflowId], map: "idx_workflows_tags_workflow_id")
+}
+
+model actor_history_score {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actor_external_id String
+  external_event_id String   @unique
+  score_delta       Decimal  @db.Decimal(10, 4)
+  signal_type       String
+  metadata          Json?
+  created_at        DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([actor_external_id, created_at(sort: Desc)], map: "idx_actor_history_score_actor_time")
+  @@index([created_at(sort: Desc)], map: "idx_actor_history_score_created")
+}
+
+model actor_lifecycle {
+  id                String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actor_external_id String
+  state             actor_state
+  occurred_at       DateTime    @default(now()) @db.Timestamptz(6)
+
+  @@index([actor_external_id, occurred_at(sort: Desc)], map: "idx_actor_lifecycle_actor_time")
+  @@index([state], map: "idx_actor_lifecycle_state")
+}
+
+model actor_score {
+  actor_external_id String   @id
+  score             Decimal  @default(0) @db.Decimal(10, 4)
+  updated_at        DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([updated_at(sort: Desc)], map: "idx_actor_score_updated")
+}
+
+model event_history {
+  id                String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  external_event_id String           @unique
+  actor_external_id String
+  provider          provider_type
+  object_type       meta_object_type
+  pipeline          pipeline_type
+  event_type        String
+  payload           Json
+  occurred_at       DateTime         @db.Timestamptz(6)
+  received_at       DateTime         @default(now()) @db.Timestamptz(6)
+
+  @@index([actor_external_id, occurred_at(sort: Desc)], map: "idx_event_history_actor_time")
+  @@index([received_at(sort: Desc)], map: "idx_event_history_received")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model n8n_chat_history {
+  id                            String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  external_event_id             String             @unique @db.VarChar(255)
+  message_external_id           String?            @db.VarChar(255)
+  actor_external_id             String             @db.VarChar(255)
+  thread_external_id            String?            @db.VarChar(255)
+  in_reply_to_external_event_id String?            @db.VarChar(255)
+  correlation_id                String?            @db.VarChar(255)
+  causation_id                  String?            @db.VarChar(255)
+  provider                      String             @db.VarChar(32)
+  object_type                   String             @db.VarChar(32)
+  pipeline                      String             @default("MESSAGES") @db.VarChar(32)
+  event_type                    String             @db.VarChar(64)
+  source_system                 String             @db.VarChar(32)
+  source_channel                String             @db.VarChar(32)
+  source_event_id               String?            @db.VarChar(255)
+  direction                     String             @db.VarChar(16)
+  content_type                  String             @db.VarChar(32)
+  content_text                  String?
+  content_json                  Json?
+  status                        String             @default("received") @db.VarChar(32)
+  signal_type                   String?            @db.VarChar(64)
+  error_code                    String?            @db.VarChar(64)
+  error_message                 String?
+  workflow_id                   String?            @db.VarChar(128)
+  workflow_execution_id         String?            @db.VarChar(128)
+  queue_name                    String?            @db.VarChar(64)
+  job_name                      String?            @db.VarChar(64)
+  job_id                        String?            @db.VarChar(255)
+  attempt                       Int?
+  max_attempts                  Int?
+  job_status                    String?            @db.VarChar(32)
+  queued_at                     DateTime?          @db.Timestamptz(6)
+  started_at                    DateTime?          @db.Timestamptz(6)
+  finished_at                   DateTime?          @db.Timestamptz(6)
+  metadata                      Json?
+  payload                       Json               @default("{}")
+  occurred_at                   DateTime           @db.Timestamptz(6)
+  received_at                   DateTime           @default(now()) @db.Timestamptz(6)
+  created_at                    DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at                    DateTime           @default(now()) @db.Timestamptz(6)
+  n8n_chat_history              n8n_chat_history?  @relation("n8n_chat_historyTon8n_chat_history", fields: [in_reply_to_external_event_id], references: [external_event_id], map: "fk_n8n_chat_in_reply")
+  other_n8n_chat_history        n8n_chat_history[] @relation("n8n_chat_historyTon8n_chat_history")
+
+  @@index([actor_external_id, occurred_at(sort: Desc)], map: "idx_n8n_chat_actor_time")
+  @@index([direction, occurred_at(sort: Desc)], map: "idx_n8n_chat_direction_time")
+  @@index([queue_name, job_name, job_id], map: "idx_n8n_chat_job")
+  @@index([in_reply_to_external_event_id], map: "idx_n8n_chat_reply_to")
+  @@index([status, occurred_at(sort: Desc)], map: "idx_n8n_chat_status_time")
+  @@index([thread_external_id, occurred_at(sort: Desc)], map: "idx_n8n_chat_thread_time")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model n8n_message_sessions {
+  id                            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  session_id                    String   @db.VarChar(255)
+  external_event_id             String   @unique @db.VarChar(255)
+  message_external_id           String?  @db.VarChar(255)
+  actor_external_id             String   @db.VarChar(255)
+  provider                      String   @db.VarChar(32)
+  object_type                   String   @db.VarChar(32)
+  source_channel                String?  @db.VarChar(32)
+  event_kind                    String   @db.VarChar(64)
+  direction                     String   @db.VarChar(16)
+  content_text                  String?
+  content_json                  Json     @default("{}")
+  in_reply_to_external_event_id String?  @db.VarChar(255)
+  status                        String   @default("received") @db.VarChar(32)
+  signal_type                   String?  @db.VarChar(64)
+  workflow_execution_id         String?  @db.VarChar(128)
+  occurred_at                   DateTime @db.Timestamptz(6)
+  received_at                   DateTime @default(now()) @db.Timestamptz(6)
+  created_at                    DateTime @default(now()) @db.Timestamptz(6)
+  updated_at                    DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([actor_external_id, occurred_at(sort: Desc)], map: "idx_n8n_msg_sessions_actor_time")
+  @@index([session_id, occurred_at(sort: Desc)], map: "idx_n8n_msg_sessions_session_time")
+  @@index([signal_type], map: "idx_n8n_msg_sessions_signal")
+  @@index([status, occurred_at(sort: Desc)], map: "idx_n8n_msg_sessions_status_time")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model signal_scoring_rules {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  signal_type String   @unique @db.VarChar(100)
+  polarity    String   @db.VarChar(10)
+  delta       Decimal  @db.Decimal(10, 2)
+  is_active   Boolean  @default(true)
+  description String?
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([is_active], map: "idx_signal_scoring_rules_active")
+}
+
+enum actor_state {
+  NEW
+  CHURNED
+  QUALIFIED
+  BLOCKED
+}
+
+enum meta_object_type {
+  PAGE
+  INSTAGRAM
+}
+
+enum pipeline_type {
+  MESSAGES
+  CHANGES
+  TRANSITIONS
+}
+
+enum provider_type {
+  META
+}

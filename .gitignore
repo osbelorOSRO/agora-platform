@@ -1,0 +1,48 @@
+# Secrets by profile (keep local only)
+env/*.secrets.env
+n8n/env/*.secrets.env
+
+# Local runtime secrets/services
+agora/.env
+agora/frontend/.env
+agora/websocket/.env
+accesos/abackend/.env
+agora/api-backend-nest/.env
+wa-backend/.env
+
+# Local exports and backups
+*.secrets
+*.secret
+*.key
+*.pem
+*.crt
+*.pfx
+*.p12
+
+# TLS cert material / local cert exports
+Cloudfare Certs/
+nmp/letsencrypt/
+
+# Runtime auth/session material
+wa-backend/auth/*.json
+wa-backend/auth_info_baileys/
+redis/redis_cache/
+n8n/n8n-data/
+
+# DB exports / dumps / backups
+infraestructura/postgres-init/*.sql
+mongo/mongo-init/*.archive
+mongo/mongo-init/*.dump
+mongo/mongo-init/dump/
+*.bak
+*.backup
+
+# Build/deps artifacts
+**/node_modules/
+**/dist/
+**/.cache/
+**/*.tsbuildinfo
+
+# Local service runtime data/config that should not be in repo
+nmp/data/
+whisper/models/

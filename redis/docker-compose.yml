@@ -1,0 +1,20 @@
+services:
+  redis:
+    image: redis:alpine
+    container_name: redis-server
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass "Hq3It62Uui/GdEgNiPBdFK0SC9m6OBM84tZn4zYaKj0=" --protected-mode yes
+    volumes:
+      - ./redis_cache:/data
+    networks:
+      - npm_network
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"Hq3It62Uui/GdEgNiPBdFK0SC9m6OBM84tZn4zYaKj0=\" ping | grep -q PONG"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+networks:
+  npm_network:
+    external: true

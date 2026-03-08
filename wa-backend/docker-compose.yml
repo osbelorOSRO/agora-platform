@@ -1,0 +1,31 @@
+services:
+  wa_backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wa_backend
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - npm_network
+    ports:
+      - "${HOST_BIND_IP:-100.121.39.83}:3000:3000"
+    environment:
+      - API_BACKEND_URL=${API_INTERNAL_URL}
+      - MEDIA_BASE_URL=${MEDIA_BASE_URL}
+      - WS_URL=${WS_INTERNAL_URL}
+      - N8N_WEBHOOK_URL=${N8N_INTERNAL_URL}/webhook/flujo-ventas
+    volumes:
+      - ./auth:/app/auth
+      - ./config-bot.json:/app/config-bot.json
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/health >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+
+networks:
+  npm_network:
+    external: true

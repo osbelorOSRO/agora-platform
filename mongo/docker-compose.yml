@@ -1,0 +1,21 @@
+services:
+  microservicio:
+    build: ./microservicio
+    container_name: fastapi_microservicio
+    restart: unless-stopped
+    expose:
+      - "8500"
+    environment:
+      - MONGO_URI=${MICROSERVICIO_MONGO_URI}
+    networks:
+      - npm_network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8500/health >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+networks:
+  npm_network:
+    external: true

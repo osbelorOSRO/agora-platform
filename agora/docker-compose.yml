@@ -1,0 +1,79 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_WEBSOCKET_URL: "${WS_PUBLIC_URL}"
+        VITE_API_URL: "${API_PUBLIC_URL}"
+        VITE_MEDIA_BASE_URL: "${MEDIA_BASE_URL}"
+        VITE_AUTH_API_URL: "${ABACKEND_PUBLIC_URL}/api/auth"
+        VITE_ESTADO_BOT_URL: "${SOCKET_HTTP_PUBLIC_URL}"
+        VITE_API_URL_ACCESOS: "${ABACKEND_PUBLIC_URL}"
+        VITE_SCRAPER_BASE_URL: "${SCRAPER_BASE_URL}"
+        VITE_API_URL_RUT: "${RUT_API_URL}"
+    container_name: panel_frontend
+    restart: always
+    ports:
+      - "${HOST_BIND_IP:-100.121.39.83}:5173:80"
+    networks:
+      - npm_network
+    working_dir: /app
+
+  websocket:
+    build:
+      context: ./websocket
+      dockerfile: Dockerfile
+    container_name: panel_websocket
+    restart: always
+    ports:
+      - "${HOST_BIND_IP:-100.121.39.83}:5050:5050"
+    networks:
+      - npm_network
+    env_file:
+      - ./websocket/.env
+    environment:
+      - NODE_ENV=production
+      - CORS_ALLOWED_ORIGINS=${FRONTEND_PUBLIC_URL},${API_PUBLIC_URL}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5050/estado-bot >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  api_backend_nest:
+    build:
+      context: ./api-backend-nest
+      dockerfile: Dockerfile.alpine
+    container_name: api_backend_nest
+    restart: unless-stopped
+    ports:
+      - "${HOST_BIND_IP:-100.121.39.83}:4001:4001"
+    networks:
+      - npm_network
+    volumes:
+      - ./uploads:/app/uploads
+      - ./config:/app/config
+    env_file:
+      - ./api-backend-nest/.env
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${API_DATABASE_URL}
+      - MONGODB_URI=${API_MONGODB_URI}
+      - MEDIA_BASE_URL=${MEDIA_BASE_URL}
+      - CORS_ALLOWED_ORIGINS=${FRONTEND_PUBLIC_URL}
+      - WS_SERVER=${WS_INTERNAL_URL}
+      - BOT_BASE_URL=${WA_INTERNAL_URL}
+      - N8N_MSG_DELEGATION_WEBHOOK_URL=${N8N_INTERNAL_URL}/webhook/flujo-eventos
+      - GATEWAY_BASE_URL=${GATEWAY_BASE_URL:-https://winbotpc.llevatuplan.cl}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4001/ping/db >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 25s
+
+networks:
+  npm_network:
+    external: true

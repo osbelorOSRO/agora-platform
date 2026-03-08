@@ -1,0 +1,32 @@
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    ports:
+      - "${HOST_BIND_IP:-100.121.39.83}:5678:5678"
+    env_file:
+      - ${N8N_ENV_FILE:-./env/dev.local1.env}
+    environment:
+      - NODE_ENV=production
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_PERSONALIZATION_ENABLED=false
+      - N8N_DIAGNOSTICS_ENABLED=false
+      - N8N_HIDE_USAGE_PAGE=true
+      - N8N_USER_MANAGEMENT_DISABLED=true
+      - N8N_LICENSE_ACCEPTED=true
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=false
+      - N8N_RUNNERS_ENABLED=true
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      - N8N_GIT_NODE_DISABLE_BARE_REPOS=true
+      - GENERIC_TIMEZONE=America/Santiago
+      - DB_TYPE=sqlite
+
+    volumes:
+      - ./n8n-data:/home/node/.n8n
+    networks:
+      - npm_network
+    restart: unless-stopped
+
+networks:
+  npm_network:
+    external: true

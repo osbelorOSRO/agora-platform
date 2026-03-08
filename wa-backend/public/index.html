@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Panel Baileys Bot</title>
+<link rel="stylesheet" href="/css/style.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Panel Baileys Bot</h1>
+    <div class="version">Baileys v2.3000</div>
+  </div>
+  <!-- Estado de conexión -->
+  <div id="status" class="status offline">
+    <div class="status-info">
+      <div class="status-dot"></div>
+      <div>
+        <div id="estado-text" class="status-title">DESCONECTADO</div>
+        <div id="numero-text" class="status-subtitle">Esperando conexión...</div>
+      </div>
+    </div>
+  </div>
+  <!-- QR Display -->
+  <div id="qr-display"></div>
+  <div id="qr-status-msg"></div>
+  <!-- Estadísticas -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value" id="stat-recibidos">0</div>
+      <div class="stat-label">
+        <i data-lucide="inbox" style="width: 16px; height: 16px; display: inline-block; vertical-align: middle;"></i>
+        Recibidos
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="stat-enviados">0</div>
+      <div class="stat-label">
+        <i data-lucide="send" style="width: 16px; height: 16px; display: inline-block; vertical-align: middle;"></i>
+        Enviados
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="stat-uptime">--</div>
+      <div class="stat-label">
+        <i data-lucide="timer" style="width: 16px; height: 16px; display: inline-block; vertical-align: middle;"></i>
+        Uptime
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="stat-ultimo">--</div>
+      <div class="stat-label">
+        <i data-lucide="clock" style="width: 16px; height: 16px; display: inline-block; vertical-align: middle;"></i>
+        Último msg
+      </div>
+    </div>
+  </div>
+  <!-- Controles principales -->
+  <div class="section">
+    <h3>
+      <i data-lucide="settings" style="width: 18px; height: 18px; display: inline-block; vertical-align: middle;"></i>
+      Controles
+    </h3>
+    <div class="buttons">
+      <button id="btn-generar-qr" class="btn btn-primary">
+        <i data-lucide="qr-code" class="btn-icon"></i>
+        Generar QR
+      </button>
+      <button id="logout" class="btn btn-danger">
+        <i data-lucide="log-out" class="btn-icon"></i>
+        Logout
+      </button>
+      <button id="restart" class="btn btn-warning">
+        <i data-lucide="refresh-cw" class="btn-icon"></i>
+        Reiniciar
+      </button>
+    </div>
+  </div>
+  <!-- Números bloqueados -->
+  <div class="section">
+    <h3>
+      <i data-lucide="shield-ban" style="width: 18px; height: 18px; display: inline-block; vertical-align: middle;"></i>
+      Números Bloqueados
+    </h3>
+    <div class="block-input">
+      <input type="text" id="input-numero" placeholder="Ej: 56912345678" class="input">
+      <button id="btn-bloquear" class="btn btn-danger">Bloquear</button>
+    </div>
+    <div id="lista-bloqueados" class="blocked-list"></div>
+  </div>
+  <!-- Logs en tiempo real -->
+  <div class="section">
+    <h3>
+      <i data-lucide="terminal" style="width: 18px; height: 18px; display: inline-block; vertical-align: middle;"></i>
+      Logs Recientes
+    </h3>
+    <div id="logs-container" class="logs"></div>
+  </div>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/dashboard.js"></script>
+<script>
+  // Inicializar Lucide icons
+  lucide.createIcons();
+</script>
+</body>
+</html>

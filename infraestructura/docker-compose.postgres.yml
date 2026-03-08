@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres_local
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-adminbot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-<postgres_password>}
+      POSTGRES_DB: ${POSTGRES_DB:-memoriabot}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+    ports:
+      - "${HOST_BIND_IP:-100.121.39.83}:5432:5432"
+    networks:
+      - npm_network
+
+volumes:
+  postgres_data:
+
+networks:
+  npm_network:
+    external: true

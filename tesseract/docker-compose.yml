@@ -1,0 +1,28 @@
+services:
+  tesseract-api:
+    image: hertzg/tesseract-server:latest
+    container_name: tesseract-ocr
+    restart: unless-stopped
+    expose:
+      - "8884"
+    environment:
+      - TESSDATA_PREFIX=/usr/share/tesseract-ocr/4.00/tessdata
+    networks:
+      - npm_network
+    volumes:
+      - ./tessdata:/usr/share/tesseract-ocr/4.00/tessdata
+    healthcheck:
+      test: ["CMD-SHELL", "bash -lc 'cat </dev/null >/dev/tcp/127.0.0.1/8884'"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+
+networks:
+  npm_network:
+    external: true

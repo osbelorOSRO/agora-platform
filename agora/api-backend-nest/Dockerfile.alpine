@@ -1,0 +1,64 @@
+# Stage 1: Build
+FROM node:24-alpine AS builder
+
+WORKDIR /app
+
+# Instalar dependencias de compilación + ffmpeg
+RUN apk add --no-cache \
+    ffmpeg \
+    python3 \
+    make \
+    g++ \
+    openssl
+
+# Copiar package files
+COPY package*.json ./
+COPY prisma ./prisma/
+COPY prisma.config.ts ./
+
+# Instalar dependencias
+RUN npm ci
+
+# Copiar código fuente
+COPY . .
+
+# Generar Prisma Client para Alpine
+RUN DATABASE_URL=postgresql://user:pass@localhost:5432/db npx prisma generate
+
+# Build de NestJS
+RUN npm run build
+
+# Stage 2: Production
+FROM node:24-alpine
+
+WORKDIR /app
+
+# Instalar solo ffmpeg en producción
+RUN apk add --no-cache ffmpeg openssl
+
+# Copiar package files
+COPY package*.json ./
+COPY prisma ./prisma/
+COPY prisma.config.ts ./
+
+# Instalar SOLO dependencias de producción
+RUN npm ci --omit=dev
+
+# Generar Prisma Client en producción
+RUN DATABASE_URL=postgresql://user:pass@localhost:5432/db npx prisma generate
+
+# Copiar el build desde el stage anterior
+COPY --from=builder /app/dist ./dist
+
+# Crear directorios para volúmenes
+RUN mkdir -p /app/uploads /app/config && \
+    chown -R node:node /app
+
+# Exponer puerto
+EXPOSE 4001
+
+# Usuario no-root
+USER node
+
+# Comando de producción
+CMD ["node", "dist/main.js"]
