@@ -32,25 +32,12 @@ else
   export N8N_ENV_FILE="$N8N_PUBLIC_FILE"
 fi
 
-APP_ENV="${APP_ENV:-dev}"
-USE_LOCAL_POSTGRES="${USE_LOCAL_POSTGRES:-}"
-USE_LOCAL_MONGO="${USE_LOCAL_MONGO:-}"
-
-if [[ -z "$USE_LOCAL_POSTGRES" ]]; then
-  if [[ "$APP_ENV" == "dev" ]]; then USE_LOCAL_POSTGRES="true"; else USE_LOCAL_POSTGRES="false"; fi
-fi
-if [[ -z "$USE_LOCAL_MONGO" ]]; then
-  if [[ "$APP_ENV" == "dev" ]]; then USE_LOCAL_MONGO="true"; else USE_LOCAL_MONGO="false"; fi
-fi
-
 project_for_file() {
   case "$1" in
     "accesos/docker-compose.yml") echo "stack_accesos" ;;
     "agora/docker-compose.yml") echo "stack_agora" ;;
     "infraestructura/docker-compose.yml") echo "stack_infra_pgadmin" ;;
-    "infraestructura/docker-compose.postgres.yml") echo "stack_infra_postgres" ;;
     "mongo/docker-compose.yml") echo "stack_mongo_micro" ;;
-    "mongo/docker-compose.mongo.yml") echo "stack_mongo_db" ;;
     "n8n/docker-compose.yml") echo "stack_n8n" ;;
     "nmp/docker-compose.yml") echo "stack_nmp" ;;
     "redis/docker-compose.yml") echo "stack_redis" ;;
@@ -68,13 +55,6 @@ validate_compose() {
   echo ">>> config: $file (project=$project)"
   docker compose -p "$project" -f "$ROOT_DIR/$file" config >/dev/null
 }
-
-if [[ "$USE_LOCAL_POSTGRES" == "true" ]]; then
-  validate_compose "infraestructura/docker-compose.postgres.yml"
-fi
-if [[ "$USE_LOCAL_MONGO" == "true" ]]; then
-  validate_compose "mongo/docker-compose.mongo.yml"
-fi
 
 validate_compose "redis/docker-compose.yml"
 validate_compose "whisper/docker-compose.yml"

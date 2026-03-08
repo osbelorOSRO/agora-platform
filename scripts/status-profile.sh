@@ -32,25 +32,12 @@ else
   export N8N_ENV_FILE="$N8N_PUBLIC_FILE"
 fi
 
-APP_ENV="${APP_ENV:-dev}"
-USE_LOCAL_POSTGRES="${USE_LOCAL_POSTGRES:-}"
-USE_LOCAL_MONGO="${USE_LOCAL_MONGO:-}"
-
-if [[ -z "$USE_LOCAL_POSTGRES" ]]; then
-  if [[ "$APP_ENV" == "dev" ]]; then USE_LOCAL_POSTGRES="true"; else USE_LOCAL_POSTGRES="false"; fi
-fi
-if [[ -z "$USE_LOCAL_MONGO" ]]; then
-  if [[ "$APP_ENV" == "dev" ]]; then USE_LOCAL_MONGO="true"; else USE_LOCAL_MONGO="false"; fi
-fi
-
 project_for_file() {
   case "$1" in
     "accesos/docker-compose.yml") echo "stack_accesos" ;;
     "agora/docker-compose.yml") echo "stack_agora" ;;
     "infraestructura/docker-compose.yml") echo "stack_infra_pgadmin" ;;
-    "infraestructura/docker-compose.postgres.yml") echo "stack_infra_postgres" ;;
     "mongo/docker-compose.yml") echo "stack_mongo_micro" ;;
-    "mongo/docker-compose.mongo.yml") echo "stack_mongo_db" ;;
     "n8n/docker-compose.yml") echo "stack_n8n" ;;
     "nmp/docker-compose.yml") echo "stack_nmp" ;;
     "redis/docker-compose.yml") echo "stack_redis" ;;
@@ -71,15 +58,7 @@ print_compose_ps() {
 
 echo "Perfil: $PROFILE"
 echo "HOST_BIND_IP=${HOST_BIND_IP:-unset} APP_ENV=${APP_ENV:-unset} TARGET_HOST=${TARGET_HOST:-unset}"
-echo "USE_LOCAL_POSTGRES=$USE_LOCAL_POSTGRES USE_LOCAL_MONGO=$USE_LOCAL_MONGO"
 echo ""
-
-if [[ "$USE_LOCAL_POSTGRES" == "true" ]]; then
-  print_compose_ps "infraestructura/docker-compose.postgres.yml"
-fi
-if [[ "$USE_LOCAL_MONGO" == "true" ]]; then
-  print_compose_ps "mongo/docker-compose.mongo.yml"
-fi
 
 print_compose_ps "redis/docker-compose.yml"
 print_compose_ps "whisper/docker-compose.yml"

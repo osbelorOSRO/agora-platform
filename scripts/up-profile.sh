@@ -33,25 +33,12 @@ else
   export N8N_ENV_FILE="$N8N_PUBLIC_FILE"
 fi
 
-APP_ENV="${APP_ENV:-dev}"
-USE_LOCAL_POSTGRES="${USE_LOCAL_POSTGRES:-}"
-USE_LOCAL_MONGO="${USE_LOCAL_MONGO:-}"
-
-if [[ -z "$USE_LOCAL_POSTGRES" ]]; then
-  if [[ "$APP_ENV" == "dev" ]]; then USE_LOCAL_POSTGRES="true"; else USE_LOCAL_POSTGRES="false"; fi
-fi
-if [[ -z "$USE_LOCAL_MONGO" ]]; then
-  if [[ "$APP_ENV" == "dev" ]]; then USE_LOCAL_MONGO="true"; else USE_LOCAL_MONGO="false"; fi
-fi
-
 project_for_file() {
   case "$1" in
     "accesos/docker-compose.yml") echo "stack_accesos" ;;
     "agora/docker-compose.yml") echo "stack_agora" ;;
     "infraestructura/docker-compose.yml") echo "stack_infra_pgadmin" ;;
-    "infraestructura/docker-compose.postgres.yml") echo "stack_infra_postgres" ;;
     "mongo/docker-compose.yml") echo "stack_mongo_micro" ;;
-    "mongo/docker-compose.mongo.yml") echo "stack_mongo_db" ;;
     "n8n/docker-compose.yml") echo "stack_n8n" ;;
     "nmp/docker-compose.yml") echo "stack_nmp" ;;
     "redis/docker-compose.yml") echo "stack_redis" ;;
@@ -75,13 +62,6 @@ if ! docker network inspect npm_network >/dev/null 2>&1; then
   docker network create npm_network >/dev/null
 fi
 
-if [[ "$USE_LOCAL_POSTGRES" == "true" ]]; then
-  compose_up "infraestructura/docker-compose.postgres.yml"
-fi
-if [[ "$USE_LOCAL_MONGO" == "true" ]]; then
-  compose_up "mongo/docker-compose.mongo.yml"
-fi
-
 compose_up "redis/docker-compose.yml"
 compose_up "whisper/docker-compose.yml"
 compose_up "tesseract/docker-compose.yml"
@@ -96,5 +76,4 @@ compose_up "nmp/docker-compose.yml"
 echo ""
 echo "Perfil cargado: $PROFILE"
 echo "HOST_BIND_IP=${HOST_BIND_IP:-unset} APP_ENV=${APP_ENV:-unset} TARGET_HOST=${TARGET_HOST:-unset}"
-echo "USE_LOCAL_POSTGRES=$USE_LOCAL_POSTGRES USE_LOCAL_MONGO=$USE_LOCAL_MONGO"
 echo "Stack arriba."

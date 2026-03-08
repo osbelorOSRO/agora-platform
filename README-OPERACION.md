@@ -78,22 +78,12 @@ cd /home/oscar/dev/proyectos
 ./scripts/down-profile.sh dev.local1
 ```
 
-## Variables que controlan DB local
-Por defecto:
-- En `dev`: `USE_LOCAL_POSTGRES=true` y `USE_LOCAL_MONGO=true`
-- En `prod`: `USE_LOCAL_POSTGRES=false` y `USE_LOCAL_MONGO=false`
-
-Si quieres forzar temporalmente otro comportamiento:
-```bash
-cd /home/oscar/dev/proyectos
-USE_LOCAL_POSTGRES=true USE_LOCAL_MONGO=true ./scripts/up-profile.sh prod.vps1
-```
-
-## Compose separados temporales
-- Postgres local: `infraestructura/docker-compose.postgres.yml`
-- Mongo local: `mongo/docker-compose.mongo.yml`
+## Compose en repo
 - PgAdmin: `infraestructura/docker-compose.yml`
 - FastAPI microservicio: `mongo/docker-compose.yml`
+
+Nota:
+- Compose de BD (`postgres`/`mongo`) quedaron fuera del repo y se operan externamente por host.
 
 ## N8N por perfil
 `n8n/docker-compose.yml` toma env exclusivo por perfil desde:

@@ -83,7 +83,7 @@ Formalizar que el producto consume BD externas por URL, sin depender del compose
 - Medio: cambio de origen de datos para entornos activos.
 
 ### Rollback
-- Rehabilitar temporalmente compose local de BD (`docker-compose.postgres.yml`, `docker-compose.mongo.yml`) y restaurar URLs internas previas.
+- Rehabilitar temporalmente stack de BD externo del host (`/root/...`) y restaurar URLs internas previas.
 
 ---
 
