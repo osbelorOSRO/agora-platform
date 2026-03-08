@@ -46,3 +46,6 @@ mongo/mongo-init/dump/
 # Local service runtime data/config that should not be in repo
 nmp/data/
 whisper/models/
+
+# Mongo seed/restore kept out of repo
+mongo/mongo-init/
