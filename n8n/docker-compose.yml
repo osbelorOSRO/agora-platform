@@ -22,7 +22,7 @@ services:
       - DB_TYPE=sqlite
 
     volumes:
-      - ./n8n-data:/home/node/.n8n
+      - /root/n8n/data:/home/node/.n8n
     networks:
       - npm_network
     restart: unless-stopped
