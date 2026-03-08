@@ -9,10 +9,18 @@
 
 ## 2) Pre-deploy checklist
 1. Seleccionar perfil correcto (`APP_ENV`, `TARGET_HOST`).
-2. Validar env cargado sin vacíos críticos (DB, Vault, URLs públicas).
-3. Validar compose (`docker compose config`) de cada stack.
-4. Confirmar existencia de red `npm_network`.
-5. Ejecutar scripts de verificación:
+2. Inicializar `.env` de servicios no versionados (si faltan):
+   - `./scripts/init-service-envs.sh`
+3. Completar valores reales en:
+   - `env/<perfil>.env` (o `env/<perfil>.secrets.env`)
+   - `agora/api-backend-nest/.env`
+   - `agora/websocket/.env`
+   - `accesos/abackend/.env`
+   - `wa-backend/.env`
+4. Validar env cargado sin vacíos críticos (DB, Vault, URLs públicas).
+5. Validar compose (`docker compose config`) de cada stack.
+6. Confirmar existencia de red `npm_network`.
+7. Ejecutar scripts de verificación:
    - `./scripts/verify-env.sh <perfil>`
    - `./scripts/verify-compose.sh <perfil>`
 

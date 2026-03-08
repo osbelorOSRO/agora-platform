@@ -34,6 +34,12 @@ cp n8n/env/dev.local1.env n8n/env/dev.local1.secrets.env
 # luego editar *.secrets.env con valores reales
 ```
 
+Si faltan `.env` no versionados de servicios (api/websocket/abackend/wa-backend):
+```bash
+./scripts/init-service-envs.sh
+```
+Luego completar valores reales antes de validar o levantar.
+
 ## N8N con Vault (sin token root)
 Script:
 - `ops/scripts/n8n-vault-bootstrap.sh <perfil>`
