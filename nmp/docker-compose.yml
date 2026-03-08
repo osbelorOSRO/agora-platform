@@ -6,8 +6,8 @@ services:
     environment:
       DB_SQLITE_FILE: /data/database.sqlite
     volumes:
-      - /path/to/data:/data
-      - /path/to/letsencrypt:/etc/letsencrypt
+      - /root/nmp/data:/data
+      - /root/nmp/letsencrypt:/etc/letsencrypt
     ports:
       - "80:80"
       - "443:443"
