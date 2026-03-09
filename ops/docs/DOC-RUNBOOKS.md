@@ -27,10 +27,36 @@
 ## 3) Deploy base
 1. Levantar infra de soporte necesaria.
 2. Levantar servicios core.
-3. Verificar salud de contenedores y logs iniciales.
-4. Ejecutar smoke básico funcional.
-5. Smoke operativo:
+3. Normalizar permisos de volúmenes bind para servicios Node (obligatorio en host nuevo o ruta nueva).
+4. Verificar salud de contenedores y logs iniciales.
+5. Ejecutar smoke básico funcional.
+6. Smoke operativo:
    - `./scripts/smoke-core.sh <perfil>`
+
+### 3.1) Permisos persistentes (`uploads`/`config`)
+Objetivo: evitar errores `EACCES` al subir archivos (`api_backend_nest`) al migrar entre hosts/rutas físicas/lógicas.
+
+Ejecutar en el host, desde la raíz del repo:
+
+```bash
+cd /home/<usuario>/agora-platfrom/agora
+sudo mkdir -p uploads config
+sudo chown -R 1000:1000 uploads config
+sudo find uploads config -type d -exec chmod 775 {} \;
+sudo find uploads config -type f -exec chmod 664 {} \;
+```
+
+Validar dentro del contenedor:
+
+```bash
+docker exec -it api_backend_nest sh -lc 'id && ls -ld /app/uploads /app/config && touch /app/uploads/.perm_check && ls -l /app/uploads/.perm_check'
+```
+
+Si falla, recrear solo el servicio:
+
+```bash
+docker compose --env-file env/<perfil>.secrets.env -p stack_agora -f agora/docker-compose.yml up -d --force-recreate api_backend_nest
+```
 
 ## 4) Rollback
 1. Detener servicios impactados.
