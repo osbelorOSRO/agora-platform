@@ -1,16 +1,21 @@
 import { Request, Response, NextFunction } from "express";
 
-const ALLOWED_SERVICE_IPS = (process.env.SERVICE_ALLOWED_IPS || "100.121.165.88,100.67.8.81,127.0.0.1")
+const ALLOWED_SERVICE_IPS = (process.env.SERVICE_ALLOWED_IPS || "127.0.0.1,::1")
   .split(",")
   .map((ip) => ip.trim())
   .filter(Boolean);
+
+const normalizeIp = (ip?: string): string => {
+  if (!ip) return "";
+  return ip.startsWith("::ffff:") ? ip.replace("::ffff:", "") : ip;
+};
 
 export function validateServiceIp(
   req: Request,
   res: Response,
   next: NextFunction
 ): void {
-  const clientIp = req.ip || req.socket.remoteAddress;
+  const clientIp = normalizeIp(req.ip || req.socket.remoteAddress);
   
   if (!clientIp || !ALLOWED_SERVICE_IPS.includes(clientIp)) {
     res.status(403).json({ 

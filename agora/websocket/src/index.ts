@@ -10,7 +10,7 @@ import { apiKeyAuthMiddleware } from './apiKeyAuthMiddleware.js';
 dotenv.config();
 const PORT = process.env.PORT || 5050;
 
-const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || 'http://agorast.zaldio.qzz.io,http://apist.zaldio.qzz.io')
+const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || 'http://localhost:5173,http://127.0.0.1:5173')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);

@@ -199,11 +199,7 @@ export class HandleIncomingMessageUseCase {
     } catch {}
 
     if (estado.usar_piloto) {
-      const webhook =
-        process.env.N8N_WEBHOOK_URL ||
-        'http://n8n:5678/webhook/flujo-ventas';
-
-      await axios.post(webhook, {
+      await axios.post(env.n8nWebhookUrl, {
         cliente_id,
         contenido: parsed.contenido,
         tipo: parsed.tipo,

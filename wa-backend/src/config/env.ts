@@ -42,6 +42,7 @@ export const env = {
   apiBackendUrl: required('API_BACKEND_URL'),
   wsPanelUrl: required('WS_URL'),
   mediaBaseUrl: required('MEDIA_BASE_URL'),
+  n8nWebhookUrl: required('N8N_WEBHOOK_URL'),
 
   // Vault
   vaultAddr: required('VAULT_ADDR'), // http://vault:8200

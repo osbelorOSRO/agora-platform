@@ -4,7 +4,12 @@ class SocketService {
   private socket: Socket;
 
   constructor() {
-    this.socket = io(process.env.WS_SERVER || 'http://panel_websocket:5050', {
+    const wsServer = process.env.WS_SERVER;
+    if (!wsServer) {
+      throw new Error('Missing required env WS_SERVER');
+    }
+
+    this.socket = io(wsServer, {
       transports: ['websocket'],
       reconnection: true,
     });

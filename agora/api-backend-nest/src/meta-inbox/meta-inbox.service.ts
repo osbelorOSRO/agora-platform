@@ -290,7 +290,7 @@ export class MetaInboxService implements OnModuleInit {
       isInstagram,
       mediaType,
     });
-    const publicBase = (process.env.MEDIA_BASE_URL || 'http://localhost:4001').replace(/\/+$/, '');
+    const publicBase = (process.env.MEDIA_BASE_URL || '').replace(/\/+$/, '');
     const mediaUrl = `${publicBase}/uploads/${preparedMedia.fileName}`;
 
     const response = await this.postToGraphWithFallback(

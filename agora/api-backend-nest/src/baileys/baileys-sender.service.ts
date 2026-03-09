@@ -12,7 +12,11 @@ export class BaileysSenderService {
   ) {}
 
   private getGatewayUrl(): string {
-    return process.env.BOT_BASE_URL || 'http://wa_backend:3000';
+    const url = process.env.BOT_BASE_URL;
+    if (!url) {
+      throw new Error('Missing required env BOT_BASE_URL');
+    }
+    return url;
   }
 
   async enviarMensajeWhatsApp(

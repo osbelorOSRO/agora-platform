@@ -5,7 +5,7 @@ import util from 'util';
 import { exec } from 'child_process';
 
 const execPromise = util.promisify(exec);
-const MEDIA_BASE_URL = (process.env.MEDIA_BASE_URL || 'http://localhost:4001').replace(/\/+$/, '');
+const MEDIA_BASE_URL = (process.env.MEDIA_BASE_URL || '').replace(/\/+$/, '');
 
 @Injectable()
 export class MediaService {

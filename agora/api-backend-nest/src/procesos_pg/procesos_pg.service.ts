@@ -34,7 +34,7 @@ function convertirDuracion(segundos: number) {
 
 @Injectable()
 export class ProcesosPgService {
-  private readonly mediaBaseUrl = (process.env.MEDIA_BASE_URL || 'http://localhost:4001').replace(/\/+$/, '');
+  private readonly mediaBaseUrl = (process.env.MEDIA_BASE_URL || '').replace(/\/+$/, '');
 
   constructor(
     private readonly prisma: PrismaService,

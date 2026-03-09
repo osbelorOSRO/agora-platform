@@ -1,26 +1,29 @@
-import { defineConfig } from 'vite'; 
-import react from '@vitejs/plugin-react'; 
-import path from 'path';
-export default defineConfig({
- plugins: [react()],
- resolve: {
- alias: {
- '@': path.resolve(__dirname, 'src'),
- }, 
-},
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import path from "path";
 
- server: {
- host: '0.0.0.0',
- port: 5173,
- strictPort: true,
- allowedHosts: ['agorast.zaldio.qzz.io'],
- proxy: {
- '/api': {
- target: 'http://apist.zaldio.qzz.io',
- changeOrigin: true,
- secure: true,
- },
- },
- },
- base: '/', 
+const devAllowedHost = process.env.VITE_DEV_ALLOWED_HOST || "localhost";
+const devApiTarget = process.env.VITE_DEV_API_TARGET || "http://localhost:4001";
+
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "src"),
+    },
+  },
+  server: {
+    host: "0.0.0.0",
+    port: 5173,
+    strictPort: true,
+    allowedHosts: [devAllowedHost],
+    proxy: {
+      "/api": {
+        target: devApiTarget,
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
+  base: "/",
 });

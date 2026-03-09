@@ -10,7 +10,7 @@ async function bootstrap() {
 
   const config = app.get(ConfigService);
   const port = config.get<number>('PORT') || 4001;
-  const corsAllowedOrigins = (config.get<string>('CORS_ALLOWED_ORIGINS') || 'http://agorast.zaldio.qzz.io')
+  const corsAllowedOrigins = (config.get<string>('CORS_ALLOWED_ORIGINS') || 'http://localhost:5173,http://127.0.0.1:5173')
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);

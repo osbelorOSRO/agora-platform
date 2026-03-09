@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_AUTH_API_URL || "https://accesos.llevatuplan.cl/api/auth";
+const BASE_URL = import.meta.env.VITE_AUTH_API_URL || "/api/auth";
 
 export async function login(username: string, password: string, token_2fa?: string) {
   const res = await fetch(`${BASE_URL}/login`, {

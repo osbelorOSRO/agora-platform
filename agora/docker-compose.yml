@@ -12,6 +12,7 @@ services:
         VITE_API_URL_ACCESOS: "${ABACKEND_PUBLIC_URL}"
         VITE_SCRAPER_BASE_URL: "${SCRAPER_BASE_URL}"
         VITE_API_URL_RUT: "${RUT_API_URL}"
+        VITE_WA_PUBLIC_URL: "${WA_PUBLIC_URL}"
     container_name: panel_frontend
     restart: always
     ports:

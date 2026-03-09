@@ -10,7 +10,7 @@ import { EstadoClienteService, EstadoCliente } from './estado-cliente.service';
 import { CacheService } from '../cache/cache.service';
 import { WebsocketNotifierService } from '../websocket-notifier/websocket-notifier.service';
 
-const MEDIA_BASE_URL = (process.env.MEDIA_BASE_URL || 'http://localhost:4001').replace(/\/+$/, '');
+const MEDIA_BASE_URL = (process.env.MEDIA_BASE_URL || '').replace(/\/+$/, '');
 const AVATARES = [
   `${MEDIA_BASE_URL}/uploads/avatares/foto_perfil_hombre_default_02.png`,
   `${MEDIA_BASE_URL}/uploads/avatares/foto_perfil_hombre_default_03.png`,
