@@ -15,6 +15,7 @@ export type GatewayPhase = 'PAIRING' | 'CONNECTED';
 export type RestartOptions = {
   refreshAuthState?: boolean;
   resetAuth?: boolean;
+  resetAppStateSync?: boolean;
 };
 
 export class WhatsAppGateway {
@@ -25,6 +26,7 @@ export class WhatsAppGateway {
 
   private onIncomingMessageCbs: IncomingMessageCallback[] = [];
   private onConnectionUpdateCbs: ConnectionUpdateCallback[] = [];
+  private onAppStateSyncIssueCbs: Array<() => void> = [];
   private authState?: AuthenticationState;
   private saveCreds?: () => Promise<void> | void;
   private authFolder = 'auth';
@@ -43,7 +45,11 @@ export class WhatsAppGateway {
     this.saveCreds = saveCreds;
     this.authFolder = authFolder;
 
-    const socket = await this.baileysService.create(authState, saveCreds);
+    const socket = await this.baileysService.create(
+      authState,
+      saveCreds,
+      () => this.notifyAppStateSyncIssue()
+    );
 
     this.connectionManager = new ConnectionManager(socket);
     this.messageHandler = new MessageHandler(socket);
@@ -58,6 +64,10 @@ export class WhatsAppGateway {
 
   public onConnectionUpdate(callback: ConnectionUpdateCallback): void {
     this.onConnectionUpdateCbs.push(callback);
+  }
+
+  public onAppStateSyncIssue(callback: () => void): void {
+    this.onAppStateSyncIssueCbs.push(callback);
   }
 
   public async sendMessage(to: string, content: any): Promise<void> {
@@ -80,6 +90,21 @@ export class WhatsAppGateway {
       const entries = await readdir(this.authFolder);
       await Promise.all(
         entries.map((entry) =>
+          rm(`${this.authFolder}/${entry}`, { recursive: true, force: true })
+        )
+      );
+    }
+    else if (options.resetAppStateSync) {
+      const { readdir, rm, mkdir } = await import('node:fs/promises');
+      await mkdir(this.authFolder, { recursive: true });
+      const entries = await readdir(this.authFolder);
+      const syncEntries = entries.filter((entry) =>
+        entry.startsWith('app-state-sync-key-') ||
+        entry.startsWith('app-state-sync-version-')
+      );
+
+      await Promise.all(
+        syncEntries.map((entry) =>
           rm(`${this.authFolder}/${entry}`, { recursive: true, force: true })
         )
       );
@@ -120,5 +145,9 @@ export class WhatsAppGateway {
     this.messageHandler.onMessage((msg) => {
       for (const cb of this.onIncomingMessageCbs) cb(msg);
     });
+  }
+
+  private notifyAppStateSyncIssue(): void {
+    for (const cb of this.onAppStateSyncIssueCbs) cb();
   }
 }
