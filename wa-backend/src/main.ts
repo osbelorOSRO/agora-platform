@@ -26,6 +26,9 @@ const RECONNECT_ALERT_WINDOW_MS = 15 * 60_000;
 const RECONNECT_ALERT_THRESHOLD = 8;
 const RECONNECT_COOLDOWN_MS = 2 * 60_000;
 const APP_STATE_SYNC_RESET_COOLDOWN_MS = 30 * 60_000;
+const APP_STATE_SYNC_GRACE_MS = 90_000;
+const APP_STATE_SYNC_WINDOW_MS = 45_000;
+const APP_STATE_SYNC_THRESHOLD = 3;
 const HOURLY_STATS_RETENTION = 72;
 
 function sanitizeSensitiveSignalLogs(): void {
@@ -146,7 +149,9 @@ async function bootstrap() {
   let reconnectCooldownUntil = 0;
   let appStateResets = 0;
   let lastAppStateResetAt = 0;
+  let lastConnectionOpenAt = 0;
   const reconnectEvents: number[] = [];
+  const appStateMismatchEvents: number[] = [];
   const hourlyStats = new Map<string, HourBucketStats>();
 
   function ensureHourBucket(ts = Date.now()): HourBucketStats {
@@ -184,6 +189,15 @@ async function bootstrap() {
     bucket.reconnectCount += 1;
     bucket.reconnectMsTotal += durationMs;
     bucket.reconnectMsMax = Math.max(bucket.reconnectMsMax, durationMs);
+  }
+
+  function pruneAppStateMismatchEvents(now = Date.now()): void {
+    while (
+      appStateMismatchEvents.length > 0 &&
+      now - appStateMismatchEvents[0] > APP_STATE_SYNC_WINDOW_MS
+    ) {
+      appStateMismatchEvents.shift();
+    }
   }
 
   function clearReconnectTimer(): void {
@@ -232,6 +246,21 @@ async function bootstrap() {
   gateway.onAppStateSyncIssue(() => {
     const now = Date.now();
 
+    if (lastConnectionOpenAt > 0 && now - lastConnectionOpenAt < APP_STATE_SYNC_GRACE_MS) {
+      console.warn('⚠️ App-state mismatch detectado durante ventana de gracia post-login; se observa sin reset');
+      return;
+    }
+
+    appStateMismatchEvents.push(now);
+    pruneAppStateMismatchEvents(now);
+
+    if (appStateMismatchEvents.length < APP_STATE_SYNC_THRESHOLD) {
+      console.warn(
+        `⚠️ App-state mismatch detectado (${appStateMismatchEvents.length}/${APP_STATE_SYNC_THRESHOLD}); esperando confirmación antes de reset`
+      );
+      return;
+    }
+
     if (now - lastAppStateResetAt < APP_STATE_SYNC_RESET_COOLDOWN_MS) {
       console.warn('⚠️ App-state mismatch detectado, pero en cooldown de reset');
       return;
@@ -239,6 +268,7 @@ async function bootstrap() {
 
     lastAppStateResetAt = now;
     appStateResets += 1;
+    appStateMismatchEvents.length = 0;
 
     console.warn('⚠️ App-state mismatch detectado. Se agenda reset controlado de sync keys');
     scheduleRestart(2500, 'APP_STATE_SYNC_MISMATCH', {
@@ -287,6 +317,8 @@ async function bootstrap() {
       pairingAttempts = 0;
       connectedRetries = 0;
       clearReconnectTimer();
+      lastConnectionOpenAt = Date.now();
+      appStateMismatchEvents.length = 0;
 
       if (reconnectStartedAt !== null) {
         registerReconnectDuration(Date.now() - reconnectStartedAt);
