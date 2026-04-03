@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { KanbanProvider } from "./context/KanbanContext";
+import { KanbanUIProvider } from "./context/KanbanUIContext";
 import Login from "./pages/Login";
 import KanbanBoard from "./pages/KanbanBoard";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -13,8 +15,10 @@ import MetaInboxPage from "./pages/MetaInboxPage";
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
+    <KanbanProvider>
+      <KanbanUIProvider>
+        <BrowserRouter>
+          <Routes>
         {/* Redirección raíz */}
         <Route path="/" element={<Navigate to="/login" replace />} />
 
@@ -57,7 +61,9 @@ function App() {
           <Route patRoute path="roles" element={<Roles />} />
         </Route>
       </Routes>
-    </BrowserRouter>
+        </BrowserRouter>
+      </KanbanUIProvider>
+    </KanbanProvider>
   );
 }
 

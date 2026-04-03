@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, memo } from "react";
 import {
   MoreVertical,
   Pencil,
@@ -318,4 +318,4 @@ const ClientCard: React.FC<ClientCardProps & { procesoId?: string; onActualizarE
   );
 };
 
-export default ClientCard;
+export default memo(ClientCard);

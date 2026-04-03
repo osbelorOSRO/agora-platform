@@ -16,7 +16,9 @@ import {
   onMetaInboxMessageNew,
   offMetaInboxMessageNew,
 } from "../services/socket";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
+import { useKanban } from "../context/KanbanContext";
+import { useKanbanUI } from "../context/KanbanUIContext";
 import ClientCard from "../components/ClientCard";
 import { Cliente } from "../types/Cliente";
 import FloatingChat from "../components/FloatingChat";
@@ -45,32 +47,59 @@ import { abrirOContinuarChat, obtenerProcesoActivoPorCliente } from "@/services/
 import ChatAnimation from "../components/ChatAnimation";
 
 const KanbanBoard = () => {
+  // Contextos
+  const {
+    clientesActivos,
+    setClientesActivos,
+    clientesInactivos,
+    setClientesInactivos,
+    clientesCerrados,
+    setClientesCerrados,
+    procesosPorCliente,
+    setProcesosPorCliente,
+    resultadoBusqueda,
+    setResultadoBusqueda,
+  } = useKanban();
+
+  const {
+    filtroEstado,
+    setFiltroEstado,
+    clienteActualId,
+    setClienteActualId,
+    procesoActualId,
+    setProcesoActualId,
+    tipoIdActual,
+    setTipoIdActual,
+    chatsAbiertos,
+    setChatsAbiertos,
+    panelActivo,
+    setPanelActivo,
+    mostrarFormulario,
+    setMostrarFormulario,
+    mostrarEliminar,
+    setMostrarEliminar,
+    selectorLiteAbierto,
+    setSelectorLiteAbierto,
+    busquedaId,
+    setBusquedaId,
+    metaInboxUnread,
+    setMetaInboxUnread,
+    metaInboxToasts,
+    setMetaInboxToasts,
+    botActivo,
+    setBotActivo,
+    usuario,
+    setUsuario,
+    cargando,
+    setCargando,
+  } = useKanbanUI();
+
   type MetaInboxToast = {
     id: string;
     actorExternalId: string;
     contentText: string;
   };
 
-  const [usuario, setUsuario] = useState("");
-  const [clientesActivos, setClientesActivos] = useState<Cliente[]>([]);
-  const [clientesInactivos, setClientesInactivos] = useState<Cliente[]>([]);
-  const [clientesCerrados, setClientesCerrados] = useState<Cliente[]>([]);
-  const [cargando, setCargando] = useState(true);
-  const [botActivo, setBotActivo] = useState<boolean | null>(null);
-  const [chatsAbiertos, setChatsAbiertos] = useState<string[]>([]);
-  const [clienteActualId, setClienteActualId] = useState<string | null>(null);
-  const [procesoActualId, setProcesoActualId] = useState<string | null>(null);
-  const [tipoIdActual, setTipoIdActual] = useState<string | null>(null);
-  const [procesosPorCliente, setProcesosPorCliente] = useState<Record<string, string>>({});
-  const [mostrarFormulario, setMostrarFormulario] = useState(false);
-  const [mostrarEliminar, setMostrarEliminar] = useState(false);
-  const [panelActivo, setPanelActivo] = useState<"cliente" | "scraping" | "cierre" | null>(null);
-  const [filtroEstado, setFiltroEstado] = useState<"activos" | "inactivos" | "cerrados">("activos");
-  const [busquedaId, setBusquedaId] = useState("");
-  const [resultadoBusqueda, setResultadoBusqueda] = useState<Cliente | null>(null);
-  const [selectorLiteAbierto, setSelectorLiteAbierto] = useState(false);
-  const [metaInboxUnread, setMetaInboxUnread] = useState(0);
-  const [metaInboxToasts, setMetaInboxToasts] = useState<MetaInboxToast[]>([]);
   const esMovil = useEsMovil();
   const { agregar, eliminar } = useNotificaciones();
 
@@ -87,10 +116,11 @@ const KanbanBoard = () => {
     setTipoIdActual(cliente?.tipo_id || null);
   }, [clienteActualId, clientesActivos, clientesInactivos, clientesCerrados]);
 
-  const abrirChat = async (clienteId: string) => {
-    if (!chatsAbiertos.includes(clienteId)) {
-      setChatsAbiertos(prev => [...prev, clienteId]);
-    }
+  const abrirChat = useCallback(async (clienteId: string) => {
+    setChatsAbiertos(prev => {
+      if (prev.includes(clienteId)) return prev;
+      return [...prev, clienteId];
+    });
     setClienteActualId(clienteId);
     try {
       const proceso = await obtenerProcesoActivoPorCliente(clienteId);
@@ -107,9 +137,9 @@ const KanbanBoard = () => {
       console.error("❌ Error al obtener procesos:", err);
     }
     eliminar(clienteId);
-  };
+  }, []);
 
-  const handlePickClienteLite = async (c: ClienteLite) => {
+  const handlePickClienteLite = useCallback(async (c: ClienteLite) => {
     const tokenData = getTokenData();
     if (!tokenData) {
       alert("Sesión expirada. Inicia sesión nuevamente.");
@@ -118,9 +148,10 @@ const KanbanBoard = () => {
     try {
       const r = await abrirOContinuarChat(c.cliente_id, tokenData.id, c);
       setSelectorLiteAbierto(false);
-      if (!chatsAbiertos.includes(c.cliente_id)) {
-        setChatsAbiertos(prev => [...prev, c.cliente_id]);
-      }
+      setChatsAbiertos(prev => {
+        if (prev.includes(c.cliente_id)) return prev;
+        return [...prev, c.cliente_id];
+      });
       setClienteActualId(c.cliente_id);
       setProcesoActualId(r.proceso_id);
       setProcesosPorCliente(prev => ({ ...prev, [c.cliente_id]: r.proceso_id }));
@@ -134,45 +165,54 @@ const KanbanBoard = () => {
       console.error("❌ No se pudo abrir/continuar el chat:", e);
       alert("No se pudo iniciar la conversación. Intenta nuevamente.");
     }
-  };
+  }, [clientesActivos, clientesInactivos, clientesCerrados]);
 
-  const cerrarChat = (clienteId: string) => {
+  const cerrarChat = useCallback((clienteId: string) => {
     setChatsAbiertos(prev => prev.filter(id => id !== clienteId));
     if (clienteActualId === clienteId) {
-      const index = chatsAbiertos.indexOf(clienteId);
-      if (chatsAbiertos.length > 1) {
-        const siguiente =
-          index === chatsAbiertos.length - 1 ? chatsAbiertos[index - 1] : chatsAbiertos[index + 1];
+      setChatsAbiertos(current => {
+        const index = current.indexOf(clienteId);
+        if (current.length > 1) {
+          const siguiente =
+            index === current.length - 1 ? current[index - 1] : current[index + 1];
+          setClienteActualId(siguiente);
+          setProcesoActualId(procesosPorCliente[siguiente] ?? null);
+        } else {
+          setClienteActualId(null);
+          setProcesoActualId(null);
+        }
+        return current.filter(id => id !== clienteId);
+      });
+    }
+  }, [clienteActualId, procesosPorCliente]);
+
+  const handleNextCliente = useCallback(() => {
+    if (!clienteActualId) return;
+    setChatsAbiertos(current => {
+      const index = current.findIndex(id => id === clienteActualId);
+      if (index !== -1 && index < current.length - 1) {
+        const siguiente = current[index + 1];
         setClienteActualId(siguiente);
         setProcesoActualId(procesosPorCliente[siguiente] ?? null);
-      } else {
-        setClienteActualId(null);
-        setProcesoActualId(null);
       }
-    }
-  };
+      return current;
+    });
+  }, [clienteActualId, procesosPorCliente]);
 
-  const handleNextCliente = () => {
+  const handlePrevCliente = useCallback(() => {
     if (!clienteActualId) return;
-    const index = chatsAbiertos.findIndex(id => id === clienteActualId);
-    if (index !== -1 && index < chatsAbiertos.length - 1) {
-      const siguiente = chatsAbiertos[index + 1];
-      setClienteActualId(siguiente);
-      setProcesoActualId(procesosPorCliente[siguiente] ?? null);
-    }
-  };
+    setChatsAbiertos(current => {
+      const index = current.findIndex(id => id === clienteActualId);
+      if (index > 0) {
+        const anterior = current[index - 1];
+        setClienteActualId(anterior);
+        setProcesoActualId(procesosPorCliente[anterior] ?? null);
+      }
+      return current;
+    });
+  }, [clienteActualId, procesosPorCliente]);
 
-  const handlePrevCliente = () => {
-    if (!clienteActualId) return;
-    const index = chatsAbiertos.findIndex(id => id === clienteActualId);
-    if (index > 0) {
-      const anterior = chatsAbiertos[index - 1];
-      setClienteActualId(anterior);
-      setProcesoActualId(procesosPorCliente[anterior] ?? null);
-    }
-  };
-
-  const verificarEstadoBot = () => {
+  const verificarEstadoBot = useCallback(() => {
     fetch(`${import.meta.env.VITE_ESTADO_BOT_URL}/estado-bot`)
       .then(res => res.json())
       .then(data => setBotActivo(data.conectado ?? false))
@@ -180,9 +220,9 @@ const KanbanBoard = () => {
         console.error("❌ Error consultando estado del bot (socket):", err);
         setBotActivo(false);
       });
-  };
+  }, []);
 
-  const buscarCliente = async () => {
+  const buscarCliente = useCallback(async () => {
     if (!busquedaId.trim()) {
       setResultadoBusqueda(null);
       return;
@@ -193,7 +233,7 @@ const KanbanBoard = () => {
     } catch (err) {
       console.error("❌ Error buscando cliente:", err);
     }
-  };
+  }, [busquedaId]);
 
   useEffect(() => {
     const tokenData = getTokenData();
@@ -247,7 +287,7 @@ const KanbanBoard = () => {
         nombre: data.nombre,
         foto_perfil: data.fotoPerfil,
         estado_actual: 1,
-        etiqueta_actual: "Nuevo", // 🔥 Viene con etiqueta
+        etiqueta_actual: "Nuevo",
         intervenida: false,
       };
 
@@ -286,7 +326,7 @@ const KanbanBoard = () => {
             ? {
                 ...c,
                 estado_actual: data.estadoActual,
-                etiqueta_actual: data.etiquetaActual, // 🔥 Actualizar etiqueta
+                etiqueta_actual: data.etiquetaActual,
               }
             : c
         );
@@ -387,16 +427,17 @@ const KanbanBoard = () => {
       offProcesoCerrado();
       offMetaInboxMessageNew();
     };
-  }, []);
+  }, [filtroEstado]);
 
-  const listaFiltrada =
-    resultadoBusqueda
+  const listaFiltrada = useMemo(() => {
+    return resultadoBusqueda
       ? [resultadoBusqueda]
       : filtroEstado === "activos"
       ? clientesActivos
       : filtroEstado === "inactivos"
       ? clientesInactivos
       : clientesCerrados;
+  }, [resultadoBusqueda, filtroEstado, clientesActivos, clientesInactivos, clientesCerrados]);
 
   useEffect(() => {
     (async () => {
@@ -413,7 +454,7 @@ const KanbanBoard = () => {
         } catch {}
       }
     })();
-  }, [listaFiltrada]);
+  }, [listaFiltrada, procesosPorCliente]);
 
   return (
     <div className="flex h-screen overflow-hidden">
