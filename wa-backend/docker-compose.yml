@@ -16,6 +16,7 @@ services:
       - MEDIA_BASE_URL=${MEDIA_BASE_URL}
       - WS_URL=${WS_INTERNAL_URL}
       - N8N_WEBHOOK_URL=${N8N_INTERNAL_URL}/webhook/flujo-ventas
+      - VAULT_ADDR=${VAULT_ADDR}
     volumes:
       - ./auth:/app/auth
       - ./config-bot.json:/app/config-bot.json

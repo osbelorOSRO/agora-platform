@@ -8,6 +8,7 @@ import productividadRoutes from "./routes/productividad.js";
 import rolesRoutes from "./routes/roles.js";
 import permisosRoutes from "./routes/permisos.js";
 import serviceAuthRoutes from "./routes/serviceAuth.js";
+import reportesRoutes from "./routes/reportes.js";
 import prisma from "./utils/prisma.js";
 
 dotenv.config();
@@ -47,6 +48,7 @@ app.use("/api/trazabilidad", trazabilidadRoutes);
 app.use("/api/productividad", productividadRoutes);
 app.use("/api/roles", rolesRoutes);
 app.use("/api/permisos", permisosRoutes);
+app.use("/api/reportes", reportesRoutes);
 
 // Puerto
 const PORT = process.env.PORT || 4002;
