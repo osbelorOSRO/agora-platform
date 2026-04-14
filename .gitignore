@@ -49,3 +49,6 @@ whisper/models/
 
 # Mongo seed/restore kept out of repo
 mongo/mongo-init/
+
+# Local
+n8n_v2_blueprint/
