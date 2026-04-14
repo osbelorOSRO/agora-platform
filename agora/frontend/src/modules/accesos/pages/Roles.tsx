@@ -107,7 +107,7 @@ export default function Roles() {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold text-white font-[Montserrat] mb-4">Roles</h2>
+        <h2 className="mb-4 text-2xl font-bold text-white">Roles</h2>
         <button onClick={agregar}>
           <CirclePlus className="w-5 h-5 text-white" />
         </button>

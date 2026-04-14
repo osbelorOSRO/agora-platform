@@ -26,7 +26,7 @@ function Login() {
       const response = await login(loginData.username, loginData.password, loginData.token_2fa);
       guardarToken(response.token);
       setMensaje("Login exitoso 🔐");
-      navigate("/kanban");
+      navigate("/accesos/welcome");
     } catch (err: any) {
       setError(err.response?.data?.error || "Error al iniciar sesión");
     }

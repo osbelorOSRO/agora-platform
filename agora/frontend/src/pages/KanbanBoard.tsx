@@ -16,7 +16,8 @@ import {
   onMetaInboxMessageNew,
   offMetaInboxMessageNew,
 } from "../services/socket";
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { useKanban } from "../context/KanbanContext";
 import { useKanbanUI } from "../context/KanbanUIContext";
 import ClientCard from "../components/ClientCard";
@@ -24,14 +25,12 @@ import { Cliente } from "../types/Cliente";
 import FloatingChat from "../components/FloatingChat";
 import FormNuevoCliente from "../components/FormNuevoCliente";
 import FormEliminarCliente from "../components/FormEliminarCliente";
-import SidebarAcciones from "../components/SidebarAcciones";
 import { estilos } from "../theme/estilos";
 import { getTokenData } from "../utils/getTokenData";
 import {
   listarClientesActivos,
   listarClientesInactivos,
   listarClientesCerrados,
-  obtenerClientePorId,
 } from "../services/clientes.service";
 import useEsMovil from "../hooks/useEsMovil";
 import { useNotificaciones } from "../context/NotificacionContext";
@@ -40,13 +39,15 @@ import TarjetaCliente from "@/components/tarjetas/TarjetaCliente";
 import TarjetaScraping from "@/components/tarjetas/TarjetaScraping";
 import TarjetaCierreProceso from "@/components/tarjetas/TarjetaCierreProceso";
 import { Search, Users, UserX, UserCheck, X } from "lucide-react";
-import NuevoChatButton from "@/components/NuevoChatButton";
 import MenuClientesLite from "@/components/MenuClientesLite";
 import type { ClienteLite } from "@/types/cliente";
 import { abrirOContinuarChat, obtenerProcesoActivoPorCliente } from "@/services/procesos.service";
+import { getClientesLite } from "@/services/clientesLite.service";
 import ChatAnimation from "../components/ChatAnimation";
 
 const KanbanBoard = () => {
+  const location = useLocation();
+  const processedClienteIdRef = useRef<string | null>(null);
   // Contextos
   const {
     clientesActivos,
@@ -57,8 +58,6 @@ const KanbanBoard = () => {
     setClientesCerrados,
     procesosPorCliente,
     setProcesosPorCliente,
-    resultadoBusqueda,
-    setResultadoBusqueda,
   } = useKanban();
 
   const {
@@ -82,12 +81,9 @@ const KanbanBoard = () => {
     setSelectorLiteAbierto,
     busquedaId,
     setBusquedaId,
-    metaInboxUnread,
     setMetaInboxUnread,
     metaInboxToasts,
     setMetaInboxToasts,
-    botActivo,
-    setBotActivo,
     usuario,
     setUsuario,
     cargando,
@@ -102,6 +98,8 @@ const KanbanBoard = () => {
 
   const esMovil = useEsMovil();
   const { agregar, eliminar } = useNotificaciones();
+  const [resultadosBusquedaLite, setResultadosBusquedaLite] = useState<ClienteLite[]>([]);
+  const [buscandoLite, setBuscandoLite] = useState(false);
 
   useEffect(() => {
     if (!clienteActualId) {
@@ -167,6 +165,34 @@ const KanbanBoard = () => {
     }
   }, [clientesActivos, clientesInactivos, clientesCerrados]);
 
+  const openChatByClienteId = useCallback(
+    async (clienteId: string) => {
+      const tokenData = getTokenData();
+      if (!tokenData) return;
+
+      try {
+        const r = await abrirOContinuarChat(clienteId, tokenData.id, null);
+        setSelectorLiteAbierto(false);
+        setChatsAbiertos((prev) => {
+          if (prev.includes(clienteId)) return prev;
+          return [...prev, clienteId];
+        });
+        setClienteActualId(clienteId);
+        setProcesoActualId(r.proceso_id);
+        setProcesosPorCliente((prev) => ({ ...prev, [clienteId]: r.proceso_id }));
+
+        const cliente =
+          clientesActivos.find((x) => x.cliente_id === clienteId) ||
+          clientesInactivos.find((x) => x.cliente_id === clienteId) ||
+          clientesCerrados.find((x) => x.cliente_id === clienteId);
+        setTipoIdActual(cliente?.tipo_id || null);
+      } catch (e) {
+        console.error("❌ No se pudo abrir/continuar el chat:", e);
+      }
+    },
+    [clientesActivos, clientesInactivos, clientesCerrados]
+  );
+
   const cerrarChat = useCallback((clienteId: string) => {
     setChatsAbiertos(prev => prev.filter(id => id !== clienteId));
     if (clienteActualId === clienteId) {
@@ -212,28 +238,65 @@ const KanbanBoard = () => {
     });
   }, [clienteActualId, procesosPorCliente]);
 
-  const verificarEstadoBot = useCallback(() => {
-    fetch(`${import.meta.env.VITE_ESTADO_BOT_URL}/estado-bot`)
-      .then(res => res.json())
-      .then(data => setBotActivo(data.conectado ?? false))
-      .catch(err => {
-        console.error("❌ Error consultando estado del bot (socket):", err);
-        setBotActivo(false);
-      });
-  }, []);
+  useEffect(() => {
+    const term = busquedaId.trim();
 
-  const buscarCliente = useCallback(async () => {
-    if (!busquedaId.trim()) {
-      setResultadoBusqueda(null);
+    if (!term) {
+      setResultadosBusquedaLite([]);
+      setBuscandoLite(false);
       return;
     }
-    try {
-      const cliente = await obtenerClientePorId(busquedaId.trim());
-      setResultadoBusqueda(cliente || null);
-    } catch (err) {
-      console.error("❌ Error buscando cliente:", err);
-    }
+
+    let cancelled = false;
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        setBuscandoLite(true);
+        const response = await getClientesLite({ search: term, page: 1, limit: 6 });
+        if (!cancelled) {
+          setResultadosBusquedaLite(response.items ?? []);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.error("❌ Error buscando clientes lite:", err);
+          setResultadosBusquedaLite([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setBuscandoLite(false);
+        }
+      }
+    }, 220);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
   }, [busquedaId]);
+
+  const handlePickBusqueda = useCallback(async (cliente: ClienteLite) => {
+    await handlePickClienteLite(cliente);
+    setBusquedaId("");
+    setResultadosBusquedaLite([]);
+  }, [handlePickClienteLite, setBusquedaId]);
+
+  const handleBuscarEnter = useCallback(async () => {
+    if (resultadosBusquedaLite.length === 1) {
+      await handlePickBusqueda(resultadosBusquedaLite[0]);
+    }
+  }, [handlePickBusqueda, resultadosBusquedaLite]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const clienteIdParam = params.get("cliente");
+    if (!clienteIdParam) return;
+
+    const clienteId = clienteIdParam.trim();
+    if (!clienteId) return;
+    if (processedClienteIdRef.current === clienteId) return;
+
+    processedClienteIdRef.current = clienteId;
+    openChatByClienteId(clienteId);
+  }, [location.search, openChatByClienteId]);
 
   useEffect(() => {
     const tokenData = getTokenData();
@@ -257,9 +320,6 @@ const KanbanBoard = () => {
         setCargando(false);
       });
 
-    verificarEstadoBot();
-    const interval = setInterval(verificarEstadoBot, 30000);
-
     // Conectar WebSocket
     connectSocket();
     const socket = getSocket();
@@ -269,13 +329,6 @@ const KanbanBoard = () => {
         rol: tokenData.rol,
       });
     }
-
-    // Listener de mensajes globito
-    socket?.on("nuevoMensajeGlobito", data => {
-      agregar(data);
-      const audio = new Audio("/sound/notificacion.mp3");
-      audio.play().catch(() => {});
-    });
 
     // 🔥 LISTENER 1: Cliente Creado
     onClienteCreado((data) => {
@@ -415,7 +468,6 @@ const KanbanBoard = () => {
     });
 
     return () => {
-      clearInterval(interval);
       if (socket) {
         socket.off("nuevoMensajeGlobito");
       }
@@ -430,14 +482,12 @@ const KanbanBoard = () => {
   }, [filtroEstado]);
 
   const listaFiltrada = useMemo(() => {
-    return resultadoBusqueda
-      ? [resultadoBusqueda]
-      : filtroEstado === "activos"
+    return filtroEstado === "activos"
       ? clientesActivos
       : filtroEstado === "inactivos"
       ? clientesInactivos
       : clientesCerrados;
-  }, [resultadoBusqueda, filtroEstado, clientesActivos, clientesInactivos, clientesCerrados]);
+  }, [filtroEstado, clientesActivos, clientesInactivos, clientesCerrados]);
 
   useEffect(() => {
     (async () => {
@@ -457,29 +507,9 @@ const KanbanBoard = () => {
   }, [listaFiltrada, procesosPorCliente]);
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <SidebarAcciones
-        usuario={usuario}
-        botActivo={botActivo}
-        metaInboxUnread={metaInboxUnread}
-        onOpenMetaInbox={() => {
-          setMetaInboxUnread(0);
-          setMetaInboxToasts([]);
-        }}
-        onNuevo={() => setMostrarFormulario(true)}
-        onEliminar={() => setMostrarEliminar(true)}
-        onCerrarSesion={() => {
-          localStorage.removeItem("token");
-          window.location.href = "/login";
-        }}
-      />
-
-      <div className="flex-1 ml-20">
+    <div className="flex h-[calc(100vh-88px)] min-h-0 overflow-hidden">
+      <div className="flex min-h-0 flex-1">
         <div className={estilos.kanban.contenedor}>
-          <div className="flex justify-end px-4 pt-3">
-            <NuevoChatButton onClick={() => setSelectorLiteAbierto(true)} />
-          </div>
-
           <div className={estilos.chatExpandido.contenedor}>
             {cargando ? (
               <div className="flex items-center justify-center h-full text-sm text-grisOscuro">
@@ -496,33 +526,84 @@ const KanbanBoard = () => {
                     }
                   >
                     <div className="flex flex-col gap-2 mb-4">
-                      <div className="flex">
-                        <input
-                          type="text"
-                          placeholder="Buscar por cliente ID..."
-                          value={busquedaId}
-                          onChange={e => setBusquedaId(e.target.value)}
-                          className="flex-1 border p-2 rounded-l text-[11px] font-normal placeholder:text-[11px] placeholder:font-normal"
-                        />
-                        <button
-                          onClick={buscarCliente}
-                          className="bg-azulOscuro text-white px-3 rounded-r text-[11px] font-normal"
-                        >
-                          <Search size={16} />
-                        </button>
+                      <div className="relative">
+                        <div className="flex">
+                          <input
+                            type="text"
+                            placeholder="Buscar por nombre o cliente ID..."
+                            value={busquedaId}
+                            onChange={e => setBusquedaId(e.target.value)}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                event.preventDefault();
+                                handleBuscarEnter();
+                              }
+                              if (event.key === "Escape") {
+                                setBusquedaId("");
+                                setResultadosBusquedaLite([]);
+                              }
+                            }}
+                            className="flex-1 rounded-l border border-borde bg-fondoClient px-3 py-2 text-[11px] font-montserrat text-textoOscuro placeholder:text-[11px] placeholder:text-textoOscuro/60 focus:outline-none focus:ring-2 focus:ring-azulPrimario/60"
+                          />
+                          <button
+                            onClick={() => handleBuscarEnter()}
+                            className="rounded-r border border-l-0 border-borde bg-fondoCard px-3 text-[11px] font-montserrat text-textoOscuro transition-colors hover:bg-fondoCard/80"
+                            type="button"
+                          >
+                            <Search size={16} />
+                          </button>
+                        </div>
+
+                        {busquedaId.trim() ? (
+                          <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-2xl border border-borde bg-fondoCard/95 backdrop-blur-md shadow-2xl">
+                            {buscandoLite ? (
+                              <div className="px-3 py-3 text-[11px] text-textoOscuro/70">
+                                Buscando contactos...
+                              </div>
+                            ) : resultadosBusquedaLite.length > 0 ? (
+                              <div className="max-h-72 overflow-y-auto">
+                                {resultadosBusquedaLite.map((cliente) => (
+                                  <button
+                                    key={cliente.cliente_id}
+                                    type="button"
+                                    onClick={() => handlePickBusqueda(cliente)}
+                                    className="flex w-full items-center gap-3 border-b border-borde/50 px-3 py-3 text-left transition hover:bg-fondoClient/60"
+                                  >
+                                    <img
+                                      src={cliente.foto_perfil || `${import.meta.env.VITE_API_URL}/uploads/avatares/foto_perfil_hombre_default_02.png`}
+                                      alt={cliente.nombre || cliente.cliente_id}
+                                      className="h-10 w-10 rounded-full object-cover"
+                                    />
+                                    <div className="min-w-0">
+                                      <p className="truncate text-sm font-semibold text-textoOscuro">
+                                        {cliente.nombre?.trim() || "Sin nombre"}
+                                      </p>
+                                      <p className="truncate text-[11px] text-textoOscuro/60">
+                                        {cliente.cliente_id}
+                                      </p>
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="px-3 py-3 text-[11px] text-textoOscuro/70">
+                                No encontramos coincidencias.
+                              </div>
+                            )}
+                          </div>
+                        ) : null}
                       </div>
                       <div className="flex gap-2">
                         <button
                           key="activos-tab"
                           onClick={() => {
                             setFiltroEstado("activos");
-                            setResultadoBusqueda(null);
                             setTipoIdActual(null);
                           }}
-                          className={`flex items-center gap-1 px-3 py-1 rounded text-[11px] ${
+                          className={`flex items-center gap-1 rounded px-3 py-1 text-[11px] font-montserrat ${
                             filtroEstado === "activos"
-                              ? "bg-azulOscuro text-white font-semibold"
-                              : "bg-grisClaro text-grisOscuro"
+                              ? "bg-fondoCard text-textoOscuro"
+                              : "bg-fondoClient text-textoOscuro/70"
                           }`}
                         >
                           <UserCheck size={15} /> Activos
@@ -531,13 +612,12 @@ const KanbanBoard = () => {
                           key="inactivos-tab"
                           onClick={() => {
                             setFiltroEstado("inactivos");
-                            setResultadoBusqueda(null);
                             setTipoIdActual(null);
                           }}
-                          className={`flex items-center gap-1 px-3 py-1 rounded text-[11px] ${
+                          className={`flex items-center gap-1 rounded px-3 py-1 text-[11px] font-montserrat ${
                             filtroEstado === "inactivos"
-                              ? "bg-azulOscuro text-white font-semibold"
-                              : "bg-grisClaro text-grisOscuro"
+                              ? "bg-fondoCard text-textoOscuro"
+                              : "bg-fondoClient text-textoOscuro/70"
                           }`}
                         >
                           <UserX size={15} /> Inactivos
@@ -546,13 +626,12 @@ const KanbanBoard = () => {
                           key="cerrados-tab"
                           onClick={() => {
                             setFiltroEstado("cerrados");
-                            setResultadoBusqueda(null);
                             setTipoIdActual(null);
                           }}
-                          className={`flex items-center gap-1 px-3 py-1 rounded text-[11px] ${
+                          className={`flex items-center gap-1 rounded px-3 py-1 text-[11px] font-montserrat ${
                             filtroEstado === "cerrados"
-                              ? "bg-azulOscuro text-white font-semibold"
-                              : "bg-grisClaro text-grisOscuro"
+                              ? "bg-fondoCard text-textoOscuro"
+                              : "bg-fondoClient text-textoOscuro/70"
                           }`}
                         >
                           <Users size={15} /> Cerrados
@@ -679,15 +758,15 @@ const KanbanBoard = () => {
             onPick={handlePickClienteLite}
           />
 
-          <div className="fixed bottom-4 right-4 z-[9999] flex flex-col gap-3 w-[300px] max-w-[90%]">
+          <div className="fixed bottom-4 right-4 z-[9999] flex w-[300px] max-w-[90%] flex-col gap-3">
             {metaInboxToasts.map((n) => (
               <div
                 key={n.id}
-                className="bg-white shadow-lg p-4 rounded-lg border border-gray-200"
+                className="rounded-lg border border-borde bg-fondoCard/95 p-4 text-textoOscuro shadow-lg backdrop-blur-md"
               >
                 <div className="flex justify-between items-start gap-2">
                   <div className="flex-1">
-                    <div className="flex items-center gap-1 text-sm text-gray-800">
+                    <div className="flex items-center gap-1 text-sm font-montserrat text-textoOscuro">
                       <img
                         src="/icono169.png"
                         alt="icono notificación"
@@ -695,11 +774,11 @@ const KanbanBoard = () => {
                       />
                       Nuevo mensaje en <strong className="ml-1">Meta Inbox</strong>
                     </div>
-                    <p className="text-xs mt-1 text-gray-600">Actor: {n.actorExternalId}</p>
-                    <p className="text-xs mt-1 text-gray-600">{n.contentText.slice(0, 60)}</p>
+                    <p className="mt-1 text-xs text-textoOscuro/70">Actor: {n.actorExternalId}</p>
+                    <p className="mt-1 text-xs text-textoOscuro/70">{n.contentText.slice(0, 60)}</p>
                   </div>
                   <button
-                    className="text-gray-400 hover:text-red-500 transition"
+                    className="text-textoOscuro/60 transition hover:text-red-400"
                     onClick={() =>
                       setMetaInboxToasts((prev) => prev.filter((item) => item.id !== n.id))
                     }

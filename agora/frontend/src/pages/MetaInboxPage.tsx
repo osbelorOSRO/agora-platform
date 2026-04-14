@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Facebook, ImagePlus, Instagram, Mic, MoreVertical, RefreshCcw, Save, Send, X } from "lucide-react";
+import { Facebook, ImagePlus, Instagram, Mic, MoreVertical, Save, Send, X } from "lucide-react";
 import {
   connectSocket,
   offMetaInboxMessageNew,
@@ -431,29 +431,6 @@ const MetaInboxPage: React.FC = () => {
 
   return (
     <div className={estilos.metaInbox.pagina}>
-      <header className={estilos.metaInbox.header}>
-        <div className={estilos.metaInbox.headerLeft}>
-          <h1 className={estilos.metaInbox.titulo}>Meta Inbox</h1>
-          <button
-            onClick={() => navigate("/kanban")}
-            className={estilos.floatingChat.botonEnviar}
-            aria-label="Volver"
-            title="Volver"
-          >
-            <ArrowLeft size={16} />
-          </button>
-          <button
-            onClick={loadThreads}
-            className={estilos.floatingChat.botonEnviar}
-            aria-label="Actualizar"
-            title="Actualizar"
-          >
-            <RefreshCcw size={16} />
-          </button>
-        </div>
-        <div />
-      </header>
-
       {error && <div className={estilos.metaInbox.errorBanner}>{error}</div>}
 
       <main

@@ -14,7 +14,7 @@ export const estilos = {
     titulo: "text-3xl font-bold mb-6 text-white",
   },
 kanban: {
-  contenedor: "font-montserrat flex flex-col h-screen bg-fondoPagina",
+  contenedor: "font-montserrat flex h-full min-h-0 w-full flex-col bg-transparent",
   seccion: "flex-1 flex w-full max-w-6xl",
   tituloSeccion:
     "font-montserrat text-lg font-semibold mb-4 flex items-center gap-2 text-textoOscuro",
@@ -25,16 +25,16 @@ kanban: {
     "grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 pb-20",
 },
 chatExpandido: {
-  contenedor: 'flex flex-1 h-full bg-fondoPagina text-azulOscuro min-h-0',
-  panelClientes: 'flex-1 w-full md:w-1/3 max-w-sm bg-fondoPagina p-4 overflow-y-auto border-r border-borde flex flex-col gap-4 min-h-0',
+  contenedor: 'flex h-full min-h-0 w-full flex-1 bg-transparent text-textoOscuro',
+  panelClientes: 'flex-1 w-full md:w-1/3 max-w-sm bg-fondoCard/40 backdrop-blur-sm p-4 overflow-y-auto border-r border-borde flex flex-col gap-4 min-h-0',
   tarjetasClientes: 'flex flex-col gap-3 pb-4',
   tituloSeccion: 'text-lg font-semibold text-azulOscuro mb-4',
-  ventanaChat: 'flex-1 flex flex-col bg-fondoPagina h-full overflow-hidden',
+  ventanaChat: 'flex min-h-0 flex-1 flex-col bg-transparent overflow-hidden',
   encabezadoChat:
-    'flex items-center justify-between px-4 py-2 bg-fondoCard text-textoOscuro rounded-t-lg shadow z-30',
-  areaMensajes: 'flex-1 overflow-y-auto p-4 space-y-3',
+    'z-20 flex shrink-0 items-center justify-between px-4 py-2 bg-fondoCard text-textoOscuro rounded-t-lg shadow',
+  areaMensajes: 'min-h-0 flex-1 overflow-y-auto p-4 space-y-3',
   entradaMensaje:
-    'p-2 border-t border-borde flex items-center gap-2 bg-fondoPagina shadow-sm',
+    'shrink-0 p-2 border-t border-borde flex items-center gap-2 bg-fondoCard/40 backdrop-blur-sm shadow-sm',
   botonEnviar:
     'bg-fondoCard text-azulPrimario border border-azulPrimario rounded p-2 active:bg-azulPrimario active:text-textoClaro transition-colors',
   adjuntoPreview: 'w-full max-w-xs rounded shadow',
@@ -42,7 +42,7 @@ chatExpandido: {
   sinMensajes: 'text-sm text-azulOscuro italic',
   iconoMini: 'w-4 h-4',
 inputMensaje:
-'flex-1 min-w-0 text-sm text-textoOscuro bg-fondoPagina rounded px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-azulOscuro font-montserrat',
+'flex-1 min-w-0 text-sm text-textoOscuro bg-fondoClient rounded px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-azulOscuro font-montserrat',
 },
   clientCard: {
     contenedor: 'relative bg-fondoCard rounded-lg shadow-md p-4 w-full max-w-sm font-montserrat text-azulOscuro',
@@ -157,19 +157,19 @@ menuClientesLite: {
     lateral: "bg-fondoCard text-textoOscuro", // fondo dinámico para el SidePanel entero
     contenedorPanel: "p-6",
     avatarContenedor: "flex justify-center mb-4",
-    avatarImagen: "w-32 h-32 rounded-full object-cover border-4 border-black/10 shadow-md",
+    avatarImagen: "w-32 h-32 rounded-full object-cover border-4 border-borde shadow-md",
     gridLabelInput: "grid grid-cols-[120px_minmax(0,1fr)] items-center gap-3",
 
 
     label: "block text-sm font-medium text-textoOscuro mb-1",
-    input:"w-full h-10 px-3 rounded-lg border border-black/10 bg-fondoOutput text-textoOutput placeholder:text-textoOutput focus-visible:ring-azulPrimario/40", 
-    botonCerrar: "px-3 py-2 rounded-lg bg-transparent hover:bg-black/5",
-    botonGuardar: "px-3 py-2 rounded-lg bg-fondoOutput text-textoOutput hover:brightness-95 inline-flex items-center gap-2",
+    input:"w-full h-10 px-3 rounded-lg border border-borde bg-fondoClient text-textoOscuro placeholder:text-textoOscuro/60 focus-visible:ring-azulPrimario/40", 
+    botonCerrar: "px-3 py-2 rounded-lg bg-transparent hover:bg-fondoClient/60",
+    botonGuardar: "px-3 py-2 rounded-lg bg-fondoCard text-textoOscuro hover:bg-fondoCard/80 inline-flex items-center gap-2",
     botonBuscarNombre:
-      "inline-flex h-9 w-9 items-center justify-center rounded-lg border hover:bg-black/5 disabled:opacity-50 disabled:cursor-not-allowed",
+      "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-borde hover:bg-fondoClient/60 disabled:opacity-50 disabled:cursor-not-allowed",
     textoError: "text-red-500 text-xs",
-    cardContrato:"px-3 py-2 rounded-lg text-left justify-between text-xs  bg-fondoOutput text-textoOutput hover.brightness-90 inline-flex items-center gap-2",
-    botonCrearContrato:"px-3 py-2 rounded-lg bg-fondoOutput text-textoOutput hover:brightness-95 inline-flex items-center gap-2",
+    cardContrato:"inline-flex items-center justify-between gap-2 rounded-lg bg-fondoClient px-3 py-2 text-left text-xs text-textoOscuro hover:bg-fondoClient/70",
+    botonCrearContrato:"inline-flex items-center gap-2 rounded-lg bg-fondoCard px-3 py-2 text-textoOscuro hover:bg-fondoCard/80",
   },
 
 tarjetaCierreProceso: {
@@ -177,17 +177,17 @@ tarjetaCierreProceso: {
   contenido: "p-6 space-y-4",
   label: "block text-sm font-medium text-textoOscuro mb-1",
   input:
-    "w-full h-10 px-3 rounded-lg border border-black/10 bg-fondoOutput text-textoOutput placeholder:text-textoOutput focus-visible:ring-azulPrimario/40",
+    "w-full h-10 px-3 rounded-lg border border-borde bg-fondoClient text-textoOscuro placeholder:text-textoOscuro/60 focus-visible:ring-azulPrimario/40",
   botonCancelar:
-    "px-3 py-2 rounded-lg bg-fondoOutput text-textoOutput hover:bg-black/5",
+    "px-3 py-2 rounded-lg bg-fondoClient text-textoOscuro hover:bg-fondoClient/70",
   botonGuardar:
-    "bg-fondoOutput text-textoOutput hover:brightness-95",
+    "bg-fondoCard text-textoOscuro hover:bg-fondoCard/80",
   abandonoContenedor:
-    "flex items-center justify-between rounded-lg bg-white/40 p-3 border border-black/5",
+    "flex items-center justify-between rounded-lg bg-fondoClient/60 p-3 border border-borde",
   abandonoTexto:
-    "text-xs opacity-70",
+    "text-xs text-textoOscuro/70",
   alertaError:
-    "text-sm text-red-700 bg-red-100 border border-red-200 p-2 rounded",
+    "text-sm text-red-200 bg-red-500/10 border border-red-500/20 p-2 rounded",
 },
 
 tarjetaScraping: {
@@ -195,31 +195,31 @@ tarjetaScraping: {
   contenido: "p-6 space-y-4",
   label: "block text-sm font-medium text-textoOscuro mb-1",
   input:
-    "w-full h-10 px-3 rounded-lg border border-black/10 bg-fondoOutput text-textoOutput placeholder:text-textoClaro focus:outline-none focus:ring-2 focus:ring-azulPrimario/40",
-  botonAgregarLinea: "mt-2 flex items-center text-sm text-textoOutput hover:underline",
-  iconoAgregarLinea: "mr-1 w-4 h-4 text-textoOutput",
+    "w-full h-10 px-3 rounded-lg border border-borde bg-fondoClient text-textoOscuro placeholder:text-textoOscuro/60 focus:outline-none focus:ring-2 focus:ring-azulPrimario/40",
+  botonAgregarLinea: "mt-2 flex items-center text-sm text-textoOscuro/80 hover:text-textoOscuro",
+  iconoAgregarLinea: "mr-1 w-4 h-4 text-textoOscuro/80",
   botonEvaluar:
-    "btn flex items-center gap-2 bg-fondoOutput text-textoOutput hover:brightness-95 rounded-lg px-3 py-2",
+    "btn flex items-center gap-2 rounded-lg bg-fondoCard px-3 py-2 text-textoOscuro hover:bg-fondoCard/80",
   iconoEvaluar: "w-4 h-4",
   errorGeneral:
-    "flex items-center gap-2 bg-red-100 text-red-700 p-2 rounded",
+    "flex items-center gap-2 rounded bg-red-500/10 p-2 text-red-200",
   iconoError: "w-4 h-4",
   textoError: "text-sm",
   tarjetaContenedor: "space-y-3",
-  tarjeta: "rounded border bg-fondoInput text-textoOscuro",
-  btnToggle: "w-full px-3 py-2 flex items-center justify-between",
+  tarjeta: "rounded border border-borde bg-fondoClient/70 text-textoOscuro",
+  btnToggle: "w-full px-3 py-2 flex items-center justify-between text-textoOscuro",
   iconoVerdad: "text-green-600",
   iconoFalso: "text-red-600",
   iconoAdvertencia: "text-amber-600",
   tituloTarjeta: "font-semibold text-textoOscuro",
-  btnTabLinea: "px-2 py-1 rounded border text-sm bg-transparent text-textoOutput",
-  btnTabLineaActivo: "bg-fondoOutput text-textoOutput",
-  kpi: "p-2 rounded bg-fondoInput text-textoOscuro",
-  kpiLabel: "text-xs opacity-70 text-textoOutput",
-  kpiValue: "text-sm font-semibold break-all text-textOuput",
+  btnTabLinea: "px-2 py-1 rounded border border-borde text-sm bg-transparent text-textoOscuro/80",
+  btnTabLineaActivo: "bg-fondoCard text-textoOscuro",
+  kpi: "p-2 rounded bg-fondoPagina/60 text-textoOscuro",
+  kpiLabel: "text-xs text-textoOscuro/70",
+  kpiValue: "text-sm font-semibold break-all text-textoOscuro",
   lineaDetalle: "grid gap-3",
   lineaDetalleTitulo: "font-medium text-textoOscuro",
-  bannerInfo: "flex items-center gap-2 text-amber-700 bg-amber-100 p-2 rounded",
+  bannerInfo: "flex items-center gap-2 rounded bg-amber-500/15 p-2 text-amber-200",
   bannerInfoIcono: "w-4 h-4",
   bannerInfoTexto: "text-sm",
 },
@@ -260,7 +260,7 @@ tarjetaScraping: {
 	  accesosWrapper: "mt-auto mb-4 flex flex-col gap-2",
 	 },
 	 metaInbox: {
-	  pagina: "h-screen bg-fondoPagina text-textoOscuro font-montserrat",
+	  pagina: "h-full min-h-0 bg-transparent text-textoOscuro font-montserrat",
 	  header: "h-14 border-b border-borde bg-fondoCard/80 backdrop-blur-md px-4 flex items-center justify-between",
 	  headerLeft: "flex items-center gap-3",
 	  botonHeader:
@@ -285,7 +285,7 @@ tarjetaScraping: {
 	  menuButton: "p-1.5 rounded hover:bg-fondoCard text-textoOscuro",
 	  menuPopup: "absolute right-0 top-8 z-20 min-w-36 rounded-md border border-borde bg-fondoCard/95 backdrop-blur-md shadow-sm",
 	  menuOption: "w-full text-left px-3 py-2 text-sm hover:bg-fondoClient text-textoOscuro",
-	  chatPanel: "bg-fondoPagina flex flex-col min-h-0",
+	  chatPanel: "bg-transparent flex flex-col min-h-0",
 	  emptyState: "h-full flex items-center justify-center text-sm text-textoOscuro",
 	  chatHeader: "h-14 px-4 border-b border-borde bg-fondoCard/40 backdrop-blur-sm flex items-center",
 	  chatHeaderRow: "w-full flex items-center justify-between gap-3",

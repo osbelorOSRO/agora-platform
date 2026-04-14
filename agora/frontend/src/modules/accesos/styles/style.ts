@@ -83,7 +83,7 @@ const style = {
   w-full
   border-collapse
   text-sm
-  font-[Montserrat]
+  font-montserrat
   text-left
   `,
 
@@ -94,7 +94,7 @@ const style = {
   text-sm
   bg-white/10
   backdrop-blur
-  font-[Montserrat]
+  font-montserrat
   `,
 
   celdaTabla: `
@@ -102,7 +102,7 @@ const style = {
   px-2 py-1
   text-sm
   align-middle
-  font-[Montserrat]
+  font-montserrat
   text-white
   `,
 
@@ -129,7 +129,7 @@ const style = {
   `,
 
   fontBase: `
-  font-[Montserrat]
+  font-montserrat
   text-sm
   text-white
   `,

@@ -34,7 +34,7 @@ export default function SidePanel({
           />
           {/* Panel */}
           <motion.aside
-            className={`fixed right-0 top-0 z-50 h-full shadow-xl flex flex-col ${className || "bg-fondoCard"}`}
+            className={`fixed right-0 top-0 z-50 flex h-full flex-col border-l border-borde shadow-xl ${className || "bg-fondoCard text-textoOscuro"}`}
             style={{ width }}
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
@@ -45,12 +45,12 @@ export default function SidePanel({
             aria-label={title || "Panel lateral"}
           >
             {/* Header sticky con fondo dinámico */}
-            <div className="sticky top-0 z-10 bg-fondoInput border-b border-borde">
+            <div className="sticky top-0 z-10 border-b border-borde bg-fondoCard">
               <div className="flex items-center justify-between p-4">
-                <h3 className="text-base font-semibold m-0 text-textoInput">{title}</h3>
+                <h3 className="m-0 text-base font-semibold text-textoOscuro">{title}</h3>
                 <button
                   onClick={onClose}
-                  className="p-2 rounded hover:bg-black/5 focus:outline-none text-textoInput"
+                  className="rounded p-2 text-textoOscuro transition hover:bg-fondoClient/60 focus:outline-none"
                   aria-label="Cerrar"
                 >
                   <X className="w-5 h-5" />
@@ -63,7 +63,7 @@ export default function SidePanel({
             </div>
             {/* Footer sticky con fondo dinámico */}
             {footer && (
-              <div className="sticky bottom-0 bg-fondoInput border-t border-borde p-3">
+              <div className="sticky bottom-0 border-t border-borde bg-fondoCard p-3">
                 {footer}
               </div>
             )}

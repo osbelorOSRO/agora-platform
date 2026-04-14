@@ -86,7 +86,7 @@ export default function Usuarios() {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold text-white font-[Montserrat] mb-4">
+        <h2 className="mb-4 text-2xl font-bold text-white">
           Usuarios
         </h2>
         <button onClick={handleAgregar} className="w-5 h-5 text-white">
@@ -95,7 +95,7 @@ export default function Usuarios() {
       </div>
 
       <div className="overflow-x-auto scrollbar-custom">
-        <table className="w-full text-sm text-left text-white font-[Montserrat]">
+        <table className="w-full text-left text-sm text-white font-montserrat">
           <thead>
             <tr className="bg-white/10">
               <th className="p-2">ID</th>
