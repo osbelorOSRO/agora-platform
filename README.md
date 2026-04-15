@@ -3,8 +3,8 @@
 Monorepo operativo de Agora Platform.
 
 ## Version
-- Actual: `v0.1.0`
-- Fecha: `2026-03-08`
+- Actual: `v1.2.1`
+- Fecha: `2026-04-15`
 
 Regla:
 - En cada release, actualizar esta sección y crear tag Git (`vX.Y.Z`).
