@@ -19,13 +19,16 @@ export const getWaDashboardSocket = (): Socket | null => {
   return waDashboardSocket;
 };
 
-export const connectWaDashboardSocket = (): Socket | null => {
-  const socket = getWaDashboardSocket();
-  if (!socket) return null;
-
+export const ensureWaDashboardConnected = (socket: Socket | null): void => {
+  if (!socket) return;
   if (!socket.connected) {
     socket.connect();
   }
+};
+
+export const connectWaDashboardSocket = (): Socket | null => {
+  const socket = getWaDashboardSocket();
+  ensureWaDashboardConnected(socket);
 
   return socket;
 };

@@ -70,7 +70,7 @@ app.post('/notify/cambio-estado', apiKeyAuthMiddleware, (req, res) => {
     return;
   }
 
-  io.to(clienteId).emit('estadoActualizado', {
+  io.emit('estadoActualizado', {
     clienteId,
     estadoActual,
     etiquetaActual,
@@ -107,7 +107,7 @@ app.post('/notify/proceso-creado', apiKeyAuthMiddleware, (req, res) => {
     return;
   }
 
-  io.to(clienteId).emit('procesoCreado', {
+  io.emit('procesoCreado', {
     clienteId,
     procesoId,
     timestamp,
@@ -124,7 +124,7 @@ app.post('/notify/cambio-intervencion', apiKeyAuthMiddleware, (req, res) => {
     return;
   }
 
-  io.to(clienteId).emit('intervencionCambiada', {
+  io.emit('intervencionCambiada', {
     clienteId,
     intervenida,
     timestamp,
@@ -141,7 +141,7 @@ app.post('/notify/proceso-cerrado', apiKeyAuthMiddleware, (req, res) => {
     return;
   }
 
-  io.to(clienteId).emit('procesoCerrado', {
+  io.emit('procesoCerrado', {
     clienteId,
     procesoId,
     timestamp,
@@ -166,7 +166,7 @@ app.post('/notify/refrescar-clientes', apiKeyAuthMiddleware, (req, res) => {
     res.status(400).json({ error: 'clienteId es requerido' });
     return;
   }
-  io.to(clienteId).emit('refrescarClientes');
+  io.emit('refrescarClientes');
   res.status(200).json({ success: true });
 });
 

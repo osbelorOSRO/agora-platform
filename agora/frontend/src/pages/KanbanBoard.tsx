@@ -344,23 +344,48 @@ const KanbanBoard = () => {
         intervenida: false,
       };
 
-      // Agregar a activos sin refetch
-      setClientesActivos(prev => [nuevoCliente, ...prev]);
+      // Agregar a activos sin refetch, evitando duplicados.
+      setClientesActivos(prev => {
+        const withoutCurrent = prev.filter((c) => c.cliente_id !== data.clienteId);
+        return [nuevoCliente, ...withoutCurrent];
+      });
     });
 
     // 🔥 LISTENER 2: Proceso Creado
     onProcesoCreado((data) => {
       console.log("📋 Proceso creado:", data);
 
-      // Mover cliente de inactivos a activos
+      let clienteMovido: Cliente | null = null;
+
+      // Mover cliente de inactivos a activos.
       setClientesInactivos(prev => {
         const cliente = prev.find(c => c.cliente_id === data.clienteId);
         if (cliente) {
-          setClientesActivos(prevActivos => [cliente, ...prevActivos]);
+          clienteMovido = cliente;
           return prev.filter(c => c.cliente_id !== data.clienteId);
         }
         return prev;
       });
+
+      // Si estaba en cerrados, también debe volver a activos.
+      setClientesCerrados(prev => {
+        const cliente = prev.find(c => c.cliente_id === data.clienteId);
+        if (cliente) {
+          clienteMovido = cliente;
+          return prev.filter(c => c.cliente_id !== data.clienteId);
+        }
+        return prev;
+      });
+
+      if (clienteMovido) {
+        setClientesActivos(prevActivos => {
+          const withoutCurrent = prevActivos.filter(c => c.cliente_id !== data.clienteId);
+          return [clienteMovido as Cliente, ...withoutCurrent];
+        });
+      } else {
+        // Fallback: aseguramos sincronía si el cliente no estaba en memoria local.
+        listarClientesActivos().then((activos) => setClientesActivos(activos || []));
+      }
 
       // Guardar proceso_id
       setProcesosPorCliente(prev => ({
@@ -409,17 +434,26 @@ const KanbanBoard = () => {
     onProcesoCerrado((data) => {
       console.log("🔒 Proceso cerrado:", data);
 
+      let clienteCerrado: Cliente | null = null;
+
       // Mover cliente de activos a inactivos
       setClientesActivos(prev => {
         const cliente = prev.find(c => c.cliente_id === data.clienteId);
         if (cliente) {
-          // Agregar a inactivos
-          setClientesInactivos(prevInactivos => [cliente, ...prevInactivos]);
-          // Remover de activos
+          clienteCerrado = cliente;
           return prev.filter(c => c.cliente_id !== data.clienteId);
         }
         return prev;
       });
+
+      if (clienteCerrado) {
+        setClientesInactivos(prevInactivos => {
+          const withoutCurrent = prevInactivos.filter(c => c.cliente_id !== data.clienteId);
+          return [clienteCerrado as Cliente, ...withoutCurrent];
+        });
+      } else {
+        listarClientesInactivos().then((inactivos) => setClientesInactivos(inactivos || []));
+      }
 
       // Remover proceso_id del estado
       setProcesosPorCliente(prev => {

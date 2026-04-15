@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { connectWaDashboardSocket } from "../services/waDashboard.service";
+import { ensureWaDashboardConnected, getWaDashboardSocket } from "../services/waDashboard.service";
 
 type WaEstado = {
   conexion?: string;
@@ -49,7 +49,7 @@ export function useWaDashboard() {
   const [available, setAvailable] = useState(true);
 
   useEffect(() => {
-    const socket = connectWaDashboardSocket();
+    const socket = getWaDashboardSocket();
 
     if (!socket) {
       setAvailable(false);
@@ -121,6 +121,9 @@ export function useWaDashboard() {
     socket.on("bloqueado", onBloqueado);
     socket.on("desbloqueado", onDesbloqueado);
 
+    // Conectamos después de registrar listeners para no perder `estadoCompleto`.
+    ensureWaDashboardConnected(socket);
+
     if (socket.connected) {
       onConnect();
     }
@@ -144,7 +147,8 @@ export function useWaDashboard() {
   }, []);
 
   const acciones = useMemo(() => {
-    const socket = connectWaDashboardSocket();
+    const socket = getWaDashboardSocket();
+    ensureWaDashboardConnected(socket);
 
     return {
       generarQr: () => socket?.emit("generateQR"),
