@@ -65,6 +65,7 @@ export function useWaDashboard() {
     const onConnect = () => {
       setConnected(true);
       socket.emit("getStats");
+      socket.emit("getEstado");
       addLog("Conexion al panel WA establecida", "success");
     };
 
@@ -130,6 +131,7 @@ export function useWaDashboard() {
 
     const interval = window.setInterval(() => {
       socket.emit("getStats");
+      socket.emit("getEstado");
     }, 10000);
 
     return () => {
@@ -177,6 +179,7 @@ export function useWaDashboard() {
         const socket = getWaDashboardSocket();
         ensureWaDashboardConnected(socket);
         socket?.emit("getStats");
+        socket?.emit("getEstado");
       },
     };
   }, []);

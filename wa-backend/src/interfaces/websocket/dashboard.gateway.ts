@@ -235,6 +235,10 @@ export function registerDashboardGateway(io: IOServer, gateway: WhatsAppGateway)
       socket.emit('stats', runtimeState.snapshotStats())
     })
 
+    socket.on('getEstado', () => {
+      socket.emit('estadoCompleto', runtimeState.snapshotEstado())
+    })
+
     socket.on('restart', async () => {
       try {
         socket.emit('qrStatus', { status: 'info', message: 'Reiniciando bot...' })
