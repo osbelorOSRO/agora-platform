@@ -32,3 +32,8 @@ export const connectWaDashboardSocket = (): Socket | null => {
 
   return socket;
 };
+
+export const disconnectWaDashboardSocket = (): void => {
+  if (!waDashboardSocket) return;
+  waDashboardSocket.disconnect();
+};
