@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { ensureWaDashboardConnected, getWaDashboardSocket } from "../services/waDashboard.service";
+import {
+  disconnectWaDashboardSocket,
+  ensureWaDashboardConnected,
+  getWaDashboardSocket,
+} from "../services/waDashboard.service";
 
 type WaEstado = {
   conexion?: string;
@@ -145,6 +149,8 @@ export function useWaDashboard() {
       socket.off("qrStatus", onQrStatus);
       socket.off("bloqueado", onBloqueado);
       socket.off("desbloqueado", onDesbloqueado);
+      // Forzamos reconexión al volver al módulo para asegurar `estadoCompleto` inicial.
+      disconnectWaDashboardSocket();
     };
   }, []);
 
