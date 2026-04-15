@@ -9,6 +9,8 @@ type WaEstado = {
   conexion?: string;
   numero?: string | null;
   ultimaConexion?: string | null;
+  connectedSince?: string | null;
+  connectedDurationMs?: number;
   ultimoMensaje?: string | null;
 };
 

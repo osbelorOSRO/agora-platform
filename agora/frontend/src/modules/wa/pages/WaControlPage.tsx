@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Bot, Clock3, Lock, LogOut, QrCode, RefreshCw, ShieldBan, Wrench } from "lucide-react";
 import { hasPermission } from "@/utils/permissions";
 import { getTokenData } from "@/utils/getTokenData";
@@ -16,11 +16,25 @@ const relativeTime = (value?: string | null) => {
   }).format(date);
 };
 
+const formatDuration = (ms?: number | null) => {
+  if (!ms || ms <= 0) return "--";
+  const totalSeconds = Math.floor(ms / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+  if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+  return `${minutes}m ${seconds}s`;
+};
+
 export default function WaControlPage() {
   const user = getTokenData();
   const permissions = user?.permisos ?? [];
   const canManageBot = hasPermission("control_bot", permissions);
   const [numeroBloqueo, setNumeroBloqueo] = useState("");
+  const [nowTick, setNowTick] = useState(() => Date.now());
 
   const {
     estado,
@@ -44,6 +58,25 @@ export default function WaControlPage() {
     if (estado?.conexion === "open") return { label: "Conectado", color: "bg-emerald-500" };
     return { label: "Desconectado", color: "bg-amber-500" };
   }, [available, estado?.conexion]);
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNowTick(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const tiempoConectadoMs = useMemo(() => {
+    if (estado?.conexion !== "open") return 0;
+    if (typeof estado?.connectedDurationMs === "number" && estado.connectedDurationMs > 0) {
+      return estado.connectedDurationMs;
+    }
+    if (estado?.connectedSince) {
+      const connectedAt = new Date(estado.connectedSince).getTime();
+      if (!Number.isNaN(connectedAt)) {
+        return Math.max(0, nowTick - connectedAt);
+      }
+    }
+    return 0;
+  }, [estado?.conexion, estado?.connectedDurationMs, estado?.connectedSince, nowTick]);
 
   return (
     <section className="space-y-6 text-white">
@@ -75,8 +108,8 @@ export default function WaControlPage() {
           { label: "Mensajes recibidos", value: String(stats?.mensajesRecibidos ?? 0), Icon: Bot },
           { label: "Mensajes enviados", value: String(stats?.mensajesEnviados ?? 0), Icon: Bot },
           {
-            label: "Ultimo mensaje",
-            value: relativeTime(stats?.ultimoMensaje ?? estado?.ultimoMensaje),
+            label: "Tiempo conectado",
+            value: formatDuration(tiempoConectadoMs),
             Icon: Clock3,
           },
         ].map(({ label, value, Icon }) => (
@@ -86,6 +119,11 @@ export default function WaControlPage() {
               <span className="text-xs uppercase tracking-[0.24em]">{label}</span>
             </div>
             <div className="mt-4 text-2xl font-semibold text-white">{value}</div>
+            {label === "Tiempo conectado" ? (
+              <div className="mt-2 text-xs text-white/55">
+                Último mensaje: {relativeTime(stats?.ultimoMensaje ?? estado?.ultimoMensaje)}
+              </div>
+            ) : null}
           </div>
         ))}
       </div>
