@@ -6,7 +6,7 @@ services:
     container_name: abackend
     restart: always
     ports:
-      - "${HOST_BIND_IP:-100.121.39.83}:4002:4002"
+      - "${HOST_BIND_IP:-127.0.0.1}:4002:4002"
     networks:
       - npm_network
     env_file:
@@ -14,7 +14,7 @@ services:
     environment:
       - DATABASE_URL=${ABACKEND_DATABASE_URL}
       - CORS_ALLOWED_ORIGINS=${FRONTEND_PUBLIC_URL}
-      - SERVICE_ALLOWED_IPS=${SERVICE_ALLOWED_IPS:-100.121.165.88,100.67.8.81,100.101.61.94,127.0.0.1}
+      - SERVICE_ALLOWED_IPS=${SERVICE_ALLOWED_IPS:-127.0.0.1,::1}
       - VAULT_ADDR=${VAULT_ADDR}
     volumes:
       - ./abackend/prisma:/app/prisma

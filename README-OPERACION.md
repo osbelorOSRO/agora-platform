@@ -47,7 +47,7 @@ Script:
 
 Uso:
 ```bash
-export VAULT_ADDR=http://100.101.61.94:8200
+export VAULT_ADDR=http://<host_bind_ip>:8200
 export VAULT_ROLE_ID=<role_id>
 export VAULT_SECRET_ID=<secret_id>
 

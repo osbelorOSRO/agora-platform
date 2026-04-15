@@ -10,7 +10,7 @@ services:
     networks:
       - npm_network
     ports:
-      - "${HOST_BIND_IP:-100.121.39.83}:3000:3000"
+      - "${HOST_BIND_IP:-127.0.0.1}:3000:3000"
     environment:
       - API_BACKEND_URL=${API_INTERNAL_URL}
       - MEDIA_BASE_URL=${MEDIA_BASE_URL}

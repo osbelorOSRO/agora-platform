@@ -2,7 +2,7 @@
 
 ## 1. Identidad del Proyecto
 - Nombre oficial del monorepo: `agora-platform`
-- Nota: `llevatuplan.cl` y `tigo-movil.cl` son dominios de entorno, no nombre de proyecto.
+- Nota: `example.com` y `example.org` son dominios de entorno, no nombre de proyecto.
 
 ## 2. Estructura Objetivo (Opción A)
 Se adopta estructura por dominio funcional para evitar mezcla:
@@ -106,11 +106,11 @@ Las apps consumen BD por DSN/URL (`DATABASE_URL`, `MONGODB_URI`) como servicios 
 
 ## 8. Ambientes físicos y lógicos
 Perfiles activos definidos:
-- `dev.local1` (`100.121.39.83`)
-- `dev.vps1` (`100.67.8.81`)
-- `dev.vps2` (`100.101.61.94`)
-- `prod.vps1` (`100.67.8.81`, dominio `llevatuplan.cl`)
-- `prod.vps2` (`100.101.61.94`, dominio `tigo-movil.cl`)
+- `dev.local1` (`<host_bind_ip>`)
+- `dev.vps1` (`<host_bind_ip>`)
+- `dev.vps2` (`<host_bind_ip>`)
+- `prod.vps1` (`<host_bind_ip>`, dominio `example.com`)
+- `prod.vps2` (`<host_bind_ip>`, dominio `example.org`)
 
 ## 9. Convención de configuración
 - Variables públicas por perfil: `*_PUBLIC_URL`

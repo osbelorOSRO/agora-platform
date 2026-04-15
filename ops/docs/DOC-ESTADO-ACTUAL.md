@@ -15,7 +15,7 @@ Fecha de corte: 2026-03-08
 - `n8n` con env por perfil (`/n8n/env/*.env`).
 - Compose de Mongo y Postgres separados del stack principal para operación independiente.
 - URI Mongo globales normalizadas a formato canónico:
-  - `mongodb://adminbot:***@HOST:27017/?authSource=admin`
+  - `mongodb://<db_user>:***@HOST:27017/?authSource=admin`
 - Vault cross-VPS cerrado:
   - VPS2 manual unseal (ancla)
   - VPS1 auto-unseal por transit hacia VPS2
@@ -23,8 +23,8 @@ Fecha de corte: 2026-03-08
 ## Decisiones activas
 - Nombre oficial del proyecto: `agora-platform`.
 - BD tratadas como capa externa al monorepo (por DSN/URI).
-- Producción BD oficial en VPS1 (`100.67.8.81`).
-- BD de pruebas en VPS2 (`100.101.61.94`) operativas para dev/pruebas.
+- Producción BD oficial en VPS1 (`<host_bind_ip>`).
+- BD de pruebas en VPS2 (`<host_bind_ip>`) operativas para dev/pruebas.
 - Vault cross-VPS activo (auto-unseal `vps1 <- vps2`).
 - `vault` queda como servicio operativo fuera de repo.
 

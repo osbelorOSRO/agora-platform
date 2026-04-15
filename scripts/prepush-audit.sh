@@ -16,7 +16,7 @@ fi
 
 echo ""
 echo "== prepush-audit: nested .git =="
-NESTED_GIT="$(find . -mindepth 2 -type d -name .git -not -path './.git' | sed 's#^\./##' || true)"
+NESTED_GIT="$( (find . -mindepth 2 -type d -name .git -not -path './.git' 2>/dev/null || true) | sed 's#^\./##')"
 if [[ -n "$NESTED_GIT" ]]; then
   echo "[WARN] Se encontraron repos anidados:"
   echo "$NESTED_GIT"
@@ -30,7 +30,7 @@ echo "== prepush-audit: archivos sensibles no ignorados =="
 if [[ "$HAS_GIT_ROOT" -eq 1 ]]; then
   SENSITIVE_LIST="$(find . -type f \
     \( -name '*.secrets.env' -o -name '*.pem' -o -name '*.key' -o -name '*.p12' -o -name '*.crt' -o -name '*.sql' -o -name '*.dump' -o -name '*.backup' -o -name '*.bak' \) \
-    -not -path './node_modules/*' -not -path './*/node_modules/*')"
+    -not -path './node_modules/*' -not -path './*/node_modules/*' 2>/dev/null || true)"
 
   LEAK=0
   while IFS= read -r f; do
@@ -52,12 +52,12 @@ echo ""
 echo "== prepush-audit: busqueda de patrones de secreto (tracked files) =="
 if [[ "$HAS_GIT_ROOT" -eq 1 ]]; then
   MATCHES="$(
-    git ls-files -z | xargs -0 rg -n \
-      -e 'Jif01258Gaf' \
+    git ls-files -z | grep -zv '^scripts/prepush-audit.sh$' | xargs -0 rg -n \
+      -e 'PGADMIN_DEFAULT_PASSWORD=[^<$[:space:]]+' \
+      -e 'REDIS_PASSWORD=[^<$[:space:]]+' \
       -e 'hvs\.' \
       -e 'BEGIN (RSA|PRIVATE) KEY' \
-      -e 'META_PAGE_ACCESS_TOKEN=' \
-      -g '!scripts/prepush-audit.sh' \
+      -e 'META_PAGE_ACCESS_TOKEN=[^<[:space:]]+' \
       2>/dev/null || true
   )"
 else
@@ -69,10 +69,11 @@ else
       -g '!**/redis_cache/**' \
       -g '!**/n8n-data/**' \
       -g '!scripts/prepush-audit.sh' \
-      -e 'Jif01258Gaf' \
+      -e 'PGADMIN_DEFAULT_PASSWORD=[^<$[:space:]]+' \
+      -e 'REDIS_PASSWORD=[^<$[:space:]]+' \
       -e 'hvs\.' \
       -e 'BEGIN (RSA|PRIVATE) KEY' \
-      -e 'META_PAGE_ACCESS_TOKEN=' \
+      -e 'META_PAGE_ACCESS_TOKEN=[^<[:space:]]+' \
       . 2>/dev/null || true
   )"
 fi

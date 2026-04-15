@@ -10,7 +10,7 @@ export class LegalController {
       <h1>Política de Privacidad</h1>
       <p>Agora responde mensajes iniciados por usuarios mediante Facebook Messenger.</p>
       <p>Los datos se utilizan solo para atención al cliente.</p>
-      <p>Contacto: contacto@llevatuplan.cl</p>
+      <p>Contacto: contacto@example.com</p>
     `;
   }
 
@@ -28,7 +28,7 @@ export class LegalController {
   deleteData() {
     return `
       <h1>Eliminación de Datos</h1>
-      <p>Solicitudes: contacto@llevatuplan.cl</p>
+      <p>Solicitudes: contacto@example.com</p>
     `;
   }
 }

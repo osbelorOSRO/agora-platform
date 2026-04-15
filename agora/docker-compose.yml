@@ -16,7 +16,7 @@ services:
     container_name: panel_frontend
     restart: always
     ports:
-      - "${HOST_BIND_IP:-100.121.39.83}:5173:80"
+      - "${HOST_BIND_IP:-127.0.0.1}:5173:80"
     networks:
       - npm_network
     working_dir: /app
@@ -28,7 +28,7 @@ services:
     container_name: panel_websocket
     restart: always
     ports:
-      - "${HOST_BIND_IP:-100.121.39.83}:5050:5050"
+      - "${HOST_BIND_IP:-127.0.0.1}:5050:5050"
     networks:
       - npm_network
     env_file:
@@ -50,7 +50,7 @@ services:
     container_name: api_backend_nest
     restart: unless-stopped
     ports:
-      - "${HOST_BIND_IP:-100.121.39.83}:4001:4001"
+      - "${HOST_BIND_IP:-127.0.0.1}:4001:4001"
     networks:
       - npm_network
     volumes:
@@ -69,8 +69,8 @@ services:
       - BOT_BASE_URL=${WA_INTERNAL_URL}
       - N8N_MSG_DELEGATION_WEBHOOK_URL=${N8N_INTERNAL_URL}/webhook/flujo-eventos
       - VAULT_ADDR=${VAULT_ADDR}
-      - VAULT_APP_SECRETS_PATH=secret/data/dev.local1/agora/api-backend-nest
-      - GATEWAY_BASE_URL=${GATEWAY_BASE_URL:-https://winbotpc.llevatuplan.cl}
+      - VAULT_APP_SECRETS_PATH=${API_VAULT_APP_SECRETS_PATH:-dev.local/agora/api-backend-nest}
+      - GATEWAY_BASE_URL=${GATEWAY_BASE_URL:-https://gateway.example.com}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:4001/ping/db >/dev/null || exit 1"]
       interval: 30s
