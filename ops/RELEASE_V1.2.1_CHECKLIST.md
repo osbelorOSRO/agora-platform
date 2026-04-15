@@ -7,7 +7,7 @@
 
 ## 2) Publicar en `main`
 ```bash
-cd /home/oscar/Documentos/GitHub/agora-platfrom
+cd /home/oscar/Documentos/GitHub/agora-platform
 git add .
 git commit -m "release: 1.2.1 realtime hardening and notifications consistency"
 git push origin main
@@ -15,7 +15,7 @@ git push origin main
 
 ## 3) Actualizar VPS1
 ```bash
-cd ~/agora-platfrom
+cd ~/agora-platform
 git pull origin main
 ```
 
@@ -43,8 +43,7 @@ docker logs --tail 150 frontend
 
 ## 7) Tag release
 ```bash
-cd ~/agora-platfrom
+cd ~/agora-platform
 git tag v1.2.1
 git push origin v1.2.1
 ```
-

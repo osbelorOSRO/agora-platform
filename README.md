@@ -1,4 +1,4 @@
-# agora-platfrom
+# agora-platform
 
 Monorepo operativo de Agora Platform.
 

@@ -39,7 +39,7 @@ Objetivo: evitar errores `EACCES` al subir archivos (`api_backend_nest`) al migr
 Ejecutar en el host, desde la raíz del repo:
 
 ```bash
-cd /home/<usuario>/agora-platfrom/agora
+cd /home/<usuario>/agora-platform/agora
 sudo mkdir -p uploads config
 sudo chown -R 1000:1000 uploads config
 sudo find uploads config -type d -exec chmod 775 {} \;
