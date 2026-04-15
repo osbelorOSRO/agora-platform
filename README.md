@@ -2,6 +2,10 @@
 
 Monorepo operativo para una plataforma modular de atencion, automatizacion y control de conversaciones. Integra panel web, backend transaccional, autenticacion, WebSocket en tiempo real, WhatsApp, Meta Inbox, n8n y servicios auxiliares de IA/OCR.
 
+## Vista del panel
+
+![WA Control dashboard](docs/assets/wa-control.png)
+
 ## Version
 - Actual: `v1.2.1`
 - Fecha: `2026-04-15`
