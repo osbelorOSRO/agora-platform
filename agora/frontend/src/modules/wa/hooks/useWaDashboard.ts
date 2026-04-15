@@ -147,16 +147,37 @@ export function useWaDashboard() {
   }, []);
 
   const acciones = useMemo(() => {
-    const socket = getWaDashboardSocket();
-    ensureWaDashboardConnected(socket);
-
     return {
-      generarQr: () => socket?.emit("generateQR"),
-      reiniciar: () => socket?.emit("restart"),
-      cerrarSesion: () => socket?.emit("logout"),
-      bloquear: (numero: string) => socket?.emit("bloquear", numero),
-      desbloquear: (numero: string) => socket?.emit("desbloquear", numero),
-      refrescarStats: () => socket?.emit("getStats"),
+      generarQr: () => {
+        const socket = getWaDashboardSocket();
+        ensureWaDashboardConnected(socket);
+        socket?.emit("generateQR");
+      },
+      reiniciar: () => {
+        const socket = getWaDashboardSocket();
+        ensureWaDashboardConnected(socket);
+        socket?.emit("restart");
+      },
+      cerrarSesion: () => {
+        const socket = getWaDashboardSocket();
+        ensureWaDashboardConnected(socket);
+        socket?.emit("logout");
+      },
+      bloquear: (numero: string) => {
+        const socket = getWaDashboardSocket();
+        ensureWaDashboardConnected(socket);
+        socket?.emit("bloquear", numero);
+      },
+      desbloquear: (numero: string) => {
+        const socket = getWaDashboardSocket();
+        ensureWaDashboardConnected(socket);
+        socket?.emit("desbloquear", numero);
+      },
+      refrescarStats: () => {
+        const socket = getWaDashboardSocket();
+        ensureWaDashboardConnected(socket);
+        socket?.emit("getStats");
+      },
     };
   }, []);
 
