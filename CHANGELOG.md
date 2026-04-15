@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.2.1
+
+### Added
+- Indicadores de estado de socket en `WA Control` (`connecting/reconnecting`, intento y último sync).
+- Métrica de sesión activa WA: duración desde `connection=open` (no desde inicio del bot).
+- Botón de gestión en `Welcome` para marcar notificaciones como leídas y limpiar las de APP.
+- Checklist operativo de release/deploy para VPS1.
+
+### Changed
+- Notificaciones de `Welcome` agrupadas por `clienteId` para reducir ruido.
+- Tarjeta de notificaciones muestra contador de no leídas consistente.
+
+### Fixed
+- Robustez de reconexión en `wa-control` evitando estados ambiguos al navegar entre módulos.
+- Limpieza automática (TTL) de notificaciones persistidas en frontend.
+
 ## 1.2.0
 
 ### Added

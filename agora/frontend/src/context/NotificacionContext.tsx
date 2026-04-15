@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState, useContext } from "react";
+import { createContext, useEffect, useMemo, useState, useContext } from "react";
 import { Notificacion } from "../types/Notificacion";
 import { connectSocket, getSocket } from "../services/socket";
 import { getTokenData } from "../utils/getTokenData";
@@ -7,6 +7,9 @@ const NotificacionContext = createContext<{
   notificaciones: Notificacion[];
   agregar: (n: Notificacion) => void;
   eliminar: (clienteId: string) => void;
+  eliminarTodas: () => void;
+  markAllRead: () => void;
+  unreadCount: number;
 } | null>(null); // <- ⚠️ Esto es mejor que poner funciones vacías
 
 export const useNotificaciones = () => {
@@ -16,20 +19,51 @@ export const useNotificaciones = () => {
 };
 
 const STORAGE_KEY = "agora.notificaciones";
+const READ_CUTOFF_KEY = "agora.notificaciones.lastReadAt";
+const NOTIFICATION_TTL_MS = 72 * 60 * 60 * 1000;
+
+const toTimestamp = (value?: string) => {
+  if (!value) return 0;
+  const ts = new Date(value).getTime();
+  return Number.isNaN(ts) ? 0 : ts;
+};
+
+const cleanupNotifications = (items: Notificacion[]) => {
+  const now = Date.now();
+  return items
+    .filter((item) => {
+      const ts = toTimestamp(item.fecha);
+      if (!ts) return false;
+      return now - ts <= NOTIFICATION_TTL_MS;
+    })
+    .slice(0, 100);
+};
 
 const loadStored = (): Notificacion[] => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as Notificacion[];
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? cleanupNotifications(parsed) : [];
   } catch {
     return [];
   }
 };
 
+const loadReadCutoff = (): number => {
+  try {
+    const raw = localStorage.getItem(READ_CUTOFF_KEY);
+    if (!raw) return 0;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : 0;
+  } catch {
+    return 0;
+  }
+};
+
 export const NotificacionProvider = ({ children }: { children: React.ReactNode }) => {
   const [notificaciones, setNotificaciones] = useState<Notificacion[]>(() => loadStored());
+  const [lastReadAt, setLastReadAt] = useState<number>(() => loadReadCutoff());
 
 const agregar = (nueva: Notificacion | Record<string, any>) => {
   const normalized: Notificacion = {
@@ -55,7 +89,7 @@ const agregar = (nueva: Notificacion | Record<string, any>) => {
 
   console.log("📥 Llamando a agregar con:", normalized);
   setNotificaciones((prev) => {
-    const next = [normalized, ...prev];
+    const next = cleanupNotifications([normalized, ...prev]);
     const deduped = next.filter(
       (item, idx, arr) =>
         idx ===
@@ -119,12 +153,42 @@ const agregar = (nueva: Notificacion | Record<string, any>) => {
     }
   }, [notificaciones]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(READ_CUTOFF_KEY, String(lastReadAt));
+    } catch {
+      // noop
+    }
+  }, [lastReadAt]);
+
   const eliminar = (clienteId: string) => {
     setNotificaciones((prev) => prev.filter((n) => n.clienteId !== clienteId));
   };
 
+  const eliminarTodas = () => {
+    setNotificaciones([]);
+  };
+
+  const markAllRead = () => {
+    setLastReadAt(Date.now());
+  };
+
+  const unreadCount = useMemo(
+    () => notificaciones.filter((n) => toTimestamp(n.fecha) > lastReadAt).length,
+    [notificaciones, lastReadAt]
+  );
+
   return (
-    <NotificacionContext.Provider value={{ notificaciones, agregar, eliminar }}>
+    <NotificacionContext.Provider
+      value={{
+        notificaciones,
+        agregar,
+        eliminar,
+        eliminarTodas,
+        markAllRead,
+        unreadCount,
+      }}
+    >
       {children}
     </NotificacionContext.Provider>
   );

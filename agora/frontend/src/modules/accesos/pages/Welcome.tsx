@@ -123,7 +123,7 @@ export default function Welcome() {
   const user = getTokenData();
   const navigate = useNavigate();
   const permissions = user?.permisos ?? [];
-  const { notificaciones, eliminar } = useNotificaciones();
+  const { notificaciones, eliminar, eliminarTodas, unreadCount, markAllRead } = useNotificaciones();
   const [procesos, setProcesos] = useState<ProcesoProductividad[]>([]);
   const [loadingChart, setLoadingChart] = useState(true);
   const [chartError, setChartError] = useState("");
@@ -215,15 +215,46 @@ export default function Welcome() {
       message: item.message,
       timestamp: item.timestamp,
       tone: item.type,
+      appCount: 0,
     }));
 
-    const appEntries = notificaciones.map((item) => ({
-      id: `app-${item.clienteId}-${item.fecha}`,
+    const appMap = new Map<
+      string,
+      { clienteId: string; timestamp: string; latestContent: string; count: number }
+    >();
+    notificaciones.forEach((item) => {
+      const prev = appMap.get(item.clienteId);
+      if (!prev) {
+        appMap.set(item.clienteId, {
+          clienteId: item.clienteId,
+          timestamp: item.fecha,
+          latestContent: item.contenido,
+          count: 1,
+        });
+        return;
+      }
+
+      const prevTs = +new Date(prev.timestamp);
+      const nextTs = +new Date(item.fecha);
+      appMap.set(item.clienteId, {
+        clienteId: item.clienteId,
+        timestamp: nextTs > prevTs ? item.fecha : prev.timestamp,
+        latestContent: nextTs > prevTs ? item.contenido : prev.latestContent,
+        count: prev.count + 1,
+      });
+    });
+
+    const appEntries = Array.from(appMap.values()).map((item) => ({
+      id: `app-${item.clienteId}-${item.timestamp}`,
       source: "APP",
-      message: `Nuevo mensaje de ${item.clienteId}: ${item.contenido}`,
-      timestamp: item.fecha,
+      message:
+        item.count > 1
+          ? `${item.count} mensajes nuevos de ${item.clienteId}`
+          : `Nuevo mensaje de ${item.clienteId}: ${item.latestContent}`,
+      timestamp: item.timestamp,
       tone: "info" as const,
       clienteId: item.clienteId,
+      appCount: item.count,
     }));
 
     return [...waEntries, ...appEntries]
@@ -283,8 +314,8 @@ export default function Welcome() {
     },
     {
       title: "Notificaciones",
-      value: `${activityFeed.length} ${activityFeed.length === 1 ? "evento" : "eventos"}`,
-      subtitle: "Actividad reciente consolidada desde app y bot.",
+      value: `${unreadCount} ${unreadCount === 1 ? "no leída" : "no leídas"}`,
+      subtitle: "Actividad reciente consolidada (agrupada por cliente).",
       enabled: true,
       status: activityFeed.length > 0 ? "Activo" : "Sin eventos",
       Icon: Bell,
@@ -505,6 +536,23 @@ export default function Welcome() {
               </div>
             ) : null}
 
+            <div className="mt-4 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={markAllRead}
+                className="rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium transition hover:bg-white/15"
+              >
+                Marcar como leídas
+              </button>
+              <button
+                type="button"
+                onClick={eliminarTodas}
+                className="rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium transition hover:bg-white/15"
+              >
+                Limpiar APP
+              </button>
+            </div>
+
             <div className="mt-5 space-y-3">
               {activityFeed.length === 0 ? (
                 <div className="rounded-xl border border-white/10 bg-black/10 p-4 text-sm text-white/60">
@@ -535,6 +583,11 @@ export default function Welcome() {
                     <p className="mt-2 text-sm text-white/80">{item.message}</p>
                     {item.source === "APP" && item.clienteId ? (
                       <div className="absolute right-3 top-3 flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-2 py-1 opacity-0 transition group-hover:opacity-100">
+                        {item.appCount ? (
+                          <span className="rounded-full bg-cyan-300/20 px-2 py-1 text-[10px] font-semibold text-cyan-100">
+                            {item.appCount}
+                          </span>
+                        ) : null}
                         <button
                           type="button"
                           onClick={() => navigate(`/kanban?cliente=${encodeURIComponent(item.clienteId)}`)}

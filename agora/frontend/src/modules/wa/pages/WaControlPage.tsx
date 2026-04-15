@@ -45,6 +45,9 @@ export default function WaControlPage() {
     logs,
     available,
     connected,
+    socketPhase,
+    reconnectAttempt,
+    lastSyncAt,
     generarQr,
     reiniciar,
     cerrarSesion,
@@ -58,6 +61,15 @@ export default function WaControlPage() {
     if (estado?.conexion === "open") return { label: "Conectado", color: "bg-emerald-500" };
     return { label: "Desconectado", color: "bg-amber-500" };
   }, [available, estado?.conexion]);
+
+  const socketDetail = useMemo(() => {
+    if (!available) return "Sin endpoint WA";
+    if (socketPhase === "connecting") return "Conectando...";
+    if (socketPhase === "reconnecting")
+      return reconnectAttempt > 0 ? `Reconectando (intento ${reconnectAttempt})` : "Reconectando...";
+    if (socketPhase === "connected") return connected ? "Socket activo" : "Socket conectado";
+    return connected ? "Socket activo" : "Socket sin conexion";
+  }, [available, connected, reconnectAttempt, socketPhase]);
 
   useEffect(() => {
     const id = window.setInterval(() => setNowTick(Date.now()), 1000);
@@ -97,7 +109,8 @@ export default function WaControlPage() {
             <span className={`h-2.5 w-2.5 rounded-full ${estatus.color}`} />
             <span>{estatus.label}</span>
             <span className="text-white/45">/</span>
-            <span>{connected ? "Socket activo" : "Socket sin conexion"}</span>
+            <span>{socketDetail}</span>
+            {lastSyncAt ? <span className="text-white/55">· sync {relativeTime(lastSyncAt)}</span> : null}
           </div>
         </div>
       </div>
