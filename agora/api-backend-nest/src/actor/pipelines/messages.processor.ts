@@ -76,9 +76,10 @@ export class MessagesProcessor extends WorkerHost {
         this.logger.log(`FLOW[MESSAGE] inbox skip non-message eventType=${env?.eventType}`);
       }
 
-      if (this.isInboxMessageEvent(env?.eventType) && messageDirection !== 'INCOMING') {
+      if (!this.isDelegableIncomingEvent(env?.eventType, messageDirection)) {
         this.logger.log(
-          `FLOW[MESSAGE] delegation skipped actor=${env.actorExternalId} reason=non_incoming_message direction=${messageDirection}`,
+          `FLOW[MESSAGE] delegation skipped actor=${env.actorExternalId} reason=non_delegable_event ` +
+          `eventType=${env?.eventType || 'unknown'} direction=${messageDirection}`,
         );
         return;
       }
@@ -401,6 +402,14 @@ export class MessagesProcessor extends WorkerHost {
   private isInboxMessageEvent(eventType: string | undefined): boolean {
     const eventKind = String(eventType || '').replace(/^messaging\./, '');
     return eventKind === 'message' || eventKind === 'message_echo' || eventKind === 'postback';
+  }
+
+  private isDelegableIncomingEvent(
+    eventType: string | undefined,
+    direction: 'INCOMING' | 'OUTGOING' | 'SYSTEM',
+  ): boolean {
+    const eventKind = String(eventType || '').replace(/^messaging\./, '');
+    return eventKind === 'message' && direction === 'INCOMING';
   }
 
   private resolveDirection(payload: any, eventKind: string): 'INCOMING' | 'OUTGOING' | 'SYSTEM' {
