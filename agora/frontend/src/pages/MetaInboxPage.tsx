@@ -12,10 +12,18 @@ import {
   listMetaInboxMessages,
   sendMetaInboxMedia,
   listMetaInboxThreads,
+  reopenMetaInboxThread,
   sendMetaInboxText,
   updateMetaInboxContact,
+  updateMetaInboxThreadControl,
 } from "@/services/metaInbox.service";
-import type { MetaInboxContactUpdate, MetaInboxContentJson, MetaInboxMessage, MetaInboxThread } from "@/types/metaInbox";
+import type {
+  MetaInboxContactUpdate,
+  MetaInboxContentJson,
+  MetaInboxMessage,
+  MetaInboxThread,
+  MetaInboxThreadControlUpdate,
+} from "@/types/metaInbox";
 import { estilos } from "@/theme/estilos";
 import VoiceRecorder from "@/components/VoiceRecorder";
 import { normalizeMediaUrl } from "@/utils/mediaUrl";
@@ -24,13 +32,6 @@ type InboxRealtimePayload = Partial<MetaInboxThread> &
   Partial<MetaInboxMessage> & {
     sessionId?: string;
   };
-
-const actorKey = (actorExternalId: string, objectType: string) => `${objectType}::${actorExternalId}`;
-
-const getPayloadActorKey = (payload: InboxRealtimePayload): string | null => {
-  if (!payload.actorExternalId || !payload.objectType) return null;
-  return actorKey(String(payload.actorExternalId), String(payload.objectType));
-};
 
 const formatRelativeTs = (value?: string | null) => {
   if (!value) return "";
@@ -48,6 +49,44 @@ const formatRelativeTs = (value?: string | null) => {
 
 const sortThreads = (items: MetaInboxThread[]) =>
   [...items].sort((a, b) => +new Date(b.lastMessageAt || 0) - +new Date(a.lastMessageAt || 0));
+
+const THREAD_STATUS_OPTIONS = ["OPEN", "PAUSED", "ARCHIVED", "CLOSED"] as const;
+const ATTENTION_MODE_OPTIONS = ["N8N", "HUMAN", "PAUSED"] as const;
+const THREAD_STAGE_OPTIONS = [
+  "acepta_oferta",
+  "cierre_no_exitoso",
+  "delegacion_humano",
+  "entrega_datos_lineas",
+  "entrega_datos_rut",
+  "inicio",
+  "intencion_humano",
+  "intencion_ofertas",
+  "intencion_requisitos",
+  "lineas_factibles",
+  "lineas_no_factibles",
+  "no_acepta_oferta",
+  "objeta_ofertas",
+  "ofertas_alta",
+  "ofertas_porta",
+  "otras_solicitudes",
+  "requisitos_rechaza_alta",
+  "requisitos_rechaza_porta",
+  "requisitos_acepta_alta",
+  "requisitos_acepta_negociacion",
+  "requisitos_acepta_porta",
+  "requisitos_datos_lineas",
+  "requisitos_datos_rut",
+  "requisitos_lineas_factibles",
+  "requisitos_lineas_no_factibles",
+  "requisitos_objeta_alta",
+  "requisitos_objeta_porta",
+  "requisitos_oferta_alta",
+  "requisitos_oferta_porta",
+  "requisitos_rut_factible",
+  "requisitos_rut_no_factible",
+  "rut_factible",
+  "rut_no_factible",
+] as const;
 
 const extractMedia = (contentJson: MetaInboxContentJson | null | undefined) => {
   const mediaType = String(contentJson?.mediaType || "").toLowerCase();
@@ -79,15 +118,17 @@ const MetaInboxPage: React.FC = () => {
   const navigate = useNavigate();
   const [threads, setThreads] = useState<MetaInboxThread[]>([]);
   const [messages, setMessages] = useState<MetaInboxMessage[]>([]);
-  const [selectedActorKey, setSelectedActorKey] = useState<string | null>(null);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [loadingThreads, setLoadingThreads] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [draft, setDraft] = useState("");
   const [savingContact, setSavingContact] = useState(false);
   const [sending, setSending] = useState(false);
+  const [savingThreadControl, setSavingThreadControl] = useState(false);
+  const [reopeningThread, setReopeningThread] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [openMenuForKey, setOpenMenuForKey] = useState<string | null>(null);
-  const [contactActorKey, setContactActorKey] = useState<string | null>(null);
+  const [openMenuForSessionId, setOpenMenuForSessionId] = useState<string | null>(null);
+  const [detailSessionId, setDetailSessionId] = useState<string | null>(null);
   const [contactForm, setContactForm] = useState<MetaInboxContactUpdate>({
     displayName: "",
     phone: "",
@@ -98,32 +139,38 @@ const MetaInboxPage: React.FC = () => {
   const [showRecorder, setShowRecorder] = useState(false);
 
   const selectedThread = useMemo(
-    () => threads.find((item) => actorKey(item.actorExternalId, item.objectType) === selectedActorKey) || null,
-    [threads, selectedActorKey],
+    () => threads.find((item) => item.sessionId === selectedSessionId) || null,
+    [threads, selectedSessionId],
   );
-  const showContactPanel = !!selectedThread && contactActorKey === selectedActorKey;
+  const showContactPanel = !!selectedThread && detailSessionId === selectedSessionId;
 
   const mergeThread = (payload: InboxRealtimePayload) => {
-    const payloadKey = getPayloadActorKey(payload);
     const payloadSessionId = payload.sessionId ? String(payload.sessionId) : null;
-    if (!payloadKey && !payloadSessionId) return;
+    if (!payloadSessionId) return;
+
+    if (payload.threadStatus && String(payload.threadStatus) === "CLOSED" && selectedSessionId === payloadSessionId) {
+      setSelectedSessionId(null);
+      setDetailSessionId(null);
+      setMessages([]);
+    }
 
     setThreads((prev) => {
-      const idx = prev.findIndex((t) => {
-        const keyMatch = payloadKey
-          ? actorKey(t.actorExternalId, t.objectType) === payloadKey
-          : false;
-        const sessionMatch = payloadSessionId ? t.sessionId === payloadSessionId : false;
-        return keyMatch || sessionMatch;
-      });
+      if (payload.threadStatus && String(payload.threadStatus) === "CLOSED") {
+        return prev.filter((t) => t.sessionId !== payloadSessionId);
+      }
+
+      const idx = prev.findIndex((t) => t.sessionId === payloadSessionId);
 
       if (idx === -1) {
-        if (!payloadKey || !payloadSessionId) return prev;
         const newItem: MetaInboxThread = {
+          threadId: payload.threadId ? String(payload.threadId) : undefined,
           sessionId: payloadSessionId,
           actorExternalId: String(payload.actorExternalId),
           objectType: String(payload.objectType),
           sourceChannel: payload.sourceChannel ? String(payload.sourceChannel) : null,
+          threadStatus: payload.threadStatus ? String(payload.threadStatus) : "OPEN",
+          attentionMode: payload.attentionMode ? String(payload.attentionMode) : "N8N",
+          threadStage: payload.threadStage ? String(payload.threadStage) : "inicio",
           displayName: payload.displayName ? String(payload.displayName) : "Nuevo",
           phone: payload.phone ? String(payload.phone) : null,
           email: payload.email ? String(payload.email) : null,
@@ -151,6 +198,7 @@ const MetaInboxPage: React.FC = () => {
       const current = prev[idx];
       const updated: MetaInboxThread = {
         ...current,
+        threadId: payload.threadId ? String(payload.threadId) : current.threadId,
         sessionId: payloadSessionId || current.sessionId,
         actorExternalId: payload.actorExternalId ? String(payload.actorExternalId) : current.actorExternalId,
         objectType: payload.objectType ? String(payload.objectType) : current.objectType,
@@ -160,6 +208,9 @@ const MetaInboxPage: React.FC = () => {
               ? String(payload.sourceChannel)
               : null
             : current.sourceChannel,
+        threadStatus: payload.threadStatus ? String(payload.threadStatus) : current.threadStatus,
+        attentionMode: payload.attentionMode ? String(payload.attentionMode) : current.attentionMode,
+        threadStage: payload.threadStage ? String(payload.threadStage) : current.threadStage,
         displayName: payload.displayName ? String(payload.displayName) : current.displayName,
         phone:
           payload.phone !== undefined
@@ -221,8 +272,8 @@ const MetaInboxPage: React.FC = () => {
     try {
       const data = sortThreads(await listMetaInboxThreads(100, 0));
       setThreads(data);
-      if (!selectedActorKey && data.length > 0) {
-        setSelectedActorKey(actorKey(data[0].actorExternalId, data[0].objectType));
+      if (!selectedSessionId && data.length > 0) {
+        setSelectedSessionId(data[0].sessionId);
       }
     } catch (e: any) {
       setError(e?.message || "Error cargando conversaciones");
@@ -273,8 +324,7 @@ const MetaInboxPage: React.FC = () => {
       const data = payload as InboxRealtimePayload;
       mergeThread(data);
 
-      const payloadKey = getPayloadActorKey(data);
-      if (!payloadKey || payloadKey !== selectedActorKey) return;
+      if (!data.sessionId || String(data.sessionId) !== selectedSessionId) return;
       if (!data.externalEventId) return;
 
       setMessages((prev) => {
@@ -300,7 +350,7 @@ const MetaInboxPage: React.FC = () => {
       offMetaInboxThreadUpsert();
       offMetaInboxMessageNew();
     };
-  }, [selectedActorKey, selectedThread?.sessionId, selectedThread?.actorExternalId, selectedThread?.objectType]);
+  }, [selectedSessionId, selectedThread?.sessionId, selectedThread?.actorExternalId, selectedThread?.objectType]);
 
   const handleSaveContact = async () => {
     if (!selectedThread?.sessionId) return;
@@ -330,6 +380,44 @@ const MetaInboxPage: React.FC = () => {
       setError(e?.message || "Error guardando contacto");
     } finally {
       setSavingContact(false);
+    }
+  };
+
+  const handleThreadControlChange = async (patch: MetaInboxThreadControlUpdate) => {
+    if (!selectedThread?.sessionId) return;
+    setSavingThreadControl(true);
+    setError(null);
+    try {
+      await updateMetaInboxThreadControl(selectedThread.sessionId, patch);
+      mergeThread({
+        sessionId: selectedThread.sessionId,
+        actorExternalId: selectedThread.actorExternalId,
+        objectType: selectedThread.objectType,
+        threadStatus: patch.threadStatus,
+        attentionMode: patch.attentionMode,
+        threadStage: patch.threadStage,
+      });
+    } catch (e: any) {
+      setError(e?.message || "Error actualizando thread");
+    } finally {
+      setSavingThreadControl(false);
+    }
+  };
+
+  const handleReopenThread = async (sessionId: string) => {
+    if (!sessionId) return;
+    setReopeningThread(true);
+    setError(null);
+    try {
+      const reopened = await reopenMetaInboxThread(sessionId);
+      mergeThread(reopened);
+      setSelectedSessionId(reopened.sessionId);
+      setDetailSessionId(reopened.sessionId);
+      setMessages([]);
+    } catch (e: any) {
+      setError(e?.message || "Error abriendo nueva atencion");
+    } finally {
+      setReopeningThread(false);
     }
   };
 
@@ -444,17 +532,19 @@ const MetaInboxPage: React.FC = () => {
           </div>
 
           {threads.map((thread) => {
-            const key = actorKey(thread.actorExternalId, thread.objectType);
-            const active = key === selectedActorKey;
+            const active = thread.sessionId === selectedSessionId;
             return (
               <div
-                key={key}
+                key={thread.sessionId}
                 className={`${estilos.metaInbox.threadItem} ${
                   active ? estilos.metaInbox.threadItemActive : ""
                 }`}
               >
                 <div className={estilos.metaInbox.threadRow}>
-                  <button onClick={() => setSelectedActorKey(key)} className={estilos.metaInbox.threadMainButton}>
+                    <button
+                      onClick={() => setSelectedSessionId(thread.sessionId)}
+                      className={estilos.metaInbox.threadMainButton}
+                    >
                     <div className={estilos.metaInbox.threadTop}>
                       <span className={estilos.metaInbox.threadName}>{thread.displayName || "Nuevo"}</span>
                       <span className={estilos.metaInbox.threadTime}>
@@ -467,29 +557,51 @@ const MetaInboxPage: React.FC = () => {
                         objectType={thread.objectType}
                         className="inline-block w-3.5 h-3.5"
                       />
+                      <span className="ml-2 text-[10px] uppercase tracking-wide text-textoSecundario">
+                        {thread.attentionMode}
+                      </span>
+                      <span className="ml-2 text-[10px] uppercase tracking-wide text-textoSecundario">
+                        {thread.threadStatus}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-[10px] text-textoSecundario truncate opacity-70">
+                      {thread.threadStage}
                     </div>
                   </button>
 
                   <div className="relative">
                     <button
-                      onClick={() => setOpenMenuForKey((prev) => (prev === key ? null : key))}
+                      onClick={() => setOpenMenuForSessionId((prev) => (prev === thread.sessionId ? null : thread.sessionId))}
                       className={estilos.metaInbox.menuButton}
                       aria-label="menu actor"
                     >
                       <MoreVertical size={14} />
                     </button>
-                    {openMenuForKey === key && (
+                    {openMenuForSessionId === thread.sessionId && (
                       <div className={estilos.metaInbox.menuPopup}>
                         <button
                           onClick={() => {
-                            setSelectedActorKey(key);
-                            setContactActorKey(key);
-                            setOpenMenuForKey(null);
+                            setSelectedSessionId(thread.sessionId);
+                            setDetailSessionId(thread.sessionId);
+                            setOpenMenuForSessionId(null);
                           }}
                           className={estilos.metaInbox.menuOption}
                         >
-                          Ver contacto
+                          Ver detalle
                         </button>
+                        {(thread.threadStatus === "ARCHIVED" || thread.threadStatus === "CLOSED") && (
+                          <button
+                            onClick={() => {
+                              setSelectedSessionId(thread.sessionId);
+                              setDetailSessionId(thread.sessionId);
+                              setOpenMenuForSessionId(null);
+                              void handleReopenThread(thread.sessionId);
+                            }}
+                            className={estilos.metaInbox.menuOption}
+                          >
+                            Nueva atencion
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -515,12 +627,21 @@ const MetaInboxPage: React.FC = () => {
                         objectType={selectedThread.objectType}
                         className="inline-block w-3.5 h-3.5"
                       />
+                      <span className="ml-2 text-xs text-textoSecundario uppercase">
+                        {selectedThread.attentionMode}
+                      </span>
+                      <span className="ml-2 text-xs text-textoSecundario uppercase">
+                        {selectedThread.threadStatus}
+                      </span>
+                      <span className="ml-2 text-xs text-textoSecundario">
+                        {selectedThread.threadStage}
+                      </span>
                     </div>
                   </div>
                   <button
                     onClick={() => {
-                      setSelectedActorKey(null);
-                      setContactActorKey(null);
+                      setSelectedSessionId(null);
+                      setDetailSessionId(null);
                       setMessages([]);
                     }}
                     className={estilos.metaInbox.closeButton}
@@ -634,16 +755,71 @@ const MetaInboxPage: React.FC = () => {
         {showContactPanel && (
           <aside className={estilos.metaInbox.contactAside}>
             <div className={estilos.metaInbox.contactHead}>
-              <h2 className={estilos.metaInbox.contactTitle}>Contacto</h2>
+              <h2 className={estilos.metaInbox.contactTitle}>Detalle</h2>
               <button
-                onClick={() => setContactActorKey(null)}
+                onClick={() => setDetailSessionId(null)}
                 className={estilos.metaInbox.closeButton}
-                aria-label="Cerrar contacto"
-                title="Cerrar contacto"
+                aria-label="Cerrar detalle"
+                title="Cerrar detalle"
               >
                 <X size={16} />
               </button>
             </div>
+            <div className="space-y-2 border-b border-borde pb-3">
+              <div className="text-xs uppercase tracking-wide text-textoOscuro/70">Thread</div>
+              <select
+                value={selectedThread.threadStatus}
+                onChange={(e) => void handleThreadControlChange({ threadStatus: e.target.value })}
+                disabled={savingThreadControl}
+                className={estilos.metaInbox.contactInput}
+              >
+                {THREAD_STATUS_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    Estado: {option}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={selectedThread.attentionMode}
+                onChange={(e) => void handleThreadControlChange({ attentionMode: e.target.value })}
+                disabled={savingThreadControl}
+                className={estilos.metaInbox.contactInput}
+              >
+                {ATTENTION_MODE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    Modo: {option}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={selectedThread.threadStage}
+                onChange={(e) => void handleThreadControlChange({ threadStage: e.target.value })}
+                disabled={savingThreadControl}
+                className={estilos.metaInbox.contactInput}
+              >
+                {THREAD_STAGE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    Etapa: {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2 border-b border-borde pb-3">
+              <div className="text-xs uppercase tracking-wide text-textoOscuro/70">Actor</div>
+              <div className={estilos.metaInbox.contactInput}>
+                Score: {selectedThread.actorScore ?? "0"}
+              </div>
+              <div className={estilos.metaInbox.contactInput}>
+                Lifecycle: {selectedThread.actorLifecycleState ?? "SIN_ESTADO"}
+              </div>
+              <div className={estilos.metaInbox.contactInput}>
+                Actualizado:{" "}
+                {selectedThread.actorLifecycleUpdatedAt
+                  ? formatRelativeTs(selectedThread.actorLifecycleUpdatedAt)
+                  : "sin registro"}
+              </div>
+            </div>
+            <div className="text-xs uppercase tracking-wide text-textoOscuro/70">Contacto</div>
             <input
               value={contactForm.displayName || ""}
               onChange={(e) => setContactForm((prev) => ({ ...prev, displayName: e.target.value }))}

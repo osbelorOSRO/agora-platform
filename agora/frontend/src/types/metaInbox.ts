@@ -5,15 +5,22 @@ export type MetaInboxContentJson = {
 };
 
 export type MetaInboxThread = {
+  threadId?: string;
   sessionId: string;
   actorExternalId: string;
   objectType: string;
   sourceChannel: string | null;
+  threadStatus: string;
+  attentionMode: string;
+  threadStage: string;
   displayName: string;
   phone: string | null;
   email: string | null;
   notes: string | null;
   city: string | null;
+  actorScore?: string | null;
+  actorLifecycleState?: string | null;
+  actorLifecycleUpdatedAt?: string | null;
   lastMessageText: string | null;
   lastDirection: string;
   lastMessageAt: string;
@@ -39,4 +46,10 @@ export type MetaInboxContactUpdate = {
   email?: string;
   notes?: string;
   city?: string;
+};
+
+export type MetaInboxThreadControlUpdate = {
+  threadStatus?: string;
+  attentionMode?: string;
+  threadStage?: string;
 };

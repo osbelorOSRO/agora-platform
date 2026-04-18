@@ -1,5 +1,10 @@
 import { getAuthHeaders } from "@/utils/getAuthHeaders";
-import type { MetaInboxContactUpdate, MetaInboxMessage, MetaInboxThread } from "@/types/metaInbox";
+import type {
+  MetaInboxContactUpdate,
+  MetaInboxMessage,
+  MetaInboxThread,
+  MetaInboxThreadControlUpdate,
+} from "@/types/metaInbox";
 
 const API_URL = import.meta.env.VITE_API_URL as string;
 
@@ -40,6 +45,25 @@ export const updateMetaInboxContact = async (sessionId: string, payload: MetaInb
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error("No se pudo actualizar el contacto");
+  return res.json();
+};
+
+export const updateMetaInboxThreadControl = async (sessionId: string, payload: MetaInboxThreadControlUpdate) => {
+  const res = await fetch(`${API_URL}/meta-inbox/threads/${encodeURIComponent(sessionId)}/control`, {
+    method: "PATCH",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("No se pudo actualizar el thread");
+  return res.json();
+};
+
+export const reopenMetaInboxThread = async (sessionId: string): Promise<MetaInboxThread> => {
+  const res = await fetch(`${API_URL}/meta-inbox/threads/${encodeURIComponent(sessionId)}/reopen`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error("No se pudo abrir una nueva atencion");
   return res.json();
 };
 

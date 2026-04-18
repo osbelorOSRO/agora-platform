@@ -9,6 +9,7 @@ import { MsgDelegationProcessor } from './pipelines/msg-delegation.processor';
 import { MsgDelegationStateService } from './pipelines/msg-delegation-state.service';
 import { MsgDelegationCompletionService } from './pipelines/msg-delegation-completion.service';
 import { MsgDelegationCallbackController } from './pipelines/msg-delegation-callback.controller';
+import { ThreadMsgDelegationProcessor } from './pipelines/thread-msg-delegation.processor';
 import { QueuesModule } from '../queues/queues.module';
 import { ActorEventsModule } from '../actor-events/actor-events.module';
 import { CacheConfigModule } from '../cache/cache.module';
@@ -32,6 +33,7 @@ import { WebsocketNotifierModule } from '../websocket-notifier/websocket-notifie
     ChangesProcessor,
     MessagesProcessor,
     MsgDelegationProcessor,
+    ThreadMsgDelegationProcessor,
     ActorTransitionsProcessor,
     MsgDelegationFinalizer,
   ],

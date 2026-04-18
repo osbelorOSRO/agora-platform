@@ -1,6 +1,6 @@
 {
   "name": "api-backend-nest",
-  "version": "1.2.0",
+  "version": "1.2.2",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {

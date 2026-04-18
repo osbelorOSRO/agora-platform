@@ -9,18 +9,48 @@ import util from 'util';
 import { getRuntimeSecret } from '../shared/runtime-secrets';
 
 type ThreadRow = {
+  threadId: string;
   sessionId: string;
   actorExternalId: string;
   objectType: string;
   sourceChannel: string | null;
+  threadStatus: string;
+  attentionMode: string;
+  threadStage: string;
   displayName: string;
   phone: string | null;
   email: string | null;
   notes: string | null;
   city: string | null;
+  actorScore: string | null;
+  actorLifecycleState: string | null;
+  actorLifecycleUpdatedAt: Date | null;
   lastMessageText: string | null;
   lastDirection: string;
   lastMessageAt: Date;
+};
+
+type ThreadIdentity = {
+  sessionId: string;
+  actorExternalId: string;
+  objectType: string;
+  sourceChannel: string | null;
+};
+
+type ThreadControlSnapshot = ThreadIdentity & {
+  threadId: string;
+  threadStatus: string;
+  attentionMode: string;
+  threadStage: string;
+  lastMessageText: string | null;
+  lastDirection: string | null;
+  lastMessageAt: Date | null;
+};
+
+type ThreadSelectorInput = {
+  sessionId?: string;
+  actorExternalId?: string;
+  objectType?: string;
 };
 
 type MessageRow = {
@@ -37,6 +67,17 @@ type MessageRow = {
   occurredAt: Date;
 };
 
+type StageTemplateRow = {
+  stageActual: string;
+  posicion: number | null;
+  posiblesMatch: string;
+  esFallback: boolean;
+  procesaDatos: boolean;
+  datoEsperado: string | null;
+  nuevoStage: string;
+  tipoRespuesta: string;
+};
+
 @Injectable()
 export class MetaInboxService implements OnModuleInit {
   private readonly logger = new Logger(MetaInboxService.name);
@@ -48,6 +89,43 @@ export class MetaInboxService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
+    await this.prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS threads (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        session_id varchar(255) NOT NULL UNIQUE,
+        actor_external_id varchar(255) NOT NULL,
+        object_type varchar(32) NOT NULL,
+        source_channel varchar(32) NULL,
+        thread_status varchar(32) NOT NULL DEFAULT 'OPEN',
+        attention_mode varchar(32) NOT NULL DEFAULT 'N8N',
+        thread_stage varchar(64) NOT NULL DEFAULT 'inicio',
+        awaiting_first_incoming_delegate boolean NOT NULL DEFAULT false,
+        last_message_text text NULL,
+        last_direction varchar(16) NULL,
+        last_message_at timestamptz NULL,
+        last_incoming_at timestamptz NULL,
+        last_outgoing_at timestamptz NULL,
+        opened_at timestamptz NOT NULL DEFAULT now(),
+        paused_at timestamptz NULL,
+        archived_at timestamptz NULL,
+        closed_at timestamptz NULL,
+        metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        updated_at timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+    await this.prisma.$executeRawUnsafe(`
+      ALTER TABLE threads
+      ADD COLUMN IF NOT EXISTS awaiting_first_incoming_delegate boolean NOT NULL DEFAULT false
+    `);
+    await this.prisma.$executeRawUnsafe(`
+      CREATE INDEX IF NOT EXISTS idx_threads_actor_object
+      ON threads(actor_external_id, object_type)
+    `);
+    await this.prisma.$executeRawUnsafe(`
+      CREATE INDEX IF NOT EXISTS idx_threads_status_last_message
+      ON threads(thread_status, last_message_at DESC NULLS LAST)
+    `);
     await this.prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS meta_inbox_contacts (
         id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -67,6 +145,164 @@ export class MetaInboxService implements OnModuleInit {
       ALTER TABLE meta_inbox_contacts
       ADD COLUMN IF NOT EXISTS city varchar(120) NULL
     `);
+    await this.prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS thread_messages (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        session_id varchar(255) NOT NULL,
+        external_event_id varchar(255) NOT NULL UNIQUE,
+        message_external_id varchar(255) NULL,
+        actor_external_id varchar(255) NOT NULL,
+        provider varchar(32) NOT NULL DEFAULT 'META',
+        object_type varchar(32) NOT NULL,
+        source_channel varchar(32) NULL,
+        event_kind varchar(64) NOT NULL,
+        direction varchar(16) NOT NULL,
+        content_text text NULL,
+        content_json jsonb NULL,
+        in_reply_to_external_event_id varchar(255) NULL,
+        status varchar(32) NOT NULL DEFAULT 'received',
+        occurred_at timestamptz NOT NULL,
+        received_at timestamptz NOT NULL DEFAULT now(),
+        created_at timestamptz NOT NULL DEFAULT now(),
+        updated_at timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+    await this.prisma.$executeRawUnsafe(`
+      CREATE INDEX IF NOT EXISTS idx_thread_messages_session_time
+      ON thread_messages(session_id, occurred_at DESC)
+    `);
+    await this.prisma.$executeRawUnsafe(`
+      CREATE INDEX IF NOT EXISTS idx_thread_messages_actor_object_time
+      ON thread_messages(actor_external_id, object_type, occurred_at DESC)
+    `);
+    await this.prisma.$executeRawUnsafe(`
+      CREATE INDEX IF NOT EXISTS idx_thread_messages_direction
+      ON thread_messages(direction)
+    `);
+    await this.prisma.$executeRawUnsafe(`
+      INSERT INTO thread_messages (
+        session_id,
+        external_event_id,
+        message_external_id,
+        actor_external_id,
+        provider,
+        object_type,
+        source_channel,
+        event_kind,
+        direction,
+        content_text,
+        content_json,
+        in_reply_to_external_event_id,
+        status,
+        occurred_at,
+        received_at,
+        created_at,
+        updated_at
+      )
+      SELECT
+        session_id,
+        external_event_id,
+        message_external_id,
+        actor_external_id,
+        provider,
+        object_type,
+        source_channel,
+        event_kind,
+        direction,
+        content_text,
+        content_json,
+        in_reply_to_external_event_id,
+        status,
+        occurred_at,
+        received_at,
+        created_at,
+        updated_at
+      FROM n8n_message_sessions
+      ON CONFLICT (external_event_id) DO NOTHING
+    `);
+    await this.prisma.$executeRawUnsafe(`
+      INSERT INTO threads (
+        session_id,
+        actor_external_id,
+        object_type,
+        source_channel,
+        last_message_text,
+        last_direction,
+        last_message_at,
+        last_incoming_at,
+        last_outgoing_at,
+        metadata
+      )
+      SELECT DISTINCT ON (s.session_id)
+        s.session_id,
+        s.actor_external_id,
+        s.object_type,
+        s.source_channel,
+        s.content_text,
+        s.direction,
+        s.occurred_at,
+        (
+          SELECT s2.occurred_at
+          FROM thread_messages s2
+          WHERE s2.session_id = s.session_id
+            AND s2.direction = 'INCOMING'
+          ORDER BY s2.occurred_at DESC
+          LIMIT 1
+        ),
+        (
+          SELECT s3.occurred_at
+          FROM thread_messages s3
+          WHERE s3.session_id = s.session_id
+            AND s3.direction = 'OUTGOING'
+          ORDER BY s3.occurred_at DESC
+          LIMIT 1
+        ),
+        jsonb_build_object('backfilledFrom', 'thread_messages')
+      FROM thread_messages s
+      WHERE s.direction IN ('INCOMING', 'OUTGOING')
+      ORDER BY s.session_id, s.occurred_at DESC
+      ON CONFLICT (session_id) DO NOTHING
+    `);
+    await this.prisma.$executeRawUnsafe(`
+      WITH visible_last AS (
+        SELECT DISTINCT ON (s.session_id)
+          s.session_id,
+          s.content_text,
+          s.direction,
+          s.occurred_at
+        FROM thread_messages s
+        WHERE s.direction IN ('INCOMING', 'OUTGOING')
+        ORDER BY s.session_id, s.occurred_at DESC
+      ),
+      visible_incoming AS (
+        SELECT
+          s.session_id,
+          MAX(s.occurred_at) AS last_incoming_at
+        FROM thread_messages s
+        WHERE s.direction = 'INCOMING'
+        GROUP BY s.session_id
+      ),
+      visible_outgoing AS (
+        SELECT
+          s.session_id,
+          MAX(s.occurred_at) AS last_outgoing_at
+        FROM thread_messages s
+        WHERE s.direction = 'OUTGOING'
+        GROUP BY s.session_id
+      )
+      UPDATE threads t
+      SET
+        last_message_text = vl.content_text,
+        last_direction = vl.direction,
+        last_message_at = vl.occurred_at,
+        last_incoming_at = vi.last_incoming_at,
+        last_outgoing_at = vo.last_outgoing_at,
+        updated_at = now()
+      FROM visible_last vl
+      LEFT JOIN visible_incoming vi ON vi.session_id = vl.session_id
+      LEFT JOIN visible_outgoing vo ON vo.session_id = vl.session_id
+      WHERE t.session_id = vl.session_id
+    `);
   }
 
   async listThreads(input: { limit?: number; offset?: number }) {
@@ -74,37 +310,51 @@ export class MetaInboxService implements OnModuleInit {
     const offset = Math.max(input.offset ?? 0, 0);
 
     const rows = await this.prisma.$queryRawUnsafe<ThreadRow[]>(`
-      SELECT *
-      FROM (
-        SELECT DISTINCT ON (s.actor_external_id, s.object_type)
-          s.session_id AS "sessionId",
-          s.actor_external_id AS "actorExternalId",
-          s.object_type AS "objectType",
-          s.source_channel AS "sourceChannel",
-          COALESCE(c.display_name, 'Nuevo') AS "displayName",
-          c.phone AS "phone",
-          c.email AS "email",
-          c.notes AS "notes",
-          c.city AS "city",
-          s.content_text AS "lastMessageText",
-          s.direction AS "lastDirection",
-          s.occurred_at AS "lastMessageAt"
-        FROM n8n_message_sessions s
-        LEFT JOIN meta_inbox_contacts c
-          ON c.actor_external_id = s.actor_external_id
-         AND c.object_type = s.object_type
-        WHERE s.direction IN ('INCOMING', 'OUTGOING')
-        ORDER BY s.actor_external_id, s.object_type, s.occurred_at DESC
-      ) t
-      JOIN LATERAL (
-        SELECT al.state
+      SELECT
+        t.id AS "threadId",
+        t.session_id AS "sessionId",
+        t.actor_external_id AS "actorExternalId",
+        t.object_type AS "objectType",
+        t.source_channel AS "sourceChannel",
+        t.thread_status AS "threadStatus",
+        t.attention_mode AS "attentionMode",
+        t.thread_stage AS "threadStage",
+        COALESCE(c.display_name, 'Nuevo') AS "displayName",
+        c.phone AS "phone",
+        c.email AS "email",
+        c.notes AS "notes",
+        c.city AS "city",
+        sc.score::text AS "actorScore",
+        lc.state::text AS "actorLifecycleState",
+        lc.occurred_at AS "actorLifecycleUpdatedAt",
+        t.last_message_text AS "lastMessageText",
+        COALESCE(t.last_direction, 'INCOMING') AS "lastDirection",
+        t.last_message_at AS "lastMessageAt"
+      FROM threads t
+      LEFT JOIN meta_inbox_contacts c
+        ON c.actor_external_id = t.actor_external_id
+       AND c.object_type = t.object_type
+      LEFT JOIN actor_score sc
+        ON sc.actor_external_id = t.actor_external_id
+      LEFT JOIN LATERAL (
+        SELECT al.state, al.occurred_at
         FROM actor_lifecycle al
-        WHERE al.actor_external_id = t."actorExternalId"
+        WHERE al.actor_external_id = t.actor_external_id
         ORDER BY al.occurred_at DESC
         LIMIT 1
-      ) last_state ON true
-      WHERE last_state.state = 'QUALIFIED'
-      ORDER BY t."lastMessageAt" DESC
+      ) lc ON true
+      WHERE t.thread_status <> 'CLOSED'
+        AND (
+          t.last_direction IN ('INCOMING', 'OUTGOING')
+          OR EXISTS (
+            SELECT 1
+            FROM thread_messages s
+            WHERE s.session_id = t.session_id
+              AND s.direction IN ('INCOMING', 'OUTGOING')
+          )
+          OR (t.last_message_at IS NOT NULL AND t.thread_status IN ('OPEN', 'PAUSED'))
+        )
+      ORDER BY t.last_message_at DESC NULLS LAST
       LIMIT ${limit}
       OFFSET ${offset}
     `);
@@ -126,28 +376,58 @@ export class MetaInboxService implements OnModuleInit {
         content_json AS "contentJson",
         status,
         occurred_at AS "occurredAt"
-      FROM n8n_message_sessions
+      FROM thread_messages
       WHERE session_id = $1
-        AND ($2::boolean = true OR direction <> 'SYSTEM')
-        AND EXISTS (
-          SELECT 1
-          FROM actor_lifecycle al
-          WHERE al.actor_external_id = n8n_message_sessions.actor_external_id
-          ORDER BY al.occurred_at DESC
-          LIMIT 1
-        )
-        AND (
-          SELECT al2.state
-          FROM actor_lifecycle al2
-          WHERE al2.actor_external_id = n8n_message_sessions.actor_external_id
-          ORDER BY al2.occurred_at DESC
-          LIMIT 1
-        ) = 'QUALIFIED'
+        AND ($2::boolean = true OR direction <> 'SYSTEM' OR event_kind = 'bootstrap_greeting')
       ORDER BY occurred_at ASC
       LIMIT 1000
     `, sessionId, includeSystem);
 
-    return rows;
+    return rows.map((row) => ({
+      ...row,
+      contentJson: this.normalizeLegacyMessageContentJson(row.contentJson),
+    }));
+  }
+
+  async getStageTemplatePaths(stageActual: string) {
+    const normalizedStage = (stageActual || '').trim();
+    if (!normalizedStage) {
+      throw new BadRequestException('Debes enviar un stage actual valido');
+    }
+
+    const rows = await this.prisma.$queryRawUnsafe<StageTemplateRow[]>(
+      `
+      SELECT
+        stage_actual AS "stageActual",
+        posicion,
+        posibles_match AS "posiblesMatch",
+        es_fallback AS "esFallback",
+        procesa_datos AS "procesaDatos",
+        dato_esperado AS "datoEsperado",
+        nuevo_stage AS "nuevoStage",
+        tipo_respuesta AS "tipoRespuesta"
+      FROM stage_templates
+      WHERE stage_actual = $1
+        AND activo = true
+      ORDER BY posicion ASC NULLS LAST, id ASC
+    `,
+      normalizedStage,
+    );
+
+    return {
+      stage_actual: normalizedStage,
+      caminos: rows.map((row) =>
+        this.omitEmptyFields({
+          posicion: row.posicion,
+          posibles_match: row.posiblesMatch,
+          es_fallback: row.esFallback,
+          procesa_datos: row.procesaDatos,
+          dato_esperado: row.datoEsperado,
+          nuevo_stage: row.nuevoStage,
+          tipo_respuesta: row.tipoRespuesta,
+        }),
+      ),
+    };
   }
 
   async updateContact(
@@ -179,21 +459,250 @@ export class MetaInboxService implements OnModuleInit {
       input.city ?? null,
     );
 
+    const updated = await this.getThreadRow(sessionId);
     await this.websocketNotifier.notificarMetaInboxThreadUpsert({
+      threadId: updated?.threadId,
       sessionId,
       actorExternalId: thread.actorExternalId,
       objectType: thread.objectType,
-      displayName: input.displayName ?? undefined,
-      phone: input.phone ?? undefined,
-      email: input.email ?? undefined,
-      notes: input.notes ?? undefined,
-      city: input.city ?? undefined,
+      displayName: input.displayName ?? updated?.displayName ?? undefined,
+      phone: input.phone ?? updated?.phone ?? undefined,
+      email: input.email ?? updated?.email ?? undefined,
+      notes: input.notes ?? updated?.notes ?? undefined,
+      city: input.city ?? updated?.city ?? undefined,
+      threadStatus: updated?.threadStatus,
+      attentionMode: updated?.attentionMode,
+      threadStage: updated?.threadStage,
+      lastMessageText: updated?.lastMessageText ?? undefined,
+      lastDirection: updated?.lastDirection ?? undefined,
+      lastMessageAt: updated?.lastMessageAt?.toISOString(),
     });
 
-    return { ok: true };
+    return {
+      ok: true,
+      sessionId,
+      actorExternalId: thread.actorExternalId,
+      objectType: thread.objectType,
+      contact: {
+        displayName: input.displayName ?? updated?.displayName ?? 'Nuevo',
+        phone: input.phone ?? updated?.phone ?? null,
+        email: input.email ?? updated?.email ?? null,
+        notes: input.notes ?? updated?.notes ?? null,
+        city: input.city ?? updated?.city ?? null,
+      },
+    };
+  }
+
+  async updateThreadControl(
+    sessionId: string,
+    input: { threadStatus?: string; attentionMode?: string; threadStage?: string },
+  ) {
+    const thread = await this.getThreadSnapshot(sessionId);
+    if (!thread) throw new Error(`session_not_found:${sessionId}`);
+
+    await this.prisma.$executeRawUnsafe(
+      `
+      UPDATE threads
+      SET
+        thread_status = COALESCE($2, thread_status),
+        attention_mode = COALESCE($3, attention_mode),
+        thread_stage = COALESCE($4, thread_stage),
+        paused_at = CASE
+          WHEN COALESCE($2, thread_status) = 'PAUSED' THEN now()
+          WHEN $2 IS NOT NULL AND $2 <> 'PAUSED' THEN NULL
+          ELSE paused_at
+        END,
+        archived_at = CASE
+          WHEN COALESCE($2, thread_status) = 'ARCHIVED' THEN now()
+          WHEN $2 IS NOT NULL AND $2 <> 'ARCHIVED' THEN NULL
+          ELSE archived_at
+        END,
+        closed_at = CASE
+          WHEN COALESCE($2, thread_status) = 'CLOSED' THEN now()
+          WHEN $2 IS NOT NULL AND $2 <> 'CLOSED' THEN NULL
+          ELSE closed_at
+        END,
+        updated_at = now()
+      WHERE session_id = $1
+    `,
+      sessionId,
+      input.threadStatus ?? null,
+      input.attentionMode ?? null,
+      input.threadStage ?? null,
+    );
+
+    const updated = await this.getThreadSnapshot(sessionId);
+    if (!updated) throw new Error(`session_not_found:${sessionId}`);
+
+    await this.notifyThreadUpsert(updated);
+
+    return {
+      ok: true,
+      threadStatus: updated.threadStatus,
+      attentionMode: updated.attentionMode,
+      threadStage: updated.threadStage,
+    };
+  }
+
+  async reopenThread(sessionId: string) {
+    const current = await this.getThreadRow(sessionId);
+    if (!current) throw new Error(`session_not_found:${sessionId}`);
+    if (!['ARCHIVED', 'CLOSED'].includes(current.threadStatus)) {
+      throw new BadRequestException('Solo se puede abrir una nueva atencion desde un thread ARCHIVED o CLOSED');
+    }
+
+    const openedAt = new Date();
+
+    await this.prisma.$executeRawUnsafe(
+      `
+      UPDATE threads
+      SET
+        thread_status = 'OPEN',
+        attention_mode = 'HUMAN',
+        thread_stage = 'delegado_humano',
+        opened_at = $2::timestamptz,
+        paused_at = NULL,
+        archived_at = NULL,
+        closed_at = NULL,
+        metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('reopenedAt', $2::timestamptz, 'openedManually', true),
+        updated_at = now()
+      WHERE session_id = $1
+    `,
+      current.sessionId,
+      openedAt,
+    );
+
+    const reopened = await this.getThreadRow(current.sessionId);
+    if (!reopened) throw new Error(`thread_reopen_failed:${current.sessionId}`);
+
+    await this.notifyThreadUpsert({
+      threadId: reopened.threadId,
+      sessionId: reopened.sessionId,
+      actorExternalId: reopened.actorExternalId,
+      objectType: reopened.objectType,
+      sourceChannel: reopened.sourceChannel,
+      threadStatus: reopened.threadStatus,
+      attentionMode: reopened.attentionMode,
+      threadStage: reopened.threadStage,
+      lastMessageText: reopened.lastMessageText,
+      lastDirection: reopened.lastDirection,
+      lastMessageAt: reopened.lastMessageAt ? new Date(reopened.lastMessageAt) : null,
+    });
+
+    return reopened;
+  }
+
+  async resolveThreadByActor(
+    actorExternalId: string,
+    objectType: string,
+    includeClosed = false,
+  ) {
+    const thread = await this.getPreferredThreadByActor(actorExternalId, objectType, includeClosed);
+    if (!thread) {
+      throw new Error(`thread_not_found:${objectType}:${actorExternalId}`);
+    }
+    return thread;
+  }
+
+  async updateThreadControlForAutomation(input: {
+    sessionId?: string;
+    actorExternalId?: string;
+    objectType?: string;
+    threadStatus?: string;
+    attentionMode?: string;
+    threadStage?: string;
+  }) {
+    const sessionId = await this.resolveSessionIdForAutomation(input);
+    const result = await this.updateThreadControl(sessionId, {
+      threadStatus: input.threadStatus,
+      attentionMode: input.attentionMode,
+      threadStage: input.threadStage,
+    });
+    const thread = await this.getThreadRow(sessionId);
+
+    return {
+      ...result,
+      sessionId,
+      thread,
+    };
+  }
+
+  async updateContactForAutomation(input: {
+    sessionId?: string;
+    actorExternalId?: string;
+    objectType?: string;
+    displayName?: string;
+    phone?: string;
+    email?: string;
+    notes?: string;
+    city?: string;
+  }) {
+    const sessionId = await this.resolveSessionIdForAutomation(input);
+    const result = await this.updateContact(sessionId, {
+      displayName: input.displayName,
+      phone: input.phone,
+      email: input.email,
+      notes: input.notes,
+      city: input.city,
+    });
+    const thread = await this.getThreadRow(sessionId);
+
+    return {
+      ...result,
+      thread,
+    };
+  }
+
+  async sendTextForAutomation(input: {
+    sessionId?: string;
+    actorExternalId?: string;
+    objectType?: string;
+    text: string;
+  }) {
+    const sessionId = await this.resolveSessionIdForAutomation(input);
+    const result = await this.sendTextInternal(sessionId, input.text, 'N8N');
+    const thread = await this.getThreadRow(sessionId);
+
+    return {
+      ...result,
+      thread,
+    };
+  }
+
+  async sendMessageForAutomation(input: {
+    sessionId?: string;
+    actorExternalId?: string;
+    objectType?: string;
+    text?: string;
+    mediaUrl?: string;
+    mediaType?: 'audio' | 'image';
+  }) {
+    const sessionId = await this.resolveSessionIdForAutomation(input);
+
+    if (input.text) {
+      const result = await this.sendTextInternal(sessionId, input.text, 'N8N');
+      const thread = await this.getThreadRow(sessionId);
+      return { ...result, thread };
+    }
+
+    if (input.mediaUrl && input.mediaType) {
+      const result = await this.sendMediaByUrlInternal(sessionId, input.mediaUrl, input.mediaType, 'N8N');
+      const thread = await this.getThreadRow(sessionId);
+      return { ...result, thread };
+    }
+
+    throw new Error('invalid_automation_message_payload');
   }
 
   async sendText(sessionId: string, text: string) {
+    return this.sendTextInternal(sessionId, text, 'HUMAN');
+  }
+
+  private async sendTextInternal(
+    sessionId: string,
+    text: string,
+    senderType: 'HUMAN' | 'N8N',
+  ) {
     const thread = await this.getThreadIdentity(sessionId);
     if (!thread) throw new Error(`session_not_found:${sessionId}`);
 
@@ -215,10 +724,17 @@ export class MetaInboxService implements OnModuleInit {
     const messageExternalId = response?.data?.message_id || null;
     const externalEventId = messageExternalId || `out_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
     const occurredAt = new Date();
+    const contentJson = {
+      senderType,
+      messageType: 'text',
+      sourceChannel: thread.sourceChannel,
+      structuredPayload: null,
+      graphResponse: response.data,
+    };
 
     await this.prisma.$executeRawUnsafe(
       `
-      INSERT INTO n8n_message_sessions (
+      INSERT INTO thread_messages (
         session_id, external_event_id, message_external_id, actor_external_id,
         provider, object_type, source_channel, event_kind, direction,
         content_text, content_json, in_reply_to_external_event_id, status, occurred_at, received_at, created_at, updated_at
@@ -236,10 +752,19 @@ export class MetaInboxService implements OnModuleInit {
       thread.objectType,
       thread.sourceChannel,
       text,
-      JSON.stringify({ graphResponse: response.data }),
+      JSON.stringify(contentJson),
       inReplyToExternalEventId,
       occurredAt,
     );
+    await this.upsertThreadRecord({
+      sessionId,
+      actorExternalId: thread.actorExternalId,
+      objectType: thread.objectType,
+      sourceChannel: thread.sourceChannel,
+      lastMessageText: text,
+      lastDirection: 'OUTGOING',
+      lastMessageAt: occurredAt,
+    });
 
     await this.websocketNotifier.notificarMetaInboxMessageNew({
       sessionId,
@@ -247,23 +772,22 @@ export class MetaInboxService implements OnModuleInit {
       objectType: thread.objectType,
       externalEventId,
       messageExternalId,
+      senderType,
+      messageType: 'text',
+      sourceChannel: thread.sourceChannel,
       direction: 'OUTGOING',
       eventKind: 'message',
       contentText: text,
+      contentJson,
       status: 'sent',
       occurredAt: occurredAt.toISOString(),
       inReplyToExternalEventId,
     });
 
-    await this.websocketNotifier.notificarMetaInboxThreadUpsert({
-      sessionId,
-      actorExternalId: thread.actorExternalId,
-      objectType: thread.objectType,
-      sourceChannel: thread.sourceChannel,
-      lastMessageText: text,
-      lastDirection: 'OUTGOING',
-      lastMessageAt: occurredAt.toISOString(),
-    });
+    const snapshot = await this.getThreadSnapshot(sessionId);
+    if (snapshot) {
+      await this.notifyThreadUpsert(snapshot);
+    }
 
     return {
       ok: true,
@@ -293,6 +817,34 @@ export class MetaInboxService implements OnModuleInit {
     const publicBase = (process.env.MEDIA_BASE_URL || '').replace(/\/+$/, '');
     const mediaUrl = `${publicBase}/uploads/${preparedMedia.fileName}`;
 
+    return this.sendMediaByUrlInternal(
+      sessionId,
+      mediaUrl,
+      mediaType,
+      'HUMAN',
+      {
+        mimeType: preparedMedia.mimeType,
+        fileName: preparedMedia.fileName,
+      },
+    );
+  }
+
+  private async sendMediaByUrlInternal(
+    sessionId: string,
+    mediaUrl: string,
+    mediaType: 'audio' | 'image',
+    senderType: 'HUMAN' | 'N8N',
+    extra?: { mimeType?: string; fileName?: string },
+  ) {
+    const thread = await this.getThreadIdentity(sessionId);
+    if (!thread) throw new Error(`session_not_found:${sessionId}`);
+
+    const transport = await this.resolveSendTransport(thread.objectType, thread.sourceChannel);
+    const inReplyToExternalEventId = await this.getLastIncomingExternalEventId(sessionId);
+    if (!inReplyToExternalEventId) {
+      throw new Error(`missing_conversation_context:${sessionId}`);
+    }
+
     const response = await this.postToGraphWithFallback(
       thread,
       {
@@ -315,16 +867,20 @@ export class MetaInboxService implements OnModuleInit {
     const occurredAt = new Date();
     const placeholderText = this.resolveMediaPlaceholder(mediaType);
     const contentJson = {
+      senderType,
+      messageType: mediaType,
+      sourceChannel: thread.sourceChannel,
+      structuredPayload: null,
       mediaType,
       mediaUrl,
-      mimeType: preparedMedia.mimeType,
-      fileName: preparedMedia.fileName,
+      mimeType: extra?.mimeType || null,
+      fileName: extra?.fileName || null,
       graphResponse: response.data,
     };
 
     await this.prisma.$executeRawUnsafe(
       `
-      INSERT INTO n8n_message_sessions (
+      INSERT INTO thread_messages (
         session_id, external_event_id, message_external_id, actor_external_id,
         provider, object_type, source_channel, event_kind, direction,
         content_text, content_json, in_reply_to_external_event_id, status, occurred_at, received_at, created_at, updated_at
@@ -346,6 +902,15 @@ export class MetaInboxService implements OnModuleInit {
       inReplyToExternalEventId,
       occurredAt,
     );
+    await this.upsertThreadRecord({
+      sessionId,
+      actorExternalId: thread.actorExternalId,
+      objectType: thread.objectType,
+      sourceChannel: thread.sourceChannel,
+      lastMessageText: placeholderText,
+      lastDirection: 'OUTGOING',
+      lastMessageAt: occurredAt,
+    });
 
     await this.websocketNotifier.notificarMetaInboxMessageNew({
       sessionId,
@@ -353,6 +918,9 @@ export class MetaInboxService implements OnModuleInit {
       objectType: thread.objectType,
       externalEventId,
       messageExternalId,
+      senderType,
+      messageType: mediaType,
+      sourceChannel: thread.sourceChannel,
       direction: 'OUTGOING',
       eventKind: 'message',
       contentText: placeholderText,
@@ -362,15 +930,10 @@ export class MetaInboxService implements OnModuleInit {
       inReplyToExternalEventId,
     });
 
-    await this.websocketNotifier.notificarMetaInboxThreadUpsert({
-      sessionId,
-      actorExternalId: thread.actorExternalId,
-      objectType: thread.objectType,
-      sourceChannel: thread.sourceChannel,
-      lastMessageText: placeholderText,
-      lastDirection: 'OUTGOING',
-      lastMessageAt: occurredAt.toISOString(),
-    });
+    const snapshot = await this.getThreadSnapshot(sessionId);
+    if (snapshot) {
+      await this.notifyThreadUpsert(snapshot);
+    }
 
     return {
       ok: true,
@@ -396,7 +959,28 @@ export class MetaInboxService implements OnModuleInit {
         actor_external_id AS "actorExternalId",
         object_type AS "objectType",
         source_channel AS "sourceChannel"
-      FROM n8n_message_sessions
+      FROM threads
+      WHERE session_id = $1
+      LIMIT 1
+    `,
+      sessionId,
+    );
+
+    if (rows[0]) return rows[0];
+
+    const fallbackRows = await this.prisma.$queryRawUnsafe<Array<{
+      sessionId: string;
+      actorExternalId: string;
+      objectType: string;
+      sourceChannel: string | null;
+    }>>(
+      `
+      SELECT
+        session_id AS "sessionId",
+        actor_external_id AS "actorExternalId",
+        object_type AS "objectType",
+        source_channel AS "sourceChannel"
+      FROM thread_messages
       WHERE session_id = $1
       ORDER BY occurred_at DESC
       LIMIT 1
@@ -404,7 +988,239 @@ export class MetaInboxService implements OnModuleInit {
       sessionId,
     );
 
+    return fallbackRows[0] || null;
+  }
+
+  private async getThreadSnapshot(sessionId: string): Promise<ThreadControlSnapshot | null> {
+    const rows = await this.prisma.$queryRawUnsafe<ThreadControlSnapshot[]>(
+      `
+      SELECT
+        id AS "threadId",
+        session_id AS "sessionId",
+        actor_external_id AS "actorExternalId",
+        object_type AS "objectType",
+        source_channel AS "sourceChannel",
+        thread_status AS "threadStatus",
+        attention_mode AS "attentionMode",
+        thread_stage AS "threadStage",
+        last_message_text AS "lastMessageText",
+        last_direction AS "lastDirection",
+        last_message_at AS "lastMessageAt"
+      FROM threads
+      WHERE session_id = $1
+      LIMIT 1
+    `,
+      sessionId,
+    );
     return rows[0] || null;
+  }
+
+  private async getPreferredThreadByActor(
+    actorExternalId: string,
+    objectType: string,
+    includeClosed = false,
+  ): Promise<ThreadRow | null> {
+    const rows = await this.prisma.$queryRawUnsafe<ThreadRow[]>(
+      `
+      SELECT
+        t.id AS "threadId",
+        t.session_id AS "sessionId",
+        t.actor_external_id AS "actorExternalId",
+        t.object_type AS "objectType",
+        t.source_channel AS "sourceChannel",
+        t.thread_status AS "threadStatus",
+        t.attention_mode AS "attentionMode",
+        t.thread_stage AS "threadStage",
+        COALESCE(c.display_name, 'Nuevo') AS "displayName",
+        c.phone AS "phone",
+        c.email AS "email",
+        c.notes AS "notes",
+        c.city AS "city",
+        sc.score::text AS "actorScore",
+        lc.state::text AS "actorLifecycleState",
+        lc.occurred_at AS "actorLifecycleUpdatedAt",
+        t.last_message_text AS "lastMessageText",
+        COALESCE(t.last_direction, 'INCOMING') AS "lastDirection",
+        t.last_message_at AS "lastMessageAt"
+      FROM threads t
+      LEFT JOIN meta_inbox_contacts c
+        ON c.actor_external_id = t.actor_external_id
+       AND c.object_type = t.object_type
+      LEFT JOIN actor_score sc
+        ON sc.actor_external_id = t.actor_external_id
+      LEFT JOIN LATERAL (
+        SELECT al.state, al.occurred_at
+        FROM actor_lifecycle al
+        WHERE al.actor_external_id = t.actor_external_id
+        ORDER BY al.occurred_at DESC
+        LIMIT 1
+      ) lc ON true
+      WHERE t.actor_external_id = $1
+        AND t.object_type = $2
+        AND ($3::boolean = true OR t.thread_status <> 'CLOSED')
+      ORDER BY
+        CASE t.thread_status
+          WHEN 'OPEN' THEN 0
+          WHEN 'PAUSED' THEN 1
+          WHEN 'ARCHIVED' THEN 2
+          WHEN 'CLOSED' THEN 3
+          ELSE 4
+        END,
+        t.updated_at DESC,
+        t.last_message_at DESC NULLS LAST
+      LIMIT 1
+    `,
+      actorExternalId,
+      objectType,
+      includeClosed,
+    );
+
+    return rows[0] || null;
+  }
+
+  private async getThreadRow(sessionId: string): Promise<ThreadRow | null> {
+    const rows = await this.prisma.$queryRawUnsafe<ThreadRow[]>(
+      `
+      SELECT
+        t.id AS "threadId",
+        t.session_id AS "sessionId",
+        t.actor_external_id AS "actorExternalId",
+        t.object_type AS "objectType",
+        t.source_channel AS "sourceChannel",
+        t.thread_status AS "threadStatus",
+        t.attention_mode AS "attentionMode",
+        t.thread_stage AS "threadStage",
+        COALESCE(c.display_name, 'Nuevo') AS "displayName",
+        c.phone AS "phone",
+        c.email AS "email",
+        c.notes AS "notes",
+        c.city AS "city",
+        sc.score::text AS "actorScore",
+        lc.state::text AS "actorLifecycleState",
+        lc.occurred_at AS "actorLifecycleUpdatedAt",
+        t.last_message_text AS "lastMessageText",
+        COALESCE(t.last_direction, 'INCOMING') AS "lastDirection",
+        t.last_message_at AS "lastMessageAt"
+      FROM threads t
+      LEFT JOIN meta_inbox_contacts c
+        ON c.actor_external_id = t.actor_external_id
+       AND c.object_type = t.object_type
+      LEFT JOIN actor_score sc
+        ON sc.actor_external_id = t.actor_external_id
+      LEFT JOIN LATERAL (
+        SELECT al.state, al.occurred_at
+        FROM actor_lifecycle al
+        WHERE al.actor_external_id = t.actor_external_id
+        ORDER BY al.occurred_at DESC
+        LIMIT 1
+      ) lc ON true
+      WHERE t.session_id = $1
+      LIMIT 1
+    `,
+      sessionId,
+    );
+
+    return rows[0] || null;
+  }
+
+  private async resolveSessionIdForAutomation(input: ThreadSelectorInput): Promise<string> {
+    if (input.sessionId) {
+      const exists = await this.getThreadIdentity(input.sessionId);
+      if (!exists) throw new Error(`session_not_found:${input.sessionId}`);
+      return input.sessionId;
+    }
+
+    if (!input.actorExternalId || !input.objectType) {
+      throw new BadRequestException('Debes enviar sessionId o actorExternalId + objectType');
+    }
+
+    const thread = await this.getPreferredThreadByActor(input.actorExternalId, input.objectType, true);
+    if (!thread) {
+      throw new Error(`thread_not_found:${input.objectType}:${input.actorExternalId}`);
+    }
+
+    return thread.sessionId;
+  }
+
+  private async notifyThreadUpsert(thread: ThreadControlSnapshot) {
+    await this.websocketNotifier.notificarMetaInboxThreadUpsert({
+      threadId: thread.threadId,
+      sessionId: thread.sessionId,
+      actorExternalId: thread.actorExternalId,
+      objectType: thread.objectType,
+      sourceChannel: thread.sourceChannel,
+      threadStatus: thread.threadStatus,
+      attentionMode: thread.attentionMode,
+      threadStage: thread.threadStage,
+      lastMessageText: thread.lastMessageText,
+      lastDirection: thread.lastDirection,
+      lastMessageAt: thread.lastMessageAt?.toISOString(),
+    });
+  }
+
+  private async upsertThreadRecord(input: {
+    sessionId: string;
+    actorExternalId: string;
+    objectType: string;
+    sourceChannel: string | null;
+    lastMessageText: string | null;
+    lastDirection: 'INCOMING' | 'OUTGOING' | 'SYSTEM';
+    lastMessageAt: Date;
+  }) {
+    await this.prisma.$executeRawUnsafe(
+      `
+      INSERT INTO threads (
+        session_id,
+        actor_external_id,
+        object_type,
+        source_channel,
+        last_message_text,
+        last_direction,
+        last_message_at,
+        last_incoming_at,
+        last_outgoing_at,
+        updated_at
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6::varchar(16), $7::timestamptz,
+        CASE WHEN $6::varchar(16) = 'INCOMING' THEN $7::timestamptz ELSE NULL::timestamptz END,
+        CASE WHEN $6::varchar(16) = 'OUTGOING' THEN $7::timestamptz ELSE NULL::timestamptz END,
+        now()
+      )
+      ON CONFLICT (session_id)
+      DO UPDATE SET
+        actor_external_id = EXCLUDED.actor_external_id,
+        object_type = EXCLUDED.object_type,
+        source_channel = COALESCE(EXCLUDED.source_channel, threads.source_channel),
+        last_message_text = CASE
+          WHEN EXCLUDED.last_direction IN ('INCOMING', 'OUTGOING') THEN EXCLUDED.last_message_text
+          ELSE threads.last_message_text
+        END,
+        last_direction = CASE
+          WHEN EXCLUDED.last_direction IN ('INCOMING', 'OUTGOING') THEN EXCLUDED.last_direction
+          ELSE threads.last_direction
+        END,
+        last_message_at = CASE
+          WHEN EXCLUDED.last_direction IN ('INCOMING', 'OUTGOING') THEN EXCLUDED.last_message_at
+          ELSE threads.last_message_at
+        END,
+        last_incoming_at = CASE
+          WHEN EXCLUDED.last_direction = 'INCOMING' THEN EXCLUDED.last_message_at
+          ELSE threads.last_incoming_at
+        END,
+        last_outgoing_at = CASE
+          WHEN EXCLUDED.last_direction = 'OUTGOING' THEN EXCLUDED.last_message_at
+          ELSE threads.last_outgoing_at
+        END,
+        updated_at = now()
+    `,
+      input.sessionId,
+      input.actorExternalId,
+      input.objectType,
+      input.sourceChannel,
+      input.lastMessageText,
+      input.lastDirection,
+      input.lastMessageAt,
+    );
   }
 
   private async resolveSendTransport(
@@ -521,11 +1337,63 @@ export class MetaInboxService implements OnModuleInit {
     return mediaType === 'audio' ? '[audio]' : '[imagen]';
   }
 
+  private normalizeLegacyMessageContentJson(contentJson: any) {
+    if (!contentJson || typeof contentJson !== 'object' || Array.isArray(contentJson)) {
+      return contentJson;
+    }
+
+    const cloned = { ...contentJson };
+    const currentMediaType = String(cloned.mediaType || '').toLowerCase();
+    const currentMediaUrl = cloned.mediaUrl ? String(cloned.mediaUrl) : '';
+    if (currentMediaUrl && (currentMediaType === 'audio' || currentMediaType === 'image')) {
+      return cloned;
+    }
+
+    const message = cloned.message && typeof cloned.message === 'object' ? cloned.message : null;
+    const attachments = Array.isArray(message?.attachments) ? message.attachments : [];
+    const first = attachments[0];
+    const attachmentType = String(first?.type || '').toLowerCase();
+    const attachmentUrl = first?.payload?.url ? String(first.payload.url) : '';
+    if (attachmentUrl && (attachmentType === 'audio' || attachmentType === 'image')) {
+      return {
+        ...cloned,
+        mediaType: attachmentType,
+        mediaUrl: attachmentUrl,
+      };
+    }
+
+    const topLevelType = String((cloned as any).type || '').toLowerCase();
+    const topLevelUrl =
+      (cloned as any).url ? String((cloned as any).url) :
+      (cloned as any).mediaUrl ? String((cloned as any).mediaUrl) :
+      '';
+    if (topLevelUrl && (topLevelType === 'audio' || topLevelType === 'image')) {
+      return {
+        ...cloned,
+        mediaType: topLevelType,
+        mediaUrl: topLevelUrl,
+      };
+    }
+
+    const graphAttachment = cloned.attachment && typeof cloned.attachment === 'object' ? cloned.attachment : null;
+    const graphType = String(graphAttachment?.type || '').toLowerCase();
+    const graphUrl = graphAttachment?.payload?.url ? String(graphAttachment.payload.url) : '';
+    if (graphUrl && (graphType === 'audio' || graphType === 'image')) {
+      return {
+        ...cloned,
+        mediaType: graphType,
+        mediaUrl: graphUrl,
+      };
+    }
+
+    return cloned;
+  }
+
   private async getLastIncomingExternalEventId(sessionId: string): Promise<string | null> {
     const rows = await this.prisma.$queryRawUnsafe<Array<{ externalEventId: string }>>(
       `
       SELECT external_event_id AS "externalEventId"
-      FROM n8n_message_sessions
+      FROM thread_messages
       WHERE session_id = $1
         AND direction = 'INCOMING'
       ORDER BY occurred_at DESC
@@ -534,5 +1402,11 @@ export class MetaInboxService implements OnModuleInit {
       sessionId,
     );
     return rows[0]?.externalEventId || null;
+  }
+
+  private omitEmptyFields<T extends Record<string, unknown>>(input: T): Partial<T> {
+    return Object.fromEntries(
+      Object.entries(input).filter(([, value]) => value !== null && value !== undefined && value !== ''),
+    ) as Partial<T>;
   }
 }

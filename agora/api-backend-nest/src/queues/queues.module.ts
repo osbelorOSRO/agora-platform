@@ -4,6 +4,7 @@ import {
   Q_META_MESSAGES,
   Q_META_CHANGES,
   Q_MSG_DELEGATION,
+  Q_THREAD_MSG_DELEGATION,
   Q_ACTOR_TRANSITIONS,
 } from './queues.constants';
 
@@ -42,6 +43,7 @@ import {
       { name: Q_META_MESSAGES },
       { name: Q_META_CHANGES },
       { name: Q_MSG_DELEGATION },
+      { name: Q_THREAD_MSG_DELEGATION },
       { name: Q_ACTOR_TRANSITIONS },
     ),
   ],
