@@ -7,6 +7,7 @@ import { ActorScoringService } from '../scoring/actor-scoring.service';
 import { ActorEventsService } from '../../actor-events/actor-events.service';
 import { Q_META_MESSAGES, Q_MSG_DELEGATION, Q_THREAD_MSG_DELEGATION } from '../../queues/queues.constants';
 import { WebsocketNotifierService } from '../../websocket-notifier/websocket-notifier.service';
+import { MetaInboxService } from '../../meta-inbox/meta-inbox.service';
 
 @Processor(Q_META_MESSAGES, { concurrency: 1 })
 export class MessagesProcessor extends WorkerHost {
@@ -27,6 +28,7 @@ export class MessagesProcessor extends WorkerHost {
     private readonly bootstrap: ActorBootstrapService,
     private readonly scoring: ActorScoringService,
     private readonly websocketNotifier: WebsocketNotifierService,
+    private readonly metaInbox: MetaInboxService,
     @InjectQueue(Q_MSG_DELEGATION) private readonly delegationQueue: Queue,
     @InjectQueue(Q_THREAD_MSG_DELEGATION) private readonly threadDelegationQueue: Queue,
   ) {
@@ -721,7 +723,7 @@ export class MessagesProcessor extends WorkerHost {
   private async primeFirstIncomingDelegate(
     sessionId: string,
     env: any,
-    sourceChannel: string | null,
+    _sourceChannel: string | null,
   ) {
     await this.prisma.$executeRawUnsafe(
       `
@@ -733,57 +735,18 @@ export class MessagesProcessor extends WorkerHost {
       sessionId,
     );
 
-    const occurredAt = new Date(new Date(env.occurredAt).getTime() + 1);
-    const externalEventId = `bootstrap_greeting:${sessionId}`;
-    const contentJson = {
-      senderType: 'SYSTEM',
-      messageType: 'bootstrap_greeting',
-      sourceChannel,
-      structuredPayload: {
-        kind: 'bootstrap_greeting',
-      },
-    };
-
-    await this.prisma.$executeRawUnsafe(
-      `
-      INSERT INTO thread_messages (
-        session_id, external_event_id, message_external_id, actor_external_id,
-        provider, object_type, source_channel, event_kind, direction,
-        content_text, content_json, status, occurred_at, received_at, created_at, updated_at
-      ) VALUES (
-        $1, $2, NULL, $3,
-        $4, $5, $6, 'bootstrap_greeting', 'SYSTEM',
-        $7, $8::jsonb, 'sent', $9, now(), now(), now()
-      )
-      ON CONFLICT (external_event_id) DO NOTHING
-    `,
-      sessionId,
-      externalEventId,
-      env.actorExternalId,
-      env.provider || 'META',
-      String(env.objectType || 'PAGE'),
-      sourceChannel,
-      MessagesProcessor.BOOTSTRAP_GREETING_TEXT,
-      JSON.stringify(contentJson),
-      occurredAt,
-    );
-
-    await this.websocketNotifier.notificarMetaInboxMessageNew({
-      sessionId,
-      actorExternalId: env.actorExternalId,
-      objectType: String(env.objectType || 'PAGE'),
-      externalEventId,
-      messageExternalId: null,
-      senderType: 'SYSTEM',
-      messageType: 'bootstrap_greeting',
-      sourceChannel,
-      direction: 'SYSTEM',
-      eventKind: 'bootstrap_greeting',
-      contentText: MessagesProcessor.BOOTSTRAP_GREETING_TEXT,
-      contentJson,
-      status: 'sent',
-      occurredAt: occurredAt.toISOString(),
-    });
+    try {
+      await this.metaInbox.sendTextForAutomation({
+        sessionId,
+        text: MessagesProcessor.BOOTSTRAP_GREETING_TEXT,
+      });
+      this.logger.log(`FLOW[MESSAGE] bootstrap greeting sent sessionId=${sessionId}`);
+    } catch (error) {
+      this.logger.error(
+        `FLOW[MESSAGE] bootstrap greeting failed sessionId=${sessionId}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw error;
+    }
   }
 
   private async clearAwaitingFirstIncomingDelegate(tx: any, sessionId: string) {

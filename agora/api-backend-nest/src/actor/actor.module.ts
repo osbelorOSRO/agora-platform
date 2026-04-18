@@ -15,6 +15,7 @@ import { ActorEventsModule } from '../actor-events/actor-events.module';
 import { CacheConfigModule } from '../cache/cache.module';
 import { PrismaService } from '../database/prisma/prisma.service';
 import { WebsocketNotifierModule } from '../websocket-notifier/websocket-notifier.module';
+import { MetaInboxModule } from '../meta-inbox/meta-inbox.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { WebsocketNotifierModule } from '../websocket-notifier/websocket-notifie
     ActorEventsModule,
     CacheConfigModule,
     WebsocketNotifierModule,
+    MetaInboxModule,
   ],
   controllers: [MsgDelegationCallbackController],
   providers: [
