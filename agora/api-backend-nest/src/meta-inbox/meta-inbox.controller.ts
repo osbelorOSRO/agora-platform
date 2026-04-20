@@ -12,6 +12,8 @@ import { N8nContactUpsertDto } from './dto/n8n-contact-upsert.dto';
 import { ResolveThreadDto } from './dto/resolve-thread.dto';
 import { N8nSendTextDto } from './dto/n8n-send-text.dto';
 import { N8nSendMessageDto } from './dto/n8n-send-message.dto';
+import { N8nOfferEventCreateDto } from './dto/n8n-offer-event-create.dto';
+import { N8nOfferEventQueryDto } from './dto/n8n-offer-event-query.dto';
 
 @Controller('meta-inbox')
 export class MetaInboxController {
@@ -146,6 +148,33 @@ export class MetaInboxController {
       mediaUrl: body.mediaUrl?.trim(),
       mediaType: body.mediaType,
     });
+  }
+
+  @Post('n8n/offer-events')
+  async createOfferEventForN8n(
+    @Headers('authorization') auth: string,
+    @Body() body: N8nOfferEventCreateDto,
+  ) {
+    await this.assertN8nToken(auth);
+    return this.metaInbox.createOfferEventForAutomation(body);
+  }
+
+  @Get('n8n/offer-events/:id')
+  async getOfferEventForN8n(
+    @Headers('authorization') auth: string,
+    @Param('id') id: string,
+  ) {
+    await this.assertN8nToken(auth);
+    return this.metaInbox.getOfferEventById(id);
+  }
+
+  @Get('n8n/offer-events')
+  async listOfferEventsForN8n(
+    @Headers('authorization') auth: string,
+    @Query() query: N8nOfferEventQueryDto,
+  ) {
+    await this.assertN8nToken(auth);
+    return this.metaInbox.listOfferEvents(query);
   }
 
   private async assertN8nToken(auth: string) {

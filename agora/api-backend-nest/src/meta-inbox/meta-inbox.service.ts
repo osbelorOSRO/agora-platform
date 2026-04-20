@@ -76,6 +76,31 @@ type StageTemplateRow = {
   datoEsperado: string | null;
   nuevoStage: string;
   tipoRespuesta: string;
+  stageRoute: string | null;
+};
+
+type OfferPlanRow = {
+  codigo: string;
+  nombre: string;
+  precioBase: string | number;
+  descripcion: string | null;
+  precioNormal: string | number | null;
+  urlArchivo: string | null;
+};
+
+type OfferEventRow = {
+  id: string;
+  sessionId: string;
+  stageActual: string;
+  tipo: string;
+  codigo: string;
+  nombrePlan: string;
+  precioBase: string;
+  descripcion: string | null;
+  precioNormal: string | null;
+  urlArchivo: string | null;
+  decision: string;
+  createdAt: Date;
 };
 
 @Injectable()
@@ -125,6 +150,10 @@ export class MetaInboxService implements OnModuleInit {
     await this.prisma.$executeRawUnsafe(`
       CREATE INDEX IF NOT EXISTS idx_threads_status_last_message
       ON threads(thread_status, last_message_at DESC NULLS LAST)
+    `);
+    await this.prisma.$executeRawUnsafe(`
+      ALTER TABLE stage_templates
+      ADD COLUMN IF NOT EXISTS stage_route varchar(64) NULL
     `);
     await this.prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS meta_inbox_contacts (
@@ -303,6 +332,38 @@ export class MetaInboxService implements OnModuleInit {
       LEFT JOIN visible_outgoing vo ON vo.session_id = vl.session_id
       WHERE t.session_id = vl.session_id
     `);
+    await this.prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS thread_offer_events (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        session_id varchar(255) NOT NULL,
+        stage_actual varchar(64) NOT NULL,
+        tipo varchar(32) NOT NULL,
+        codigo varchar(120) NOT NULL,
+        nombre_plan varchar(255) NOT NULL,
+        precio_base numeric(12,2) NOT NULL,
+        descripcion text NULL,
+        precio_normal numeric(12,2) NULL,
+        url_archivo text NULL,
+        decision varchar(32) NOT NULL DEFAULT 'indefinido',
+        created_at timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+    await this.prisma.$executeRawUnsafe(`
+      CREATE INDEX IF NOT EXISTS idx_thread_offer_events_session_id
+      ON thread_offer_events(session_id)
+    `);
+    await this.prisma.$executeRawUnsafe(`
+      CREATE INDEX IF NOT EXISTS idx_thread_offer_events_session_decision
+      ON thread_offer_events(session_id, decision)
+    `);
+    await this.prisma.$executeRawUnsafe(`
+      CREATE INDEX IF NOT EXISTS idx_thread_offer_events_session_codigo
+      ON thread_offer_events(session_id, codigo)
+    `);
+    await this.prisma.$executeRawUnsafe(`
+      CREATE INDEX IF NOT EXISTS idx_thread_offer_events_created_at
+      ON thread_offer_events(created_at DESC)
+    `);
   }
 
   async listThreads(input: { limit?: number; offset?: number }) {
@@ -405,7 +466,8 @@ export class MetaInboxService implements OnModuleInit {
         procesa_datos AS "procesaDatos",
         dato_esperado AS "datoEsperado",
         nuevo_stage AS "nuevoStage",
-        tipo_respuesta AS "tipoRespuesta"
+        tipo_respuesta AS "tipoRespuesta",
+        stage_route AS "stageRoute"
       FROM stage_templates
       WHERE stage_actual = $1
         AND activo = true
@@ -425,6 +487,7 @@ export class MetaInboxService implements OnModuleInit {
           dato_esperado: row.datoEsperado,
           nuevo_stage: row.nuevoStage,
           tipo_respuesta: row.tipoRespuesta,
+          stage_route: row.stageRoute,
         }),
       ),
     };
@@ -692,6 +755,131 @@ export class MetaInboxService implements OnModuleInit {
     }
 
     throw new Error('invalid_automation_message_payload');
+  }
+
+  async createOfferEventForAutomation(input: {
+    sessionId: string;
+    stageActual: string;
+    tipo: string;
+    codigo: string;
+    decision?: string;
+  }) {
+    const normalizedDecision = (input.decision || 'indefinido').trim().toLowerCase();
+    const plan = await this.getOfferPlanByCode(input.codigo);
+
+    const rows = await this.prisma.$queryRawUnsafe<OfferEventRow[]>(
+      `
+      INSERT INTO thread_offer_events (
+        session_id,
+        stage_actual,
+        tipo,
+        codigo,
+        nombre_plan,
+        precio_base,
+        descripcion,
+        precio_normal,
+        url_archivo,
+        decision
+      )
+      VALUES (
+        $1, $2, $3, $4, $5, $6::numeric, $7, $8::numeric, $9, $10
+      )
+      RETURNING
+        id,
+        session_id AS "sessionId",
+        stage_actual AS "stageActual",
+        tipo,
+        codigo,
+        nombre_plan AS "nombrePlan",
+        precio_base::text AS "precioBase",
+        descripcion,
+        precio_normal::text AS "precioNormal",
+        url_archivo AS "urlArchivo",
+        decision,
+        created_at AS "createdAt"
+    `,
+      input.sessionId,
+      input.stageActual,
+      input.tipo,
+      plan.codigo,
+      plan.nombre,
+      plan.precioBase,
+      plan.descripcion,
+      plan.precioNormal,
+      plan.urlArchivo,
+      normalizedDecision,
+    );
+
+    return rows[0];
+  }
+
+  async getOfferEventById(id: string) {
+    const rows = await this.prisma.$queryRawUnsafe<OfferEventRow[]>(
+      `
+      SELECT
+        id,
+        session_id AS "sessionId",
+        stage_actual AS "stageActual",
+        tipo,
+        codigo,
+        nombre_plan AS "nombrePlan",
+        precio_base::text AS "precioBase",
+        descripcion,
+        precio_normal::text AS "precioNormal",
+        url_archivo AS "urlArchivo",
+        decision,
+        created_at AS "createdAt"
+      FROM thread_offer_events
+      WHERE id = $1
+      LIMIT 1
+    `,
+      id,
+    );
+
+    if (!rows[0]) {
+      throw new BadRequestException(`offer_event_not_found:${id}`);
+    }
+
+    return rows[0];
+  }
+
+  async listOfferEvents(input: {
+    sessionId?: string;
+    codigo?: string;
+    decision?: string;
+    stageActual?: string;
+    tipo?: string;
+  }) {
+    return this.prisma.$queryRawUnsafe<OfferEventRow[]>(
+      `
+      SELECT
+        id,
+        session_id AS "sessionId",
+        stage_actual AS "stageActual",
+        tipo,
+        codigo,
+        nombre_plan AS "nombrePlan",
+        precio_base::text AS "precioBase",
+        descripcion,
+        precio_normal::text AS "precioNormal",
+        url_archivo AS "urlArchivo",
+        decision,
+        created_at AS "createdAt"
+      FROM thread_offer_events
+      WHERE ($1::text IS NULL OR session_id = $1)
+        AND ($2::text IS NULL OR codigo = $2)
+        AND ($3::text IS NULL OR decision = $3)
+        AND ($4::text IS NULL OR stage_actual = $4)
+        AND ($5::text IS NULL OR tipo = $5)
+      ORDER BY created_at DESC, id DESC
+      LIMIT 500
+    `,
+      input.sessionId ?? null,
+      input.codigo ?? null,
+      input.decision ?? null,
+      input.stageActual ?? null,
+      input.tipo ?? null,
+    );
   }
 
   async sendText(sessionId: string, text: string) {
@@ -1402,6 +1590,35 @@ export class MetaInboxService implements OnModuleInit {
       sessionId,
     );
     return rows[0]?.externalEventId || null;
+  }
+
+  private async getOfferPlanByCode(codigo: string): Promise<OfferPlanRow> {
+    const normalizedCode = (codigo || '').trim();
+    if (!normalizedCode) {
+      throw new BadRequestException('Debes enviar un codigo valido');
+    }
+
+    const rows = await this.prisma.$queryRawUnsafe<OfferPlanRow[]>(
+      `
+      SELECT
+        codigo,
+        nombre,
+        precio_base AS "precioBase",
+        descripcion,
+        precio_normal AS "precioNormal",
+        url_archivo AS "urlArchivo"
+      FROM precios_planes
+      WHERE codigo = $1
+      LIMIT 1
+    `,
+      normalizedCode,
+    );
+
+    if (!rows[0]) {
+      throw new BadRequestException(`codigo_no_encontrado:${normalizedCode}`);
+    }
+
+    return rows[0];
   }
 
   private omitEmptyFields<T extends Record<string, unknown>>(input: T): Partial<T> {
