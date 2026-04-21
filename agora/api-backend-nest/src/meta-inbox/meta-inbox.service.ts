@@ -74,6 +74,10 @@ type StageTemplateRow = {
   esFallback: boolean;
   procesaDatos: boolean;
   datoEsperado: string | null;
+  modoDefault: string | null;
+  factible: boolean | null;
+  decision: string | null;
+  accion: string | null;
   nuevoStage: string;
   tipoRespuesta: string;
   stageRoute: string | null;
@@ -465,6 +469,10 @@ export class MetaInboxService implements OnModuleInit {
         es_fallback AS "esFallback",
         procesa_datos AS "procesaDatos",
         dato_esperado AS "datoEsperado",
+        modo_default AS "modoDefault",
+        factible,
+        decision,
+        accion,
         nuevo_stage AS "nuevoStage",
         tipo_respuesta AS "tipoRespuesta",
         stage_route AS "stageRoute"
@@ -485,6 +493,10 @@ export class MetaInboxService implements OnModuleInit {
           es_fallback: row.esFallback,
           procesa_datos: row.procesaDatos,
           dato_esperado: row.datoEsperado,
+          modo_default: row.modoDefault,
+          factible: row.factible,
+          decision: row.decision,
+          accion: row.accion,
           nuevo_stage: row.nuevoStage,
           tipo_respuesta: row.tipoRespuesta,
           stage_route: row.stageRoute,
