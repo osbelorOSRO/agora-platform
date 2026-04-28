@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 export type ConversationBootstrapDecision = {
   shouldWelcome: boolean;
   welcomeText: string | null;
-  reason: 'meta_first_incoming_delegate' | 'provider_not_enabled';
+  reason: 'first_incoming_delegate' | 'provider_not_enabled';
 };
 
 @Injectable()
@@ -19,7 +19,13 @@ export class ConversationBootstrapService {
     provider: string;
     objectType: string;
   }): ConversationBootstrapDecision {
-    if (String(input.provider || 'META') !== 'META') {
+    const provider = String(input.provider || 'META').toUpperCase();
+    const objectType = String(input.objectType || 'PAGE').toUpperCase();
+    const enabled =
+      provider === 'META' ||
+      (provider === 'BAILEYS' && objectType === 'WHATSAPP');
+
+    if (!enabled) {
       return {
         shouldWelcome: false,
         welcomeText: null,
@@ -30,7 +36,7 @@ export class ConversationBootstrapService {
     return {
       shouldWelcome: true,
       welcomeText: ConversationBootstrapService.WELCOME_TEXT,
-      reason: 'meta_first_incoming_delegate',
+      reason: 'first_incoming_delegate',
     };
   }
 }
