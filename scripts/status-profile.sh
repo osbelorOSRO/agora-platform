@@ -37,7 +37,6 @@ project_for_file() {
     "accesos/docker-compose.yml") echo "stack_accesos" ;;
     "agora/docker-compose.yml") echo "stack_agora" ;;
     "infraestructura/docker-compose.yml") echo "stack_infra_pgadmin" ;;
-    "mongo/docker-compose.yml") echo "stack_mongo_micro" ;;
     "n8n/docker-compose.yml") echo "stack_n8n" ;;
     "nmp/docker-compose.yml") echo "stack_nmp" ;;
     "redis/docker-compose.yml") echo "stack_redis" ;;
@@ -63,7 +62,6 @@ echo ""
 print_compose_ps "redis/docker-compose.yml"
 print_compose_ps "whisper/docker-compose.yml"
 print_compose_ps "tesseract/docker-compose.yml"
-print_compose_ps "mongo/docker-compose.yml"
 print_compose_ps "infraestructura/docker-compose.yml"
 print_compose_ps "accesos/docker-compose.yml"
 print_compose_ps "agora/docker-compose.yml"

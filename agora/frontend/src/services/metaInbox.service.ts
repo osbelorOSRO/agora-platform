@@ -1,5 +1,8 @@
 import { getAuthHeaders } from "@/utils/getAuthHeaders";
 import type {
+  CreateWhatsappContactInput,
+  MetaInboxDirectoryContact,
+  MetaInboxDirectoryContactsResponse,
   MetaInboxContactUpdate,
   MetaInboxMessage,
   MetaInboxThread,
@@ -8,11 +11,62 @@ import type {
 
 const API_URL = import.meta.env.VITE_API_URL as string;
 
-export const listMetaInboxThreads = async (limit = 100, offset = 0): Promise<MetaInboxThread[]> => {
-  const res = await fetch(`${API_URL}/meta-inbox/threads?limit=${limit}&offset=${offset}`, {
+export const listMetaInboxThreads = async (
+  limit = 100,
+  offset = 0,
+  includeClosed = false,
+): Promise<MetaInboxThread[]> => {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    offset: String(offset),
+    includeClosed: String(includeClosed),
+  });
+  const res = await fetch(`${API_URL}/meta-inbox/threads?${params.toString()}`, {
     headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error("No se pudieron cargar las conversaciones");
+  return res.json();
+};
+
+export const listMetaInboxContacts = async (input: {
+  search?: string;
+  objectType?: string;
+  limit?: number;
+  offset?: number;
+} = {}): Promise<MetaInboxDirectoryContactsResponse> => {
+  const params = new URLSearchParams({
+    limit: String(input.limit ?? 50),
+    offset: String(input.offset ?? 0),
+  });
+  if (input.search?.trim()) params.set("search", input.search.trim());
+  if (input.objectType && input.objectType !== "ALL") params.set("objectType", input.objectType);
+
+  const res = await fetch(`${API_URL}/meta-inbox/contacts?${params.toString()}`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error("No se pudo cargar la agenda");
+  return res.json();
+};
+
+export const createWhatsappContact = async (
+  payload: CreateWhatsappContactInput,
+): Promise<MetaInboxDirectoryContact> => {
+  const res = await fetch(`${API_URL}/meta-inbox/contacts/whatsapp`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("No se pudo crear el contacto WhatsApp");
+  return res.json();
+};
+
+export const ensureWhatsappThread = async (actorExternalId: string): Promise<MetaInboxThread> => {
+  const res = await fetch(`${API_URL}/meta-inbox/contacts/whatsapp/thread`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ actorExternalId }),
+  });
+  if (!res.ok) throw new Error("No se pudo preparar el thread WhatsApp");
   return res.json();
 };
 
@@ -67,10 +121,11 @@ export const reopenMetaInboxThread = async (sessionId: string): Promise<MetaInbo
   return res.json();
 };
 
-export const sendMetaInboxMedia = async (sessionId: string, file: File) => {
+export const sendMetaInboxMedia = async (sessionId: string, file: File, caption?: string) => {
   const token = localStorage.getItem("token");
   const formData = new FormData();
   formData.append("file", file);
+  if (caption?.trim()) formData.append("caption", caption.trim());
 
   const res = await fetch(`${API_URL}/meta-inbox/threads/${encodeURIComponent(sessionId)}/send-media`, {
     method: "POST",

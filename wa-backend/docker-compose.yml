@@ -14,9 +14,7 @@ services:
     environment:
       - API_BACKEND_URL=${API_INTERNAL_URL}
       - MEDIA_BASE_URL=${MEDIA_BASE_URL}
-      - WS_URL=${WS_INTERNAL_URL}
-      - N8N_WEBHOOK_URL=${N8N_INTERNAL_URL}/webhook/flujo-ventas
-      - VAULT_ADDR=${VAULT_ADDR}
+      - BAILEYS_INTERNAL_TOKEN=${BAILEYS_INTERNAL_TOKEN}
     volumes:
       - ./auth:/app/auth
       - ./config-bot.json:/app/config-bot.json

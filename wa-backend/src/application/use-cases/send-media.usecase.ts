@@ -1,15 +1,20 @@
 import { WhatsAppGateway } from '../whatsapp.gateway.js';
 import axios from 'axios';
-import { conectarSocketBot, getSocketBot } from '../../infrastructure/socket/socket.client.js';
 import { runtimeState } from '../../shared/runtime-state.js';
 import { env } from '../../config/env.js';
+import { toBaileysOutgoingCommand } from './baileys-outgoing-command.js';
 
 export interface SendMediaInput {
-  cliente_id: string;
-  tipoId: 'jid' | 'lid';
-  tipo: 'imagen' | 'audio' | 'video' | 'documento';
-  url_archivo: string;
+  destino?: string;
+  actorExternalId?: string;
+  recipientId?: string;
+  tipoId?: 'jid' | 'lid';
+  tipo: 'image' | 'audio' | 'video' | 'document';
+  url_archivo?: string;
   contenido?: unknown;
+  payload?: unknown;
+  message?: unknown;
+  media?: unknown;
 }
 
 export class SendMediaUseCase {
@@ -28,16 +33,9 @@ export class SendMediaUseCase {
   }
 
   async execute(input: SendMediaInput): Promise<void> {
-    const to = `${input.cliente_id}@${input.tipoId === 'jid' ? 's.whatsapp.net' : 'lid'}`;
+    const command = toBaileysOutgoingCommand(input);
 
-    const caption =
-      typeof input.contenido === 'string'
-        ? input.contenido
-        : (input.contenido as { text?: string; caption?: string } | undefined)?.text ||
-          (input.contenido as { text?: string; caption?: string } | undefined)?.caption ||
-          '';
-
-    const downloadUrl = this.resolveInternalDownloadUrl(input.url_archivo);
+    const downloadUrl = this.resolveInternalDownloadUrl(command.url_archivo!);
     const { data } = await axios.get(downloadUrl, { responseType: 'arraybuffer' });
     const buffer = Buffer.from(data);
 
@@ -47,11 +45,11 @@ export class SendMediaUseCase {
 
     let content: any;
 
-    switch (input.tipo) {
-      case 'imagen':
+    switch (command.tipo) {
+      case 'image':
         content = {
           image: buffer,
-          ...(caption && { caption }),
+          ...(command.text && { caption: command.text }),
         };
         break;
 
@@ -66,55 +64,25 @@ export class SendMediaUseCase {
       case 'video':
         content = {
           video: buffer,
-          ...(caption && { caption }),
+          ...(command.text && { caption: command.text }),
         };
         break;
 
-      case 'documento':
+      case 'document':
         content = {
           document: buffer,
-          fileName: input.url_archivo.split('/').pop() || 'documento.pdf',
-          mimetype: 'application/pdf',
-          ...(caption && { caption }),
+          fileName: command.fileName || command.url_archivo!.split('/').pop() || 'document.pdf',
+          mimetype: command.mimeType || 'application/pdf',
+          ...(command.text && { caption: command.text }),
         };
         break;
 
       default:
-        throw new Error(`Tipo no soportado: ${input.tipo}`);
+        throw new Error(`Tipo no soportado: ${command.tipo}`);
     }
 
-    await this.gateway.sendMessage(to, content);
+    await this.gateway.sendMessage(command.to, content);
     
     runtimeState.markOutgoing();
-
-    const textoMostrado = caption || input.url_archivo.split('/').pop() || `[${input.tipo}]`;
-
-    try {
-      await conectarSocketBot();
-      const socketHumano = getSocketBot();
-
-      socketHumano.emit('joinRoom', input.cliente_id);
-
-      socketHumano.emit('mensajeOutput', {
-        cliente_id: input.cliente_id,
-        contenido: textoMostrado,
-        tipo: input.tipo,
-        direccion_mensaje: 'output',
-        fecha_envio: new Date().toISOString(),
-        usuario: 'baileysbot',
-        url_archivo: input.url_archivo,
-      });
-
-      socketHumano.emit('nuevoMensaje', {
-        clienteId: input.cliente_id,
-        contenido: textoMostrado,
-        tipo: input.tipo,
-        direccion_mensaje: 'output',
-        fecha_envio: new Date().toISOString(),
-        url_archivo: input.url_archivo,
-      });
-    } catch {
-      // noop
-    }
   }
 }

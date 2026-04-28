@@ -24,10 +24,5 @@ export function createRoutes(gateway: WhatsAppGateway) {
     controller.enviarMensaje.bind(controller)
   );
 
-  router.post(
-    '/api/enviar-desde-n8n',
-    controller.enviarDesdeN8n.bind(controller)
-  );
-
   return router;
 }

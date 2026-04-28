@@ -1,98 +1,82 @@
-import axios from 'axios';
 import { downloadMediaMessage } from '@whiskeysockets/baileys';
 import { CoreIncomingMessage } from '../../core/whatsapp/index.js';
 import { backendApiClient } from '../../infrastructure/backend-api.client.js';
 import { WhatsAppGateway } from '../whatsapp.gateway.js';
-import { WelcomeFlowUseCase } from './welcome-flow.usecase.js';
-import { env } from '../../config/env.js';
-import { conectarSocketBot, getSocketBot } from '../../infrastructure/socket/socket.client.js';
 
 type TipoId = 'jid' | 'lid';
 type MsgTipo = 'texto' | 'imagen' | 'audio' | 'video' | 'documento';
+type ParsedIncomingMessage = {
+  tipo: MsgTipo;
+  contenido: string;
+  url_archivo?: string;
+  isReaction?: boolean;
+  reaction?: {
+    emoji: string;
+    targetMessageId?: string;
+  };
+};
+type BaileysIncomingEnvelope = {
+  externalEventId: string;
+  actorExternalId: string;
+  provider: 'BAILEYS';
+  objectType: 'WHATSAPP';
+  pipeline: 'MESSAGES';
+  eventType: 'messaging.message' | 'messaging.reaction' | 'messaging.unsupported';
+  occurredAt: string;
+  receivedAt: string;
+  payload: {
+    platform: 'whatsapp';
+    eventKind: 'message' | 'reaction' | 'unsupported';
+    senderId: string;
+    recipientId: string | null;
+    timestamp: number;
+    message: {
+      mid: string | null;
+      text: string;
+      isEcho: boolean;
+      hasAttachments: boolean;
+      attachmentTypes: string[];
+      attachmentUrls: string[];
+      messageSource: 'baileys_whatsapp';
+      rawMessage: unknown;
+    };
+    media: {
+      mediaType: 'audio' | 'image' | 'video' | 'document';
+      mediaUrl: string;
+    } | null;
+    reaction?: {
+      emoji: string;
+      targetMessageId?: string;
+    };
+    wa: {
+      tipoId: TipoId;
+      phone: boolean;
+      remoteJid: string | null;
+      remoteJidAlt: string | null;
+      senderPn: string | null;
+      senderKey: string | null;
+      resolvedJid: string;
+      recipientRawId: string | null;
+      recipientPhone: string | null;
+      pushName: string | null;
+    };
+    rawEvent: unknown;
+  };
+};
+type ClienteIdentity = {
+  actorId: string;
+  tipo_id: TipoId;
+  actorExternalId: string;
+  phone: boolean;
+};
 
 export class HandleIncomingMessageUseCase {
-  constructor(
-    private readonly gateway: WhatsAppGateway,
-    private readonly welcomeFlow: WelcomeFlowUseCase = new WelcomeFlowUseCase(gateway)
-  ) {}
-
-  // ===============================
-  // META AUTO DETECTION
-  // ===============================
-
-  private readonly META_AUTO_SIGNATURES = [
-    'gracias por escribirnos',
-    'para ayudarte mas rapido'
-  ];
-
-  private metaAutoMessageMap = new Map<string, number>();
-  private readonly META_TTL_MS = 10 * 60 * 1000; // 10 minutos
-
-  private normalizeText(text: string): string {
-    return text
-      ?.toLowerCase()
-      ?.normalize('NFD')
-      ?.replace(/[\u0300-\u036f]/g, '')
-      ?.replace(/[^\w\s]/g, '')
-      ?.replace(/\s+/g, ' ')
-      ?.trim();
-  }
-
-  private extractTextDeep(msg: any): string {
-    const m =
-      msg?.message?.ephemeralMessage?.message ||
-      msg?.message?.viewOnceMessage?.message ||
-      msg?.message?.viewOnceMessageV2?.message ||
-      msg?.message;
-
-    return (
-      m?.conversation ||
-      m?.extendedTextMessage?.text ||
-      m?.imageMessage?.caption ||
-      m?.videoMessage?.caption ||
-      m?.documentMessage?.caption ||
-      ''
-    );
-  }
-
-  // ===============================
+  constructor(private readonly gateway: WhatsAppGateway) {}
 
   async execute(event: CoreIncomingMessage): Promise<void> {
     const upsert = event.raw as any;
     const msg = upsert?.messages?.[0];
     if (!msg?.message) return;
-
-    // =====================================
-    // DETECTAR MENSAJE AUTOMÁTICO META
-    // =====================================
-    if (msg?.key?.fromMe) {
-      let remoteForMeta = this.obtenerIdClienteDefinitivo(msg.key);
-
-      // Priorizar PN real si existe
-      if (
-        typeof msg?.key?.remoteJidAlt === 'string' &&
-        msg.key.remoteJidAlt.endsWith('@s.whatsapp.net')
-      ) {
-        remoteForMeta = msg.key.remoteJidAlt;
-      }
-
-      const extractedMeta = this.extraerClienteYTipo(remoteForMeta);
-
-      const text = this.extractTextDeep(msg);
-      const normalized = this.normalizeText(text);
-
-      if (extractedMeta && normalized) {
-        const isMetaAuto = this.META_AUTO_SIGNATURES.some(sig =>
-          normalized.includes(sig)
-        );
-
-        if (isMetaAuto) {
-          const key = `jid:${extractedMeta.cliente_id}`;
-          this.metaAutoMessageMap.set(key, Date.now());
-          console.log(`🟢 Detectado mensaje automático Meta: ${extractedMeta.cliente_id}`);
-        }
-      }
-    }
 
     if (this.isIgnorableMessage(msg)) return;
 
@@ -106,125 +90,34 @@ export class HandleIncomingMessageUseCase {
       return;
     }
 
-    let remoteJid = this.obtenerIdClienteDefinitivo(msg.key);
-
-    if (remoteJid.endsWith('@lid') || remoteJid.endsWith('@lid.c.us')) {
-      if (
-        typeof msg?.key?.senderPn === 'string' &&
-        msg.key.senderPn.endsWith('@s.whatsapp.net')
-      ) {
-        remoteJid = msg.key.senderPn;
-      } else if (
-        typeof msg?.key?.senderKey === 'string' &&
-        msg.key.senderKey.endsWith('@s.whatsapp.net')
-      ) {
-        remoteJid = msg.key.senderKey;
-      }
-    }
-
+    const remoteJid = this.obtenerIdClienteDefinitivo(msg.key);
     const extracted = this.extraerClienteYTipo(remoteJid);
     if (!extracted) return;
 
-    const { cliente_id, tipo_id } = extracted;
+    const { actorId, tipo_id, actorExternalId } = extracted;
+    const externalEventId = this.buildExternalEventId(msg, actorExternalId);
 
-    const parsed = await this.parseMessage(msg, cliente_id, tipo_id);
+    const parsed = await this.parseMessage(msg, actorId, tipo_id);
     if (!parsed) return;
 
     const timestamp = new Date(
       (Number(msg.messageTimestamp) || Math.floor(Date.now() / 1000)) * 1000
     );
 
-    const nombre = msg.pushName || 'Cliente desde bot';
-    const fotoPerfil = await this.resolveProfilePicture(remoteJid);
+    const recipientRawId = this.getRecipientRawId();
+    const normalizedEvent = this.normalizeBaileysIncomingEvent(
+      upsert,
+      msg,
+      parsed,
+      extracted,
+      externalEventId,
+      timestamp,
+      recipientRawId,
+    );
+    this.logNormalizedEnvelope(normalizedEvent);
 
-    const exists = await backendApiClient.verificarCliente(cliente_id, tipo_id);
-    if (!exists) {
-      await backendApiClient.crearClienteBot(cliente_id, tipo_id, nombre, fotoPerfil);
-    }
-
-    let procesoId = await backendApiClient.obtenerProcesoPorCliente(cliente_id);
-    if (!procesoId) {
-      procesoId = await backendApiClient.crearProceso(cliente_id);
-    }
-
-    await backendApiClient.guardarConversacion(procesoId, {
-      contenido: parsed.contenido,
-      tipo: parsed.tipo,
-      direccion: 'input',
-      fecha_envio: timestamp.toISOString(),
-      url_archivo: parsed.url_archivo ?? null,
-    });
-
-    // NUEVO: enviar modo del mensaje actual a modo piloto
-    const msg_mode: 'audio' | 'no_audio' = parsed.tipo === 'audio' ? 'audio' : 'no_audio';
-    const estado = await backendApiClient.obtenerEstadoModoPiloto(cliente_id, msg_mode);
-
-    // =====================================
-    // BLOQUE SALUDO CON CONTROL META
-    // =====================================
-    if (estado.saludar) {
-      const key = `jid:${cliente_id}`;
-      const ts = this.metaAutoMessageMap.get(key);
-
-      const isFresh =
-        typeof ts === 'number' &&
-        Date.now() - ts <= this.META_TTL_MS;
-
-      if (isFresh) {
-        this.metaAutoMessageMap.delete(key);
-        console.log(`🟡 Saludo omitido por Meta auto: ${cliente_id}`);
-        // NO return → sigue flujo normal
-      } else {
-        if (ts) this.metaAutoMessageMap.delete(key);
-
-        const destino = this.buildJid(cliente_id, tipo_id);
-        await this.welcomeFlow.execute(destino);
-        return;
-      }
-    }
-
-    // =====================================
-    // DERIVACIÓN HUMANO / PILOTO
-    // =====================================
-    try {
-      await conectarSocketBot();
-      const socketHumano = getSocketBot();
-
-      socketHumano.emit('emitirGlobito', {
-        usuario_id: '12',
-        clienteId: cliente_id,
-        contenido: parsed.contenido,
-        fecha_envio: new Date().toISOString(),
-      });
-    } catch {}
-
-    if (estado.usar_piloto) {
-      await axios.post(env.n8nWebhookUrl, {
-        cliente_id,
-        contenido: parsed.contenido,
-        tipo: parsed.tipo,
-        url_archivo: parsed.url_archivo ?? null,
-      });
-
-      console.log(`✅ Derivado a n8n: ${cliente_id}`);
-      return;
-    }
-
-    try {
-      await conectarSocketBot();
-      const socketHumano = getSocketBot();
-
-      socketHumano.emit('nuevoMensaje', {
-        clienteId: cliente_id,
-        contenido: parsed.contenido,
-        direccion_mensaje: 'input',
-        fecha_envio: timestamp.toISOString(),
-        tipo: parsed.tipo,
-        url_archivo: parsed.url_archivo ?? null,
-      });
-
-      console.log(`👤 Derivado a humano: ${cliente_id}`);
-    } catch {}
+    await this.emitirEnvelopeBaileysAlBackend(normalizedEvent);
+    console.log(`👤 Evento Baileys entregado a Threads: ${actorExternalId}`);
   }
 
   private isIgnorableMessage(msg: any): boolean {
@@ -236,7 +129,8 @@ export class HandleIncomingMessageUseCase {
       !msg?.message ||
       tipo === 'protocolMessage' ||
       tipo === 'senderKeyDistributionMessage' ||
-      tipo === 'messageContextInfo'
+      tipo === 'messageContextInfo' ||
+      tipo === 'call'
     );
   }
 
@@ -244,43 +138,212 @@ export class HandleIncomingMessageUseCase {
     const posiblesIds = [
       msgKey?.remoteJid,
       msgKey?.remoteJidAlt,
-      msgKey?.senderKey,
       msgKey?.senderPn,
+      msgKey?.senderKey,
     ].filter((id) => typeof id === 'string');
 
-    for (const id of posiblesIds) {
-      if (id.endsWith('@s.whatsapp.net')) {
-        return id;
-      }
-    }
+    const phoneId = posiblesIds.find((id) => this.esPhoneJid(id));
+    if (phoneId) return phoneId;
 
     return posiblesIds[0] || '';
   }
 
-  private extraerClienteYTipo(remoteJid: string): { cliente_id: string; tipo_id: TipoId } | null {
+  private extraerClienteYTipo(remoteJid: string): ClienteIdentity | null {
     if (typeof remoteJid !== 'string') return null;
+    const normalized = remoteJid.trim();
+    const lower = normalized.toLowerCase();
 
-    if (remoteJid.endsWith('@s.whatsapp.net')) {
-      return { cliente_id: remoteJid.replace('@s.whatsapp.net', ''), tipo_id: 'jid' };
+    if (this.esPhoneJid(normalized)) {
+      return {
+        actorId: normalized.split('@')[0],
+        tipo_id: 'jid',
+        actorExternalId: normalized,
+        phone: true,
+      };
     }
 
-    if (remoteJid.endsWith('@lid')) {
-      return { cliente_id: remoteJid.replace('@lid', ''), tipo_id: 'lid' };
+    if (lower.endsWith('@lid')) {
+      return {
+        actorId: normalized.slice(0, -'@lid'.length),
+        tipo_id: 'lid',
+        actorExternalId: normalized,
+        phone: false,
+      };
     }
 
-    if (remoteJid.endsWith('@lid.c.us')) {
-      return { cliente_id: remoteJid.replace('@lid.c.us', ''), tipo_id: 'lid' };
+    if (lower.endsWith('@lid.c.us')) {
+      return {
+        actorId: normalized.slice(0, -'@lid.c.us'.length),
+        tipo_id: 'lid',
+        actorExternalId: normalized,
+        phone: false,
+      };
     }
 
     return null;
   }
 
+  private esPhoneJid(id: string): boolean {
+    const normalized = String(id || '').trim().toLowerCase();
+    return normalized.endsWith('@s.whatsapp.net') || normalized.endsWith('@whatsapp.net');
+  }
+
+  private buildExternalEventId(msg: any, actorExternalId: string): string {
+    const baileysMessageId = typeof msg?.key?.id === 'string' ? msg.key.id.trim() : '';
+    const safeActor = this.sanitizeEventIdPart(actorExternalId || 'unknown');
+
+    if (baileysMessageId) {
+      return `baileys:${safeActor}:${this.sanitizeEventIdPart(baileysMessageId)}`.slice(0, 250);
+    }
+
+    const timestamp = Number(msg?.messageTimestamp) || Math.floor(Date.now() / 1000);
+    const messageType = Object.keys(msg?.message || {})[0] || 'unknown';
+    return `baileys:fallback:${safeActor}:${timestamp}:${this.sanitizeEventIdPart(messageType)}`.slice(0, 250);
+  }
+
+  private sanitizeEventIdPart(value: string): string {
+    return String(value || 'unknown').replace(/[^a-zA-Z0-9._@:-]/g, '_');
+  }
+
+  private getRecipientRawId(): string | null {
+    const raw = this.gateway.getSocket().user?.id;
+    return typeof raw === 'string' && raw.trim() ? raw.trim() : null;
+  }
+
+  private getRecipientPhone(recipientRawId: string | null): string | null {
+    if (!recipientRawId) return null;
+    return recipientRawId.split(':')[0]?.split('@')[0] || null;
+  }
+
+  private normalizeBaileysIncomingEvent(
+    upsert: any,
+    msg: any,
+    parsed: ParsedIncomingMessage,
+    identity: ClienteIdentity,
+    externalEventId: string,
+    occurredAt: Date,
+    recipientRawId: string | null,
+  ): BaileysIncomingEnvelope {
+    const messageExternalId = typeof msg?.key?.id === 'string' ? msg.key.id : null;
+    const timestamp = Number(msg?.messageTimestamp) || Math.floor(occurredAt.getTime() / 1000);
+    const eventKind: 'message' | 'reaction' | 'unsupported' = parsed.isReaction
+      ? 'reaction'
+      : parsed.contenido === '[mensaje no soportado]'
+        ? 'unsupported'
+        : 'message';
+    const media = parsed.url_archivo
+      ? {
+          mediaType: this.resolveCanonicalMediaType(parsed.tipo),
+          mediaUrl: parsed.url_archivo,
+        }
+      : null;
+
+    return {
+      externalEventId,
+      actorExternalId: identity.actorExternalId,
+      provider: 'BAILEYS',
+      objectType: 'WHATSAPP',
+      pipeline: 'MESSAGES',
+      eventType:
+        eventKind === 'reaction'
+          ? 'messaging.reaction'
+          : eventKind === 'unsupported'
+            ? 'messaging.unsupported'
+            : 'messaging.message',
+      occurredAt: occurredAt.toISOString(),
+      receivedAt: new Date().toISOString(),
+      payload: {
+        platform: 'whatsapp',
+        eventKind,
+        senderId: identity.actorExternalId,
+        recipientId: recipientRawId,
+        timestamp,
+        message: {
+          mid: messageExternalId,
+          text: parsed.contenido,
+          isEcho: Boolean(msg?.key?.fromMe),
+          hasAttachments: Boolean(parsed.url_archivo),
+          attachmentTypes: media ? [media.mediaType] : [],
+          attachmentUrls: parsed.url_archivo ? [parsed.url_archivo] : [],
+          messageSource: 'baileys_whatsapp',
+          rawMessage: msg?.message || null,
+        },
+        media,
+        ...(parsed.reaction ? { reaction: parsed.reaction } : {}),
+        wa: {
+          tipoId: identity.tipo_id,
+          phone: identity.phone,
+          remoteJid: this.nullableString(msg?.key?.remoteJid),
+          remoteJidAlt: this.nullableString(msg?.key?.remoteJidAlt),
+          senderPn: this.nullableString(msg?.key?.senderPn),
+          senderKey: this.nullableString(msg?.key?.senderKey),
+          resolvedJid: identity.actorExternalId,
+          recipientRawId,
+          recipientPhone: this.getRecipientPhone(recipientRawId),
+          pushName: this.nullableString(msg?.pushName),
+        },
+        rawEvent: upsert,
+      },
+    };
+  }
+
+  private resolveCanonicalMediaType(tipo: MsgTipo): 'audio' | 'image' | 'video' | 'document' {
+    if (tipo === 'imagen') return 'image';
+    if (tipo === 'documento') return 'document';
+    if (tipo === 'video') return 'video';
+    if (tipo === 'audio') return 'audio';
+    return 'document';
+  }
+
+  private nullableString(value: unknown): string | null {
+    return typeof value === 'string' && value.trim() ? value.trim() : null;
+  }
+
+  private logNormalizedEnvelope(envelope: BaileysIncomingEnvelope): void {
+    console.log(
+      `🧭 BAILEYS_ENVELOPE shadow externalEventId=${envelope.externalEventId} ` +
+      `eventKind=${envelope.payload.eventKind} actor=${envelope.actorExternalId} ` +
+      `recipient=${envelope.payload.recipientId ?? 'unknown'}`,
+    );
+  }
+
+  private async emitirEnvelopeBaileysAlBackend(envelope: BaileysIncomingEnvelope): Promise<void> {
+    try {
+      await backendApiClient.enviarEventoBaileys(envelope);
+      console.log(`🧵 Baileys envelope enviado a thread bridge: ${envelope.externalEventId}`);
+    } catch (error: any) {
+      console.warn(
+        `⚠️ Baileys thread bridge omitido externalEventId=${envelope.externalEventId}: ${error?.message || error}`,
+      );
+    }
+  }
+
   private async parseMessage(
     msg: any,
-    cliente_id: string,
+    actorId: string,
     tipo_id: TipoId
-  ): Promise<{ tipo: MsgTipo; contenido: string; url_archivo?: string } | null> {
+  ): Promise<ParsedIncomingMessage | null> {
     const m = msg.message;
+
+    if (m.reactionMessage) {
+      const emoji = String(m.reactionMessage.text || '').trim();
+      const targetMessageId =
+        typeof m.reactionMessage.key?.id === 'string'
+          ? m.reactionMessage.key.id
+          : undefined;
+
+      return {
+        tipo: 'texto',
+        contenido: emoji
+          ? `Reaccionó ${emoji}`
+          : 'Reaccionó a un mensaje',
+        isReaction: true,
+        reaction: {
+          emoji,
+          targetMessageId,
+        },
+      };
+    }
 
     if (m.conversation || m.extendedTextMessage?.text) {
       return {
@@ -314,11 +377,11 @@ export class HandleIncomingMessageUseCase {
       const buffer = (await downloadMediaMessage(msg, 'buffer', {} as any)) as Buffer;
       if (!buffer || !buffer.length) return null;
 
-      const filename = `${cliente_id}-${Date.now()}.${ext}`;
+      const filename = `${actorId}-${Date.now()}.${ext}`;
       const url_archivo = await backendApiClient.guardarMedia(
         buffer,
         filename,
-        cliente_id,
+        actorId,
         tipo,
         tipo_id
       );
@@ -336,18 +399,4 @@ export class HandleIncomingMessageUseCase {
     };
   }
 
-  private async resolveProfilePicture(remoteJid: string): Promise<string> {
-    try {
-      const pp = await this.gateway.getSocket().profilePictureUrl(remoteJid, 'image');
-      if (pp) return pp;
-    } catch {}
-
-    return `${env.mediaBaseUrl}/uploads/avatares/foto_perfil_hombre_default_02.png`;
-  }
-
-  private buildJid(cliente_id: string, tipo_id: TipoId): string {
-    return tipo_id === 'jid'
-      ? `${cliente_id}@s.whatsapp.net`
-      : `${cliente_id}@lid`;
-  }
 }

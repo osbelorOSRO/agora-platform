@@ -12,7 +12,6 @@ import { WhatsAppGateway } from './application/whatsapp.gateway.js';
 import { runtimeState } from './shared/runtime-state.js';
 import { registerDashboardGateway } from './interfaces/websocket/dashboard.gateway.js';
 import { HandleIncomingMessageUseCase } from './application/use-cases/handle-incoming.usecase.js';
-import { conectarSocketBot } from './infrastructure/socket/socket.client.js';
 
 type HourBucketStats = {
   close428: number;
@@ -119,7 +118,6 @@ async function bootstrap() {
   const { state, saveCreds } = await useMultiFileAuthState(env.authFolder);
   const gateway = new WhatsAppGateway();
   await gateway.initialize(state, saveCreds, env.authFolder);
-  await conectarSocketBot();
 
   // ==========================
   // Incoming messages hook

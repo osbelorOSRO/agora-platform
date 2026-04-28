@@ -71,23 +71,33 @@ const sendReport = (req: Request, res: Response, filename: string, rows: ReportR
   });
 };
 
+const addFilter = (
+  clauses: string[],
+  params: unknown[],
+  sql: string,
+  value: unknown,
+) => {
+  params.push(value);
+  clauses.push(sql.replace("?", `$${params.length}`));
+};
+
 export const listarCatalogoReportes = (_req: Request, res: Response): void => {
   res.json([
     {
       id: "procesos",
-      nombre: "Consulta de procesos",
+      nombre: "Consulta de eventos de threads",
       formatos: ["json", "csv"],
-      filtros: ["desde", "hasta", "cliente_id", "iniciado_por_id", "tipo_proceso", "tipo_cierre", "abandono", "delegado_humano"],
+      filtros: ["desde", "hasta", "session_id", "actor_external_id", "object_type", "event_type", "event_source", "direction", "provider"],
     },
     {
       id: "desempeno",
-      nombre: "Consulta de desempeño por usuario",
+      nombre: "Consulta de desempeño por fuente",
       formatos: ["json", "csv"],
-      filtros: ["desde", "hasta", "usuario_id"],
+      filtros: ["desde", "hasta", "event_source", "username"],
     },
     {
       id: "procesos-semanales",
-      nombre: "Procesos semanales creados",
+      nombre: "Actividad semanal de threads",
       formatos: ["json", "csv"],
       filtros: ["desde", "hasta"],
     },
@@ -98,16 +108,10 @@ export const listarCatalogoReportes = (_req: Request, res: Response): void => {
       filtros: ["codigo", "tipo", "nombre"],
     },
     {
-      id: "contratos",
-      nombre: "Contratos creados",
-      formatos: ["json", "csv"],
-      filtros: ["desde", "hasta", "rut_cliente", "estado", "creado_por_id", "tipo", "modo"],
-    },
-    {
       id: "clientes-info",
-      nombre: "Clientes con info cliente",
+      nombre: "Agenda de contactos conversacionales",
       formatos: ["json", "csv"],
-      filtros: ["desde", "hasta", "rut", "fono", "nombre"],
+      filtros: ["desde", "hasta", "rut", "fono", "nombre", "object_type"],
     },
   ]);
 };
@@ -122,104 +126,88 @@ export const reporteProcesos = async (req: Request, res: Response): Promise<void
   }
 
   try {
-    const where: Prisma.procesosWhereInput = {
+    const where: Prisma.thread_eventsWhereInput = {
       ...(desde || hasta
         ? {
-            fecha_inicio: {
+            occurred_at: {
               ...(desde ? { gte: desde } : {}),
               ...(hasta ? { lte: hasta } : {}),
             },
           }
         : {}),
-      ...(req.query.cliente_id
-        ? { cliente_id: String(req.query.cliente_id) }
-        : {}),
-      ...(req.query.iniciado_por_id
-        ? { iniciado_por_id: Number(req.query.iniciado_por_id) }
-        : {}),
-      ...(req.query.tipo_proceso
-        ? { tipo_proceso: String(req.query.tipo_proceso) }
-        : {}),
-      ...(req.query.tipo_cierre
-        ? { tipo_cierre: String(req.query.tipo_cierre) }
-        : {}),
+      ...(req.query.session_id ? { session_id: String(req.query.session_id) } : {}),
+      ...(req.query.actor_external_id ? { actor_external_id: String(req.query.actor_external_id) } : {}),
+      ...(req.query.object_type ? { object_type: String(req.query.object_type).toUpperCase() } : {}),
+      ...(req.query.event_type ? { event_type: String(req.query.event_type).toUpperCase() } : {}),
+      ...(req.query.event_source ? { event_source: String(req.query.event_source).toUpperCase() } : {}),
+      ...(req.query.direction ? { direction: String(req.query.direction).toUpperCase() } : {}),
+      ...(req.query.provider ? { provider: String(req.query.provider).toUpperCase() } : {}),
     };
 
-    const abandono = toBoolean(req.query.abandono);
-    if (abandono !== null) where.abandono = abandono;
-
-    const delegadoHumano = toBoolean(req.query.delegado_humano);
-    if (delegadoHumano !== null) where.delegado_humano = delegadoHumano;
-
-    const procesos = await prisma.procesos.findMany({
+    const events = await prisma.thread_events.findMany({
       where,
-      orderBy: { fecha_inicio: "desc" },
-      include: {
-        usuarios_procesos_iniciado_por_idTousuarios: {
-          select: { id: true, username: true, nombre: true, apellido: true, email: true },
-        },
-        usuarios_procesos_cerrado_por_idTousuarios: {
-          select: { id: true, username: true, nombre: true, apellido: true, email: true },
-        },
-      },
+      orderBy: { occurred_at: "desc" },
+      take: 5000,
     });
 
-    const clientes = await prisma.clientes.findMany({
-      where: {
-        cliente_id: { in: Array.from(new Set(procesos.map((item) => item.cliente_id))) },
-      },
-    });
+    const sessionIds = Array.from(new Set(events.map((item) => item.session_id)));
+    const actorPairs = Array.from(
+      new Map(events.map((item) => [`${item.actor_external_id}::${item.object_type}`, item])).values()
+    );
 
-    const clientesMap = new Map(clientes.map((item) => [item.cliente_id, item]));
+    const [threads, contacts] = await Promise.all([
+      sessionIds.length
+        ? prisma.threads.findMany({
+            where: { session_id: { in: sessionIds } },
+          })
+        : Promise.resolve([]),
+      actorPairs.length
+        ? prisma.meta_inbox_contacts.findMany({
+            where: {
+              OR: actorPairs.map((item) => ({
+                actor_external_id: item.actor_external_id,
+                object_type: item.object_type,
+              })),
+            },
+          })
+        : Promise.resolve([]),
+    ]);
 
-    const rows = procesos.map((proceso) => {
-      const cliente = clientesMap.get(proceso.cliente_id);
+    const threadMap = new Map(threads.map((item) => [item.session_id, item]));
+    const contactMap = new Map(contacts.map((item) => [`${item.actor_external_id}::${item.object_type}`, item]));
 
+    const rows = events.map((event) => {
+      const thread = threadMap.get(event.session_id);
+      const contact = contactMap.get(`${event.actor_external_id}::${event.object_type}`);
       return {
-        proceso_id: proceso.id,
-        cliente_id: proceso.cliente_id,
-        cliente_nombre: cliente?.nombre ?? null,
-        cliente_tipo_id: cliente?.tipo_id ?? null,
-        cliente_estado_actual: cliente?.estado_actual ?? null,
-        cliente_etiqueta_actual: cliente?.etiqueta_actual ?? null,
-        cliente_intervenida: cliente?.intervenida ?? null,
-        cliente_fecha_registro: cliente?.fecha_registro?.toISOString() ?? null,
-        fecha_inicio: proceso.fecha_inicio?.toISOString() ?? null,
-        fecha_fin: proceso.fecha_fin?.toISOString() ?? null,
-        tipo_proceso: proceso.tipo_proceso ?? null,
-        tipo_cierre: proceso.tipo_cierre ?? null,
-        delegado_humano: proceso.delegado_humano ?? false,
-        abandono: proceso.abandono ?? false,
-        duracion_total: proceso.duracion_total ?? null,
-        duracion_valor: proceso.duracion_valor ? Number(proceso.duracion_valor) : null,
-        duracion_unidad: proceso.duracion_unidad ?? null,
-        sla_humano: proceso.sla_humano ?? null,
-        tmo: proceso.tmo ?? null,
-        iniciado_por_id: proceso.iniciado_por_id,
-        iniciado_por_username:
-          proceso.usuarios_procesos_iniciado_por_idTousuarios?.username ?? null,
-        iniciado_por_nombre: [
-          proceso.usuarios_procesos_iniciado_por_idTousuarios?.nombre,
-          proceso.usuarios_procesos_iniciado_por_idTousuarios?.apellido,
-        ]
-          .filter(Boolean)
-          .join(" ") || null,
-        cerrado_por_id: proceso.cerrado_por_id ?? null,
-        cerrado_por_username:
-          proceso.usuarios_procesos_cerrado_por_idTousuarios?.username ?? null,
-        cerrado_por_nombre: [
-          proceso.usuarios_procesos_cerrado_por_idTousuarios?.nombre,
-          proceso.usuarios_procesos_cerrado_por_idTousuarios?.apellido,
-        ]
-          .filter(Boolean)
-          .join(" ") || null,
+        id: event.id,
+        session_id: event.session_id,
+        actor_external_id: event.actor_external_id,
+        object_type: event.object_type,
+        actor_nombre: contact?.display_name ?? "Nuevo",
+        actor_fono: contact?.phone ?? null,
+        event_type: event.event_type,
+        event_source: event.event_source,
+        direction: event.direction,
+        provider: event.provider,
+        source_channel: event.source_channel,
+        from_value: event.from_value,
+        to_value: event.to_value,
+        username: event.username,
+        external_event_id: event.external_event_id,
+        message_external_id: event.message_external_id,
+        thread_status_actual: thread?.thread_status ?? null,
+        attention_mode_actual: thread?.attention_mode ?? null,
+        thread_stage_actual: thread?.thread_stage ?? null,
+        metadata: event.metadata,
+        occurred_at: event.occurred_at.toISOString(),
       };
     });
 
-    sendReport(req, res, "reporte_procesos", rows);
+    sendReport(req, res, "reporte_threads_eventos", rows);
   } catch (error) {
-    console.error("❌ Error en reporte de procesos:", error);
-    res.status(500).json({ error: "Error al generar reporte de procesos" });
+    console.error("❌ Error en reporte de eventos de threads:", error);
+    res.status(500).json({ error: "Error al generar reporte de eventos de threads" });
   }
 };
 
@@ -232,60 +220,38 @@ export const reporteDesempeno = async (req: Request, res: Response): Promise<voi
     return;
   }
 
-  const usuarioId = req.query.usuario_id ? Number(req.query.usuario_id) : null;
-
   try {
-    const where: Prisma.procesosWhereInput = {
-      fecha_inicio: {
-        gte: desde,
-        lte: hasta,
-      },
-      ...(usuarioId ? { iniciado_por_id: usuarioId } : {}),
-    };
+    const clauses = ["e.occurred_at >= $1", "e.occurred_at <= $2"];
+    const params: unknown[] = [desde, hasta];
+    if (req.query.event_source) addFilter(clauses, params, "e.event_source = ?", String(req.query.event_source).toUpperCase());
+    if (req.query.username) addFilter(clauses, params, "e.username ILIKE ?", `%${String(req.query.username)}%`);
 
-    const procesos = await prisma.procesos.findMany({
-      where,
-      orderBy: [{ iniciado_por_id: "asc" }, { fecha_inicio: "desc" }],
-      include: {
-        usuarios_procesos_iniciado_por_idTousuarios: {
-          include: {
-            rol_usuarios_rol_idTorol: true,
-          },
-        },
-        usuarios_procesos_cerrado_por_idTousuarios: {
-          select: { id: true, username: true },
-        },
-      },
-    });
+    const rows = await prisma.$queryRawUnsafe<ReportRow[]>(
+      `
+      SELECT
+        COALESCE(e.username, e.event_source) AS operador,
+        e.event_source,
+        COUNT(*)::int AS total_eventos,
+        COUNT(*) FILTER (WHERE e.event_type = 'MESSAGE_INCOMING')::int AS mensajes_entrantes,
+        COUNT(*) FILTER (WHERE e.event_type = 'MESSAGE_OUTGOING')::int AS mensajes_salientes,
+        COUNT(*) FILTER (WHERE e.event_type = 'THREAD_STATUS_CHANGED')::int AS cambios_estado,
+        COUNT(*) FILTER (WHERE e.event_type = 'THREAD_STAGE_CHANGED')::int AS cambios_stage,
+        COUNT(*) FILTER (WHERE e.event_type = 'ATTENTION_MODE_CHANGED')::int AS cambios_modo,
+        COUNT(DISTINCT e.session_id)::int AS threads_distintos,
+        MIN(e.occurred_at) AS primera_actividad,
+        MAX(e.occurred_at) AS ultima_actividad
+      FROM thread_events e
+      WHERE ${clauses.join(" AND ")}
+      GROUP BY COALESCE(e.username, e.event_source), e.event_source
+      ORDER BY total_eventos DESC, ultima_actividad DESC
+    `,
+      ...params
+    );
 
-    const rows = procesos.map((proceso) => {
-      const usuario = proceso.usuarios_procesos_iniciado_por_idTousuarios;
-      return {
-        usuario_id: usuario?.id ?? proceso.iniciado_por_id,
-        username: usuario?.username ?? null,
-        usuario_nombre: [usuario?.nombre, usuario?.apellido].filter(Boolean).join(" ") || null,
-        rol: usuario?.rol_usuarios_rol_idTorol?.nombre ?? null,
-        proceso_id: proceso.id,
-        cliente_id: proceso.cliente_id,
-        fecha_inicio: proceso.fecha_inicio.toISOString(),
-        fecha_fin: proceso.fecha_fin?.toISOString() ?? null,
-        tipo_proceso: proceso.tipo_proceso ?? null,
-        tipo_cierre: proceso.tipo_cierre ?? null,
-        delegado_humano: proceso.delegado_humano ?? false,
-        abandono: proceso.abandono ?? false,
-        duracion_total: proceso.duracion_total ?? null,
-        duracion_valor: proceso.duracion_valor ? Number(proceso.duracion_valor) : null,
-        duracion_unidad: proceso.duracion_unidad ?? null,
-        cerrado_por_id: proceso.cerrado_por_id ?? null,
-        cerrado_por_username:
-          proceso.usuarios_procesos_cerrado_por_idTousuarios?.username ?? null,
-      };
-    });
-
-    sendReport(req, res, "reporte_desempeno", rows);
+    sendReport(req, res, "reporte_desempeno_threads", rows);
   } catch (error) {
-    console.error("❌ Error en reporte de desempeño:", error);
-    res.status(500).json({ error: "Error al generar reporte de desempeño" });
+    console.error("❌ Error en reporte de desempeño de threads:", error);
+    res.status(500).json({ error: "Error al generar reporte de desempeño de threads" });
   }
 };
 
@@ -300,15 +266,27 @@ export const reporteProcesosSemanales = async (req: Request, res: Response): Pro
 
   try {
     const rows = await prisma.$queryRaw<
-      Array<{ semana_inicio: Date; semana_fin: Date; total_procesos: bigint | number }>
+      Array<{
+        semana_inicio: Date;
+        semana_fin: Date;
+        total_eventos: bigint | number;
+        threads_creados: bigint | number;
+        mensajes_entrantes: bigint | number;
+        mensajes_salientes: bigint | number;
+        threads_distintos: bigint | number;
+      }>
     >`
       SELECT
-        date_trunc('week', fecha_inicio AT TIME ZONE ${TIMEZONE})::date AS semana_inicio,
-        (date_trunc('week', fecha_inicio AT TIME ZONE ${TIMEZONE})::date + INTERVAL '6 days')::date AS semana_fin,
-        COUNT(*) AS total_procesos
-      FROM procesos
-      WHERE fecha_inicio >= ${desde}
-        AND fecha_inicio <= ${hasta}
+        date_trunc('week', occurred_at AT TIME ZONE ${TIMEZONE})::date AS semana_inicio,
+        (date_trunc('week', occurred_at AT TIME ZONE ${TIMEZONE})::date + INTERVAL '6 days')::date AS semana_fin,
+        COUNT(*) AS total_eventos,
+        COUNT(*) FILTER (WHERE event_type = 'THREAD_CREATED') AS threads_creados,
+        COUNT(*) FILTER (WHERE event_type = 'MESSAGE_INCOMING') AS mensajes_entrantes,
+        COUNT(*) FILTER (WHERE event_type = 'MESSAGE_OUTGOING') AS mensajes_salientes,
+        COUNT(DISTINCT session_id) AS threads_distintos
+      FROM thread_events
+      WHERE occurred_at >= ${desde}
+        AND occurred_at <= ${hasta}
       GROUP BY 1, 2
       ORDER BY 1 ASC
     `;
@@ -320,12 +298,16 @@ export const reporteProcesosSemanales = async (req: Request, res: Response): Pro
       rows.map((row) => ({
         semana_inicio: row.semana_inicio instanceof Date ? row.semana_inicio.toISOString().slice(0, 10) : row.semana_inicio,
         semana_fin: row.semana_fin instanceof Date ? row.semana_fin.toISOString().slice(0, 10) : row.semana_fin,
-        total_procesos: Number(row.total_procesos),
+        total_eventos: Number(row.total_eventos),
+        threads_creados: Number(row.threads_creados),
+        mensajes_entrantes: Number(row.mensajes_entrantes),
+        mensajes_salientes: Number(row.mensajes_salientes),
+        threads_distintos: Number(row.threads_distintos),
       }))
     );
   } catch (error) {
-    console.error("❌ Error en reporte semanal de procesos:", error);
-    res.status(500).json({ error: "Error al generar reporte semanal de procesos" });
+    console.error("❌ Error en reporte semanal de threads:", error);
+    res.status(500).json({ error: "Error al generar reporte semanal de threads" });
   }
 };
 
@@ -370,78 +352,6 @@ export const reportePreciosPlanes = async (req: Request, res: Response): Promise
   }
 };
 
-export const reporteContratos = async (req: Request, res: Response): Promise<void> => {
-  const desde = parseDate(req.query.desde);
-  const hasta = parseDate(req.query.hasta);
-
-  if ((req.query.desde && !desde) || (req.query.hasta && !hasta)) {
-    res.status(400).json({ error: "Parámetros de fecha inválidos" });
-    return;
-  }
-
-  try {
-    const rows = await prisma.contratos.findMany({
-      where: {
-        ...(desde || hasta
-          ? {
-              creado_en: {
-                ...(desde ? { gte: desde } : {}),
-                ...(hasta ? { lte: hasta } : {}),
-              },
-            }
-          : {}),
-        ...(req.query.rut_cliente
-          ? { rut_cliente: String(req.query.rut_cliente) }
-          : {}),
-        ...(req.query.estado ? { estado: String(req.query.estado) } : {}),
-        ...(req.query.creado_por_id
-          ? { creado_por_id: Number(req.query.creado_por_id) }
-          : {}),
-        ...(req.query.tipo ? { tipo: String(req.query.tipo) } : {}),
-        ...(req.query.modo ? { modo: String(req.query.modo) } : {}),
-      },
-      orderBy: { creado_en: "desc" },
-      include: {
-        info: true,
-        planes: true,
-        usuarios: {
-          select: { id: true, username: true, nombre: true, apellido: true },
-        },
-      },
-    });
-
-    sendReport(
-      req,
-      res,
-      "reporte_contratos",
-      rows.map((row) => ({
-        contrato_id: row.id,
-        creado_en: row.creado_en?.toISOString() ?? null,
-        rut_cliente: row.rut_cliente,
-        cliente_nombre: row.info?.nombre ?? null,
-        cliente_email: row.info?.email ?? null,
-        cliente_fono: row.info?.fono ?? null,
-        tipo: row.tipo,
-        modo: row.modo,
-        estado: row.estado ?? null,
-        plan_id: row.plan_id ?? null,
-        plan_codigo: row.planes?.codigo ?? null,
-        plan_nombre: row.planes?.nombre ?? null,
-        ciclo: row.ciclo ?? null,
-        cantidad_lineas: row.cantidad_lineas ?? null,
-        creado_por_id: row.creado_por_id ?? null,
-        creado_por_username: row.usuarios?.username ?? null,
-        creado_por_nombre: [row.usuarios?.nombre, row.usuarios?.apellido]
-          .filter(Boolean)
-          .join(" ") || null,
-      }))
-    );
-  } catch (error) {
-    console.error("❌ Error en reporte de contratos:", error);
-    res.status(500).json({ error: "Error al generar reporte de contratos" });
-  }
-};
-
 export const reporteClientesInfo = async (req: Request, res: Response): Promise<void> => {
   const desde = parseDate(req.query.desde);
   const hasta = parseDate(req.query.hasta);
@@ -452,51 +362,56 @@ export const reporteClientesInfo = async (req: Request, res: Response): Promise<
   }
 
   try {
-    const rows = await prisma.info.findMany({
+    const rows = await prisma.meta_inbox_contacts.findMany({
       where: {
         ...(desde || hasta
           ? {
-              fecha_registro: {
+              created_at: {
                 ...(desde ? { gte: desde } : {}),
                 ...(hasta ? { lte: hasta } : {}),
               },
             }
           : {}),
         ...(req.query.rut ? { rut: String(req.query.rut) } : {}),
-        ...(req.query.fono ? { fono: String(req.query.fono) } : {}),
+        ...(req.query.fono ? { phone: String(req.query.fono) } : {}),
+        ...(req.query.object_type ? { object_type: String(req.query.object_type).toUpperCase() } : {}),
         ...(req.query.nombre
           ? {
-              nombre: {
+              display_name: {
                 contains: String(req.query.nombre),
                 mode: "insensitive",
               },
             }
           : {}),
       },
-      orderBy: { fecha_registro: "desc" },
+      orderBy: { created_at: "desc" },
     });
 
     sendReport(
       req,
       res,
-      "reporte_clientes_info",
+      "reporte_agenda_contactos",
       rows.map((row) => ({
         id: row.id,
+        actor_external_id: row.actor_external_id,
+        object_type: row.object_type,
         rut: row.rut ?? null,
-        nombre: row.nombre,
+        nombre: row.display_name,
+        first_name: row.first_name ?? null,
+        last_name: row.last_name ?? null,
         email: row.email ?? null,
-        direccion: row.direccion ?? null,
-        comuna: row.comuna ?? null,
+        direccion: row.address ?? null,
+        comuna: row.city ?? null,
         region: row.region ?? null,
-        fono: row.fono ?? null,
-        fecha_registro: row.fecha_registro?.toISOString() ?? null,
-        usuario_registro_id: row.usuario_registro_id ?? null,
-        fecha_actualizacion: row.fecha_actualizacion?.toISOString() ?? null,
-        usuario_actualiza_id: row.usuario_actualiza_id ?? null,
+        fono: row.phone ?? null,
+        notes: row.notes ?? null,
+        metadata: row.metadata,
+        fecha_registro: row.created_at?.toISOString() ?? null,
+        fecha_actualizacion: row.updated_at?.toISOString() ?? null,
       }))
     );
   } catch (error) {
-    console.error("❌ Error en reporte de clientes/info:", error);
-    res.status(500).json({ error: "Error al generar reporte de clientes/info" });
+    console.error("❌ Error en reporte de agenda/contactos:", error);
+    res.status(500).json({ error: "Error al generar reporte de agenda/contactos" });
   }
 };

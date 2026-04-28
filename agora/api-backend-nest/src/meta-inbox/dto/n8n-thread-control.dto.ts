@@ -13,7 +13,7 @@ export class N8nThreadControlDto {
 
   @ValidateIf((o) => !o.sessionId)
   @IsString()
-  @IsIn(['PAGE', 'INSTAGRAM'])
+  @IsIn(['PAGE', 'INSTAGRAM', 'WHATSAPP'])
   objectType?: string;
 
   @IsOptional()
@@ -23,7 +23,7 @@ export class N8nThreadControlDto {
 
   @IsOptional()
   @IsString()
-  @IsIn(['N8N', 'HUMAN', 'PAUSED'])
+  @IsIn(['N8N', 'HUMAN', 'SYSTEM', 'PAUSED'])
   attentionMode?: string;
 
   @IsOptional()

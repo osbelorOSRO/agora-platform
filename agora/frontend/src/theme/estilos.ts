@@ -13,17 +13,6 @@ export const estilos = {
     mensajeExito: "text-green-500",
     titulo: "text-3xl font-bold mb-6 text-white",
   },
-kanban: {
-  contenedor: "font-montserrat flex h-full min-h-0 w-full flex-col bg-transparent",
-  seccion: "flex-1 flex w-full max-w-6xl",
-  tituloSeccion:
-    "font-montserrat text-lg font-semibold mb-4 flex items-center gap-2 text-textoOscuro",
-  iconoActivo: "w-5 h-5 text-textoOscuro",
-  iconoInactivo: "w-5 h-5 text-textoOscuro",
-  sinClientes: "font-montserrat text-textoOscuro",
-  grillaTarjetas:
-    "grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 pb-20",
-},
 chatExpandido: {
   contenedor: 'flex h-full min-h-0 w-full flex-1 bg-transparent text-textoOscuro',
   panelClientes: 'flex-1 w-full md:w-1/3 max-w-sm bg-fondoCard/40 backdrop-blur-sm p-4 overflow-y-auto border-r border-borde flex flex-col gap-4 min-h-0',
@@ -44,57 +33,7 @@ chatExpandido: {
 inputMensaje:
 'flex-1 min-w-0 text-sm text-textoOscuro bg-fondoClient rounded px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-azulOscuro font-montserrat',
 },
-  clientCard: {
-    contenedor: 'relative bg-fondoCard rounded-lg shadow-md p-4 w-full max-w-sm font-montserrat text-azulOscuro',
-    kebabBoton: 'p-1 rounded-full',
-    kebabIcono: 'w-5 h-5 text-textoOutput',
-    menuDropdown: 'absolute right-0 mt-2 w-48 text-textoOscuro rounded shadow-lg z-10 p-1 space-y-1 animate-fade-in',
-    menuBoton: 'w-full text-left px-4 py-2 text-sm font-montserrat flex items-center gap-2',
-    nombreCliente: 'text-textoOscuro font-normal text-xs font-montserrat',
-    etiquetaActual: 'bg-fondoCard inline-block mb-2 px-2 py-0.5 text-xs text-textoOscuro rounded-full font-normal font-montserrat',
-    lineaID: 'flex items-center text-xs text-textoOscuro font-normal text-xs font-montserrat',
-    idTexto: 'inline-flex items-center text-xs font-normal text-textoOscuro',
-    atendido: 'flex items-center text-xs text-textoOscuro font-normal',
-    atendidoLabel: 'inline-flex items-center text-xs font-normal text-textoOscuro',
-    atendidoBot: 'flex items-center text-xs font-normal',
-    atendidoHumano: 'flex items-center text-xs font-normal',
-    cargando: 'text-azulOscuro opacity-50',
-    iconoAtendido: 'w-4 h-4 mr-1 text-azulOscuro',
-    avatarBase: 'rounded-full object-cover bg-neutral-700',
-    avatarRing: 'ring-4 ring-azulPrimario ring-offset-2 ring-offset-transparent',
-    avatarSize: 'w-16 h-16',
-  },
 
-  estadoDropdown: {
-    contenedor: 'space-y-2 bg-fondoCard text-textoOscuro',
-    lista: 'space-y-1 max-h-52 overflow-y-auto bg-fondoCard text-textoTag',
-    botonEtiqueta: 'w-full text-left px-3 py-1 rounded text-xs font-normal text-textoTag bg-azulPrimario flex items-center justify-between font-montserrat',
-    cargando: 'text-xs text-textoTag font-montserrat',
-    botonAgregar: 'w-full bg-azulPrimario text-textoOscuro py-1 rounded text-sm font-montserrat',
-    inputNuevo: 'w-full px-2 py-1 border border-borde rounded text-xs font-normal bg-fondoCard text-textoTag',
-    botonCrear: 'w-full bg-azulPrimario text-textoTag py-1 rounded text-sm font-montserrat',
-  },
-
-  floatingChat: {
-    contenedor: 'fixed bottom-4 right-4 w-80 bg-fondoSection rounded-lg shadow-md z-50 flex flex-col font-montserrat',
-    encabezado: 'flex items-center justify-between px-4 py-2 bg-fondoCard text-azulOscuro rounded-t-lg',
-    encabezadoTitulo: 'font-semibold text-sm text-azulOscuro',
-    cerrarBoton: 'text-azulOscuro hover:text-fondoPagina',
-    areaMensajes: 'flex-1 p-3 overflow-y-auto max-h-96',
-    mensajeCliente: 'rounded-lg px-2 py-2 text-sm max-w-[65%] shadow bg-fondoInput text-textoInput',
-    mensajeAgente: 'rounded-lg px-2 py-2 text-sm max-w-[65%] shadow bg-fondoOutput text-textoOutput',
-    timestamp: 'text-[10px] text-textoTimestamp mt-1 text-right',
-    adjuntoPreview: 'w-full mt-1 rounded',
-    inputMensaje: 'flex-1 text-sm bg-fondoInput rounded px-3 py-1 shadow-sm focus:outline-none focus:ring-2 focus:ring-azulOscuro font-montserrat',
-    barraInferior: 'p-2 border-t border-borde flex gap-2 items-center',
-    botonAdjuntos: 'p-2 rounded-full bg-fondoPagina hover:bg-azulPrimario transition',
-    menuAdjuntos: 'absolute bottom-full left-0 mb-2 p-2 bg-fondoCard shadow rounded-lg flex space-x-2 z-50',
-    botonEnviar: 'bg-fondoCard text-azulPrimario border border-azulPrimario rounded p-2 active:bg-azulPrimario active:text-textoClaro transition-colors',
-    cargandoTexto: 'text-sm text-azulOscuro',
-    sinMensajes: 'text-sm text-azulOscuro italic',
-    icono: 'w-5 h-5',
-    iconoMini: 'w-4 h-4',
-  },
   voiceRecorder: {
     contenedor: 'flex flex-col items-center text-sm space-y-2 font-montserrat',
     grabando: 'flex items-center space-x-2 text-red-600 font-semibold',
@@ -119,19 +58,7 @@ inputMensaje:
     btnCancelar: 'px-3 py-1 border border-borde rounded text-textoOscuro hover:bg-fondoCard font-montserrat',
     btnGuardar: 'px-4 py-1 rounded bg-fondoCard text-textoOscuro hover:bg-azulPrimario font-montserrat',
   },
-  formEliminar: {
-    overlay: 'fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50',
-    card: 'bg-fondoInput text-textoOscuro p-6 rounded shadow-md w-96 font-montserrat',
-    titulo: 'text-lg font-semibold mb-4 text-center text-textoOscuro flex justify-center items-center gap-2',
-    label: 'text-sm block mb-2 text-textoOscuro',
-    input: 'w-full bg-fondoPagina px-3 py-2 rounded mb-4 text-sm font-montserrat shadow-sm focus:outline-none focus:ring-2 focus:ring-azulOscuro texto-textoOscuro',
-    error: 'text-red-600 text-sm mb-2',
-    advertencia: 'text-sm mb-4 text-center text-textoClaro',
-    advertenciaFuerte: 'text-red-600 font-semibold',
-    botones: 'flex justify-end gap-2',
-    btnCancelar: 'px-3 py-1 border border-borde rounded text-textoOscuro hover:bg-fondoCard font-montserrat',
-    btnConfirmar:  'px-4 py-1 rounded bg-fondoCard text-textoOscuro hover:bg-azulPrimario font-montserrat',
-  },
+
   notificaciones: {
     contenedor: 'fixed top-2 right-2 z-50 space-y-2',
     tarjeta: 'bg-fondoCard border border-azulPrimario text-azulOscuro px-4 py-2 rounded shadow-lg flex justify-between items-start font-montserrat',
@@ -139,19 +66,6 @@ inputMensaje:
     cerrar: 'ml-4 hover:text-red-600 transition',
     icono: 'w-4 h-4 mr-1 inline',
   },
-menuClientesLite: {
-  contenedor: 'fixed right-0 top-0 z-50 h-full w-full sm:w-[420px] bg-fondoPagina shadow-xl flex flex-col',
-  header: 'sticky top-0 z-10 bg-fondoInput border-b flex items-center justify-between p-4',
-  titulo: 'm-0 text-textoInput text-center w-full font-montserrat font-semibold text-xl',
-  botonCerrar: 'p-2 text-fondoOutput hover:text-azulOscuro transition',
-  inputBusqueda: 'pl-9 pr-8 w-full',
-  listaScrollable: 'flex-1 overflow-y-auto overscroll-contain',
-  footer: 'sticky bottom-0 bg-fondoInput p-3 border-t flex items-center justify-between gap-2',
-  textoFooter: 'text-xs opacity-70 text-textoInput',
-  itemNombre: 'font-medium truncate text-azulPrimario',
-  itemId: 'text-xs opacity-70 truncate text-azulPrimario',
-
-},
 
   tarjetaCliente: {
     lateral: "bg-fondoCard text-textoOscuro", // fondo dinámico para el SidePanel entero
@@ -162,7 +76,7 @@ menuClientesLite: {
 
 
     label: "block text-sm font-medium text-textoOscuro mb-1",
-    input:"w-full h-10 px-3 rounded-lg border border-borde bg-fondoClient text-textoOscuro placeholder:text-textoOscuro/60 focus-visible:ring-azulPrimario/40", 
+    input:"w-full h-10 px-3 rounded-lg border border-borde bg-fondoClient text-textoOscuro placeholder:text-textoOscuro/60 focus-visible:ring-azulPrimario/40",
     botonCerrar: "px-3 py-2 rounded-lg bg-transparent hover:bg-fondoClient/60",
     botonGuardar: "px-3 py-2 rounded-lg bg-fondoCard text-textoOscuro hover:bg-fondoCard/80 inline-flex items-center gap-2",
     botonBuscarNombre:
@@ -172,60 +86,9 @@ menuClientesLite: {
     botonCrearContrato:"inline-flex items-center gap-2 rounded-lg bg-fondoCard px-3 py-2 text-textoOscuro hover:bg-fondoCard/80",
   },
 
-tarjetaCierreProceso: {
-  lateral: "bg-fondoCard text-textoOscuro",
-  contenido: "p-6 space-y-4",
-  label: "block text-sm font-medium text-textoOscuro mb-1",
-  input:
-    "w-full h-10 px-3 rounded-lg border border-borde bg-fondoClient text-textoOscuro placeholder:text-textoOscuro/60 focus-visible:ring-azulPrimario/40",
-  botonCancelar:
-    "px-3 py-2 rounded-lg bg-fondoClient text-textoOscuro hover:bg-fondoClient/70",
-  botonGuardar:
-    "bg-fondoCard text-textoOscuro hover:bg-fondoCard/80",
-  abandonoContenedor:
-    "flex items-center justify-between rounded-lg bg-fondoClient/60 p-3 border border-borde",
-  abandonoTexto:
-    "text-xs text-textoOscuro/70",
-  alertaError:
-    "text-sm text-red-200 bg-red-500/10 border border-red-500/20 p-2 rounded",
-},
-
-tarjetaScraping: {
-  lateral: "bg-fondoCard text-textoOscuro",
-  contenido: "p-6 space-y-4",
-  label: "block text-sm font-medium text-textoOscuro mb-1",
-  input:
-    "w-full h-10 px-3 rounded-lg border border-borde bg-fondoClient text-textoOscuro placeholder:text-textoOscuro/60 focus:outline-none focus:ring-2 focus:ring-azulPrimario/40",
-  botonAgregarLinea: "mt-2 flex items-center text-sm text-textoOscuro/80 hover:text-textoOscuro",
-  iconoAgregarLinea: "mr-1 w-4 h-4 text-textoOscuro/80",
-  botonEvaluar:
-    "btn flex items-center gap-2 rounded-lg bg-fondoCard px-3 py-2 text-textoOscuro hover:bg-fondoCard/80",
-  iconoEvaluar: "w-4 h-4",
-  errorGeneral:
-    "flex items-center gap-2 rounded bg-red-500/10 p-2 text-red-200",
-  iconoError: "w-4 h-4",
-  textoError: "text-sm",
-  tarjetaContenedor: "space-y-3",
-  tarjeta: "rounded border border-borde bg-fondoClient/70 text-textoOscuro",
-  btnToggle: "w-full px-3 py-2 flex items-center justify-between text-textoOscuro",
-  iconoVerdad: "text-green-600",
-  iconoFalso: "text-red-600",
-  iconoAdvertencia: "text-amber-600",
-  tituloTarjeta: "font-semibold text-textoOscuro",
-  btnTabLinea: "px-2 py-1 rounded border border-borde text-sm bg-transparent text-textoOscuro/80",
-  btnTabLineaActivo: "bg-fondoCard text-textoOscuro",
-  kpi: "p-2 rounded bg-fondoPagina/60 text-textoOscuro",
-  kpiLabel: "text-xs text-textoOscuro/70",
-  kpiValue: "text-sm font-semibold break-all text-textoOscuro",
-  lineaDetalle: "grid gap-3",
-  lineaDetalleTitulo: "font-medium text-textoOscuro",
-  bannerInfo: "flex items-center gap-2 rounded bg-amber-500/15 p-2 text-amber-200",
-  bannerInfoIcono: "w-4 h-4",
-  bannerInfoTexto: "text-sm",
-},
   fichaEnganche: {
     lateral: "bg-white text-textoOscuro",
-    form: "space-y-4",  
+    form: "space-y-4",
     flexSelect: "flex items-center gap-2 mb-2",
     flexInput: "flex items-center gap-2 mb-2",
     botonesContainer: "flex justify-end gap-2 mt-4",
@@ -240,11 +103,11 @@ tarjetaScraping: {
     "bg-fondoPagina text-textoOscuro flex flex-col items-center justify-between py-4 shadow-lg",
   botonAccion:
     "flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-textoOscuro hover:bg-fondoCard hover:shadow-lg hover:shadow-azulOscuro/20 transition-all duration-150",
-  
+
   // MODO COLAPSADO: iconos con círculo y efecto glass al hover
   botonAccionCollapsed:
     "flex items-center justify-center w-9 h-9 rounded-full bg-fondoPagina text-fondoInput hover:bg-fondoCard hover:text-textoOscuro hover:backdrop-blur-md hover:shadow-lg hover:shadow-azulOscuro/30 transition-all duration-150",
-  
+
   sidebarIcon: "w-5 h-5",
   avatarExpandido:
     "w-10 h-10 rounded-full bg-fondoInput text-textoInput flex items-center justify-center",
@@ -305,6 +168,7 @@ tarjetaScraping: {
 	    "flex-1 rounded-md border border-borde px-3 py-2 text-sm bg-fondoClient text-textoOscuro focus:outline-none focus:ring-2 focus:ring-azulPrimario/60",
 	  composerSend:
 	    "bg-fondoCard text-azulPrimario border border-azulPrimario rounded p-2 active:bg-azulPrimario active:text-textoClaro transition-colors disabled:opacity-50",
+	  composerIcon: "w-5 h-5",
 	  contactAside: "border-l border-borde bg-fondoCard/40 backdrop-blur-sm p-4 space-y-3 overflow-y-auto",
 	  contactHead: "flex items-center justify-between",
 	  contactTitle: "text-sm font-semibold text-textoOscuro",

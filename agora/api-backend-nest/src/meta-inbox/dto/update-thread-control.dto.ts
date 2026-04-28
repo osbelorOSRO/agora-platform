@@ -8,7 +8,7 @@ export class UpdateThreadControlDto {
 
   @IsOptional()
   @IsString()
-  @IsIn(['N8N', 'HUMAN', 'PAUSED'])
+  @IsIn(['N8N', 'HUMAN', 'SYSTEM', 'PAUSED'])
   attentionMode?: string;
 
   @IsOptional()

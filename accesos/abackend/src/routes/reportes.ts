@@ -2,7 +2,6 @@ import { Router } from "express";
 import {
   listarCatalogoReportes,
   reporteClientesInfo,
-  reporteContratos,
   reporteDesempeno,
   reportePreciosPlanes,
   reporteProcesos,
@@ -20,7 +19,6 @@ router.get("/procesos", reporteProcesos);
 router.get("/desempeno", reporteDesempeno);
 router.get("/procesos-semanales", reporteProcesosSemanales);
 router.get("/precios-planes", reportePreciosPlanes);
-router.get("/contratos", reporteContratos);
 router.get("/clientes-info", reporteClientesInfo);
 
 export default router;

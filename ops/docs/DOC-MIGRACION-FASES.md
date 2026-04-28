@@ -46,8 +46,8 @@ Consolidar `env` por perfil y compose parametrizados sin hardcodes críticos.
 1. Confirmar perfiles `env/*.env` y `n8n/env/*.env`.
 2. Confirmar compose parametrizados por `HOST_BIND_IP` y URLs por perfil.
 3. Confirmar separación temporal de compose:
-   - `mongo` vs `microservicio`
    - `postgres` vs `pgadmin`
+   - antiguo `mongo/microservicio` retirado del stack conversacional
 4. Verificar scripts operativos:
    - `scripts/up-profile.sh`
    - `scripts/down-profile.sh`
@@ -72,7 +72,7 @@ Formalizar que el producto consume BD externas por URL, sin depender del compose
 ### Pasos
 1. Definir `VPS1` como BD oficial (prod), fuera de `/proyectos` (`/root`).
 2. Definir `VPS2` como BD de pruebas (restaurada desde backup), también fuera de `/proyectos`.
-3. Ajustar `DATABASE_URL` y `MONGODB_URI` por perfil para apuntar a hosts de BD externos.
+3. Ajustar `DATABASE_URL` por perfil para apuntar a hosts de BD externos.
 4. Asegurar conectividad por Tailscale para DB (sin exposición pública).
 
 ### Criterio de éxito

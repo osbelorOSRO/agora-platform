@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { jwtService } from '../../auth/jwt.service.js';
 import { logger } from '../../../shared/logger.js';
+import { env } from '../../../config/env.js';
 
 export interface AuthenticatedRequest extends Request {
   user?: any;
@@ -11,39 +11,14 @@ export const authMiddleware = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  try {
-    const authHeader = req.headers['authorization'];
-
-    if (!authHeader) {
-      res.status(401).json({
-        error: 'Falta header Authorization',
-      });
-      return;
-    }
-
-    const parts = authHeader.split(' ');
-
-    if (parts.length !== 2 || parts[0] !== 'Bearer') {
-      res.status(401).json({
-        error: 'Formato Authorization inválido',
-      });
-      return;
-    }
-
-    const token = parts[1];
-
-    const payload = await jwtService.verifyBackendToken(token);
-
-    req.user = payload;
-
+  const internalToken = req.headers['x-internal-token'];
+  if (typeof internalToken === 'string' && internalToken === env.baileysInternalToken) {
     next();
-  } catch (error: any) {
-    logger.warn('Token inválido o expirado', {
-      error: error.message,
-    });
-
-    res.status(403).json({
-      error: 'Token inválido o expirado',
-    });
+    return;
   }
+
+  logger.warn('Solicitud interna rechazada: token Baileys inválido o ausente');
+  res.status(403).json({
+    error: 'Token interno inválido',
+  });
 };

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ActorBootstrapService } from './bootstrap/actor-bootstrap.service';
+import { ConversationBootstrapService } from './bootstrap/conversation-bootstrap.service';
 import { ActorScoringService } from './scoring/actor-scoring.service';
 import { ActorTransitionsProcessor } from './transitions/actor-transitions.processor';
 import { ChangesProcessor } from './pipelines/changes.processor';
@@ -29,6 +30,7 @@ import { MetaInboxModule } from '../meta-inbox/meta-inbox.module';
   providers: [
     PrismaService,
     ActorBootstrapService,
+    ConversationBootstrapService,
     ActorScoringService,
     MsgDelegationStateService,
     MsgDelegationCompletionService,
@@ -41,6 +43,7 @@ import { MetaInboxModule } from '../meta-inbox/meta-inbox.module';
   ],
   exports: [
     ActorBootstrapService,
+    ConversationBootstrapService,
     ActorScoringService,
     MsgDelegationCompletionService,
   ],

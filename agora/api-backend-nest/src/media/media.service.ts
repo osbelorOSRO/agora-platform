@@ -10,10 +10,9 @@ const MEDIA_BASE_URL = (process.env.MEDIA_BASE_URL || '').replace(/\/+$/, '');
 @Injectable()
 export class MediaService {
 
-  // 🔹 EXISTENTE (NO SE MODIFICA)
   async procesarArchivo(
     archivo: Express.Multer.File,
-    cliente_id: string,
+    actorId: string,
     tipo: string,
   ) {
     const ruta = `/uploads/${archivo.filename}`;
@@ -22,7 +21,7 @@ export class MediaService {
       mensaje: 'Archivo guardado correctamente',
       ruta,
       nombre_original: archivo.originalname,
-      cliente_id,
+      actorId,
       tipo,
     };
   }

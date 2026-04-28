@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   BarChart3,
   Bell,
-  KanbanSquare,
   Lock,
   ContactRound,
   MessageSquare,
@@ -16,14 +15,12 @@ import {
 import { getTokenData } from "@/utils/getTokenData";
 import { hasPermission } from "@/utils/permissions";
 import {
-  obtenerTodosLosProcesos,
-  type ProcesoProductividad,
-} from "../services/productividadService";
+  obtenerActividadSemanalThreads,
+  type ThreadWeeklyActivityRow,
+} from "../services/reportesService";
 import { useWaDashboard } from "@/modules/wa/hooks/useWaDashboard";
 import { useNotificaciones } from "@/context/NotificacionContext";
-import { listarClientesActivos } from "@/services/clientes.service";
-import { getClientesLite } from "@/services/clientesLite.service";
-import { listMetaInboxThreads } from "@/services/metaInbox.service";
+import { listMetaInboxContacts, listMetaInboxThreads } from "@/services/metaInbox.service";
 
 type WeeklyBucket = {
   weekStart: string;
@@ -79,10 +76,7 @@ const startOfWeek = (date: Date) => {
   return copy;
 };
 
-const buildWeeklyBuckets = (
-  procesos: ProcesoProductividad[],
-  totalWeeks = 8
-): WeeklyBucket[] => {
+const buildEmptyWeeklyBuckets = (totalWeeks = 8): WeeklyBucket[] => {
   const thisWeekStart = startOfWeek(new Date());
   const firstWeekStart = new Date(thisWeekStart);
   firstWeekStart.setDate(firstWeekStart.getDate() - (totalWeeks - 1) * 7);
@@ -104,19 +98,36 @@ const buildWeeklyBuckets = (
     });
   }
 
-  procesos.forEach((proceso) => {
-    if (!proceso.fecha_inicio) return;
-    const fecha = new Date(proceso.fecha_inicio);
-    if (Number.isNaN(fecha.getTime())) return;
+  return Array.from(buckets.values());
+};
 
-    const weekStartKey = toLocalDateKey(startOfWeek(fecha));
+const buildWeeklyBuckets = (
+  activityRows: ThreadWeeklyActivityRow[],
+  totalWeeks = 8
+): WeeklyBucket[] => {
+  const buckets = new Map(buildEmptyWeeklyBuckets(totalWeeks).map((item) => [item.weekStart, item]));
+
+  activityRows.forEach((row) => {
+    const fecha = new Date(`${row.semana_inicio}T12:00:00`);
+    if (Number.isNaN(fecha.getTime())) return;
+    const weekStartKey = toLocalDateKey(fecha);
     const current = buckets.get(weekStartKey);
     if (!current) return;
 
-    current.total += 1;
+    current.total = Number(row.total_eventos || 0);
   });
 
   return Array.from(buckets.values());
+};
+
+const getWeeklyWindow = (totalWeeks = 8) => {
+  const buckets = buildEmptyWeeklyBuckets(totalWeeks);
+  const desde = new Date(`${buckets[0].weekStart}T00:00:00`);
+  const hasta = new Date(`${buckets[buckets.length - 1].weekEnd}T23:59:59`);
+  return {
+    desde: desde.toISOString(),
+    hasta: hasta.toISOString(),
+  };
 };
 
 export default function Welcome() {
@@ -124,14 +135,13 @@ export default function Welcome() {
   const navigate = useNavigate();
   const permissions = user?.permisos ?? [];
   const { notificaciones, eliminar, eliminarTodas, unreadCount, markAllRead } = useNotificaciones();
-  const [procesos, setProcesos] = useState<ProcesoProductividad[]>([]);
+  const [weeklyRows, setWeeklyRows] = useState<ThreadWeeklyActivityRow[]>([]);
   const [loadingChart, setLoadingChart] = useState(true);
   const [chartError, setChartError] = useState("");
-  const [activeClientsCount, setActiveClientsCount] = useState<number | null>(null);
   const [agendaTotal, setAgendaTotal] = useState<number | null>(null);
   const [metaThreadsCount, setMetaThreadsCount] = useState<number | null>(null);
 
-  const canUseKanban = hasPermission("gestionar_usuarios", permissions);
+  const canUseThreads = hasPermission("gestionar_usuarios", permissions);
   const canSeeReports = hasPermission("ver_reportes", permissions);
   const canEditSettings = hasPermission("editar_configuracion", permissions);
   const canViewBot = hasPermission("vista_bot", permissions);
@@ -148,11 +158,12 @@ export default function Welcome() {
   useEffect(() => {
     const load = async () => {
       try {
-        const data = await obtenerTodosLosProcesos();
-        setProcesos(data);
+        const { desde, hasta } = getWeeklyWindow();
+        const data = await obtenerActividadSemanalThreads(desde, hasta);
+        setWeeklyRows(data);
       } catch (error) {
-        console.error("Error cargando procesos semanales:", error);
-        setChartError("No se pudo cargar el gráfico semanal de procesos.");
+        console.error("Error cargando actividad semanal:", error);
+        setChartError("No se pudo cargar el grafico semanal de actividad.");
       } finally {
         setLoadingChart(false);
       }
@@ -162,20 +173,18 @@ export default function Welcome() {
   }, []);
 
   useEffect(() => {
-    if (!canUseKanban) return;
+    if (!canUseThreads) return;
 
     let cancelled = false;
 
     (async () => {
       try {
-        const [activos, agenda, metaThreads] = await Promise.all([
-          listarClientesActivos(),
-          getClientesLite({ page: 1, limit: 1 }),
+        const [agenda, metaThreads] = await Promise.all([
+          listMetaInboxContacts({ limit: 1, offset: 0 }),
           listMetaInboxThreads(100, 0),
         ]);
 
         if (cancelled) return;
-        setActiveClientsCount(Array.isArray(activos) ? activos.length : 0);
         setAgendaTotal(agenda?.total ?? 0);
         setMetaThreadsCount(Array.isArray(metaThreads) ? metaThreads.length : 0);
       } catch (error) {
@@ -187,16 +196,16 @@ export default function Welcome() {
     return () => {
       cancelled = true;
     };
-  }, [canUseKanban]);
+  }, [canUseThreads]);
 
-  const weeklyData = useMemo(() => buildWeeklyBuckets(procesos), [procesos]);
+  const weeklyData = useMemo(() => buildWeeklyBuckets(weeklyRows), [weeklyRows]);
   const maxWeeklyTotal = useMemo(
     () => Math.max(...weeklyData.map((item) => item.total), 1),
     [weeklyData]
   );
 
   const enabledModulesCount = [
-    canUseKanban,
+    canUseThreads,
     canSeeReports,
     canEditSettings,
     canViewBot,
@@ -215,18 +224,21 @@ export default function Welcome() {
       message: item.message,
       timestamp: item.timestamp,
       tone: item.type,
+      actorExternalId: "",
       appCount: 0,
     }));
 
     const appMap = new Map<
       string,
-      { clienteId: string; timestamp: string; latestContent: string; count: number }
+      { actorExternalId: string; label: string; timestamp: string; latestContent: string; count: number }
     >();
     notificaciones.forEach((item) => {
-      const prev = appMap.get(item.clienteId);
+      const prev = appMap.get(item.actorExternalId);
+      const label = item.phone || item.actorExternalId;
       if (!prev) {
-        appMap.set(item.clienteId, {
-          clienteId: item.clienteId,
+        appMap.set(item.actorExternalId, {
+          actorExternalId: item.actorExternalId,
+          label,
           timestamp: item.fecha,
           latestContent: item.contenido,
           count: 1,
@@ -236,8 +248,9 @@ export default function Welcome() {
 
       const prevTs = +new Date(prev.timestamp);
       const nextTs = +new Date(item.fecha);
-      appMap.set(item.clienteId, {
-        clienteId: item.clienteId,
+      appMap.set(item.actorExternalId, {
+        actorExternalId: item.actorExternalId,
+        label: prev.label || label,
         timestamp: nextTs > prevTs ? item.fecha : prev.timestamp,
         latestContent: nextTs > prevTs ? item.contenido : prev.latestContent,
         count: prev.count + 1,
@@ -245,15 +258,15 @@ export default function Welcome() {
     });
 
     const appEntries = Array.from(appMap.values()).map((item) => ({
-      id: `app-${item.clienteId}-${item.timestamp}`,
-      source: "APP",
+      id: `threads-${item.actorExternalId}-${item.timestamp}`,
+      source: "THREADS",
       message:
         item.count > 1
-          ? `${item.count} mensajes nuevos de ${item.clienteId}`
-          : `Nuevo mensaje de ${item.clienteId}: ${item.latestContent}`,
+          ? `${item.count} mensajes nuevos del actor ${item.label}`
+          : `Nuevo mensaje del actor ${item.label}: ${item.latestContent}`,
       timestamp: item.timestamp,
       tone: "info" as const,
-      clienteId: item.clienteId,
+      actorExternalId: item.actorExternalId,
       appCount: item.count,
     }));
 
@@ -264,39 +277,27 @@ export default function Welcome() {
 
   const moduleCards: ModuleCard[] = [
     {
-      title: "Modulo Chats",
-      value:
-        activeClientsCount === null
-          ? "--"
-          : `${activeClientsCount} ${activeClientsCount === 1 ? "cliente activo" : "clientes activos"}`,
-      subtitle: "Procesos activos listos para operacion diaria.",
-      to: "/kanban",
-      enabled: canUseKanban,
-      status: canUseKanban ? "Disponible" : "Restringido",
-      Icon: KanbanSquare,
-    },
-    {
       title: "Agenda",
       value:
         agendaTotal === null
           ? "--"
           : `${agendaTotal} ${agendaTotal === 1 ? "contacto" : "contactos"}`,
-      subtitle: "Cantidad total de clientes disponibles en agenda.",
+      subtitle: "Contactos conversacionales disponibles en agenda.",
       to: "/agenda",
-      enabled: canUseKanban,
-      status: canUseKanban ? "Disponible" : "Restringido",
+      enabled: canUseThreads,
+      status: canUseThreads ? "Disponible" : "Restringido",
       Icon: ContactRound,
     },
     {
-      title: "Meta",
+      title: "Threads",
       value:
         metaThreadsCount === null
           ? "--"
-          : `${metaThreadsCount} ${metaThreadsCount === 1 ? "chat activo" : "chats activos"}`,
-      subtitle: "Conversaciones detectadas en Meta Inbox.",
+          : `${metaThreadsCount} ${metaThreadsCount === 1 ? "thread activo" : "threads activos"}`,
+      subtitle: "Conversaciones operativas detectadas en Threads.",
       to: "/meta-inbox",
-      enabled: canUseKanban,
-      status: canUseKanban ? "Disponible" : "Restringido",
+      enabled: canUseThreads,
+      status: canUseThreads ? "Disponible" : "Restringido",
       Icon: MessageSquare,
     },
     {
@@ -315,7 +316,7 @@ export default function Welcome() {
     {
       title: "Notificaciones",
       value: `${unreadCount} ${unreadCount === 1 ? "no leída" : "no leídas"}`,
-      subtitle: "Actividad reciente consolidada (agrupada por cliente).",
+      subtitle: "Actividad reciente consolidada.",
       enabled: true,
       status: activityFeed.length > 0 ? "Activo" : "Sin eventos",
       Icon: Bell,
@@ -336,7 +337,7 @@ export default function Welcome() {
               </h1>
               <p className="mt-2 max-w-3xl text-sm text-white/75 md:text-base">
                 Este es el hub transversal de operacion. Desde aqui centralizamos
-                accesos, permisos y el pulso semanal de procesos creados.
+                accesos, permisos y el pulso semanal de actividad conversacional.
               </p>
             </div>
           </div>
@@ -375,7 +376,7 @@ export default function Welcome() {
         </div>
       </header>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {moduleCards.map(({ title, value, subtitle, to, actionLabel, onAction, enabled, status, Icon }) => (
           <article
             key={title}
@@ -462,10 +463,10 @@ export default function Welcome() {
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-200/80">
-                Procesos semanales
+                Actividad semanal
               </p>
               <h2 className="mt-2 text-2xl font-semibold">
-                Procesos creados por semana
+                Eventos registrados por semana
               </h2>
               <p className="mt-2 text-sm text-white/70">
                 Ventana movil de ocho semanas, agrupada de lunes a domingo.
@@ -508,7 +509,7 @@ export default function Welcome() {
                         <div
                           className="w-full rounded-t-[18px] bg-gradient-to-t from-cyan-400 via-sky-400 to-orange-300 shadow-[0_10px_30px_rgba(56,189,248,0.35)] transition-all"
                           style={{ height }}
-                          title={`${item.total} procesos`}
+                          title={`${item.total} eventos`}
                         />
                       </div>
                       <div className="text-center text-xs text-white/65">
@@ -549,7 +550,7 @@ export default function Welcome() {
                 onClick={eliminarTodas}
                 className="rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium transition hover:bg-white/15"
               >
-                Limpiar APP
+                Limpiar Threads
               </button>
             </div>
 
@@ -581,7 +582,7 @@ export default function Welcome() {
                       <span className="text-white/35">{relativeActivityTime(item.timestamp)}</span>
                     </div>
                     <p className="mt-2 text-sm text-white/80">{item.message}</p>
-                    {item.source === "APP" && item.clienteId ? (
+                    {item.source === "THREADS" && item.actorExternalId ? (
                       <div className="absolute right-3 top-3 flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-2 py-1 opacity-0 transition group-hover:opacity-100">
                         {item.appCount ? (
                           <span className="rounded-full bg-cyan-300/20 px-2 py-1 text-[10px] font-semibold text-cyan-100">
@@ -590,16 +591,16 @@ export default function Welcome() {
                         ) : null}
                         <button
                           type="button"
-                          onClick={() => navigate(`/kanban?cliente=${encodeURIComponent(item.clienteId)}`)}
+                          onClick={() => navigate(`/meta-inbox?actor=${encodeURIComponent(item.actorExternalId)}`)}
                           className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/90 transition hover:bg-white/20"
-                          title="Ir al chat"
-                          aria-label="Ir al chat"
+                          title="Ir al thread"
+                          aria-label="Ir al thread"
                         >
                           <ArrowUpRight className="h-4 w-4" />
                         </button>
                         <button
                           type="button"
-                          onClick={() => eliminar(item.clienteId)}
+                          onClick={() => eliminar(item.actorExternalId)}
                           className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/70 transition hover:bg-red-500/40 hover:text-white"
                           title="Eliminar notificación"
                           aria-label="Eliminar notificación"
@@ -622,7 +623,7 @@ export default function Welcome() {
 
             <div className="mt-5 space-y-3">
               {[
-                ["Operacion Kanban y Meta", canUseKanban],
+                ["Operacion Threads", canUseThreads],
                 ["Reportes CSV", canSeeReports],
                 ["Ajustes y configuracion", canEditSettings],
                 ["Vista bot", canViewBot],

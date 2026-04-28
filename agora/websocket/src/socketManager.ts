@@ -8,19 +8,17 @@ interface DecodedToken {
   [key: string]: any;
 }
 
-interface ClienteActualizadoPayload {
-  clienteId: string;
-  estado: string;
-}
-
 interface NuevoMensajePayload {
-  clienteId: string;
+  actorExternalId: string;
+  phone?: string;
   mensaje: string;
+  contenido?: string;
 }
 
 interface MensajeGlobitoPayload {
   usuario_id: number;
-  clienteId: string;
+  actorExternalId: string;
+  phone?: string;
   contenido: string;
   fecha_envio: string;
 }
@@ -59,10 +57,10 @@ export const handleSocketConnection = async (socket: Socket, io: Server): Promis
 
     socket.emit("conexion_autorizada", { usuario_id: decoded.id });
 
-    // 📌 El frontend se une a una sala específica para cada cliente
-    socket.on("joinRoom", (clienteId: string) => {
-      socket.join(clienteId);
-      console.log(`📌 Socket unido a sala: ${clienteId}`);
+    // 📌 Unión explícita a una sala operativa.
+    socket.on("joinRoom", (room: string) => {
+      socket.join(room);
+      console.log(`📌 Socket unido a sala: ${room}`);
     });
 
     const joinUserRoom = (usuarioId: number | string, rol?: string) => {
@@ -82,26 +80,10 @@ export const handleSocketConnection = async (socket: Socket, io: Server): Promis
       joinUserRoom(usuario_id, rol);
     });
 
-    // Compatibilidad con clientes antiguos
-    socket.on("unirseSalaUsuario", (usuario_id: number | string) => {
-      if (!usuario_id) {
-        console.warn("⚠️ Datos faltantes en unirseSalaUsuario");
-        return;
-      }
-
-      joinUserRoom(usuario_id);
-    });
-
-    // 🔄 Evento emitido cuando se actualiza un cliente desde el panel
-    socket.on("clienteActualizado", (data: ClienteActualizadoPayload) => {
-      io.to(data.clienteId).emit("clienteActualizado", data);
-      console.log(`♻️ Emitido clienteActualizado a sala ${data.clienteId}`);
-    });
-
-    // 💬 Evento cuando se manda un mensaje a un cliente
+    // 💬 Evento de sala directa por actor externo.
     socket.on("nuevoMensaje", (data: NuevoMensajePayload) => {
-      io.to(data.clienteId).emit("nuevoMensaje", data);
-      console.log(`💬 Emitido nuevoMensaje a sala ${data.clienteId}`);
+      io.to(data.actorExternalId).emit("nuevoMensaje", data);
+      console.log(`💬 Emitido nuevoMensaje a sala ${data.actorExternalId}`);
     });
 
 

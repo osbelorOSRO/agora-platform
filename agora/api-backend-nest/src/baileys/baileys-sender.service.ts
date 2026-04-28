@@ -1,16 +1,10 @@
-// api-backend-nest/src/baileys/baileys-sender.service.ts
-
-import { Injectable, InternalServerErrorException, Inject, Scope } from '@nestjs/common';
-import { REQUEST } from '@nestjs/core';
-import { Request } from 'express';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import axios from 'axios';
 
-@Injectable({ scope: Scope.REQUEST }) // ✅ Importante para inyectar REQUEST
-export class BaileysSenderService {
-  constructor(
-    @Inject(REQUEST) private readonly request: Request,
-  ) {}
+type BaileysMessageType = 'text' | 'image' | 'audio' | 'document' | 'video';
 
+@Injectable()
+export class BaileysSenderService {
   private getGatewayUrl(): string {
     const url = process.env.BOT_BASE_URL;
     if (!url) {
@@ -19,30 +13,46 @@ export class BaileysSenderService {
     return url;
   }
 
+  private resolveDestino(clienteId: string): string {
+    const value = String(clienteId || '').trim();
+    if (!value) throw new Error('Falta destino WhatsApp.');
+    if (value.includes('@')) return value;
+    return `${value}@s.whatsapp.net`;
+  }
+
+  private resolveTipoId(destino: string, explicitTipoId?: string): string {
+    if (explicitTipoId === 'jid' || explicitTipoId === 'lid') return explicitTipoId;
+    return destino.includes('@lid') ? 'lid' : 'jid';
+  }
+
   async enviarMensajeWhatsApp(
     clienteId: string,
-    tipo: 'texto' | 'imagen' | 'audio' | 'documento' | 'video',
+    tipo: BaileysMessageType,
     contenido: string,
-    tipoId: string,
-    urlArchivo?: string
-  ): Promise<void> {
-    const waId = `${clienteId}@s.whatsapp.net`;
+    tipoId?: string,
+    urlArchivo?: string,
+    options?: {
+      fileName?: string;
+      mimeType?: string;
+    },
+  ): Promise<any> {
+    const waId = this.resolveDestino(clienteId);
 
     const payload: any = {
       destino: waId,
       tipo,
-      tipoId
+      tipoId: this.resolveTipoId(waId, tipoId),
     };
 
     switch (tipo) {
-      case 'texto':
+      case 'text':
         if (!contenido) throw new Error('Falta contenido para mensaje de texto.');
         payload.contenido = { text: contenido };
         break;
 
-      case 'imagen':
+      case 'image':
         if (!urlArchivo) throw new Error('Falta URL de imagen.');
-        payload.contenido = { image: { url: urlArchivo }, caption: '' };
+        payload.contenido = { image: { url: urlArchivo }, caption: contenido || '' };
         break;
 
       case 'audio':
@@ -54,18 +64,19 @@ export class BaileysSenderService {
         };
         break;
 
-      case 'documento':
+      case 'document':
         if (!urlArchivo) throw new Error('Falta URL de documento.');
         payload.contenido = {
           document: { url: urlArchivo },
-          mimetype: 'application/pdf',
-          caption: '',
+          mimetype: options?.mimeType || 'application/pdf',
+          fileName: options?.fileName,
+          caption: contenido || '',
         };
         break;
 
       case 'video':
         if (!urlArchivo) throw new Error('Falta URL de video.');
-        payload.contenido = { video: { url: urlArchivo }, caption: '' };
+        payload.contenido = { video: { url: urlArchivo }, caption: contenido || '' };
         break;
 
       default:
@@ -76,24 +87,25 @@ export class BaileysSenderService {
     const endpoint = `${gatewayUrl}/api/enviar-mensaje`;
 
     try {
-      // ✅ Obtener el token del request actual
-      const authHeader = this.request.headers.authorization;
-      if (!authHeader) {
-        throw new Error('No se encontró token de autorización en la petición');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      const internalToken = process.env.BAILEYS_INTERNAL_TOKEN;
+      if (!internalToken) {
+        throw new Error('Missing required env BAILEYS_INTERNAL_TOKEN');
       }
+      headers['x-internal-token'] = internalToken;
 
       console.log(`📤 Enviando mensaje a Gateway: ${endpoint}`);
       console.log(`📦 Payload: destino=${waId}, tipo=${tipo}, tipoId=${tipoId}`);
 
-      await axios.post(endpoint, payload, {
-        headers: { 
-          Authorization: authHeader, // ✅ Reenviar el mismo Bearer token del frontend
-          'Content-Type': 'application/json'
-        },
+      const response = await axios.post(endpoint, payload, {
+        headers,
         timeout: 10000
       });
 
       console.log(`✅ Mensaje enviado vía Gateway a ${clienteId} (${tipo})`);
+      return response.data;
     } catch (error: any) {
       console.error(`❌ Error al enviar mensaje vía Gateway:`, {
         endpoint,

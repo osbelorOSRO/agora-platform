@@ -115,15 +115,13 @@ Acción:
 
 Esperado:
 
-- se crea thread nuevo
-- el thread viejo queda intacto
-- el thread nuevo queda:
+- reutiliza el mismo thread
+- el thread queda:
   - `OPEN`
-  - `N8N`
-  - `inicio`
-- `awaiting_first_incoming_delegate = true`
-- se inserta `bootstrap_greeting`
-- no delega el primer incoming
+- conserva `attention_mode` y `thread_stage`
+- `archived_at = null`
+- persiste mensaje
+- delega a `n8n` solo si `attention_mode = N8N`
 
 Luego:
 
@@ -131,9 +129,8 @@ Luego:
 
 Esperado:
 
-- sin saludo duplicado
-- `awaiting_first_incoming_delegate = false`
-- ese segundo incoming sí delega
+- sigue usando el mismo thread reabierto
+- no crea saludo bootstrap duplicado
 
 ## Caso 5. Actor con thread CLOSED
 
@@ -144,8 +141,8 @@ Acción:
 
 Esperado:
 
-- mismo comportamiento que `ARCHIVED`
-- thread nuevo operativo
+- no reutiliza el thread cerrado
+- crea thread nuevo operativo
 - saludo bootstrap una sola vez
 - segundo incoming delega
 
@@ -166,7 +163,7 @@ Esperado:
 
 Acción:
 
-- usar `POST /meta-inbox/n8n/send-message`
+- usar `POST /meta-inbox/n8n/send-thread-message`
 
 Texto:
 
@@ -231,8 +228,9 @@ Esperado:
 - saludo bootstrap repetido dos o más veces en el mismo thread
 - `awaiting_first_incoming_delegate` queda siempre en `true`
 - segundo incoming no delega cuando debería
-- un incoming sobre `ARCHIVED/CLOSED` reutiliza el thread viejo
-- `n8n/send-message` envía pero no persiste
+- un incoming sobre `ARCHIVED` no reabre el thread
+- un incoming sobre `CLOSED` reutiliza el thread viejo
+- `n8n/send-thread-message` envía pero no persiste
 - thread preview no se actualiza tras salida
 
 ## Criterio de aceptación

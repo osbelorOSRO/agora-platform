@@ -6,7 +6,7 @@ import { getTokenData } from "../utils/getTokenData";
 const NotificacionContext = createContext<{
   notificaciones: Notificacion[];
   agregar: (n: Notificacion) => void;
-  eliminar: (clienteId: string) => void;
+  eliminar: (actorExternalId: string) => void;
   eliminarTodas: () => void;
   markAllRead: () => void;
   unreadCount: number;
@@ -32,6 +32,7 @@ const cleanupNotifications = (items: Notificacion[]) => {
   const now = Date.now();
   return items
     .filter((item) => {
+      if (!item.actorExternalId) return false;
       const ts = toTimestamp(item.fecha);
       if (!ts) return false;
       return now - ts <= NOTIFICATION_TTL_MS;
@@ -43,8 +44,8 @@ const loadStored = (): Notificacion[] => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
-    const parsed = JSON.parse(raw) as Notificacion[];
-    return Array.isArray(parsed) ? cleanupNotifications(parsed) : [];
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? cleanupNotifications(parsed as Notificacion[]) : [];
   } catch {
     return [];
   }
@@ -67,12 +68,8 @@ export const NotificacionProvider = ({ children }: { children: React.ReactNode }
 
 const agregar = (nueva: Notificacion | Record<string, any>) => {
   const normalized: Notificacion = {
-    clienteId: String(
-      nueva?.clienteId ??
-        nueva?.cliente_id ??
-        nueva?.actorExternalId ??
-        "desconocido"
-    ),
+    actorExternalId: String(nueva?.actorExternalId ?? "desconocido"),
+    phone: nueva?.phone ? String(nueva.phone) : undefined,
     contenido: String(
       nueva?.contenido ??
         nueva?.contentText ??
@@ -95,7 +92,7 @@ const agregar = (nueva: Notificacion | Record<string, any>) => {
         idx ===
         arr.findIndex(
           (n) =>
-            n.clienteId === item.clienteId &&
+            n.actorExternalId === item.actorExternalId &&
             n.contenido === item.contenido &&
             n.fecha === item.fecha
         )
@@ -161,8 +158,8 @@ const agregar = (nueva: Notificacion | Record<string, any>) => {
     }
   }, [lastReadAt]);
 
-  const eliminar = (clienteId: string) => {
-    setNotificaciones((prev) => prev.filter((n) => n.clienteId !== clienteId));
+  const eliminar = (actorExternalId: string) => {
+    setNotificaciones((prev) => prev.filter((n) => n.actorExternalId !== actorExternalId));
   };
 
   const eliminarTodas = () => {

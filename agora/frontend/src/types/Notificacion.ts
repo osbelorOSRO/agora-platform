@@ -1,5 +1,6 @@
 export interface Notificacion {
-  clienteId: string;
+  actorExternalId: string;
+  phone?: string;
   contenido: string;
   fecha: string;
 }

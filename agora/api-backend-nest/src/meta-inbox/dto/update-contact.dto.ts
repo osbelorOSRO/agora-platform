@@ -8,8 +8,28 @@ export class UpdateContactDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(120)
+  firstName?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  lastName?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(50)
   phone?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  rut?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(250)
+  address?: string;
 
   @IsOptional()
   @IsEmail()
@@ -25,4 +45,9 @@ export class UpdateContactDto {
   @IsString()
   @MaxLength(120)
   city?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  region?: string;
 }

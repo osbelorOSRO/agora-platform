@@ -3,10 +3,6 @@ import { ConfigModule } from '@nestjs/config';
 import { PrismaService } from './database/prisma/prisma.service';
 import { HealthModule } from './health/health.module';
 import { AuthModule } from './auth/auth.module';
-import { ClientesModule } from './clientes/clientes.module';
-import { MongodbModule } from './mongodb/mongodb.module';
-import { ProcesosModule } from './mongodb/modules/procesos/procesos.module';
-import { ProcesosPgModule } from './procesos_pg/procesos_pg.module';
 import { SesionModule } from './sesion/sesion.module';
 import { MediaModule } from './media/media.module';
 import { BaileysModule } from './baileys/baileys.module';
@@ -28,10 +24,6 @@ import { MetaInboxModule } from './meta-inbox/meta-inbox.module';
     }),
     HealthModule,
     AuthModule,
-    ClientesModule,
-    MongodbModule,
-    ProcesosModule,
-    ProcesosPgModule,
     SesionModule,
     MediaModule,
     BaileysModule,

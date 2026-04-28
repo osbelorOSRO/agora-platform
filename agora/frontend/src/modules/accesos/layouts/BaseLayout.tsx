@@ -7,13 +7,11 @@ import { getTokenData } from "@/utils/getTokenData";
 export default function BaseLayout() {
   const location = useLocation();
   const user = getTokenData();
-  const isImmersiveSection =
-    location.pathname.startsWith("/kanban") || location.pathname.startsWith("/meta-inbox");
+  const isImmersiveSection = location.pathname.startsWith("/meta-inbox");
 
   const currentSection = (() => {
     if (location.pathname.startsWith("/agenda")) return "Agenda";
-    if (location.pathname.startsWith("/kanban")) return "Chats";
-    if (location.pathname.startsWith("/meta-inbox")) return "Meta";
+    if (location.pathname.startsWith("/meta-inbox")) return "Threads";
     if (location.pathname.startsWith("/wa-control")) return "Bot";
     if (location.pathname.startsWith("/accesos/reportes")) return "Reportes";
     if (location.pathname.startsWith("/accesos/ajustes")) return "Ajustes";

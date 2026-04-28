@@ -37,7 +37,6 @@ project_for_file() {
     "accesos/docker-compose.yml") echo "stack_accesos" ;;
     "agora/docker-compose.yml") echo "stack_agora" ;;
     "infraestructura/docker-compose.yml") echo "stack_infra_pgadmin" ;;
-    "mongo/docker-compose.yml") echo "stack_mongo_micro" ;;
     "n8n/docker-compose.yml") echo "stack_n8n" ;;
     "nmp/docker-compose.yml") echo "stack_nmp" ;;
     "redis/docker-compose.yml") echo "stack_redis" ;;
@@ -62,7 +61,6 @@ compose_down "wa-backend/docker-compose.yml"
 compose_down "agora/docker-compose.yml"
 compose_down "accesos/docker-compose.yml"
 compose_down "infraestructura/docker-compose.yml"
-compose_down "mongo/docker-compose.yml"
 compose_down "tesseract/docker-compose.yml"
 compose_down "whisper/docker-compose.yml"
 compose_down "redis/docker-compose.yml"

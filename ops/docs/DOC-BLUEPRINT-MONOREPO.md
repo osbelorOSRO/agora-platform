@@ -16,7 +16,6 @@ agora-platform/
     abackend/
     websocket/
     wa-backend/
-    fastapi-microservicio/
   infra/
     edge/
       nmp/
@@ -51,7 +50,6 @@ Servicios core del producto:
 - `websocket`
 - `api-backend-nest`
 - `wa-backend`
-- `fastapi-microservicio`
 
 ## 4. Infra Declarativa en Repo
 Se mantiene declarativa en repo (compose/config), no estado persistente:
@@ -91,9 +89,9 @@ Esto aplica también a certificados de Cloudflare Origin: material sensible/oper
 
 ## 7. Bases de Datos: Arquitectura Operativa
 ### 7.1 Regla General
-El monorepo **no depende** de que Postgres/Mongo estén dentro del mismo repo ni en el mismo compose del producto.
+El monorepo **no depende** de que Postgres este dentro del mismo repo ni en el mismo compose del producto.
 
-Las apps consumen BD por DSN/URL (`DATABASE_URL`, `MONGODB_URI`) como servicios externos.
+Las apps consumen Postgres por DSN/URL (`DATABASE_URL`) como servicio externo.
 
 ### 7.2 Mapa físico/lógico definido
 - Producción oficial BD: `VPS1` (permanente)

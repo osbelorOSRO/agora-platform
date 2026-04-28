@@ -1,5 +1,5 @@
 import { diskStorage } from 'multer';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { extname } from 'path';
 
 export const multerConfig = {
@@ -7,7 +7,7 @@ export const multerConfig = {
     destination: './uploads',
     filename: (req, file, cb) => {
       const ext = extname(file.originalname);
-      cb(null, `${uuidv4()}${ext}`);
+      cb(null, `${randomUUID()}${ext}`);
     },
   }),
 };

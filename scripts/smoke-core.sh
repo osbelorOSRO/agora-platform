@@ -12,7 +12,6 @@ containers=(
   panel_websocket
   abackend
   wa_backend
-  fastapi_microservicio
   n8n
   redis-server
 )

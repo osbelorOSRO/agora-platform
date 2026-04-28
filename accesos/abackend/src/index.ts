@@ -3,8 +3,6 @@ import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth.js";
 import helmet from "helmet";
-import trazabilidadRoutes from "./routes/trazabilidad.js";
-import productividadRoutes from "./routes/productividad.js";
 import rolesRoutes from "./routes/roles.js";
 import permisosRoutes from "./routes/permisos.js";
 import serviceAuthRoutes from "./routes/serviceAuth.js";
@@ -44,8 +42,6 @@ app.get("/health", async (_req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/service-auth", serviceAuthRoutes);
-app.use("/api/trazabilidad", trazabilidadRoutes);
-app.use("/api/productividad", productividadRoutes);
 app.use("/api/roles", rolesRoutes);
 app.use("/api/permisos", permisosRoutes);
 app.use("/api/reportes", reportesRoutes);

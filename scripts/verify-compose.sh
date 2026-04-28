@@ -37,7 +37,6 @@ project_for_file() {
     "accesos/docker-compose.yml") echo "stack_accesos" ;;
     "agora/docker-compose.yml") echo "stack_agora" ;;
     "infraestructura/docker-compose.yml") echo "stack_infra_pgadmin" ;;
-    "mongo/docker-compose.yml") echo "stack_mongo_micro" ;;
     "n8n/docker-compose.yml") echo "stack_n8n" ;;
     "nmp/docker-compose.yml") echo "stack_nmp" ;;
     "redis/docker-compose.yml") echo "stack_redis" ;;
@@ -59,7 +58,6 @@ validate_compose() {
 validate_compose "redis/docker-compose.yml"
 validate_compose "whisper/docker-compose.yml"
 validate_compose "tesseract/docker-compose.yml"
-validate_compose "mongo/docker-compose.yml"
 validate_compose "infraestructura/docker-compose.yml"
 validate_compose "accesos/docker-compose.yml"
 validate_compose "agora/docker-compose.yml"

@@ -1,7 +1,7 @@
 # Operacion de Stack por Perfil
 
 ## Version
-- Actual: `v1.2.1` (2026-04-15)
+- Actual: `v1.3.0` (2026-04-28)
 - Al hacer release: actualizar versión aquí y en `README.md`, y crear tag `vX.Y.Z`.
 
 Scripts:
@@ -86,10 +86,11 @@ cd /home/oscar/dev/proyectos
 
 ## Compose en repo
 - PgAdmin: `infraestructura/docker-compose.yml`
-- FastAPI microservicio: `mongo/docker-compose.yml`
 
 Nota:
-- Compose de BD (`postgres`/`mongo`) quedaron fuera del repo y se operan externamente por host.
+- Compose de BD (`postgres`) queda fuera del repo y se opera externamente por host.
+- El antiguo FastAPI microservicio de Mongo/RUT/procesos fue retirado del stack.
+- Desde `v1.3.0`, el nucleo conversacional opera solo sobre `threads`, `thread_messages`, `thread_events` y `meta_inbox_contacts`; las tablas legacy de `clientes/procesos/map_journey/scraping/oficinas` se retiran de Postgres.
 
 ## N8N por perfil
 `n8n/docker-compose.yml` toma env exclusivo por perfil desde:

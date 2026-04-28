@@ -13,7 +13,7 @@ export class N8nContactUpsertDto {
 
   @ValidateIf((o) => !o.sessionId)
   @IsString()
-  @IsIn(['PAGE', 'INSTAGRAM'])
+  @IsIn(['PAGE', 'INSTAGRAM', 'WHATSAPP'])
   objectType?: string;
 
   @IsOptional()
@@ -23,8 +23,28 @@ export class N8nContactUpsertDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(120)
+  firstName?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  lastName?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(50)
   phone?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  rut?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(250)
+  address?: string;
 
   @IsOptional()
   @IsEmail()
@@ -40,4 +60,9 @@ export class N8nContactUpsertDto {
   @IsString()
   @MaxLength(120)
   city?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  region?: string;
 }

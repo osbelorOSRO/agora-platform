@@ -6,7 +6,7 @@ export class ResolveThreadDto {
   actorExternalId!: string;
 
   @IsString()
-  @IsIn(['PAGE', 'INSTAGRAM'])
+  @IsIn(['PAGE', 'INSTAGRAM', 'WHATSAPP'])
   objectType!: string;
 
   @IsOptional()

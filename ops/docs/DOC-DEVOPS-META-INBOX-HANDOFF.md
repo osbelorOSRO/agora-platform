@@ -1,6 +1,6 @@
 # DOC-DEVOPS-META-INBOX-HANDOFF
 
-Fecha: 2026-04-18
+Fecha: 2026-04-28
 
 ## Objetivo
 
@@ -14,14 +14,13 @@ Dejar lista la preparación de despliegue para `VPS1` de todo lo trabajado en es
 
 ## Componentes y versión objetivo
 
-- `api-backend-nest`: `1.2.2`
-- `frontend`: `1.2.2`
-- `panel_websocket`: `1.2.0`
+- `api-backend-nest`: `1.3.0`
+- `frontend`: `1.3.0`
+- `panel_websocket`: `1.3.0`
+- `abackend`: `1.3.0`
+- `wa-backend`: `1.3.0`
 
-Nota:
-
-- en esta conversación no se hicieron cambios directos al código de `panel_websocket`
-- por eso no se sube versión ahí
+Nota: `v1.3.0` es un corte integral de repo. Todos los paquetes operativos quedan alineados.
 
 ## Cambios funcionales incluidos
 
@@ -41,6 +40,10 @@ Nota:
 - actualización de la lista de stages del panel según matriz real
 
 ## SQL que debe aplicarse en VPS1
+
+Para el corte actual, usar primero el runbook:
+
+- [DOC-RELEASE-1.3.0-VPS-POSTGRES.md](/home/oscar/Documentos/GitHub/agora-platform/ops/docs/DOC-RELEASE-1.3.0-VPS-POSTGRES.md:1)
 
 ### 1. Estructura operativa del inbox
 
@@ -189,8 +192,8 @@ Notas:
 
 - SQL de `threads/thread_messages` aplicado
 - SQL de `stage_templates` aplicado
-- backend en `1.2.2`
-- frontend en `1.2.2`
+- limpieza PostgreSQL legacy de `v1.3.0` aplicada si corresponde
+- `api-backend-nest`, `frontend`, `panel_websocket`, `abackend` y `wa-backend` en `1.3.0`
 - rebuild ejecutado
 - smoke tests mínimos validados
 - cambios locales temporales excluidos del commit

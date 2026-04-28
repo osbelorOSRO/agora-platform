@@ -10,13 +10,12 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { MediaService } from './media.service';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 @Controller('media')
 export class MediaController {
   constructor(private readonly mediaService: MediaService) {}
 
-  // 🔹 ENDPOINT EXISTENTE (NO SE TOCA)
   @Post('guardar')
   @UseInterceptors(FileInterceptor('archivo', {
     storage: diskStorage({
@@ -28,14 +27,14 @@ export class MediaController {
   }))
   async guardarArchivo(
     @UploadedFile() archivo: Express.Multer.File,
-    @Body('cliente_id') cliente_id: string,
+    @Body('actorId') actorId: string,
     @Body('tipo') tipo: string,
   ) {
     if (!archivo) throw new BadRequestException('Archivo no recibido');
-    if (!cliente_id) throw new BadRequestException('cliente_id requerido');
+    if (!actorId) throw new BadRequestException('actorId requerido');
     if (!tipo) throw new BadRequestException('tipo requerido');
 
-    return this.mediaService.procesarArchivo(archivo, cliente_id, tipo);
+    return this.mediaService.procesarArchivo(archivo, actorId, tipo);
   }
 
   // 🔹 NUEVO ENDPOINT PARA TTS (n8n)
@@ -45,7 +44,7 @@ export class MediaController {
       destination: './uploads',
       filename: (req, file, cb) => {
         const ext = extname(file.originalname) || '.mpga';
-        cb(null, `${uuidv4()}${ext}`);
+        cb(null, `${randomUUID()}${ext}`);
       },
     }),
   }))

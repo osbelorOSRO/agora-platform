@@ -10,10 +10,11 @@ import { getRuntimeSecret } from '../shared/runtime-secrets';
 import { N8nThreadControlDto } from './dto/n8n-thread-control.dto';
 import { N8nContactUpsertDto } from './dto/n8n-contact-upsert.dto';
 import { ResolveThreadDto } from './dto/resolve-thread.dto';
-import { N8nSendTextDto } from './dto/n8n-send-text.dto';
-import { N8nSendMessageDto } from './dto/n8n-send-message.dto';
 import { N8nOfferEventCreateDto } from './dto/n8n-offer-event-create.dto';
 import { N8nOfferEventQueryDto } from './dto/n8n-offer-event-query.dto';
+import { CreateWhatsappContactDto } from './dto/create-whatsapp-contact.dto';
+import { EnsureWhatsappThreadDto } from './dto/ensure-whatsapp-thread.dto';
+import { SendThreadMessageDto } from './dto/send-thread-message.dto';
 
 @Controller('meta-inbox')
 export class MetaInboxController {
@@ -26,11 +27,42 @@ export class MetaInboxController {
   async listThreads(
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
+    @Query('includeClosed') includeClosed?: string,
   ) {
     return this.metaInbox.listThreads({
       limit: limit ? Number(limit) : undefined,
       offset: offset ? Number(offset) : undefined,
+      includeClosed: includeClosed === 'true',
     });
+  }
+
+  @Get('contacts')
+  async listContacts(
+    @Query('search') search?: string,
+    @Query('objectType') objectType?: string,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
+    return this.metaInbox.listContacts({
+      search,
+      objectType,
+      limit: limit ? Number(limit) : undefined,
+      offset: offset ? Number(offset) : undefined,
+    });
+  }
+
+  @Post('contacts/whatsapp')
+  async createWhatsappContact(
+    @Body() body: CreateWhatsappContactDto,
+  ) {
+    return this.metaInbox.createWhatsappContact(body);
+  }
+
+  @Post('contacts/whatsapp/thread')
+  async ensureWhatsappThread(
+    @Body() body: EnsureWhatsappThreadDto,
+  ) {
+    return this.metaInbox.ensureWhatsappThreadForContact(body.actorExternalId);
   }
 
   @Get('threads/:sessionId/messages')
@@ -56,14 +88,30 @@ export class MetaInboxController {
     return this.metaInbox.sendText(sessionId, body.text.trim());
   }
 
+  @Post('threads/:sessionId/send-message')
+  async sendThreadMessage(
+    @Param('sessionId') sessionId: string,
+    @Body() body: SendThreadMessageDto,
+  ) {
+    return this.metaInbox.sendThreadMessage({
+      ...body,
+      sessionId,
+      senderType: 'HUMAN',
+      text: body.text?.trim(),
+      caption: body.caption?.trim(),
+      mediaUrl: body.mediaUrl?.trim(),
+    });
+  }
+
   @Post('threads/:sessionId/send-media')
   @UseInterceptors(FileInterceptor('file', multerConfig))
   async sendMedia(
     @Param('sessionId') sessionId: string,
     @UploadedFile() file: Express.Multer.File,
+    @Body('caption') caption?: string,
   ) {
     if (!file) throw new BadRequestException('Archivo no recibido');
-    return this.metaInbox.sendMedia(sessionId, file);
+    return this.metaInbox.sendMedia(sessionId, file, caption?.trim());
   }
 
   @Patch('threads/:sessionId/contact')
@@ -120,33 +168,18 @@ export class MetaInboxController {
     return this.metaInbox.updateContactForAutomation(body);
   }
 
-  @Post('n8n/send-text')
-  async sendTextForN8n(
+  @Post('n8n/send-thread-message')
+  async sendThreadMessageForN8n(
     @Headers('authorization') auth: string,
-    @Body() body: N8nSendTextDto,
+    @Body() body: SendThreadMessageDto,
   ) {
     await this.assertN8nToken(auth);
-    return this.metaInbox.sendTextForAutomation({
-      sessionId: body.sessionId,
-      actorExternalId: body.actorExternalId,
-      objectType: body.objectType,
-      text: body.text.trim(),
-    });
-  }
-
-  @Post('n8n/send-message')
-  async sendMessageForN8n(
-    @Headers('authorization') auth: string,
-    @Body() body: N8nSendMessageDto,
-  ) {
-    await this.assertN8nToken(auth);
-    return this.metaInbox.sendMessageForAutomation({
-      sessionId: body.sessionId,
-      actorExternalId: body.actorExternalId,
-      objectType: body.objectType,
+    return this.metaInbox.sendThreadMessage({
+      ...body,
+      senderType: body.senderType || 'N8N',
       text: body.text?.trim(),
+      caption: body.caption?.trim(),
       mediaUrl: body.mediaUrl?.trim(),
-      mediaType: body.mediaType,
     });
   }
 

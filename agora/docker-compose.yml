@@ -11,7 +11,6 @@ services:
         VITE_ESTADO_BOT_URL: "${SOCKET_HTTP_PUBLIC_URL}"
         VITE_API_URL_ACCESOS: "${ABACKEND_PUBLIC_URL}"
         VITE_SCRAPER_BASE_URL: "${SCRAPER_BASE_URL}"
-        VITE_API_URL_RUT: "${RUT_API_URL}"
         VITE_WA_PUBLIC_URL: "${WA_PUBLIC_URL}"
     container_name: panel_frontend
     restart: always
@@ -61,12 +60,12 @@ services:
     environment:
       - NODE_ENV=production
       - DATABASE_URL=${API_DATABASE_URL}
-      - MONGODB_URI=${API_MONGODB_URI}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - MEDIA_BASE_URL=${MEDIA_BASE_URL}
       - CORS_ALLOWED_ORIGINS=${FRONTEND_PUBLIC_URL}
       - WS_SERVER=${WS_INTERNAL_URL}
       - BOT_BASE_URL=${WA_INTERNAL_URL}
+      - BAILEYS_INTERNAL_TOKEN=${BAILEYS_INTERNAL_TOKEN}
       - N8N_MSG_DELEGATION_WEBHOOK_URL=${N8N_INTERNAL_URL}/webhook/flujo-eventos
       - N8N_THREAD_MSG_DELEGATION_WEBHOOK_URL=${N8N_INTERNAL_URL}/webhook/meta-thread-messages-delegation
       - VAULT_ADDR=${VAULT_ADDR}

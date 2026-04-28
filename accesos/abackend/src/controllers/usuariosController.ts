@@ -7,7 +7,6 @@ export const obtenerUsuarios = async (_req: Request, res: Response): Promise<voi
     const usuarios = await prisma.usuarios.findMany({
       include: {
         rol_usuarios_rol_idTorol: true,
-        oficinas: true,
         usuarios_usuarios_creado_por_idTousuarios: { select: { username: true } },
         usuarios_usuarios_actualizado_por_idTousuarios: { select: { username: true } }
       }
@@ -28,13 +27,7 @@ export const obtenerUsuarios = async (_req: Request, res: Response): Promise<voi
         creado_por_username: u.usuarios_usuarios_creado_por_idTousuarios?.username || null,
         actualizado_por_username: u.usuarios_usuarios_actualizado_por_idTousuarios?.username || null,
         rol: rolObjeto ? { id: rolObjeto.id || null, nombre: rolObjeto.nombre || null } : null,
-        oficina: u.oficinas
-          ? {
-              id: u.oficinas.id,
-              nombre: u.oficinas.nombre,
-              region: u.oficinas.region
-            }
-          : null
+        oficina: null
       };
     });
 
@@ -63,16 +56,11 @@ export const actualizarUsuario = async (req: Request, res: Response): Promise<vo
       datosActualizados.rol_usuarios_rol_idTorol = { connect: { id: data.rolId } };
     }
 
-    if (data.oficinaId !== undefined) {
-      datosActualizados.oficinas = { connect: { id: data.oficinaId } };
-    }
-
     const usuarioActualizado = await prisma.usuarios.update({
       where: { id },
       data: datosActualizados,
       include: {
         rol_usuarios_rol_idTorol: true,
-        oficinas: true,
         usuarios_usuarios_creado_por_idTousuarios: { select: { username: true } },
         usuarios_usuarios_actualizado_por_idTousuarios: { select: { username: true } }
       }
@@ -93,13 +81,7 @@ export const actualizarUsuario = async (req: Request, res: Response): Promise<vo
       creado_por_username: usuarioActualizado.usuarios_usuarios_creado_por_idTousuarios?.username || null,
       actualizado_por_username: usuarioActualizado.usuarios_usuarios_actualizado_por_idTousuarios?.username || null,
       rol: rolObjeto ? { id: rolObjeto.id || null, nombre: rolObjeto.nombre || null } : null,
-      oficina: usuarioActualizado.oficinas
-        ? {
-            id: usuarioActualizado.oficinas.id,
-            nombre: usuarioActualizado.oficinas.nombre,
-            region: usuarioActualizado.oficinas.region
-          }
-        : null
+      oficina: null
     };
 
     res.json(respuesta);

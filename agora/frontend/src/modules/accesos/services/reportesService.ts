@@ -9,6 +9,22 @@ export type ReportCatalogItem = {
   filtros: string[];
 };
 
+export type ThreadWeeklyActivityRow = {
+  semana_inicio: string;
+  semana_fin: string;
+  total_eventos: number;
+  threads_creados: number;
+  mensajes_entrantes: number;
+  mensajes_salientes: number;
+  threads_distintos: number;
+};
+
+type JsonReportResponse<T> = {
+  report: string;
+  total: number;
+  rows: T[];
+};
+
 export const listarReportes = async (): Promise<ReportCatalogItem[]> => {
   const res = await fetch(API_URL, {
     headers: getAuthHeaders(),
@@ -19,6 +35,24 @@ export const listarReportes = async (): Promise<ReportCatalogItem[]> => {
   }
 
   return res.json();
+};
+
+export const obtenerActividadSemanalThreads = async (
+  desde: string,
+  hasta: string
+): Promise<ThreadWeeklyActivityRow[]> => {
+  const params = new URLSearchParams({ desde, hasta });
+
+  const res = await fetch(`${API_URL}/procesos-semanales?${params.toString()}`, {
+    headers: getAuthHeaders(),
+  });
+
+  if (!res.ok) {
+    throw new Error("No se pudo obtener la actividad semanal de threads");
+  }
+
+  const data = (await res.json()) as JsonReportResponse<ThreadWeeklyActivityRow>;
+  return data.rows || [];
 };
 
 export const descargarReporteCsv = async (

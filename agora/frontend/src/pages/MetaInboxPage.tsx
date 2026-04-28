@@ -1,6 +1,23 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Facebook, ImagePlus, Instagram, Mic, MoreVertical, Save, Send, X } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import {
+  Archive,
+  Bot,
+  CheckCircle2,
+  Facebook,
+  Headset,
+  ImagePlus,
+  Inbox,
+  Instagram,
+  MessageCircle,
+  Mic,
+  MoreVertical,
+  Save,
+  Search,
+  Send,
+  Workflow,
+  X,
+} from "lucide-react";
 import {
   connectSocket,
   offMetaInboxMessageNew,
@@ -25,6 +42,7 @@ import type {
   MetaInboxThreadControlUpdate,
 } from "@/types/metaInbox";
 import { estilos } from "@/theme/estilos";
+import ChatAnimation from "@/components/ChatAnimation";
 import VoiceRecorder from "@/components/VoiceRecorder";
 import { normalizeMediaUrl } from "@/utils/mediaUrl";
 
@@ -50,8 +68,11 @@ const formatRelativeTs = (value?: string | null) => {
 const sortThreads = (items: MetaInboxThread[]) =>
   [...items].sort((a, b) => +new Date(b.lastMessageAt || 0) - +new Date(a.lastMessageAt || 0));
 
+const STATUS_VIEWS = ["OPEN", "ARCHIVED", "CLOSED"] as const;
+type StatusView = (typeof STATUS_VIEWS)[number];
+
 const THREAD_STATUS_OPTIONS = ["OPEN", "PAUSED", "ARCHIVED", "CLOSED"] as const;
-const ATTENTION_MODE_OPTIONS = ["N8N", "HUMAN", "PAUSED"] as const;
+const ATTENTION_MODE_OPTIONS = ["N8N", "HUMAN", "SYSTEM", "PAUSED"] as const;
 const THREAD_STAGE_OPTIONS = [
   "acepta_oferta",
   "cierre_no_exitoso",
@@ -106,16 +127,87 @@ const extractMedia = (contentJson: MetaInboxContentJson | null | undefined) => {
   return null;
 };
 
+const compactActorId = (thread: MetaInboxThread) => {
+  const phone = thread.phone?.trim();
+  if (phone) return phone;
+  const actor = thread.actorExternalId || "";
+  const phoneFromJid = actor.match(/^(\d{8,15})@/)?.[1];
+  if (phoneFromJid) return phoneFromJid;
+  if (actor.length > 24) return `${actor.slice(0, 10)}...${actor.slice(-8)}`;
+  return actor;
+};
+
+const normalizeText = (value?: string | null) =>
+  String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+const stageLabel = (value?: string | null) => {
+  const raw = String(value || "sin_etapa");
+  return raw
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+};
+
+const statusLabel = (value: StatusView) => {
+  if (value === "OPEN") return "Open";
+  if (value === "ARCHIVED") return "Archived";
+  return "Closed";
+};
+
+const statusIcon = (value: StatusView) => {
+  if (value === "OPEN") return Inbox;
+  if (value === "ARCHIVED") return Archive;
+  return CheckCircle2;
+};
+
+const threadMatchesStatus = (thread: MetaInboxThread, view: StatusView) => {
+  const status = String(thread.threadStatus || "OPEN").toUpperCase();
+  if (view === "OPEN") return status === "OPEN" || status === "PAUSED";
+  return status === view;
+};
+
 const ChannelIcon: React.FC<{ objectType?: string; className?: string }> = ({ objectType, className }) => {
   const normalized = String(objectType || "").toUpperCase();
   if (normalized === "INSTAGRAM") {
     return <Instagram className={className} />;
   }
+  if (normalized === "WHATSAPP") {
+    return <MessageCircle className={className} />;
+  }
   return <Facebook className={className} />;
+};
+
+const AttentionIcon: React.FC<{ mode?: string; className?: string }> = ({ mode, className }) => {
+  const normalized = String(mode || "").toUpperCase();
+  if (normalized === "HUMAN") return <Headset className={className} />;
+  if (normalized === "SYSTEM") return <Bot className={className} />;
+  return <Workflow className={className} />;
+};
+
+const attentionClass = (mode?: string) => {
+  const normalized = String(mode || "").toUpperCase();
+  if (normalized === "HUMAN") return "border-sky-300/70 bg-sky-400/15 text-sky-300 shadow-[0_0_14px_rgba(56,189,248,0.35)]";
+  if (normalized === "SYSTEM") return "border-emerald-300/70 bg-emerald-400/15 text-emerald-300 shadow-[0_0_14px_rgba(52,211,153,0.35)]";
+  if (normalized === "PAUSED") return "border-amber-300/70 bg-amber-400/15 text-amber-300 shadow-[0_0_14px_rgba(251,191,36,0.35)]";
+  return "border-rose-300/70 bg-rose-400/15 text-rose-300 shadow-[0_0_14px_rgba(251,113,133,0.35)]";
+};
+
+const channelClass = (objectType?: string) => {
+  const normalized = String(objectType || "").toUpperCase();
+  if (normalized === "WHATSAPP") return "border-emerald-300/60 bg-emerald-400/15 text-emerald-300";
+  if (normalized === "INSTAGRAM") return "border-fuchsia-300/60 bg-fuchsia-400/15 text-fuchsia-300";
+  return "border-sky-300/60 bg-sky-400/15 text-sky-300";
 };
 
 const MetaInboxPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedSessionId = searchParams.get("sessionId");
+  const requestedActorId = searchParams.get("actor");
   const [threads, setThreads] = useState<MetaInboxThread[]>([]);
   const [messages, setMessages] = useState<MetaInboxMessage[]>([]);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
@@ -124,11 +216,17 @@ const MetaInboxPage: React.FC = () => {
   const [draft, setDraft] = useState("");
   const [savingContact, setSavingContact] = useState(false);
   const [sending, setSending] = useState(false);
+  const [pendingMedia, setPendingMedia] = useState<File | null>(null);
   const [savingThreadControl, setSavingThreadControl] = useState(false);
   const [reopeningThread, setReopeningThread] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [openMenuForSessionId, setOpenMenuForSessionId] = useState<string | null>(null);
   const [detailSessionId, setDetailSessionId] = useState<string | null>(null);
+  const [chatManuallyClosed, setChatManuallyClosed] = useState(false);
+  const [statusView, setStatusView] = useState<StatusView>("OPEN");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [providerFilter, setProviderFilter] = useState("ALL");
+  const [attentionFilter, setAttentionFilter] = useState("ALL");
   const [contactForm, setContactForm] = useState<MetaInboxContactUpdate>({
     displayName: "",
     phone: "",
@@ -144,21 +242,47 @@ const MetaInboxPage: React.FC = () => {
   );
   const showContactPanel = !!selectedThread && detailSessionId === selectedSessionId;
 
+  const providers = useMemo(() => {
+    const items = Array.from(new Set(threads.map((thread) => String(thread.objectType || "").toUpperCase()).filter(Boolean)));
+    return items.sort();
+  }, [threads]);
+
+  const filteredThreads = useMemo(() => {
+    const query = normalizeText(searchQuery.trim());
+
+    return threads.filter((thread) => {
+      if (!threadMatchesStatus(thread, statusView)) return false;
+
+      if (providerFilter !== "ALL" && String(thread.objectType || "").toUpperCase() !== providerFilter) return false;
+      if (attentionFilter !== "ALL" && String(thread.attentionMode || "").toUpperCase() !== attentionFilter) return false;
+
+      if (!query) return true;
+
+      const haystack = [
+        thread.displayName,
+        thread.phone,
+        thread.actorExternalId,
+        thread.sessionId,
+        thread.objectType,
+        thread.sourceChannel,
+        thread.threadStage,
+        stageLabel(thread.threadStage),
+        thread.threadStatus,
+        thread.attentionMode,
+        thread.lastMessageText,
+      ]
+        .map(normalizeText)
+        .join(" ");
+
+      return haystack.includes(query);
+    });
+  }, [attentionFilter, providerFilter, searchQuery, statusView, threads]);
+
   const mergeThread = (payload: InboxRealtimePayload) => {
     const payloadSessionId = payload.sessionId ? String(payload.sessionId) : null;
     if (!payloadSessionId) return;
 
-    if (payload.threadStatus && String(payload.threadStatus) === "CLOSED" && selectedSessionId === payloadSessionId) {
-      setSelectedSessionId(null);
-      setDetailSessionId(null);
-      setMessages([]);
-    }
-
     setThreads((prev) => {
-      if (payload.threadStatus && String(payload.threadStatus) === "CLOSED") {
-        return prev.filter((t) => t.sessionId !== payloadSessionId);
-      }
-
       const idx = prev.findIndex((t) => t.sessionId === payloadSessionId);
 
       if (idx === -1) {
@@ -266,13 +390,39 @@ const MetaInboxPage: React.FC = () => {
     });
   };
 
+  const findRequestedThread = (items: MetaInboxThread[]) => {
+    if (requestedSessionId) {
+      return items.find((thread) => thread.sessionId === requestedSessionId) || null;
+    }
+    if (!requestedActorId) return null;
+
+    const actorQuery = normalizeText(requestedActorId);
+    return (
+      items.find((thread) => {
+        const values = [thread.actorExternalId, thread.phone, thread.displayName, compactActorId(thread)];
+        return values.map(normalizeText).some((value) => value.includes(actorQuery));
+      }) || null
+    );
+  };
+
   const loadThreads = async () => {
     setLoadingThreads(true);
     setError(null);
     try {
-      const data = sortThreads(await listMetaInboxThreads(100, 0));
+      const data = sortThreads(await listMetaInboxThreads(200, 0, true));
       setThreads(data);
-      if (!selectedSessionId && data.length > 0) {
+      const requested = findRequestedThread(data);
+      if (requested) {
+        setStatusView(
+          String(requested.threadStatus || "").toUpperCase() === "ARCHIVED"
+            ? "ARCHIVED"
+            : String(requested.threadStatus || "").toUpperCase() === "CLOSED"
+              ? "CLOSED"
+              : "OPEN",
+        );
+        setChatManuallyClosed(false);
+        setSelectedSessionId(requested.sessionId);
+      } else if (!selectedSessionId && !chatManuallyClosed && data.length > 0) {
         setSelectedSessionId(data[0].sessionId);
       }
     } catch (e: any) {
@@ -300,9 +450,41 @@ const MetaInboxPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if ((!requestedSessionId && !requestedActorId) || loadingThreads) return;
+    const requested = findRequestedThread(threads);
+    if (!requested) return;
+    setStatusView(
+      String(requested.threadStatus || "").toUpperCase() === "ARCHIVED"
+        ? "ARCHIVED"
+        : String(requested.threadStatus || "").toUpperCase() === "CLOSED"
+          ? "CLOSED"
+          : "OPEN",
+    );
+    setChatManuallyClosed(false);
+    setSelectedSessionId(requested.sessionId);
+    setSearchParams({}, { replace: true });
+  }, [loadingThreads, requestedActorId, requestedSessionId, setSearchParams, threads]);
+
+  useEffect(() => {
     if (!selectedThread?.sessionId) return;
     loadMessages(selectedThread.sessionId);
+    setPendingMedia(null);
   }, [selectedThread?.sessionId]);
+
+  useEffect(() => {
+    if (loadingThreads) return;
+    if (filteredThreads.length === 0) {
+      setSelectedSessionId(null);
+      setDetailSessionId(null);
+      setMessages([]);
+      return;
+    }
+    if (chatManuallyClosed) return;
+    if (!selectedSessionId || !filteredThreads.some((thread) => thread.sessionId === selectedSessionId)) {
+      setSelectedSessionId(filteredThreads[0].sessionId);
+      setDetailSessionId(null);
+    }
+  }, [chatManuallyClosed, filteredThreads, loadingThreads, selectedSessionId]);
 
   useEffect(() => {
     if (!selectedThread) return;
@@ -411,6 +593,7 @@ const MetaInboxPage: React.FC = () => {
     try {
       const reopened = await reopenMetaInboxThread(sessionId);
       mergeThread(reopened);
+      setChatManuallyClosed(false);
       setSelectedSessionId(reopened.sessionId);
       setDetailSessionId(reopened.sessionId);
       setMessages([]);
@@ -422,13 +605,17 @@ const MetaInboxPage: React.FC = () => {
   };
 
   const handleSend = async () => {
-    if (!selectedThread?.sessionId || !draft.trim()) return;
+    if (!selectedThread?.sessionId || (!draft.trim() && !pendingMedia)) return;
+    if (pendingMedia) {
+      await handleSendMedia(pendingMedia, draft.trim());
+      return;
+    }
     setSending(true);
     setError(null);
     try {
       const text = draft.trim();
-      setDraft("");
       const result = await sendMetaInboxText(selectedThread.sessionId, text);
+      setDraft("");
 
       setMessages((prev) => {
         const externalEventId =
@@ -467,15 +654,19 @@ const MetaInboxPage: React.FC = () => {
     }
   };
 
-  const handleSendMedia = async (file: File) => {
+  const handleSendMedia = async (file: File, caption?: string) => {
     if (!selectedThread?.sessionId) return;
     setSending(true);
     setError(null);
     try {
-      const result = await sendMetaInboxMedia(selectedThread.sessionId, file);
+      const text = caption?.trim() || "";
+      const result = await sendMetaInboxMedia(selectedThread.sessionId, file, text);
+      setDraft("");
+      setPendingMedia(null);
       const mediaType = String(result?.mediaType || "").toLowerCase() === "audio" ? "audio" : "image";
       const mediaUrl = normalizeMediaUrl(result?.mediaUrl ? String(result.mediaUrl) : "");
       const placeholder = mediaType === "audio" ? "[audio]" : "[imagen]";
+      const contentText = text || placeholder;
 
       setMessages((prev) => {
         const externalEventId =
@@ -491,10 +682,11 @@ const MetaInboxPage: React.FC = () => {
             objectType: selectedThread.objectType,
             eventKind: "message",
             direction: "OUTGOING",
-            contentText: placeholder,
+            contentText,
             contentJson: {
               mediaType,
               mediaUrl,
+              caption: text || null,
             },
             status: "sent",
             occurredAt: result?.occurredAt || new Date().toISOString(),
@@ -506,7 +698,7 @@ const MetaInboxPage: React.FC = () => {
         sessionId: selectedThread.sessionId,
         actorExternalId: selectedThread.actorExternalId,
         objectType: selectedThread.objectType,
-        lastMessageText: placeholder,
+        lastMessageText: contentText,
         lastDirection: "OUTGOING",
         lastMessageAt: result?.occurredAt || new Date().toISOString(),
       });
@@ -527,12 +719,83 @@ const MetaInboxPage: React.FC = () => {
         }`}
       >
         <section className={estilos.metaInbox.sidebar}>
-          <div className={estilos.metaInbox.sidebarInfo}>
-            {loadingThreads ? "Cargando conversaciones..." : `${threads.length} conversaciones`}
+          <div className="sticky top-0 z-20 border-b border-borde bg-fondoCard/95 p-3 backdrop-blur-md">
+            <div className="grid grid-cols-3 gap-1">
+              {STATUS_VIEWS.map((view) => {
+                const Icon = statusIcon(view);
+                const count = threads.filter((thread) => threadMatchesStatus(thread, view)).length;
+                const active = statusView === view;
+                return (
+                  <button
+                    key={view}
+                    onClick={() => setStatusView(view)}
+                    className={`flex h-9 items-center justify-center gap-1.5 rounded-md border text-[11px] font-semibold transition ${
+                      active
+                        ? "border-primary bg-primary/15 text-primary shadow-[0_0_14px_rgba(0,255,136,0.2)]"
+                        : "border-borde bg-fondoClient/60 text-textoSecundario hover:border-primary/50 hover:text-textoOscuro"
+                    }`}
+                    title={statusLabel(view)}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    <span>{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-3 flex h-9 items-center gap-2 rounded-md border border-borde bg-fondoClient px-2">
+              <Search className="h-4 w-4 shrink-0 text-textoSecundario" />
+              <input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar actor, mensaje, etapa..."
+                className="min-w-0 flex-1 bg-transparent text-sm text-textoOscuro outline-none placeholder:text-textoSecundario/70"
+              />
+            </div>
+
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <select
+                value={providerFilter}
+                onChange={(e) => setProviderFilter(e.target.value)}
+                className="h-8 rounded-md border border-borde bg-fondoClient px-2 text-xs text-textoOscuro outline-none"
+                title="Canal"
+              >
+                <option value="ALL">Todos</option>
+                {providers.map((provider) => (
+                  <option key={provider} value={provider}>
+                    {provider}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={attentionFilter}
+                onChange={(e) => setAttentionFilter(e.target.value)}
+                className="h-8 rounded-md border border-borde bg-fondoClient px-2 text-xs text-textoOscuro outline-none"
+                title="Modo"
+              >
+                <option value="ALL">Modos</option>
+                {ATTENTION_MODE_OPTIONS.map((mode) => (
+                  <option key={mode} value={mode}>
+                    {mode}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className={estilos.metaInbox.sidebarInfo}>
+              {loadingThreads ? "Cargando conversaciones..." : `${filteredThreads.length}/${threads.length} conversaciones`}
+            </div>
           </div>
 
-          {threads.map((thread) => {
+          {filteredThreads.map((thread) => {
             const active = thread.sessionId === selectedSessionId;
+            const attentionMode = String(thread.attentionMode || "N8N").toUpperCase();
+            const actorLabel = compactActorId(thread);
+            const hasUsefulName = !!thread.displayName && normalizeText(thread.displayName) !== "nuevo";
+            const title = hasUsefulName ? thread.displayName : actorLabel || "Nuevo";
+            const subtitle = hasUsefulName && actorLabel ? actorLabel : "";
+            const stage = stageLabel(thread.threadStage);
+            const channelTitle = String(thread.objectType || "PAGE").toUpperCase();
             return (
               <div
                 key={thread.sessionId}
@@ -542,30 +805,52 @@ const MetaInboxPage: React.FC = () => {
               >
                 <div className={estilos.metaInbox.threadRow}>
                     <button
-                      onClick={() => setSelectedSessionId(thread.sessionId)}
+                      onClick={() => {
+                        setChatManuallyClosed(false);
+                        setSelectedSessionId(thread.sessionId);
+                      }}
                       className={estilos.metaInbox.threadMainButton}
                     >
-                    <div className={estilos.metaInbox.threadTop}>
-                      <span className={estilos.metaInbox.threadName}>{thread.displayName || "Nuevo"}</span>
-                      <span className={estilos.metaInbox.threadTime}>
-                        {formatRelativeTs(thread.lastMessageAt)}
+                    <div className="flex min-w-0 items-start gap-2">
+                      <span
+                        className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border ${channelClass(thread.objectType)}`}
+                        title={channelTitle}
+                      >
+                        <ChannelIcon
+                          objectType={thread.objectType}
+                          className="h-4 w-4"
+                        />
                       </span>
-                    </div>
-                    <div className={estilos.metaInbox.threadPreview}>{thread.lastMessageText || "(sin texto)"}</div>
-                    <div className={estilos.metaInbox.threadMeta}>
-                      <ChannelIcon
-                        objectType={thread.objectType}
-                        className="inline-block w-3.5 h-3.5"
-                      />
-                      <span className="ml-2 text-[10px] uppercase tracking-wide text-textoSecundario">
-                        {thread.attentionMode}
-                      </span>
-                      <span className="ml-2 text-[10px] uppercase tracking-wide text-textoSecundario">
-                        {thread.threadStatus}
-                      </span>
-                    </div>
-                    <div className="mt-1 text-[10px] text-textoSecundario truncate opacity-70">
-                      {thread.threadStage}
+                      <div className="min-w-0 flex-1">
+                        <div className={estilos.metaInbox.threadTop}>
+                          <span className={`${estilos.metaInbox.threadName} truncate`}>{title}</span>
+                          <span className={`${estilos.metaInbox.threadTime} shrink-0`}>
+                            {formatRelativeTs(thread.lastMessageAt)}
+                          </span>
+                        </div>
+                        <div className={`${estilos.metaInbox.threadPreview} mt-1 truncate`}>
+                          {thread.lastMessageText || "(sin texto)"}
+                        </div>
+                        <div className="mt-2 flex min-w-0 items-center gap-1.5">
+                          <span
+                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${attentionClass(attentionMode)}`}
+                            title={attentionMode}
+                          >
+                            <AttentionIcon mode={attentionMode} className="h-3.5 w-3.5" />
+                          </span>
+                          <span
+                            className="min-w-0 truncate rounded-md border border-primary/40 bg-primary/10 px-1.5 py-1 text-[10px] font-semibold text-primary"
+                            title={thread.threadStage || ""}
+                          >
+                            {stage}
+                          </span>
+                          {subtitle && (
+                            <span className="min-w-0 truncate text-[10px] text-textoSecundario">
+                              {subtitle}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </button>
 
@@ -581,6 +866,7 @@ const MetaInboxPage: React.FC = () => {
                       <div className={estilos.metaInbox.menuPopup}>
                         <button
                           onClick={() => {
+                            setChatManuallyClosed(false);
                             setSelectedSessionId(thread.sessionId);
                             setDetailSessionId(thread.sessionId);
                             setOpenMenuForSessionId(null);
@@ -592,6 +878,7 @@ const MetaInboxPage: React.FC = () => {
                         {(thread.threadStatus === "ARCHIVED" || thread.threadStatus === "CLOSED") && (
                           <button
                             onClick={() => {
+                              setChatManuallyClosed(false);
                               setSelectedSessionId(thread.sessionId);
                               setDetailSessionId(thread.sessionId);
                               setOpenMenuForSessionId(null);
@@ -609,37 +896,58 @@ const MetaInboxPage: React.FC = () => {
               </div>
             );
           })}
+          {!loadingThreads && filteredThreads.length === 0 && (
+            <div className="px-4 py-8 text-center text-sm text-textoSecundario">
+              Sin conversaciones en esta vista
+            </div>
+          )}
         </section>
 
         <section className={estilos.metaInbox.chatPanel}>
           {!selectedThread ? (
-            <div className={estilos.metaInbox.emptyState}>
-              Selecciona una conversación
+            <div className="flex h-full flex-col items-center justify-center text-center">
+              <ChatAnimation />
+              <h1 className="mt-8 text-3xl font-normal text-textoOscuro font-montserrat">
+                Agora Web
+              </h1>
+              <p className="mt-4 max-w-md text-center font-montserrat text-textoOscuro">
+                Envía y recibe mensajes de tus contactos.
+              </p>
             </div>
           ) : (
             <>
               <div className={estilos.metaInbox.chatHeader}>
                 <div className={estilos.metaInbox.chatHeaderRow}>
                   <div>
-                    <div className={estilos.metaInbox.chatName}>{selectedThread.displayName || "Nuevo"}</div>
-                    <div className={estilos.metaInbox.chatChannel}>
-                      <ChannelIcon
-                        objectType={selectedThread.objectType}
-                        className="inline-block w-3.5 h-3.5"
-                      />
-                      <span className="ml-2 text-xs text-textoSecundario uppercase">
-                        {selectedThread.attentionMode}
+                    <div className={estilos.metaInbox.chatName}>
+                      {normalizeText(selectedThread.displayName) !== "nuevo"
+                        ? selectedThread.displayName
+                        : compactActorId(selectedThread) || "Nuevo"}
+                    </div>
+                    <div className={`${estilos.metaInbox.chatChannel} mt-2 flex items-center gap-2.5`}>
+                      <span
+                        className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${channelClass(selectedThread.objectType)}`}
+                        title={String(selectedThread.objectType || "PAGE").toUpperCase()}
+                      >
+                        <ChannelIcon
+                          objectType={selectedThread.objectType}
+                          className="h-4 w-4"
+                        />
                       </span>
-                      <span className="ml-2 text-xs text-textoSecundario uppercase">
-                        {selectedThread.threadStatus}
+                      <span
+                        className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${attentionClass(selectedThread.attentionMode)}`}
+                        title={selectedThread.attentionMode}
+                      >
+                        <AttentionIcon mode={selectedThread.attentionMode} className="h-4 w-4" />
                       </span>
-                      <span className="ml-2 text-xs text-textoSecundario">
-                        {selectedThread.threadStage}
+                      <span className="inline-flex h-8 items-center rounded-md border border-primary/40 bg-primary/10 px-2.5 text-xs font-semibold text-primary">
+                        {stageLabel(selectedThread.threadStage)}
                       </span>
                     </div>
                   </div>
                   <button
                     onClick={() => {
+                      setChatManuallyClosed(true);
                       setSelectedSessionId(null);
                       setDetailSessionId(null);
                       setMessages([]);
@@ -695,6 +1003,23 @@ const MetaInboxPage: React.FC = () => {
                   })}
               </div>
 
+              {pendingMedia && (
+                <div className="flex items-center justify-between gap-3 border-t border-borde bg-fondoCard/70 px-3 py-2">
+                  <div className="min-w-0 text-sm text-texto">
+                    <span className="font-semibold">Imagen adjunta</span>
+                    <span className="ml-2 text-textoOscuro">{pendingMedia.name}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPendingMedia(null)}
+                    className={estilos.metaInbox.closeButton}
+                    aria-label="Quitar adjunto"
+                    title="Quitar adjunto"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
               <div className={estilos.metaInbox.composer}>
                 <input
                   value={draft}
@@ -705,37 +1030,38 @@ const MetaInboxPage: React.FC = () => {
                       handleSend();
                     }
                   }}
-                  placeholder="Escribe un mensaje..."
+                  placeholder={pendingMedia ? "Escribe un texto para la imagen..." : "Escribe un mensaje..."}
                   className={estilos.metaInbox.composerInput}
                 />
-                <label className={estilos.floatingChat.botonEnviar} aria-label="Adjuntar imagen" title="Adjuntar imagen">
-                  <ImagePlus className={estilos.floatingChat.icon} />
+                <label className={estilos.metaInbox.composerSend} aria-label="Adjuntar imagen" title="Adjuntar imagen">
+                  <ImagePlus className={estilos.metaInbox.composerIcon} />
                   <input
                     type="file"
                     accept="image/*"
                     className="hidden"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      if (file) handleSendMedia(file);
+                      if (file) setPendingMedia(file);
                       e.currentTarget.value = "";
                     }}
                   />
                 </label>
                 <button
                   onClick={() => setShowRecorder((prev) => !prev)}
-                  className={estilos.floatingChat.botonEnviar}
+                  className={estilos.metaInbox.composerSend}
                   aria-label="Grabar audio"
                   title="Grabar audio"
                 >
-                  <Mic className={estilos.floatingChat.icon} />
+                  <Mic className={estilos.metaInbox.composerIcon} />
                 </button>
                 <button
                   onClick={handleSend}
-                  className={estilos.floatingChat.botonEnviar}
+                  disabled={sending || (!draft.trim() && !pendingMedia)}
+                  className={estilos.metaInbox.composerSend}
                   aria-label="Enviar"
                   title="Enviar"
                 >
-                  <Send className={estilos.floatingChat.icon} />
+                  <Send className={estilos.metaInbox.composerIcon} />
                 </button>
               </div>
               {showRecorder && (

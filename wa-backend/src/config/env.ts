@@ -40,35 +40,8 @@ export const env = {
 
   // Internal services by docker name
   apiBackendUrl: required('API_BACKEND_URL'),
-  wsPanelUrl: required('WS_URL'),
   mediaBaseUrl: required('MEDIA_BASE_URL'),
-  n8nWebhookUrl: required('N8N_WEBHOOK_URL'),
-
-  // Vault
-  vaultAddr: required('VAULT_ADDR'), // http://vault:8200
-  vaultRoleId: required('VAULT_ROLE_ID'),
-  vaultSecretId: required('VAULT_SECRET_ID'),
-  vaultTimeoutMs: optionalNumber('VAULT_TIMEOUT', 5000),
-  vaultTokenRenewIntervalMs: optionalNumber('VAULT_TOKEN_RENEW_INTERVAL', 30) * 60_000,
-
-  // Paths y campos en Vault (con defaults compatibles con el entorno actual)
-  vaultPathBotPrivateKey: optional(
-    'VAULT_PATH_BOT_PRIVATE_KEY',
-    optional('VAULT_PATH_BOT_KEYS', 'accesos/keys/bot-private')
-  ) as string,
-  vaultPathBackendPublicKey: optional(
-    'VAULT_PATH_BACKEND_PUBLIC_KEY',
-    'accesos/keys/public'
-  ) as string,
-  vaultPathSocketSecret: optional(
-    'VAULT_PATH_SOCKET_SECRET',
-    'accesos/bot'
-  ) as string,
-  vaultFieldRsaKey: optional('VAULT_FIELD_RSA_KEY', 'key') as string,
-  vaultFieldSocketSecret: optional('VAULT_FIELD_SOCKET_SECRET', 'secret_key_wa') as string,
-
-  // Auth token secret para endpoints internos si lo usas (opcional)
-  tokenEndpointSecret: optional('TOKEN_ENDPOINT_SECRET'),
+  baileysInternalToken: required('BAILEYS_INTERNAL_TOKEN'),
 
   // Misc
   logLevel: optional('LOG_LEVEL', 'info'),

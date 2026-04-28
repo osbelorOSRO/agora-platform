@@ -8,11 +8,6 @@ import { listarSesionesActivas, logout, registrarSesion } from "../controllers/S
 import { actualizarUltimaInteraccion } from "../middlewares/actualizarUltimaInteraccion.js";
 import { registrarUsuario } from '../controllers/preRegistroController.js';
 import { obtenerUsuarios, actualizarUsuario } from "../controllers/usuariosController.js";
-import {
-  obtenerOficinas,
-  crearOficina,
-  actualizarOficina,
-} from '../controllers/oficinasController.js';
 
 const router = Router();
 
@@ -36,8 +31,5 @@ router.delete(
 );
 router.get("/usuarios", verifyToken, requirePermission("editar_configuracion"), obtenerUsuarios);
 router.patch("/usuarios/:id", verifyToken, requirePermission("editar_configuracion"), actualizarUsuario);
-router.get('/oficinas', obtenerOficinas);
-router.post('/oficinas', crearOficina);
-router.put('/oficinas/:id', actualizarOficina);
 
 export default router;
