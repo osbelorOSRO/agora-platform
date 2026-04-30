@@ -12,6 +12,7 @@ import { N8nContactUpsertDto } from './dto/n8n-contact-upsert.dto';
 import { ResolveThreadDto } from './dto/resolve-thread.dto';
 import { N8nOfferEventCreateDto } from './dto/n8n-offer-event-create.dto';
 import { N8nOfferEventQueryDto } from './dto/n8n-offer-event-query.dto';
+import { N8nOfferEventUpdateDto } from './dto/n8n-offer-event-update.dto';
 import { CreateWhatsappContactDto } from './dto/create-whatsapp-contact.dto';
 import { EnsureWhatsappThreadDto } from './dto/ensure-whatsapp-thread.dto';
 import { SendThreadMessageDto } from './dto/send-thread-message.dto';
@@ -190,6 +191,16 @@ export class MetaInboxController {
   ) {
     await this.assertN8nToken(auth);
     return this.metaInbox.createOfferEventForAutomation(body);
+  }
+
+  @Patch('n8n/offer-events/:id')
+  async updateOfferEventForN8n(
+    @Headers('authorization') auth: string,
+    @Param('id') id: string,
+    @Body() body: N8nOfferEventUpdateDto,
+  ) {
+    await this.assertN8nToken(auth);
+    return this.metaInbox.updateOfferEventForAutomation(id, body);
   }
 
   @Get('n8n/offer-events/:id')

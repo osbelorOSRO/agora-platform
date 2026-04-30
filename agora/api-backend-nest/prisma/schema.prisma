@@ -963,6 +963,7 @@ model thread_offer_events {
   url_archivo   String?
   decision      String   @default("indefinido") @db.VarChar(32)
   created_at    DateTime @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime? @db.Timestamptz(6)
 
   @@index([created_at(sort: Desc)], map: "idx_thread_offer_events_created_at")
   @@index([session_id, codigo], map: "idx_thread_offer_events_session_codigo")

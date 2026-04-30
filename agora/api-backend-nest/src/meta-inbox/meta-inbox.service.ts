@@ -157,6 +157,7 @@ type OfferEventRow = {
   urlArchivo: string | null;
   decision: string;
   createdAt: Date;
+  updatedAt: Date | null;
 };
 
 @Injectable()
@@ -540,8 +541,13 @@ export class MetaInboxService implements OnModuleInit {
         precio_normal numeric(12,2) NULL,
         url_archivo text NULL,
         decision varchar(32) NOT NULL DEFAULT 'indefinido',
-        created_at timestamptz NOT NULL DEFAULT now()
+        created_at timestamptz NOT NULL DEFAULT now(),
+        updated_at timestamptz NULL
       )
+    `);
+    await this.prisma.$executeRawUnsafe(`
+      ALTER TABLE thread_offer_events
+      ADD COLUMN IF NOT EXISTS updated_at timestamptz NULL
     `);
     await this.prisma.$executeRawUnsafe(`
       CREATE INDEX IF NOT EXISTS idx_thread_offer_events_session_id
@@ -1495,7 +1501,8 @@ export class MetaInboxService implements OnModuleInit {
         precio_normal::text AS "precioNormal",
         url_archivo AS "urlArchivo",
         decision,
-        created_at AS "createdAt"
+        created_at AS "createdAt",
+        updated_at AS "updatedAt"
     `,
       input.sessionId,
       input.stageActual,
@@ -1527,7 +1534,8 @@ export class MetaInboxService implements OnModuleInit {
         precio_normal::text AS "precioNormal",
         url_archivo AS "urlArchivo",
         decision,
-        created_at AS "createdAt"
+        created_at AS "createdAt",
+        updated_at AS "updatedAt"
       FROM thread_offer_events
       WHERE id = $1
       LIMIT 1
@@ -1538,6 +1546,79 @@ export class MetaInboxService implements OnModuleInit {
     if (!rows[0]) {
       throw new BadRequestException(`offer_event_not_found:${id}`);
     }
+
+    return rows[0];
+  }
+
+  async updateOfferEventForAutomation(id: string, input: {
+    sessionId?: string;
+    stageActual?: string;
+    tipo?: string;
+    codigo?: string;
+    decision?: string;
+  }) {
+    const current = await this.getOfferEventById(id);
+    const hasChanges = Object.values(input).some((value) => value !== undefined && value !== null && String(value).trim() !== '');
+
+    if (!hasChanges) {
+      throw new BadRequestException('offer_event_update_empty');
+    }
+
+    const nextCodigo = input.codigo?.trim() || current.codigo;
+    const plan = input.codigo ? await this.getOfferPlanByCode(nextCodigo) : {
+      codigo: current.codigo,
+      nombre: current.nombrePlan,
+      precioBase: current.precioBase,
+      descripcion: current.descripcion,
+      precioNormal: current.precioNormal,
+      urlArchivo: current.urlArchivo,
+    };
+
+    const normalizedDecision = (input.decision || current.decision || 'indefinido').trim().toLowerCase();
+
+    const rows = await this.prisma.$queryRawUnsafe<OfferEventRow[]>(
+      `
+      UPDATE thread_offer_events
+      SET
+        session_id = $2,
+        stage_actual = $3,
+        tipo = $4,
+        codigo = $5,
+        nombre_plan = $6,
+        precio_base = $7::numeric,
+        descripcion = $8,
+        precio_normal = $9::numeric,
+        url_archivo = $10,
+        decision = $11,
+        updated_at = now()
+      WHERE id = $1
+      RETURNING
+        id,
+        session_id AS "sessionId",
+        stage_actual AS "stageActual",
+        tipo,
+        codigo,
+        nombre_plan AS "nombrePlan",
+        precio_base::text AS "precioBase",
+        descripcion,
+        precio_normal::text AS "precioNormal",
+        url_archivo AS "urlArchivo",
+        decision,
+        created_at AS "createdAt",
+        updated_at AS "updatedAt"
+    `,
+      id,
+      input.sessionId?.trim() || current.sessionId,
+      input.stageActual?.trim() || current.stageActual,
+      input.tipo?.trim() || current.tipo,
+      plan.codigo,
+      plan.nombre,
+      plan.precioBase,
+      plan.descripcion,
+      plan.precioNormal,
+      plan.urlArchivo,
+      normalizedDecision,
+    );
 
     return rows[0];
   }
@@ -1563,7 +1644,8 @@ export class MetaInboxService implements OnModuleInit {
         precio_normal::text AS "precioNormal",
         url_archivo AS "urlArchivo",
         decision,
-        created_at AS "createdAt"
+        created_at AS "createdAt",
+        updated_at AS "updatedAt"
       FROM thread_offer_events
       WHERE ($1::text IS NULL OR session_id = $1)
         AND ($2::text IS NULL OR codigo = $2)
