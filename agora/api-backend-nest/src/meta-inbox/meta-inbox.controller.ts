@@ -1,4 +1,17 @@
-import { BadRequestException, Body, Controller, Get, Headers, Param, Patch, Post, Query, UnauthorizedException, UploadedFile, UseInterceptors } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Headers,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UnauthorizedException,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
 import { MetaInboxService } from './meta-inbox.service';
 import { SendTextDto } from './dto/send-text.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
@@ -11,6 +24,7 @@ import { N8nThreadControlDto } from './dto/n8n-thread-control.dto';
 import { N8nContactUpsertDto } from './dto/n8n-contact-upsert.dto';
 import { ResolveThreadDto } from './dto/resolve-thread.dto';
 import { N8nOfferEventCreateDto } from './dto/n8n-offer-event-create.dto';
+import { N8nOfferContextDto } from './dto/n8n-offer-context.dto';
 import { N8nOfferEventQueryDto } from './dto/n8n-offer-event-query.dto';
 import { N8nOfferEventUpdateDto } from './dto/n8n-offer-event-update.dto';
 import { CreateWhatsappContactDto } from './dto/create-whatsapp-contact.dto';
@@ -53,16 +67,12 @@ export class MetaInboxController {
   }
 
   @Post('contacts/whatsapp')
-  async createWhatsappContact(
-    @Body() body: CreateWhatsappContactDto,
-  ) {
+  async createWhatsappContact(@Body() body: CreateWhatsappContactDto) {
     return this.metaInbox.createWhatsappContact(body);
   }
 
   @Post('contacts/whatsapp/thread')
-  async ensureWhatsappThread(
-    @Body() body: EnsureWhatsappThreadDto,
-  ) {
+  async ensureWhatsappThread(@Body() body: EnsureWhatsappThreadDto) {
     return this.metaInbox.ensureWhatsappThreadForContact(body.actorExternalId);
   }
 
@@ -75,9 +85,7 @@ export class MetaInboxController {
   }
 
   @Get('stage-templates/:stageActual')
-  async getStageTemplatePaths(
-    @Param('stageActual') stageActual: string,
-  ) {
+  async getStageTemplatePaths(@Param('stageActual') stageActual: string) {
     return this.metaInbox.getStageTemplatePaths(stageActual);
   }
 
@@ -132,9 +140,7 @@ export class MetaInboxController {
   }
 
   @Post('threads/:sessionId/reopen')
-  async reopenThread(
-    @Param('sessionId') sessionId: string,
-  ) {
+  async reopenThread(@Param('sessionId') sessionId: string) {
     return this.metaInbox.reopenThread(sessionId);
   }
 
@@ -201,6 +207,15 @@ export class MetaInboxController {
   ) {
     await this.assertN8nToken(auth);
     return this.metaInbox.updateOfferEventForAutomation(id, body);
+  }
+
+  @Post('n8n/offer-events/context')
+  async getOfferContextForN8n(
+    @Headers('authorization') auth: string,
+    @Body() body: N8nOfferContextDto,
+  ) {
+    await this.assertN8nToken(auth);
+    return this.metaInbox.getOfferContextForAutomation(body);
   }
 
   @Get('n8n/offer-events/:id')

@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  OnModuleInit,
+} from '@nestjs/common';
 import { PrismaService } from '../database/prisma/prisma.service';
 import axios from 'axios';
 import { WebsocketNotifierService } from '../websocket-notifier/websocket-notifier.service';
@@ -18,6 +23,7 @@ type ThreadRow = {
   threadStatus: string;
   attentionMode: string;
   threadStage: string;
+  metadata: any;
   displayName: string;
   phone: string | null;
   email: string | null;
@@ -69,6 +75,7 @@ type ThreadControlSnapshot = ThreadIdentity & {
   threadStatus: string;
   attentionMode: string;
   threadStage: string;
+  stageControl: Record<string, unknown> | null;
   lastMessageText: string | null;
   lastDirection: string | null;
   lastMessageAt: Date | null;
@@ -141,6 +148,36 @@ type OfferPlanRow = {
   precioBase: string | number;
   descripcion: string | null;
   precioNormal: string | number | null;
+  urlArchivo: string | null;
+};
+
+type OfferPlanCatalogRow = OfferPlanRow & {
+  tipo: string | null;
+  lineas: number | null;
+  excluyeAlta: boolean | null;
+  excluyePortabilidadPostpago: boolean | null;
+};
+
+type OfferCatalogLevelRow = {
+  nivel: number;
+  precioNormal: number;
+  nombre: string | null;
+  codigo1Linea: string | null;
+  codigo2Lineas: string | null;
+  codigo3Lineas: string | null;
+  codigo4Lineas: string | null;
+  codigo5Lineas: string | null;
+  codigos: string[];
+};
+
+type OfferCandidateRow = {
+  nivel: number;
+  codigo: string;
+  nombre: string | null;
+  precioBase: string | number;
+  precioNormal: number;
+  lineas: number | null;
+  descripcion: string | null;
   urlArchivo: string | null;
 };
 
@@ -624,7 +661,11 @@ export class MetaInboxService implements OnModuleInit {
     );
   }
 
-  async listThreads(input: { limit?: number; offset?: number; includeClosed?: boolean }) {
+  async listThreads(input: {
+    limit?: number;
+    offset?: number;
+    includeClosed?: boolean;
+  }) {
     const limit = Math.min(Math.max(input.limit ?? 50, 1), 200);
     const offset = Math.max(input.offset ?? 0, 0);
     const includeClosed = input.includeClosed === true;
@@ -639,6 +680,7 @@ export class MetaInboxService implements OnModuleInit {
         t.thread_status AS "threadStatus",
         t.attention_mode AS "attentionMode",
         t.thread_stage AS "threadStage",
+        t.metadata AS "metadata",
         COALESCE(c.display_name, 'Nuevo') AS "displayName",
         c.phone AS "phone",
         c.email AS "email",
@@ -683,13 +725,20 @@ export class MetaInboxService implements OnModuleInit {
     return rows;
   }
 
-  async listContacts(input: { search?: string; objectType?: string; limit?: number; offset?: number }) {
+  async listContacts(input: {
+    search?: string;
+    objectType?: string;
+    limit?: number;
+    offset?: number;
+  }) {
     const limit = Math.min(Math.max(input.limit ?? 50, 1), 200);
     const offset = Math.max(input.offset ?? 0, 0);
     const search = (input.search || '').trim();
     const objectType = (input.objectType || '').trim().toUpperCase();
     const hasSearch = search.length > 0;
-    const hasObjectType = ['PAGE', 'INSTAGRAM', 'WHATSAPP'].includes(objectType);
+    const hasObjectType = ['PAGE', 'INSTAGRAM', 'WHATSAPP'].includes(
+      objectType,
+    );
 
     const rows = await this.prisma.$queryRawUnsafe<ContactDirectoryRow[]>(
       `
@@ -772,7 +821,9 @@ export class MetaInboxService implements OnModuleInit {
       total: rows[0]?.totalCount ? Number(rows[0].totalCount) : 0,
       limit,
       offset,
-      hasNext: offset + rows.length < (rows[0]?.totalCount ? Number(rows[0].totalCount) : 0),
+      hasNext:
+        offset + rows.length <
+        (rows[0]?.totalCount ? Number(rows[0].totalCount) : 0),
     };
   }
 
@@ -792,7 +843,9 @@ export class MetaInboxService implements OnModuleInit {
     const actorExternalId = `${phone}@s.whatsapp.net`;
     const displayName =
       input.displayName?.trim() ||
-      [input.firstName?.trim(), input.lastName?.trim()].filter(Boolean).join(' ') ||
+      [input.firstName?.trim(), input.lastName?.trim()]
+        .filter(Boolean)
+        .join(' ') ||
       phone;
 
     await this.prisma.$executeRawUnsafe(
@@ -846,21 +899,27 @@ export class MetaInboxService implements OnModuleInit {
       offset: 0,
     });
 
-    return result.items[0] || {
-      actorExternalId,
-      objectType: 'WHATSAPP',
-      displayName,
-      phone,
-    };
+    return (
+      result.items[0] || {
+        actorExternalId,
+        objectType: 'WHATSAPP',
+        displayName,
+        phone,
+      }
+    );
   }
 
   async ensureWhatsappThreadForContact(actorExternalId: string) {
     const normalizedActor = String(actorExternalId || '').trim();
     if (!normalizedActor.endsWith('@s.whatsapp.net')) {
-      throw new BadRequestException('Solo se puede preparar thread para contactos WhatsApp/Baileys con JID telefonico');
+      throw new BadRequestException(
+        'Solo se puede preparar thread para contactos WhatsApp/Baileys con JID telefonico',
+      );
     }
 
-    const contactRows = await this.prisma.$queryRawUnsafe<Array<{ actorExternalId: string }>>(
+    const contactRows = await this.prisma.$queryRawUnsafe<
+      Array<{ actorExternalId: string }>
+    >(
       `
       SELECT actor_external_id AS "actorExternalId"
       FROM meta_inbox_contacts
@@ -874,7 +933,9 @@ export class MetaInboxService implements OnModuleInit {
       throw new BadRequestException('whatsapp_contact_not_found');
     }
 
-    const openRows = await this.prisma.$queryRawUnsafe<Array<{ sessionId: string }>>(
+    const openRows = await this.prisma.$queryRawUnsafe<
+      Array<{ sessionId: string }>
+    >(
       `
       SELECT session_id AS "sessionId"
       FROM threads
@@ -905,7 +966,9 @@ export class MetaInboxService implements OnModuleInit {
     }
 
     const baseSessionId = `BAILEYS:WHATSAPP:${normalizedActor}`;
-    const latestRows = await this.prisma.$queryRawUnsafe<Array<{ sessionId: string; threadStatus: string }>>(
+    const latestRows = await this.prisma.$queryRawUnsafe<
+      Array<{ sessionId: string; threadStatus: string }>
+    >(
       `
       SELECT session_id AS "sessionId", thread_status AS "threadStatus"
       FROM threads
@@ -918,7 +981,10 @@ export class MetaInboxService implements OnModuleInit {
     );
     const latest = latestRows[0];
     const sessionId = latest?.sessionId
-      ? `${baseSessionId}:${Date.now()}_${Math.random().toString(16).slice(2, 8)}`.slice(0, 255)
+      ? `${baseSessionId}:${Date.now()}_${Math.random().toString(16).slice(2, 8)}`.slice(
+          0,
+          255,
+        )
       : baseSessionId;
 
     await this.prisma.$executeRawUnsafe(
@@ -945,7 +1011,8 @@ export class MetaInboxService implements OnModuleInit {
     );
 
     const created = await this.getThreadRow(sessionId);
-    if (!created) throw new Error(`whatsapp_thread_prepare_failed:${sessionId}`);
+    if (!created)
+      throw new Error(`whatsapp_thread_prepare_failed:${sessionId}`);
 
     await this.recordThreadEvent({
       sessionId: created.sessionId,
@@ -978,14 +1045,17 @@ export class MetaInboxService implements OnModuleInit {
       phone: created.phone || undefined,
       lastMessageText: created.lastMessageText || undefined,
       lastDirection: created.lastDirection || undefined,
-      lastMessageAt: created.lastMessageAt ? new Date(created.lastMessageAt).toISOString() : undefined,
+      lastMessageAt: created.lastMessageAt
+        ? new Date(created.lastMessageAt).toISOString()
+        : undefined,
     });
 
     return created;
   }
 
   async listMessages(sessionId: string, includeSystem = false) {
-    const rows = await this.prisma.$queryRawUnsafe<MessageRow[]>(`
+    const rows = await this.prisma.$queryRawUnsafe<MessageRow[]>(
+      `
       SELECT
         external_event_id AS "externalEventId",
         message_external_id AS "messageExternalId",
@@ -1003,7 +1073,10 @@ export class MetaInboxService implements OnModuleInit {
         AND ($2::boolean = true OR direction <> 'SYSTEM' OR event_kind = 'bootstrap_greeting')
       ORDER BY occurred_at ASC
       LIMIT 1000
-    `, sessionId, includeSystem);
+    `,
+      sessionId,
+      includeSystem,
+    );
 
     return rows.map((row) => ({
       ...row,
@@ -1160,7 +1233,12 @@ export class MetaInboxService implements OnModuleInit {
 
   async updateThreadControl(
     sessionId: string,
-    input: { threadStatus?: string; attentionMode?: string; threadStage?: string },
+    input: {
+      threadStatus?: string;
+      attentionMode?: string;
+      threadStage?: string;
+      stageControl?: Record<string, unknown>;
+    },
     eventSource: 'HUMAN' | 'N8N' | 'SYSTEM' | 'API' = 'HUMAN',
   ) {
     const thread = await this.getThreadSnapshot(sessionId);
@@ -1173,6 +1251,15 @@ export class MetaInboxService implements OnModuleInit {
         thread_status = COALESCE($2, thread_status),
         attention_mode = COALESCE($3, attention_mode),
         thread_stage = COALESCE($4, thread_stage),
+        metadata = CASE
+          WHEN $5::jsonb IS NULL THEN metadata
+          ELSE jsonb_set(
+            COALESCE(metadata, '{}'::jsonb),
+            '{stage_control}',
+            COALESCE(metadata->'stage_control', '{}'::jsonb) || $5::jsonb,
+            true
+          )
+        END,
         paused_at = CASE
           WHEN COALESCE($2, thread_status) = 'PAUSED' THEN now()
           WHEN $2 IS NOT NULL AND $2 <> 'PAUSED' THEN NULL
@@ -1195,6 +1282,7 @@ export class MetaInboxService implements OnModuleInit {
       input.threadStatus ?? null,
       input.attentionMode ?? null,
       input.threadStage ?? null,
+      input.stageControl ? JSON.stringify(input.stageControl) : null,
     );
 
     const updated = await this.getThreadSnapshot(sessionId);
@@ -1214,6 +1302,7 @@ export class MetaInboxService implements OnModuleInit {
         metadata: {
           attentionMode: updated.attentionMode,
           threadStage: updated.threadStage,
+          stageControl: updated.stageControl,
         },
         dedupeKey: `THREAD_STATUS_CHANGED:${sessionId}:${thread.threadStatus}:${updated.threadStatus}:${Date.now()}`,
       });
@@ -1233,6 +1322,7 @@ export class MetaInboxService implements OnModuleInit {
         metadata: {
           threadStatus: updated.threadStatus,
           threadStage: updated.threadStage,
+          stageControl: updated.stageControl,
         },
         dedupeKey: `ATTENTION_MODE_CHANGED:${sessionId}:${thread.attentionMode}:${updated.attentionMode}:${Date.now()}`,
       });
@@ -1252,6 +1342,7 @@ export class MetaInboxService implements OnModuleInit {
         metadata: {
           threadStatus: updated.threadStatus,
           attentionMode: updated.attentionMode,
+          stageControl: updated.stageControl,
         },
         dedupeKey: `THREAD_STAGE_CHANGED:${sessionId}:${thread.threadStage}:${updated.threadStage}:${Date.now()}`,
       });
@@ -1264,6 +1355,7 @@ export class MetaInboxService implements OnModuleInit {
       threadStatus: updated.threadStatus,
       attentionMode: updated.attentionMode,
       threadStage: updated.threadStage,
+      stageControl: updated.stageControl,
     };
   }
 
@@ -1271,7 +1363,9 @@ export class MetaInboxService implements OnModuleInit {
     const current = await this.getThreadRow(sessionId);
     if (!current) throw new Error(`session_not_found:${sessionId}`);
     if (current.threadStatus !== 'ARCHIVED') {
-      throw new BadRequestException('Solo se puede retomar un thread ARCHIVED. Un thread CLOSED no se reutiliza; se debe crear una nueva atencion.');
+      throw new BadRequestException(
+        'Solo se puede retomar un thread ARCHIVED. Un thread CLOSED no se reutiliza; se debe crear una nueva atencion.',
+      );
     }
 
     const openedAt = new Date();
@@ -1325,9 +1419,12 @@ export class MetaInboxService implements OnModuleInit {
       threadStatus: reopened.threadStatus,
       attentionMode: reopened.attentionMode,
       threadStage: reopened.threadStage,
+      stageControl: reopened.metadata?.stage_control ?? null,
       lastMessageText: reopened.lastMessageText,
       lastDirection: reopened.lastDirection,
-      lastMessageAt: reopened.lastMessageAt ? new Date(reopened.lastMessageAt) : null,
+      lastMessageAt: reopened.lastMessageAt
+        ? new Date(reopened.lastMessageAt)
+        : null,
     });
 
     return reopened;
@@ -1338,7 +1435,11 @@ export class MetaInboxService implements OnModuleInit {
     objectType: string,
     includeClosed = false,
   ) {
-    const thread = await this.getPreferredThreadByActor(actorExternalId, objectType, includeClosed);
+    const thread = await this.getPreferredThreadByActor(
+      actorExternalId,
+      objectType,
+      includeClosed,
+    );
     if (!thread) {
       throw new Error(`thread_not_found:${objectType}:${actorExternalId}`);
     }
@@ -1352,13 +1453,19 @@ export class MetaInboxService implements OnModuleInit {
     threadStatus?: string;
     attentionMode?: string;
     threadStage?: string;
+    stageControl?: Record<string, unknown>;
   }) {
     const sessionId = await this.resolveSessionIdForAutomation(input);
-    const result = await this.updateThreadControl(sessionId, {
-      threadStatus: input.threadStatus,
-      attentionMode: input.attentionMode,
-      threadStage: input.threadStage,
-    }, 'N8N');
+    const result = await this.updateThreadControl(
+      sessionId,
+      {
+        threadStatus: input.threadStatus,
+        attentionMode: input.attentionMode,
+        threadStage: input.threadStage,
+        stageControl: input.stageControl,
+      },
+      'N8N',
+    );
     const thread = await this.getThreadRow(sessionId);
 
     return {
@@ -1420,15 +1527,17 @@ export class MetaInboxService implements OnModuleInit {
     };
   }
 
-  async sendThreadMessage(input: ThreadSelectorInput & {
-    senderType?: ThreadMessageSenderType;
-    text?: string;
-    mediaUrl?: string;
-    mediaType?: ThreadMessageMediaType;
-    caption?: string;
-    fileName?: string;
-    mimeType?: string;
-  }) {
+  async sendThreadMessage(
+    input: ThreadSelectorInput & {
+      senderType?: ThreadMessageSenderType;
+      text?: string;
+      mediaUrl?: string;
+      mediaType?: ThreadMessageMediaType;
+      caption?: string;
+      fileName?: string;
+      mimeType?: string;
+    },
+  ) {
     const sessionId = await this.resolveSessionIdForAutomation(input);
     const senderType = input.senderType || 'HUMAN';
     const text = input.text?.trim();
@@ -1469,7 +1578,9 @@ export class MetaInboxService implements OnModuleInit {
     codigo: string;
     decision?: string;
   }) {
-    const normalizedDecision = (input.decision || 'indefinido').trim().toLowerCase();
+    const normalizedDecision = (input.decision || 'indefinido')
+      .trim()
+      .toLowerCase();
     const plan = await this.getOfferPlanByCode(input.codigo);
 
     const rows = await this.prisma.$queryRawUnsafe<OfferEventRow[]>(
@@ -1550,31 +1661,45 @@ export class MetaInboxService implements OnModuleInit {
     return rows[0];
   }
 
-  async updateOfferEventForAutomation(id: string, input: {
-    sessionId?: string;
-    stageActual?: string;
-    tipo?: string;
-    codigo?: string;
-    decision?: string;
-  }) {
+  async updateOfferEventForAutomation(
+    id: string,
+    input: {
+      sessionId?: string;
+      stageActual?: string;
+      tipo?: string;
+      codigo?: string;
+      decision?: string;
+    },
+  ) {
     const current = await this.getOfferEventById(id);
-    const hasChanges = Object.values(input).some((value) => value !== undefined && value !== null && String(value).trim() !== '');
+    const hasChanges = Object.values(input).some(
+      (value) =>
+        value !== undefined && value !== null && String(value).trim() !== '',
+    );
 
     if (!hasChanges) {
       throw new BadRequestException('offer_event_update_empty');
     }
 
     const nextCodigo = input.codigo?.trim() || current.codigo;
-    const plan = input.codigo ? await this.getOfferPlanByCode(nextCodigo) : {
-      codigo: current.codigo,
-      nombre: current.nombrePlan,
-      precioBase: current.precioBase,
-      descripcion: current.descripcion,
-      precioNormal: current.precioNormal,
-      urlArchivo: current.urlArchivo,
-    };
+    const plan = input.codigo
+      ? await this.getOfferPlanByCode(nextCodigo)
+      : {
+          codigo: current.codigo,
+          nombre: current.nombrePlan,
+          precioBase: current.precioBase,
+          descripcion: current.descripcion,
+          precioNormal: current.precioNormal,
+          urlArchivo: current.urlArchivo,
+        };
 
-    const normalizedDecision = (input.decision || current.decision || 'indefinido').trim().toLowerCase();
+    const normalizedDecision = (
+      input.decision ||
+      current.decision ||
+      'indefinido'
+    )
+      .trim()
+      .toLowerCase();
 
     const rows = await this.prisma.$queryRawUnsafe<OfferEventRow[]>(
       `
@@ -1663,6 +1788,117 @@ export class MetaInboxService implements OnModuleInit {
     );
   }
 
+  async getOfferContextForAutomation(input: {
+    sessionId: string;
+    stageActual?: string;
+    modo?: string;
+    decision?: string;
+    currentOfferId?: string;
+    currentCodigo?: string;
+    lineas?: number;
+  }) {
+    const sessionId = input.sessionId?.trim();
+    if (!sessionId) {
+      throw new BadRequestException('Debes enviar sessionId');
+    }
+
+    const modo = this.normalizeOfferMode(input.modo);
+    const eventTipo = modo === 'portabilidad_postpago' ? 'portabilidad' : modo;
+    const recentEvents = await this.listOfferEvents({
+      sessionId,
+      stageActual: input.stageActual?.trim() || undefined,
+      tipo: eventTipo,
+    });
+
+    let currentOffer: OfferEventRow | null = null;
+    if (input.currentOfferId?.trim()) {
+      currentOffer = await this.getOfferEventById(input.currentOfferId.trim());
+    } else if (input.currentCodigo?.trim()) {
+      currentOffer = this.offerPlanToEventSnapshot(
+        await this.getOfferPlanByCode(input.currentCodigo.trim()),
+        sessionId,
+        input.stageActual?.trim() || recentEvents[0]?.stageActual || '',
+        eventTipo,
+      );
+    } else {
+      const decision = input.decision?.trim().toLowerCase();
+      currentOffer =
+        (decision
+          ? recentEvents.find((event) => event.decision === decision)
+          : null) ||
+        recentEvents[0] ||
+        null;
+    }
+
+    const rawCatalog = await this.listOfferCatalogPlans();
+    const filteredCatalog = rawCatalog.filter((plan) => {
+      const lineas = Number(plan.lineas ?? 0);
+      if ((plan.tipo || '').toLowerCase() === 'adicional') return false;
+      if (!Number.isFinite(lineas) || lineas <= 0) return false;
+      if (modo === 'alta' && plan.excluyeAlta === true) return false;
+      if (
+        (modo === 'portabilidad' || modo === 'portabilidad_postpago') &&
+        plan.excluyePortabilidadPostpago === true
+      )
+        return false;
+      return this.toFiniteNumber(plan.precioNormal) !== null;
+    });
+
+    const catalog = this.buildOfferCatalogLevels(filteredCatalog);
+    const codeLevel = new Map<string, number>();
+    for (const level of catalog) {
+      for (const codigo of level.codigos) {
+        codeLevel.set(codigo, level.nivel);
+      }
+    }
+
+    const currentPrecioNormal = this.toFiniteNumber(currentOffer?.precioNormal);
+    const currentLevel =
+      (currentOffer?.codigo ? codeLevel.get(currentOffer.codigo) : undefined) ||
+      catalog.find((level) => level.precioNormal === currentPrecioNormal)
+        ?.nivel ||
+      null;
+    const currentCodigo = currentOffer?.codigo || null;
+    const candidates = this.buildOfferCandidates(
+      filteredCatalog,
+      codeLevel,
+      currentCodigo,
+    );
+
+    return {
+      sessionId,
+      modo,
+      eventTipo,
+      requestedLineas: input.lineas ?? null,
+      currentOffer,
+      currentLevel,
+      catalog,
+      validCandidates: {
+        cheaper: currentLevel
+          ? candidates.filter((candidate) => candidate.nivel < currentLevel)
+          : [],
+        sameLevelDifferentLines: currentLevel
+          ? candidates.filter((candidate) => candidate.nivel === currentLevel)
+          : [],
+        higherLevel: currentLevel
+          ? candidates.filter((candidate) => candidate.nivel > currentLevel)
+          : [],
+        matchingRequestedLines: input.lineas
+          ? candidates.filter((candidate) => candidate.lineas === input.lineas)
+          : [],
+        all: candidates,
+      },
+      recentEvents: recentEvents.slice(0, 10),
+      constraints: [
+        'Usar solo codigos presentes en validCandidates o catalog.',
+        'No ofrecer codigos excluidos por modo.',
+        'No usar el mismo codigo actual como contraoferta.',
+        'No inventar precios, codigos, descuentos ni condiciones comerciales.',
+        'Si el usuario pide equipo/subsidio y no hay dato disponible, derivar a soporte humano.',
+      ],
+    };
+  }
+
   async sendText(sessionId: string, text: string) {
     return this.sendTextInternal(sessionId, text, 'HUMAN');
   }
@@ -1676,16 +1912,27 @@ export class MetaInboxService implements OnModuleInit {
     if (!thread) throw new Error(`session_not_found:${sessionId}`);
 
     if (this.isWhatsAppThread(thread.objectType)) {
-      const inReplyToExternalEventId = await this.getLastIncomingExternalEventId(sessionId);
-      return this.sendTextViaBaileys(sessionId, thread, text, senderType, inReplyToExternalEventId);
+      const inReplyToExternalEventId =
+        await this.getLastIncomingExternalEventId(sessionId);
+      return this.sendTextViaBaileys(
+        sessionId,
+        thread,
+        text,
+        senderType,
+        inReplyToExternalEventId,
+      );
     }
 
-    const inReplyToExternalEventId = await this.getLastIncomingExternalEventId(sessionId);
+    const inReplyToExternalEventId =
+      await this.getLastIncomingExternalEventId(sessionId);
     if (!inReplyToExternalEventId) {
       throw new Error(`missing_conversation_context:${sessionId}`);
     }
 
-    const transport = await this.resolveSendTransport(thread.objectType, thread.sourceChannel);
+    const transport = await this.resolveSendTransport(
+      thread.objectType,
+      thread.sourceChannel,
+    );
     const response = await this.postToGraphWithFallback(
       thread,
       {
@@ -1696,7 +1943,9 @@ export class MetaInboxService implements OnModuleInit {
     );
 
     const messageExternalId = response?.data?.message_id || null;
-    const externalEventId = messageExternalId || `out_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
+    const externalEventId =
+      messageExternalId ||
+      `out_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
     const occurredAt = new Date();
     const contentJson = {
       senderType,
@@ -1779,7 +2028,8 @@ export class MetaInboxService implements OnModuleInit {
       inReplyToExternalEventId,
     });
 
-    const snapshot = snapshotForEvent || await this.getThreadSnapshot(sessionId);
+    const snapshot =
+      snapshotForEvent || (await this.getThreadSnapshot(sessionId));
     if (snapshot) {
       await this.notifyThreadUpsert(snapshot);
     }
@@ -1793,11 +2043,18 @@ export class MetaInboxService implements OnModuleInit {
     };
   }
 
-  async sendMedia(sessionId: string, file: Express.Multer.File, caption?: string) {
+  async sendMedia(
+    sessionId: string,
+    file: Express.Multer.File,
+    caption?: string,
+  ) {
     const thread = await this.getThreadIdentity(sessionId);
     if (!thread) throw new Error(`session_not_found:${sessionId}`);
 
-    const isInstagram = this.isInstagramThread(thread.objectType, thread.sourceChannel);
+    const isInstagram = this.isInstagramThread(
+      thread.objectType,
+      thread.sourceChannel,
+    );
     const mediaType = this.resolveOutgoingMediaType(file.mimetype);
     const preparedMedia = await this.prepareOutgoingMediaForThread(file, {
       isInstagram,
@@ -1830,7 +2087,8 @@ export class MetaInboxService implements OnModuleInit {
     if (!thread) throw new Error(`session_not_found:${sessionId}`);
 
     if (this.isWhatsAppThread(thread.objectType)) {
-      const inReplyToExternalEventId = await this.getLastIncomingExternalEventId(sessionId);
+      const inReplyToExternalEventId =
+        await this.getLastIncomingExternalEventId(sessionId);
       return this.sendMediaByUrlViaBaileys(
         sessionId,
         thread,
@@ -1842,7 +2100,8 @@ export class MetaInboxService implements OnModuleInit {
       );
     }
 
-    const inReplyToExternalEventId = await this.getLastIncomingExternalEventId(sessionId);
+    const inReplyToExternalEventId =
+      await this.getLastIncomingExternalEventId(sessionId);
     if (!inReplyToExternalEventId) {
       throw new Error(`missing_conversation_context:${sessionId}`);
     }
@@ -1852,8 +2111,14 @@ export class MetaInboxService implements OnModuleInit {
       );
     }
 
-    const transport = await this.resolveSendTransport(thread.objectType, thread.sourceChannel);
-    const graphAttachmentType = this.resolveGraphAttachmentType(mediaType, thread);
+    const transport = await this.resolveSendTransport(
+      thread.objectType,
+      thread.sourceChannel,
+    );
+    const graphAttachmentType = this.resolveGraphAttachmentType(
+      mediaType,
+      thread,
+    );
     const response = await this.postToGraphWithFallback(
       thread,
       {
@@ -1872,7 +2137,9 @@ export class MetaInboxService implements OnModuleInit {
     );
 
     const messageExternalId = response?.data?.message_id || null;
-    const externalEventId = messageExternalId || `out_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
+    const externalEventId =
+      messageExternalId ||
+      `out_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
     const occurredAt = new Date();
     const placeholderText = this.resolveMediaPlaceholder(mediaType);
     const contentJson = {
@@ -1964,7 +2231,8 @@ export class MetaInboxService implements OnModuleInit {
       inReplyToExternalEventId,
     });
 
-    const snapshot = snapshotForEvent || await this.getThreadSnapshot(sessionId);
+    const snapshot =
+      snapshotForEvent || (await this.getThreadSnapshot(sessionId));
     if (snapshot) {
       await this.notifyThreadUpsert(snapshot);
     }
@@ -1997,7 +2265,9 @@ export class MetaInboxService implements OnModuleInit {
       text,
     );
     const messageExternalId = this.extractBaileysMessageId(response);
-    const externalEventId = messageExternalId || this.buildOutgoingBaileysEventId(thread.actorExternalId);
+    const externalEventId =
+      messageExternalId ||
+      this.buildOutgoingBaileysEventId(thread.actorExternalId);
     const occurredAt = new Date();
     const contentJson = {
       senderType,
@@ -2060,7 +2330,9 @@ export class MetaInboxService implements OnModuleInit {
       },
     );
     const messageExternalId = this.extractBaileysMessageId(response);
-    const externalEventId = messageExternalId || this.buildOutgoingBaileysEventId(thread.actorExternalId);
+    const externalEventId =
+      messageExternalId ||
+      this.buildOutgoingBaileysEventId(thread.actorExternalId);
     const occurredAt = new Date();
     const placeholderText = this.resolveMediaPlaceholder(mediaType);
     const contentJson = {
@@ -2194,7 +2466,8 @@ export class MetaInboxService implements OnModuleInit {
       inReplyToExternalEventId: input.inReplyToExternalEventId,
     });
 
-    const snapshot = snapshotForEvent || await this.getThreadSnapshot(input.sessionId);
+    const snapshot =
+      snapshotForEvent || (await this.getThreadSnapshot(input.sessionId));
     if (snapshot) {
       await this.notifyThreadUpsert(snapshot);
     }
@@ -2211,13 +2484,17 @@ export class MetaInboxService implements OnModuleInit {
       response?.data?.key?.id,
     ];
     for (const candidate of candidates) {
-      if (typeof candidate === 'string' && candidate.trim()) return candidate.trim();
+      if (typeof candidate === 'string' && candidate.trim())
+        return candidate.trim();
     }
     return null;
   }
 
   private buildOutgoingBaileysEventId(actorExternalId: string): string {
-    const actor = String(actorExternalId || 'unknown').replace(/[^a-zA-Z0-9@._:-]/g, '_');
+    const actor = String(actorExternalId || 'unknown').replace(
+      /[^a-zA-Z0-9@._:-]/g,
+      '_',
+    );
     return `baileys:out:${actor}:${Date.now()}:${Math.random().toString(16).slice(2, 10)}`;
   }
 
@@ -2231,12 +2508,14 @@ export class MetaInboxService implements OnModuleInit {
   }
 
   private async getThreadIdentity(sessionId: string) {
-    const rows = await this.prisma.$queryRawUnsafe<Array<{
-      sessionId: string;
-      actorExternalId: string;
-      objectType: string;
-      sourceChannel: string | null;
-    }>>(
+    const rows = await this.prisma.$queryRawUnsafe<
+      Array<{
+        sessionId: string;
+        actorExternalId: string;
+        objectType: string;
+        sourceChannel: string | null;
+      }>
+    >(
       `
       SELECT
         session_id AS "sessionId",
@@ -2252,12 +2531,14 @@ export class MetaInboxService implements OnModuleInit {
 
     if (rows[0]) return rows[0];
 
-    const fallbackRows = await this.prisma.$queryRawUnsafe<Array<{
-      sessionId: string;
-      actorExternalId: string;
-      objectType: string;
-      sourceChannel: string | null;
-    }>>(
+    const fallbackRows = await this.prisma.$queryRawUnsafe<
+      Array<{
+        sessionId: string;
+        actorExternalId: string;
+        objectType: string;
+        sourceChannel: string | null;
+      }>
+    >(
       `
       SELECT
         session_id AS "sessionId",
@@ -2275,7 +2556,9 @@ export class MetaInboxService implements OnModuleInit {
     return fallbackRows[0] || null;
   }
 
-  private async getThreadSnapshot(sessionId: string): Promise<ThreadControlSnapshot | null> {
+  private async getThreadSnapshot(
+    sessionId: string,
+  ): Promise<ThreadControlSnapshot | null> {
     const rows = await this.prisma.$queryRawUnsafe<ThreadControlSnapshot[]>(
       `
       SELECT
@@ -2287,6 +2570,7 @@ export class MetaInboxService implements OnModuleInit {
         thread_status AS "threadStatus",
         attention_mode AS "attentionMode",
         thread_stage AS "threadStage",
+        metadata->'stage_control' AS "stageControl",
         last_message_text AS "lastMessageText",
         last_direction AS "lastDirection",
         last_message_at AS "lastMessageAt"
@@ -2315,6 +2599,7 @@ export class MetaInboxService implements OnModuleInit {
         t.thread_status AS "threadStatus",
         t.attention_mode AS "attentionMode",
         t.thread_stage AS "threadStage",
+        t.metadata AS "metadata",
         COALESCE(c.display_name, 'Nuevo') AS "displayName",
         c.phone AS "phone",
         c.email AS "email",
@@ -2407,7 +2692,9 @@ export class MetaInboxService implements OnModuleInit {
     return rows[0] || null;
   }
 
-  private async resolveSessionIdForAutomation(input: ThreadSelectorInput): Promise<string> {
+  private async resolveSessionIdForAutomation(
+    input: ThreadSelectorInput,
+  ): Promise<string> {
     if (input.sessionId) {
       const exists = await this.getThreadIdentity(input.sessionId);
       if (!exists) throw new Error(`session_not_found:${input.sessionId}`);
@@ -2415,12 +2702,20 @@ export class MetaInboxService implements OnModuleInit {
     }
 
     if (!input.actorExternalId || !input.objectType) {
-      throw new BadRequestException('Debes enviar sessionId o actorExternalId + objectType');
+      throw new BadRequestException(
+        'Debes enviar sessionId o actorExternalId + objectType',
+      );
     }
 
-    const thread = await this.getPreferredThreadByActor(input.actorExternalId, input.objectType, true);
+    const thread = await this.getPreferredThreadByActor(
+      input.actorExternalId,
+      input.objectType,
+      true,
+    );
     if (!thread) {
-      throw new Error(`thread_not_found:${input.objectType}:${input.actorExternalId}`);
+      throw new Error(
+        `thread_not_found:${input.objectType}:${input.actorExternalId}`,
+      );
     }
 
     return thread.sessionId;
@@ -2516,7 +2811,10 @@ export class MetaInboxService implements OnModuleInit {
     }
 
     const isInstagram = this.isInstagramThread(objectType, sourceChannel);
-    const accessToken = await this.resolveAccessToken(objectType, sourceChannel);
+    const accessToken = await this.resolveAccessToken(
+      objectType,
+      sourceChannel,
+    );
     return {
       graphUrl: isInstagram
         ? 'https://graph.instagram.com/v21.0/me/messages'
@@ -2525,7 +2823,10 @@ export class MetaInboxService implements OnModuleInit {
     };
   }
 
-  private async resolveAccessToken(objectType: string, sourceChannel: string | null): Promise<string> {
+  private async resolveAccessToken(
+    objectType: string,
+    sourceChannel: string | null,
+  ): Promise<string> {
     const normalizedObjectType = (objectType || '').toUpperCase();
     const normalizedSource = (sourceChannel || '').toLowerCase();
 
@@ -2596,14 +2897,19 @@ export class MetaInboxService implements OnModuleInit {
       fs.unlinkSync(inputPath);
       return { fileName: outputName, mimeType: 'audio/mp4' };
     } catch (error: any) {
-      this.logger.warn(`audio conversion failed for IG: ${error?.message ?? 'unknown_error'}`);
+      this.logger.warn(
+        `audio conversion failed for IG: ${error?.message ?? 'unknown_error'}`,
+      );
       throw new BadRequestException(
         'No se pudo convertir el audio a formato compatible para Instagram (m4a).',
       );
     }
   }
 
-  private isInstagramThread(objectType: string, sourceChannel: string | null): boolean {
+  private isInstagramThread(
+    objectType: string,
+    sourceChannel: string | null,
+  ): boolean {
     const normalizedObjectType = (objectType || '').toUpperCase();
     const normalizedSource = (sourceChannel || '').toLowerCase();
     return (
@@ -2623,7 +2929,11 @@ export class MetaInboxService implements OnModuleInit {
     if (normalized.startsWith('audio/')) return 'audio';
     if (normalized.startsWith('image/')) return 'image';
     if (normalized.startsWith('video/')) return 'video';
-    if (normalized === 'application/pdf' || normalized.startsWith('application/') || normalized.startsWith('text/')) {
+    if (
+      normalized === 'application/pdf' ||
+      normalized.startsWith('application/') ||
+      normalized.startsWith('text/')
+    ) {
       return 'document';
     }
     throw new Error(`unsupported_media_type:${mimeType}`);
@@ -2636,7 +2946,9 @@ export class MetaInboxService implements OnModuleInit {
     return '[documento]';
   }
 
-  private resolveBaileysMessageType(mediaType: ThreadMessageMediaType): BaileysMessageType {
+  private resolveBaileysMessageType(
+    mediaType: ThreadMessageMediaType,
+  ): BaileysMessageType {
     return mediaType;
   }
 
@@ -2644,7 +2956,10 @@ export class MetaInboxService implements OnModuleInit {
     mediaType: ThreadMessageMediaType,
     thread: { objectType: string; sourceChannel: string | null },
   ): 'image' | 'audio' | 'video' | 'file' {
-    if (mediaType === 'document' && this.isInstagramThread(thread.objectType, thread.sourceChannel)) {
+    if (
+      mediaType === 'document' &&
+      this.isInstagramThread(thread.objectType, thread.sourceChannel)
+    ) {
       throw new BadRequestException('document_not_supported_for_instagram');
     }
     if (mediaType === 'document') return 'file';
@@ -2652,23 +2967,38 @@ export class MetaInboxService implements OnModuleInit {
   }
 
   private normalizeLegacyMessageContentJson(contentJson: any) {
-    if (!contentJson || typeof contentJson !== 'object' || Array.isArray(contentJson)) {
+    if (
+      !contentJson ||
+      typeof contentJson !== 'object' ||
+      Array.isArray(contentJson)
+    ) {
       return contentJson;
     }
 
     const cloned = { ...contentJson };
     const currentMediaType = String(cloned.mediaType || '').toLowerCase();
     const currentMediaUrl = cloned.mediaUrl ? String(cloned.mediaUrl) : '';
-    if (currentMediaUrl && (currentMediaType === 'audio' || currentMediaType === 'image')) {
+    if (
+      currentMediaUrl &&
+      (currentMediaType === 'audio' || currentMediaType === 'image')
+    ) {
       return cloned;
     }
 
-    const message = cloned.message && typeof cloned.message === 'object' ? cloned.message : null;
-    const attachments = Array.isArray(message?.attachments) ? message.attachments : [];
+    const message =
+      cloned.message && typeof cloned.message === 'object'
+        ? cloned.message
+        : null;
+    const attachments = Array.isArray(message?.attachments)
+      ? message.attachments
+      : [];
     const first = attachments[0];
     const attachmentType = String(first?.type || '').toLowerCase();
     const attachmentUrl = first?.payload?.url ? String(first.payload.url) : '';
-    if (attachmentUrl && (attachmentType === 'audio' || attachmentType === 'image')) {
+    if (
+      attachmentUrl &&
+      (attachmentType === 'audio' || attachmentType === 'image')
+    ) {
       return {
         ...cloned,
         mediaType: attachmentType,
@@ -2677,10 +3007,11 @@ export class MetaInboxService implements OnModuleInit {
     }
 
     const topLevelType = String((cloned as any).type || '').toLowerCase();
-    const topLevelUrl =
-      (cloned as any).url ? String((cloned as any).url) :
-      (cloned as any).mediaUrl ? String((cloned as any).mediaUrl) :
-      '';
+    const topLevelUrl = (cloned as any).url
+      ? String((cloned as any).url)
+      : (cloned as any).mediaUrl
+        ? String((cloned as any).mediaUrl)
+        : '';
     if (topLevelUrl && (topLevelType === 'audio' || topLevelType === 'image')) {
       return {
         ...cloned,
@@ -2689,9 +3020,14 @@ export class MetaInboxService implements OnModuleInit {
       };
     }
 
-    const graphAttachment = cloned.attachment && typeof cloned.attachment === 'object' ? cloned.attachment : null;
+    const graphAttachment =
+      cloned.attachment && typeof cloned.attachment === 'object'
+        ? cloned.attachment
+        : null;
     const graphType = String(graphAttachment?.type || '').toLowerCase();
-    const graphUrl = graphAttachment?.payload?.url ? String(graphAttachment.payload.url) : '';
+    const graphUrl = graphAttachment?.payload?.url
+      ? String(graphAttachment.payload.url)
+      : '';
     if (graphUrl && (graphType === 'audio' || graphType === 'image')) {
       return {
         ...cloned,
@@ -2703,8 +3039,12 @@ export class MetaInboxService implements OnModuleInit {
     return cloned;
   }
 
-  private async getLastIncomingExternalEventId(sessionId: string): Promise<string | null> {
-    const rows = await this.prisma.$queryRawUnsafe<Array<{ externalEventId: string }>>(
+  private async getLastIncomingExternalEventId(
+    sessionId: string,
+  ): Promise<string | null> {
+    const rows = await this.prisma.$queryRawUnsafe<
+      Array<{ externalEventId: string }>
+    >(
       `
       SELECT external_event_id AS "externalEventId"
       FROM thread_messages
@@ -2716,6 +3056,136 @@ export class MetaInboxService implements OnModuleInit {
       sessionId,
     );
     return rows[0]?.externalEventId || null;
+  }
+
+  private normalizeOfferMode(
+    modo?: string,
+  ): 'alta' | 'portabilidad' | 'portabilidad_postpago' {
+    const normalized = (modo || 'portabilidad').trim().toLowerCase();
+    if (
+      normalized === 'alta' ||
+      normalized === 'portabilidad' ||
+      normalized === 'portabilidad_postpago'
+    ) {
+      return normalized;
+    }
+    return 'portabilidad';
+  }
+
+  private async listOfferCatalogPlans(): Promise<OfferPlanCatalogRow[]> {
+    return this.prisma.$queryRawUnsafe<OfferPlanCatalogRow[]>(
+      `
+      SELECT
+        codigo,
+        nombre,
+        precio_base AS "precioBase",
+        tipo,
+        descripcion,
+        lineas,
+        COALESCE(excluye_alta, false) AS "excluyeAlta",
+        COALESCE(excluye_portabilidad_postpago, false) AS "excluyePortabilidadPostpago",
+        url_archivo AS "urlArchivo",
+        precio_normal AS "precioNormal"
+      FROM precios_planes
+      ORDER BY precio_normal ASC NULLS LAST, lineas ASC NULLS LAST, codigo ASC
+    `,
+    );
+  }
+
+  private buildOfferCatalogLevels(
+    plans: OfferPlanCatalogRow[],
+  ): OfferCatalogLevelRow[] {
+    const groups = new Map<number, OfferPlanCatalogRow[]>();
+    for (const plan of plans) {
+      const precioNormal = this.toFiniteNumber(plan.precioNormal);
+      if (precioNormal === null) continue;
+      groups.set(precioNormal, [...(groups.get(precioNormal) || []), plan]);
+    }
+
+    return Array.from(groups.entries())
+      .sort(([left], [right]) => left - right)
+      .map(([precioNormal, group], index) => {
+        const sorted = group.sort(
+          (left, right) =>
+            Number(left.lineas ?? 0) - Number(right.lineas ?? 0) ||
+            left.codigo.localeCompare(right.codigo),
+        );
+        const codeForLines = (lineas: number) =>
+          sorted.find((plan) => Number(plan.lineas ?? 0) === lineas)?.codigo ||
+          null;
+
+        return {
+          nivel: index + 1,
+          precioNormal,
+          nombre: sorted[0]?.nombre || null,
+          codigo1Linea: codeForLines(1),
+          codigo2Lineas: codeForLines(2),
+          codigo3Lineas: codeForLines(3),
+          codigo4Lineas: codeForLines(4),
+          codigo5Lineas: codeForLines(5),
+          codigos: sorted.map((plan) => plan.codigo),
+        };
+      });
+  }
+
+  private buildOfferCandidates(
+    plans: OfferPlanCatalogRow[],
+    codeLevel: Map<string, number>,
+    currentCodigo?: string | null,
+  ): OfferCandidateRow[] {
+    return plans
+      .filter((plan) => plan.codigo !== currentCodigo)
+      .map((plan) => ({
+        nivel: codeLevel.get(plan.codigo) || 0,
+        codigo: plan.codigo,
+        nombre: plan.nombre || null,
+        precioBase: plan.precioBase,
+        precioNormal: this.toFiniteNumber(plan.precioNormal) || 0,
+        lineas: plan.lineas ?? null,
+        descripcion: plan.descripcion,
+        urlArchivo: plan.urlArchivo,
+      }))
+      .filter((candidate) => candidate.nivel > 0)
+      .sort(
+        (left, right) =>
+          left.nivel - right.nivel ||
+          Number(left.lineas ?? 0) - Number(right.lineas ?? 0) ||
+          left.codigo.localeCompare(right.codigo),
+      );
+  }
+
+  private offerPlanToEventSnapshot(
+    plan: OfferPlanRow,
+    sessionId: string,
+    stageActual: string,
+    tipo: string,
+  ): OfferEventRow {
+    return {
+      id: '',
+      sessionId,
+      stageActual,
+      tipo,
+      codigo: plan.codigo,
+      nombrePlan: plan.nombre,
+      precioBase: String(plan.precioBase),
+      descripcion: plan.descripcion,
+      precioNormal:
+        plan.precioNormal === null || plan.precioNormal === undefined
+          ? null
+          : String(plan.precioNormal),
+      urlArchivo: plan.urlArchivo,
+      decision: 'indefinido',
+      createdAt: new Date(),
+      updatedAt: null,
+    };
+  }
+
+  private toFiniteNumber(
+    value: string | number | null | undefined,
+  ): number | null {
+    if (value === null || value === undefined || value === '') return null;
+    const numberValue = Number(value);
+    return Number.isFinite(numberValue) ? numberValue : null;
   }
 
   private async getOfferPlanByCode(codigo: string): Promise<OfferPlanRow> {
@@ -2747,9 +3217,13 @@ export class MetaInboxService implements OnModuleInit {
     return rows[0];
   }
 
-  private omitEmptyFields<T extends Record<string, unknown>>(input: T): Partial<T> {
+  private omitEmptyFields<T extends Record<string, unknown>>(
+    input: T,
+  ): Partial<T> {
     return Object.fromEntries(
-      Object.entries(input).filter(([, value]) => value !== null && value !== undefined && value !== ''),
+      Object.entries(input).filter(
+        ([, value]) => value !== null && value !== undefined && value !== '',
+      ),
     ) as Partial<T>;
   }
 }

@@ -1,4 +1,11 @@
-import { IsIn, IsOptional, IsString, MaxLength, ValidateIf } from 'class-validator';
+import {
+  IsIn,
+  IsObject,
+  IsOptional,
+  IsString,
+  MaxLength,
+  ValidateIf,
+} from 'class-validator';
 
 export class N8nThreadControlDto {
   @IsOptional()
@@ -30,4 +37,8 @@ export class N8nThreadControlDto {
   @IsString()
   @MaxLength(64)
   threadStage?: string;
+
+  @IsOptional()
+  @IsObject()
+  stageControl?: Record<string, unknown>;
 }

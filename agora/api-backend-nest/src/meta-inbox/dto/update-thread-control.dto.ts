@@ -1,4 +1,10 @@
-import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsIn,
+  IsObject,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 
 export class UpdateThreadControlDto {
   @IsOptional()
@@ -15,4 +21,8 @@ export class UpdateThreadControlDto {
   @IsString()
   @MaxLength(64)
   threadStage?: string;
+
+  @IsOptional()
+  @IsObject()
+  stageControl?: Record<string, unknown>;
 }
