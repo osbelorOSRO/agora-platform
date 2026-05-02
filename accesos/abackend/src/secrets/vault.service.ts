@@ -4,6 +4,8 @@ export class VaultService {
   private endpoint: string;
   private vault: any;
   private tokenExpiresAt: number = 0;
+  private secretCache = new Map<string, string>();
+  private pendingReads = new Map<string, Promise<string>>();
 
   constructor() {
     this.endpoint = process.env.VAULT_ADDR || 'http://vault:8200';
@@ -54,6 +56,25 @@ export class VaultService {
   }
 
   async getSecretKey(path: string): Promise<string> {
+    const cached = this.secretCache.get(path);
+    if (cached) return cached;
+
+    const pending = this.pendingReads.get(path);
+    if (pending) return pending;
+
+    const readPromise = this.readSecretKey(path);
+    this.pendingReads.set(path, readPromise);
+
+    try {
+      const value = await readPromise;
+      this.secretCache.set(path, value);
+      return value;
+    } finally {
+      this.pendingReads.delete(path);
+    }
+  }
+
+  private async readSecretKey(path: string): Promise<string> {
     try {
       const token = await this.getValidToken();
 
