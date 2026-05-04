@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.3.1
+
+### Added
+- Documento de plan de mitigacion de superficies de ataque con alcance estricto al repo.
+- Guia de configuracion publica del README enfocada en templates y despliegue por entorno.
+
+### Changed
+- Templates `env/*.env` y `n8n/env/*.env` sanados para usar placeholders.
+- Docs operativos limpiados de valores reales de entorno.
+
+### Fixed
+- Banner de version del README alineado con la release actual.
+
 ## 1.2.1
 
 ### Added

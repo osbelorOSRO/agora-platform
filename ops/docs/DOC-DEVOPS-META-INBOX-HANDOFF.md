@@ -43,13 +43,13 @@ Nota: `v1.3.0` es un corte integral de repo. Todos los paquetes operativos queda
 
 Para el corte actual, usar primero el runbook:
 
-- [DOC-RELEASE-1.3.0-VPS-POSTGRES.md](/home/oscar/Documentos/GitHub/agora-platform/ops/docs/DOC-RELEASE-1.3.0-VPS-POSTGRES.md:1)
+- [DOC-RELEASE-1.3.0-VPS-POSTGRES.md](DOC-RELEASE-1.3.0-VPS-POSTGRES.md)
 
 ### 1. Estructura operativa del inbox
 
 Ejecutar:
 
-- [DOC-META-INBOX-THREADS-SQL.md](/home/oscar/Documentos/GitHub/agora-platform/ops/docs/DOC-META-INBOX-THREADS-SQL.md:1)
+- [DOC-META-INBOX-THREADS-SQL.md](DOC-META-INBOX-THREADS-SQL.md)
 
 Esto cubre:
 
@@ -63,7 +63,7 @@ Esto cubre:
 
 Ejecutar:
 
-- [stage_templates_final.sql](/home/oscar/Documentos/GitHub/agora-platform/ops/docs/stage_templates_final.sql:1)
+- [stage_templates_final.sql](stage_templates_final.sql)
 
 Si la tabla ya existe y se quiere recargar completa:
 
@@ -118,7 +118,7 @@ Revisar:
 Como mínimo:
 
 ```bash
-cd /home/oscar/Documentos/GitHub/agora-platform
+cd <repo_root>
 docker compose -p stack_agora --env-file env/dev.local1.env -f agora/docker-compose.yml up -d --build api_backend_nest frontend
 ```
 
@@ -129,7 +129,7 @@ docker compose -p stack_agora --env-file env/dev.local1.env -f agora/docker-comp
 ### 1. Matriz de stages
 
 ```bash
-curl http://apist.zaldio.qzz.io/meta-inbox/stage-templates/inicio
+curl http://<api_stage_url>/meta-inbox/stage-templates/inicio
 ```
 
 Esperado:
@@ -141,7 +141,7 @@ Esperado:
 ### 2. Lista de threads
 
 ```bash
-curl http://apist.zaldio.qzz.io/meta-inbox/threads
+curl http://<api_stage_url>/meta-inbox/threads
 ```
 
 Esperado:
@@ -170,10 +170,10 @@ Esperado:
 
 ## Documentos relacionados
 
-- [DOC-META-INBOX-THREADS-SQL.md](/home/oscar/Documentos/GitHub/agora-platform/ops/docs/DOC-META-INBOX-THREADS-SQL.md:1)
-- [DOC-N8N-META-THREAD-DELEGATION.md](/home/oscar/Documentos/GitHub/agora-platform/ops/docs/DOC-N8N-META-THREAD-DELEGATION.md:1)
-- [DOC-VPS1-VALIDACION-META-THREADS.md](/home/oscar/Documentos/GitHub/agora-platform/ops/docs/DOC-VPS1-VALIDACION-META-THREADS.md:1)
-- [stage_templates_final.sql](/home/oscar/Documentos/GitHub/agora-platform/ops/docs/stage_templates_final.sql:1)
+- [DOC-META-INBOX-THREADS-SQL.md](DOC-META-INBOX-THREADS-SQL.md)
+- [DOC-N8N-META-THREAD-DELEGATION.md](DOC-N8N-META-THREAD-DELEGATION.md)
+- [DOC-VPS1-VALIDACION-META-THREADS.md](DOC-VPS1-VALIDACION-META-THREADS.md)
+- [stage_templates_final.sql](stage_templates_final.sql)
 
 ## Cambios locales que no deberían subirse al repo
 

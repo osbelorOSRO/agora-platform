@@ -39,7 +39,7 @@ Objetivo: evitar errores `EACCES` al subir archivos (`api_backend_nest`) al migr
 Ejecutar en el host, desde la raíz del repo:
 
 ```bash
-cd /home/<usuario>/agora-platform/agora
+cd <repo_root>/agora
 sudo mkdir -p uploads config
 sudo chown -R 1000:1000 uploads config
 sudo find uploads config -type d -exec chmod 775 {} \;
@@ -71,5 +71,5 @@ docker compose --env-file env/<perfil>.secrets.env -p stack_agora -f agora/docke
 4. Documentar resultado y timestamp.
 
 ## 6) Vault (estado actual)
-- VPS1 en `npm_network` y accesible como `http://vault:8200` desde contenedores de la red.
+- Vault accesible desde la red Docker mediante `<vault_internal_url>`.
 - Auto-unseal cross-VPS queda para fase final.

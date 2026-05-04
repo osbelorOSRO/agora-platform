@@ -60,7 +60,7 @@ Variables requeridas:
 
 Nota:
 - Si no exportas `VAULT_ADDR`, el script intenta usar `VAULT_PUBLIC_URL` o `VAULT_INTERNAL_URL` del `env/<perfil>.env`.
-- El script debe ejecutarse en host (no dentro de contenedor): `cd /home/oscar/dev/proyectos`.
+- El script debe ejecutarse en host (no dentro de contenedor): `cd <repo_root>`.
 
 Ejemplo:
 ```bash

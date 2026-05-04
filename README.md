@@ -7,29 +7,26 @@ Monorepo operativo para una plataforma modular de atencion, automatizacion y con
 ![WA Control dashboard](docs/assets/wa-control.png)
 
 ## Version
-- Actual: `v1.2.1`
-- Fecha: `2026-04-15`
+- Actual: `v1.3.1`
+- Fecha: `2026-05-03`
 
-En cada release se debe actualizar esta seccion, mantener `CHANGELOG.md` al dia y crear un tag Git con formato `vX.Y.Z`.
+La evolución de cambios se documenta en `CHANGELOG.md`.
 
 ## Que incluye
-- `agora/frontend`: consola React para vistas, chats Kanban, Meta Inbox, Agenda, Reportes, Ajustes, WA Control y notificaciones.
-- `agora/api-backend-nest`: API NestJS para clientes, procesos, mensajes, media, Meta, scraping y notificaciones hacia el panel.
+- `agora/frontend`: consola React para vistas, threads unificados de Facebook, Instagram y WhatsApp, Agenda, Reportes, Ajustes, WA Control y notificaciones.
+- `agora/api-backend-nest`: backend NestJS que orquesta eventos de `threads` y recursos de mensajeria instantanea de Meta, WebSocket y Baileys; incluye sesion, media, respuestas rapidas, webhooks, callbacks de actor y soporte conversacional.
 - `agora/websocket`: gateway Socket.IO para eventos de aplicacion, estado del bot y actualizaciones en tiempo real.
-- `wa-backend`: backend WhatsApp/Baileys para sesion, QR, recepcion/envio de mensajes y puente con automatizaciones.
+- `wa-backend`: backend WhatsApp/Baileys para sesion, QR y recepcion/envio de mensajes; actua como conector operativo de WhatsApp sin orquestar automatizaciones.
 - `accesos/abackend`: servicio de autenticacion, usuarios, roles, permisos y reportes administrativos.
 - `n8n`: capa declarativa para flujos de automatizacion.
-- `mongo`, `redis`, `whisper`, `tesseract`, `infraestructura` y `ops`: servicios y utilidades de soporte operativo.
+- `mongo`, `redis`, `whisper`, `tesseract`, `pgadmin` y `ops`: servicios y utilidades de soporte operativo.
 
 ## Configuracion publica
-Este repositorio esta preparado para publicarse sin secretos reales.
+Este repositorio publica solo el codigo y templates de configuracion.
 
 - Los archivos `env/*.env` y `n8n/env/*.env` son templates con placeholders.
-- Los valores reales deben vivir en archivos privados `*.secrets.env`, en `.env` locales por servicio o en Vault.
-- Las IPs privadas, dominios reales, tokens, claves y passwords no deben commitearse.
-- Los datos persistentes como `uploads`, sesiones WhatsApp, dumps, certificados y volumenes de BD deben quedar fuera de Git.
-
-Si alguna clave real fue committeada alguna vez, no basta con borrarla del ultimo commit: hay que rotarla y evaluar limpieza de historial antes de hacer publico el repo.
+- Cada despliegue completa su propia capa de configuracion segun el entorno.
+- Los datos persistentes como `uploads`, sesiones WhatsApp, dumps, certificados y volumenes de BD quedan fuera del arbol versionado.
 
 ## Operacion rapida
 1. Copiar el template del perfil que corresponda:
@@ -39,7 +36,7 @@ cp env/dev.local1.env env/dev.local1.secrets.env
 cp n8n/env/dev.local1.env n8n/env/dev.local1.secrets.env
 ```
 
-2. Completar placeholders con valores reales del host, dominios, Vault, Redis y bases de datos.
+2. Completar los placeholders con los valores del entorno local.
 
 3. Inicializar `.env` privados por servicio si faltan:
 

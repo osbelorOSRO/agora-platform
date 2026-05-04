@@ -7,7 +7,7 @@
 
 ## 2) Publicar en `main`
 ```bash
-cd /home/oscar/Documentos/GitHub/agora-platform
+cd <repo_root>
 git add .
 git commit -m "release: 1.2.1 realtime hardening and notifications consistency"
 git push origin main

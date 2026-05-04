@@ -1,7 +1,7 @@
 # Operacion de Stack por Perfil
 
 ## Version
-- Actual: `v1.3.0` (2026-04-28)
+- Actual: `v1.3.1` (2026-05-03)
 - Al hacer release: actualizar versión aquí y en `README.md`, y crear tag `vX.Y.Z`.
 
 Scripts:
@@ -60,19 +60,19 @@ Documentacion de policy/role:
 
 ## Arrancar
 ```bash
-cd /home/oscar/dev/proyectos
+cd <repo_root>
 ./scripts/up-profile.sh dev.local1
 ```
 
 ## Estado
 ```bash
-cd /home/oscar/dev/proyectos
+cd <repo_root>
 ./scripts/status-profile.sh dev.local1
 ```
 
 ## Validar antes de deploy
 ```bash
-cd /home/oscar/dev/proyectos
+cd <repo_root>
 ./scripts/verify-env.sh dev.local1
 ./scripts/verify-compose.sh dev.local1
 ./scripts/smoke-core.sh dev.local1
@@ -80,7 +80,7 @@ cd /home/oscar/dev/proyectos
 
 ## Detener
 ```bash
-cd /home/oscar/dev/proyectos
+cd <repo_root>
 ./scripts/down-profile.sh dev.local1
 ```
 
@@ -89,8 +89,7 @@ cd /home/oscar/dev/proyectos
 
 Nota:
 - Compose de BD (`postgres`) queda fuera del repo y se opera externamente por host.
-- El antiguo FastAPI microservicio de Mongo/RUT/procesos fue retirado del stack.
-- Desde `v1.3.0`, el nucleo conversacional opera solo sobre `threads`, `thread_messages`, `thread_events` y `meta_inbox_contacts`; las tablas legacy de `clientes/procesos/map_journey/scraping/oficinas` se retiran de Postgres.
+- Desde `v1.3.0`, el nucleo conversacional opera solo sobre `threads`, `thread_messages`, `thread_events` y `meta_inbox_contacts`
 
 ## N8N por perfil
 `n8n/docker-compose.yml` toma env exclusivo por perfil desde:

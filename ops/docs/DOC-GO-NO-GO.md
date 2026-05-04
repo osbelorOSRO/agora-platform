@@ -5,7 +5,7 @@
 - [ ] `docker compose config` pasa en stacks activos.
 - [ ] Red `npm_network` existente en host objetivo.
 - [ ] DB reachable según perfil (Postgres 5432, Mongo 27017).
-- [ ] Vault reachable desde red Docker (`http://vault:8200`).
+- [ ] Vault reachable desde red Docker (`<vault_internal_url>`).
 - [ ] Front/API/WebSocket/N8N levantan sin errores críticos en logs.
 
 ## NO-GO (bloqueantes)

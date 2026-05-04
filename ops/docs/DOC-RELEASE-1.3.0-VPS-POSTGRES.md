@@ -204,7 +204,7 @@ export DATABASE_URL='postgresql://USER:PASSWORD@HOST:5432/DB?schema=public'
 Regenerar `api_backend_nest`:
 
 ```bash
-cd /home/oscar/Documentos/GitHub/agora-platform/agora/api-backend-nest
+cd <repo_root>/agora/api-backend-nest
 npx prisma db pull
 npx prisma generate
 npm run build
@@ -213,7 +213,7 @@ npm run build
 Regenerar `abackend`:
 
 ```bash
-cd /home/oscar/Documentos/GitHub/agora-platform/accesos/abackend
+cd <repo_root>/accesos/abackend
 npx prisma db pull
 npx prisma generate
 npm run build
@@ -230,7 +230,7 @@ Verificacion esperada:
 Recomendado tras actualizar repo en VPS:
 
 ```bash
-cd /home/oscar/Documentos/GitHub/agora-platform
+cd <repo_root>
 docker compose -p stack_agora --env-file env/<perfil>.env -f agora/docker-compose.yml build api_backend_nest frontend
 docker compose -p stack_agora --env-file env/<perfil>.env -f agora/docker-compose.yml up -d --force-recreate api_backend_nest frontend
 ```
@@ -244,14 +244,14 @@ Para `abackend`, usar el compose/perfil que corresponda a Accesos en ese host.
 Backend Nest:
 
 ```bash
-curl https://api.llevatuplan.cl/ping
-curl https://api.llevatuplan.cl/meta-inbox/threads
+curl https://<api_public_url>/ping
+curl https://<api_public_url>/meta-inbox/threads
 ```
 
 Stage templates:
 
 ```bash
-curl https://api.llevatuplan.cl/meta-inbox/stage-templates/inicio
+curl https://<api_public_url>/meta-inbox/stage-templates/inicio
 ```
 
 n8n saliente:

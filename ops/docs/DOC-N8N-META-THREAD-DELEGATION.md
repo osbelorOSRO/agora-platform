@@ -81,7 +81,7 @@ POST /webhook/meta-thread-messages-delegation
 URL publica esperada:
 
 ```txt
-https://automate.llevatuplan.cl/webhook/meta-thread-messages-delegation
+https://<n8n_public_url>/webhook/meta-thread-messages-delegation
 ```
 
 Header:
@@ -171,7 +171,7 @@ Uso:
 Ejemplo:
 
 ```bash
-curl https://api.llevatuplan.cl/meta-inbox/stage-templates/inicio
+curl https://<api_public_url>/meta-inbox/stage-templates/inicio
 ```
 
 Este endpoint no usa bearer token.
@@ -188,7 +188,7 @@ Content-Type: application/json
 Base publica:
 
 ```txt
-https://api.llevatuplan.cl
+https://<api_public_url>
 ```
 
 Base interna desde n8n:
@@ -277,7 +277,7 @@ Payload:
   "sessionId": "BAILEYS:WHATSAPP:56979555395@s.whatsapp.net",
   "displayName": "Oscar",
   "phone": "56979555395",
-  "email": "oscar@example.com",
+  "email": "<contact_email>",
   "city": "Santiago",
   "notes": "Pidio informacion de portabilidad"
 }
@@ -354,7 +354,7 @@ No usar `imagen`, `audio_wa`, `archivo`, `destino`, `cliente_id` ni `proceso_id`
   "sessionId": "BAILEYS:WHATSAPP:56979555395@s.whatsapp.net",
   "senderType": "N8N",
   "mediaType": "image",
-  "mediaUrl": "https://media.llevatuplan.cl/uploads/oferta.jpg"
+  "mediaUrl": "https://<media_public_url>/uploads/oferta.jpg"
 }
 ```
 
@@ -367,7 +367,7 @@ No usar `imagen`, `audio_wa`, `archivo`, `destino`, `cliente_id` ni `proceso_id`
   "text": "Te dejo la oferta recomendada.",
   "caption": "Te dejo la oferta recomendada.",
   "mediaType": "image",
-  "mediaUrl": "https://media.llevatuplan.cl/uploads/oferta.jpg"
+  "mediaUrl": "https://<media_public_url>/uploads/oferta.jpg"
 }
 ```
 
@@ -380,7 +380,7 @@ Nota: para proveedores que solo acepten caption con media, Nest debe usar `capti
   "sessionId": "BAILEYS:WHATSAPP:56979555395@s.whatsapp.net",
   "senderType": "N8N",
   "mediaType": "audio",
-  "mediaUrl": "https://media.llevatuplan.cl/uploads/audio.m4a",
+  "mediaUrl": "https://<media_public_url>/uploads/audio.m4a",
   "mimeType": "audio/mp4"
 }
 ```
@@ -394,7 +394,7 @@ No se fuerza texto + audio.
   "sessionId": "BAILEYS:WHATSAPP:56979555395@s.whatsapp.net",
   "senderType": "N8N",
   "mediaType": "document",
-  "mediaUrl": "https://media.llevatuplan.cl/uploads/contrato.pdf",
+  "mediaUrl": "https://<media_public_url>/uploads/contrato.pdf",
   "fileName": "informacion.pdf",
   "mimeType": "application/pdf"
 }
@@ -409,7 +409,7 @@ No se fuerza texto + audio.
   "text": "Te dejo el documento.",
   "caption": "Te dejo el documento.",
   "mediaType": "document",
-  "mediaUrl": "https://media.llevatuplan.cl/uploads/informacion.pdf",
+  "mediaUrl": "https://<media_public_url>/uploads/informacion.pdf",
   "fileName": "informacion.pdf",
   "mimeType": "application/pdf"
 }
@@ -422,7 +422,7 @@ No se fuerza texto + audio.
   "sessionId": "BAILEYS:WHATSAPP:56979555395@s.whatsapp.net",
   "senderType": "N8N",
   "mediaType": "video",
-  "mediaUrl": "https://media.llevatuplan.cl/uploads/video.mp4",
+  "mediaUrl": "https://<media_public_url>/uploads/video.mp4",
   "mimeType": "video/mp4"
 }
 ```
@@ -532,3 +532,21 @@ fastapi_microservicio:8500/n8n_procesos/*
 - `ARCHIVED` se puede retomar y vuelve a `OPEN`.
 - `CLOSED` crea un thread nuevo.
 - No aparece `cliente_id`, `proceso_id`, `map_journey`, Mongo ni `wa_backend/enviar-desde-n8n` en workflows nuevos.
+
+para usar dentro de los nodos http:
+
+N8N_CUSTOM_API_TOKEN=http://abackend:4002/api/service-auth/service-token
+N8N_CUSTOM_API_SCRAPER=http://<scraper_host>:8000/validate
+N8N_CUSTOM_API_STATUS=http://<scraper_host>:8000/status/
+N8N_CUSTOM_API_DECISIONS=http://<scraper_host>:8000/decisions/
+N8N_CUSTOM_API_IDENTITY=http://<scraper_host>:8000/decisions/
+N8N_CUSTOM_WHISPER=http://whisper-stt:9000/asr?output=json&task=transcribe&language=es
+N8N_CUSTOM_TESSERACT=http://tesseract-ocr:8884/tesseract
+N8N_CUSTOM_API_DAEMON=http://<daemon_host>:3500/
+N8N_CUSTOM_API_CALLBACK=http://api_backend_nest:4001/actor/msg-delegation/complete
+N8N_CUSTOM_API_STAGE_ACTUAL=http://api_backend_nest:4001/meta-inbox/stage-templates/
+N8N_CUSTOM_API_THREAD_CONTROL=http://api_backend_nest:4001/meta-inbox/n8n/thread-control
+N8N_CUSTOM_API_INDENTITY_CONTACT=http://api_backend_nest:4001/meta-inbox/n8n/contact
+N8N_CUSTOM_API_SEND_MESSAGE=http://api_backend_nest:4001/meta-inbox/n8n/send-thread-message
+N8N_CUSTOM_API_OFFERS=http://api_backend_nest:4001/meta-inbox/n8n/offer-events
+N8N_CUSTOM_API_OFFERSID=http://api_backend_nest:4001/meta-inbox/n8n/offer-events/
