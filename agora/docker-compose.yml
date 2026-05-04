@@ -53,7 +53,7 @@ services:
     networks:
       - npm_network
     volumes:
-      - ./uploads:/app/uploads
+      - ${UPLOADS_DIR}:/app/uploads
       - ./config:/app/config
     env_file:
       - ./api-backend-nest/.env
