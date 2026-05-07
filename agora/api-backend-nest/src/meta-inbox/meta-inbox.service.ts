@@ -1281,8 +1281,8 @@ export class MetaInboxService implements OnModuleInit {
 
   async listWhatsappAdLeadStats(input: { sourceId?: string; limit?: number }) {
     const sourceId = String(input.sourceId || '').trim();
-    const limit = Math.max(1, Math.min(Number(input.limit) || 50, 200));
-    const rows = await this.prisma.$queryRawUnsafe<Array<any>>(
+    const limit = Math.max(1, Math.min(Number(input.limit) || 500, 1000));
+    const items = await this.prisma.$queryRawUnsafe<Array<any>>(
       `
       SELECT
         source_id AS "sourceId",
@@ -1303,9 +1303,30 @@ export class MetaInboxService implements OnModuleInit {
       sourceId,
     );
 
+    const leads = await this.prisma.$queryRawUnsafe<Array<any>>(
+      `
+      SELECT
+        source_id AS "sourceId",
+        session_id AS "sessionId",
+        actor_external_id AS "actorExternalId",
+        pn_jid AS "pnJid",
+        lid_jid AS "lidJid",
+        first_message_text AS "firstMessageText",
+        first_seen_at AS "firstSeenAt",
+        last_seen_at AS "lastSeenAt",
+        seen_count AS "seenCount"
+      FROM wa_ad_leads
+      WHERE ($1::text = '' OR source_id = $1)
+      ORDER BY last_seen_at DESC
+      LIMIT 5000
+    `,
+      sourceId,
+    );
+
     return {
-      items: rows,
-      total: rows.length,
+      items,
+      leads,
+      total: items.length,
     };
   }
 

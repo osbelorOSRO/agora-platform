@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Home, Settings, FileSpreadsheet, MessagesSquare, LogOut, Wrench, ContactRound } from "lucide-react";
+import { Home, Settings, FileSpreadsheet, MessagesSquare, LogOut, Wrench, ContactRound, Megaphone } from "lucide-react";
 import { getTokenData } from "@/utils/getTokenData";
 import { hasPermission } from "@/utils/permissions";
 
@@ -17,6 +17,9 @@ export default function SidebarCompacto() {
       : null,
     hasPermission("gestionar_usuarios", permissions)
       ? { to: "/meta-inbox", icon: MessagesSquare, label: "Threads" }
+      : null,
+    hasPermission("gestionar_usuarios", permissions)
+      ? { to: "/meta-ads", icon: Megaphone, label: "Ads WA" }
       : null,
     hasPermission("ver_reportes", permissions)
       ? { to: "/accesos/reportes", icon: FileSpreadsheet, label: "Reportes" }

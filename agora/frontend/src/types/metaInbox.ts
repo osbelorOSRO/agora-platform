@@ -102,3 +102,33 @@ export type CreateWhatsappContactInput = {
   city?: string;
   region?: string;
 };
+
+export type WhatsappAdLeadStatsItem = {
+  sourceId: string;
+  uniqueSessions: number;
+  seenCount: number;
+  firstSeenAt: string | null;
+  lastSeenAt: string | null;
+  title: string | null;
+  sourceUrl: string | null;
+  thumbnailUrl: string | null;
+  originalImageUrl: string | null;
+};
+
+export type WhatsappAdLeadRow = {
+  sourceId: string;
+  sessionId: string;
+  actorExternalId: string | null;
+  pnJid: string | null;
+  lidJid: string | null;
+  firstMessageText: string | null;
+  firstSeenAt: string | null;
+  lastSeenAt: string | null;
+  seenCount: number;
+};
+
+export type WhatsappAdLeadStatsResponse = {
+  items: WhatsappAdLeadStatsItem[];
+  leads: WhatsappAdLeadRow[];
+  total: number;
+};

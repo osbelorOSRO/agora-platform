@@ -12,6 +12,7 @@ export default function BaseLayout() {
   const currentSection = (() => {
     if (location.pathname.startsWith("/agenda")) return "Agenda";
     if (location.pathname.startsWith("/meta-inbox")) return "Threads";
+    if (location.pathname.startsWith("/meta-ads")) return "Ads WA";
     if (location.pathname.startsWith("/wa-control")) return "Bot";
     if (location.pathname.startsWith("/accesos/reportes")) return "Reportes";
     if (location.pathname.startsWith("/accesos/ajustes")) return "Ajustes";

@@ -7,6 +7,7 @@ import type {
   MetaInboxMessage,
   MetaInboxThread,
   MetaInboxThreadControlUpdate,
+  WhatsappAdLeadStatsResponse,
 } from "@/types/metaInbox";
 
 const API_URL = import.meta.env.VITE_API_URL as string;
@@ -133,6 +134,14 @@ export const updateWhatsappBlockStatus = async (payload: {
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error("No se pudo actualizar el bloqueo de WhatsApp");
+  return res.json();
+};
+
+export const listWhatsappAdLeadStats = async (): Promise<WhatsappAdLeadStatsResponse> => {
+  const res = await fetch(`${API_URL}/meta-inbox/whatsapp/ad-leads/stats?limit=1000`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error("No se pudo cargar estadísticas de anuncios WhatsApp");
   return res.json();
 };
 

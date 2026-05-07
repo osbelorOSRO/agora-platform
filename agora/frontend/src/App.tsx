@@ -8,6 +8,7 @@ import Agenda from "./modules/accesos/pages/Agenda";
 import Usuarios from "./modules/accesos/pages/Usuarios";
 import Roles from "./modules/accesos/pages/Roles";
 import MetaInboxPage from "./pages/MetaInboxPage";
+import WhatsappAdsPage from "./pages/WhatsappAdsPage";
 import Ajustes from "./modules/accesos/pages/Ajustes";
 import Reportes from "./modules/accesos/pages/Reportes";
 import WaControlPage from "./modules/wa/pages/WaControlPage";
@@ -43,6 +44,14 @@ function App() {
             element={
               <ProtectedRoute requiredPermissions={["gestionar_usuarios"]}>
                 <MetaInboxPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/meta-ads"
+            element={
+              <ProtectedRoute requiredPermissions={["gestionar_usuarios"]}>
+                <WhatsappAdsPage />
               </ProtectedRoute>
             }
           />
