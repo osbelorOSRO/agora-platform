@@ -1217,6 +1217,11 @@ export class MetaInboxService implements OnModuleInit {
       jid: identity.preferredBlockJid,
     });
 
+    this.logger.log(
+      `WHATSAPP[BLOCK_STATUS] action=${input.action} sessionId=${identity.sessionId || 'n/a'} ` +
+        `actor=${identity.actorExternalId || 'n/a'} jidUsed=${gatewayResult?.jidUsed || 'n/a'}`,
+    );
+
     const blockStatus = input.action === 'block' ? 'blocked' : 'unblocked';
     const metadataPatch = {
       blockStatus,

@@ -223,6 +223,7 @@ const MetaInboxPage: React.FC = () => {
   const [savingThreadControl, setSavingThreadControl] = useState(false);
   const [reopeningThread, setReopeningThread] = useState(false);
   const [updatingWhatsappBlock, setUpdatingWhatsappBlock] = useState<"block" | "unblock" | null>(null);
+  const [whatsappBlockFeedback, setWhatsappBlockFeedback] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [openMenuForSessionId, setOpenMenuForSessionId] = useState<string | null>(null);
   const [detailSessionId, setDetailSessionId] = useState<string | null>(null);
@@ -612,13 +613,20 @@ const MetaInboxPage: React.FC = () => {
     if (!selectedThread?.sessionId) return;
     setUpdatingWhatsappBlock(action);
     setError(null);
+    setWhatsappBlockFeedback(null);
     try {
-      await updateWhatsappBlockStatus({
+      const result = await updateWhatsappBlockStatus({
         action,
         sessionId: selectedThread.sessionId,
         actorExternalId: selectedThread.actorExternalId,
         phone: selectedThread.phone,
       });
+      const jidUsed = result?.gatewayResult?.jidUsed || result?.identity?.preferredBlockJid || "";
+      setWhatsappBlockFeedback(
+        action === "block"
+          ? `Contacto bloqueado${jidUsed ? ` (${jidUsed})` : ""}.`
+          : `Contacto desbloqueado${jidUsed ? ` (${jidUsed})` : ""}.`,
+      );
       await loadThreads();
     } catch (e: any) {
       setError(e?.message || "Error actualizando bloqueo de WhatsApp");
@@ -1192,6 +1200,11 @@ const MetaInboxPage: React.FC = () => {
                 <div className="text-[11px] leading-relaxed text-textoOscuro/70">
                   Usa el par PN/LID persistido cuando existe. Si falta LID, el backend intenta resolverlo con Baileys.
                 </div>
+                {whatsappBlockFeedback && (
+                  <div className="rounded-md border border-emerald-400/40 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-200">
+                    {whatsappBlockFeedback}
+                  </div>
+                )}
               </div>
             )}
             <div className="text-xs uppercase tracking-wide text-textoOscuro/70">Contacto</div>
