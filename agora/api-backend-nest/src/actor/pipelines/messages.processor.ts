@@ -452,8 +452,26 @@ export class MessagesProcessor extends WorkerHost {
     const messageType = this.resolveMessageType(eventKind, media);
     const senderType = this.resolveSenderType(direction);
     const structuredPayload = this.resolveStructuredPayload(payload, eventKind);
+    const isWhatsappIncoming =
+      direction === 'INCOMING' && String(env.objectType || '').toUpperCase() === 'WHATSAPP';
+    const whatsappIdentity = isWhatsappIncoming
+      ? this.normalizeWhatsappIdentity(env, payload)
+      : null;
+    const adContext = isWhatsappIncoming
+      ? this.normalizeExternalAdContext(payload)
+      : null;
     const contentJson = {
       ...(payload || {}),
+      ...(whatsappIdentity || adContext
+        ? {
+            wa: {
+              ...(payload?.wa || {}),
+              ...(whatsappIdentity || {}),
+              ...(adContext ? { adContext } : {}),
+            },
+            ...(adContext ? { adContext } : {}),
+          }
+        : {}),
       senderType,
       messageType,
       sourceChannel,
@@ -467,8 +485,8 @@ export class MessagesProcessor extends WorkerHost {
         : {}),
     };
 
-    if (direction === 'INCOMING' && String(env.objectType || '').toUpperCase() === 'WHATSAPP') {
-      await this.upsertWhatsappContactFromIncoming(env, payload);
+    if (isWhatsappIncoming) {
+      await this.upsertWhatsappContactFromIncoming(env, contentJson);
     }
 
     const insertedRows = await this.prisma.$queryRawUnsafe<Array<{ externalEventId: string }>>(
@@ -502,6 +520,26 @@ export class MessagesProcessor extends WorkerHost {
     if (insertedRows.length === 0) {
       this.logger.warn(`FLOW[MESSAGE] duplicate session skip notify externalEventId=${env.externalEventId}`);
       return { inserted: false, primedFirstDelegate: false };
+    }
+
+    if (isWhatsappIncoming && adContext?.sourceId) {
+      await this.upsertWhatsappAdLead({
+        sourceId: adContext.sourceId,
+        sessionId,
+        actorExternalId: env.actorExternalId,
+        pnJid: whatsappIdentity?.pnJid || null,
+        lidJid: whatsappIdentity?.lidJid || null,
+        sourceUrl: adContext.sourceUrl || null,
+        title: adContext.title || null,
+        thumbnailUrl: adContext.thumbnailUrl || null,
+        originalImageUrl: adContext.originalImageUrl || null,
+        firstMessageText: contentText,
+        metadata: {
+          adContext,
+          externalEventId: env.externalEventId,
+          occurredAt: env.occurredAt,
+        },
+      });
     }
 
     await this.websocketNotifier.notificarMetaInboxMessageNew({
@@ -750,9 +788,12 @@ export class MessagesProcessor extends WorkerHost {
   }
 
   private async upsertWhatsappContactFromIncoming(env: any, payload: any) {
+    const identity = this.normalizeWhatsappIdentity(env, payload);
+    const adContext = this.normalizeExternalAdContext(payload);
     const actorExternalId = String(
+      identity.pnJid ||
       payload?.wa?.resolvedJid ||
-      payload?.wa?.remoteJidAlt ||
+      identity.lidJid ||
       env.actorExternalId ||
       '',
     ).trim();
@@ -764,6 +805,7 @@ export class MessagesProcessor extends WorkerHost {
       payload?.pushName,
     );
     const phone = this.extractWhatsappPhone(actorExternalId) ||
+      this.extractWhatsappPhone(identity.pnJid) ||
       this.extractWhatsappPhone(payload?.wa?.remoteJidAlt) ||
       this.extractWhatsappPhone(env.actorExternalId);
 
@@ -782,7 +824,14 @@ export class MessagesProcessor extends WorkerHost {
             'resolvedJid', $1::varchar,
             'remoteJid', $4::varchar,
             'remoteJidAlt', $5::varchar,
-            'tipoId', $6::varchar
+            'tipoId', $6::varchar,
+            'pnJid', $7::varchar,
+            'lidJid', $8::varchar,
+            'senderPn', $9::varchar,
+            'senderKey', $10::varchar,
+            'addressingMode', $11::varchar,
+            'preferredBlockJid', $12::varchar,
+            'adContext', $13::jsonb
           )
         ),
         now()
@@ -809,6 +858,13 @@ export class MessagesProcessor extends WorkerHost {
       payload?.wa?.remoteJid ? String(payload.wa.remoteJid) : null,
       payload?.wa?.remoteJidAlt ? String(payload.wa.remoteJidAlt) : null,
       payload?.wa?.tipoId ? String(payload.wa.tipoId) : null,
+      identity.pnJid,
+      identity.lidJid,
+      payload?.wa?.senderPn ? String(payload.wa.senderPn) : null,
+      payload?.wa?.senderKey ? String(payload.wa.senderKey) : null,
+      payload?.wa?.addressingMode ? String(payload.wa.addressingMode) : null,
+      identity.preferredBlockJid,
+      adContext ? JSON.stringify(adContext) : null,
     );
   }
 
@@ -823,6 +879,148 @@ export class MessagesProcessor extends WorkerHost {
     if (typeof value !== 'string') return null;
     const match = value.match(/^(\d{8,15})@/) || value.match(/^(\d{8,15})$/);
     return match?.[1] || null;
+  }
+
+  private normalizeWhatsappIdentity(env: any, payload: any) {
+    const pnJid = this.firstString([
+      payload?.wa?.pnJid,
+      payload?.wa?.remoteJidAlt,
+      payload?.wa?.senderPn,
+      payload?.wa?.resolvedJid,
+      env.actorExternalId,
+    ], (value) => this.isWhatsappPnJid(value));
+
+    const lidJid = this.firstString([
+      payload?.wa?.lidJid,
+      payload?.wa?.remoteJid,
+      payload?.wa?.senderKey,
+      env.actorExternalId,
+    ], (value) => this.isWhatsappLidJid(value));
+
+    return {
+      pnJid,
+      lidJid,
+      preferredBlockJid: lidJid || pnJid || null,
+    };
+  }
+
+  private normalizeExternalAdContext(payload: any): any | null {
+    const direct = payload?.wa?.adContext || payload?.adContext;
+    const raw = direct || this.findExternalAdReply(payload);
+    if (!raw || typeof raw !== 'object') return null;
+
+    const context = {
+      title: this.cleanNullableString(raw.title),
+      body: this.cleanNullableString(raw.body),
+      sourceId: this.cleanNullableString(raw.sourceId),
+      sourceType: this.cleanNullableString(raw.sourceType),
+      sourceUrl: this.cleanNullableString(raw.sourceUrl),
+      sourceApp: this.cleanNullableString(raw.sourceApp),
+      mediaType: this.cleanNullableString(raw.mediaType),
+      thumbnailUrl: this.cleanNullableString(raw.thumbnailUrl),
+      originalImageUrl: this.cleanNullableString(raw.originalImageUrl),
+      clickToWhatsappCall:
+        typeof raw.clickToWhatsappCall === 'boolean' ? raw.clickToWhatsappCall : null,
+    };
+
+    return Object.values(context).some((value) => value !== null) ? context : null;
+  }
+
+  private findExternalAdReply(value: any, depth = 0): any | null {
+    if (!value || typeof value !== 'object' || depth > 8) return null;
+    if (value.externalAdReply && typeof value.externalAdReply === 'object') {
+      return value.externalAdReply;
+    }
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        const found = this.findExternalAdReply(item, depth + 1);
+        if (found) return found;
+      }
+      return null;
+    }
+    for (const item of Object.values(value)) {
+      const found = this.findExternalAdReply(item, depth + 1);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  private firstString(values: any[], predicate?: (value: string) => boolean): string | null {
+    for (const value of values) {
+      if (typeof value !== 'string') continue;
+      const cleaned = value.trim();
+      if (!cleaned) continue;
+      if (!predicate || predicate(cleaned)) return cleaned;
+    }
+    return null;
+  }
+
+  private cleanNullableString(value: any): string | null {
+    if (typeof value !== 'string') return null;
+    const cleaned = value.trim();
+    return cleaned ? cleaned : null;
+  }
+
+  private isWhatsappPnJid(value: string): boolean {
+    const lower = String(value || '').toLowerCase();
+    return lower.endsWith('@s.whatsapp.net') || lower.endsWith('@whatsapp.net');
+  }
+
+  private isWhatsappLidJid(value: string): boolean {
+    const lower = String(value || '').toLowerCase();
+    return lower.endsWith('@lid') || lower.endsWith('@lid.c.us');
+  }
+
+  private async upsertWhatsappAdLead(input: {
+    sourceId: string;
+    sessionId: string;
+    actorExternalId: string;
+    pnJid: string | null;
+    lidJid: string | null;
+    sourceUrl: string | null;
+    title: string | null;
+    thumbnailUrl: string | null;
+    originalImageUrl: string | null;
+    firstMessageText: string | null;
+    metadata: any;
+  }) {
+    await this.prisma.$executeRawUnsafe(
+      `
+      INSERT INTO wa_ad_leads (
+        source_id, session_id, actor_external_id, pn_jid, lid_jid,
+        source_url, title, thumbnail_url, original_image_url,
+        first_message_text, metadata, first_seen_at, last_seen_at, seen_count
+      )
+      VALUES (
+        $1, $2, $3, $4, $5,
+        $6, $7, $8, $9,
+        $10, $11::jsonb, now(), now(), 1
+      )
+      ON CONFLICT (source_id, session_id)
+      DO UPDATE SET
+        actor_external_id = COALESCE(wa_ad_leads.actor_external_id, EXCLUDED.actor_external_id),
+        pn_jid = COALESCE(wa_ad_leads.pn_jid, EXCLUDED.pn_jid),
+        lid_jid = COALESCE(wa_ad_leads.lid_jid, EXCLUDED.lid_jid),
+        source_url = COALESCE(wa_ad_leads.source_url, EXCLUDED.source_url),
+        title = COALESCE(wa_ad_leads.title, EXCLUDED.title),
+        thumbnail_url = COALESCE(wa_ad_leads.thumbnail_url, EXCLUDED.thumbnail_url),
+        original_image_url = COALESCE(wa_ad_leads.original_image_url, EXCLUDED.original_image_url),
+        last_seen_at = now(),
+        seen_count = wa_ad_leads.seen_count + 1,
+        metadata = COALESCE(wa_ad_leads.metadata, '{}'::jsonb) || EXCLUDED.metadata
+    `,
+      input.sourceId,
+      input.sessionId,
+      input.actorExternalId,
+      input.pnJid,
+      input.lidJid,
+      input.sourceUrl,
+      input.title,
+      input.thumbnailUrl,
+      input.originalImageUrl,
+      input.firstMessageText,
+      JSON.stringify(input.metadata || {}),
+    );
   }
 
   private async resolveSessionIdForIncomingMessage(

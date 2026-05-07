@@ -5,6 +5,18 @@ import { WhatsAppGateway } from '../whatsapp.gateway.js';
 
 type TipoId = 'jid' | 'lid';
 type MsgTipo = 'texto' | 'imagen' | 'audio' | 'video' | 'documento';
+type ExternalAdContext = {
+  title: string | null;
+  body: string | null;
+  sourceId: string | null;
+  sourceType: string | null;
+  sourceUrl: string | null;
+  sourceApp: string | null;
+  mediaType: string | null;
+  thumbnailUrl: string | null;
+  originalImageUrl: string | null;
+  clickToWhatsappCall: boolean | null;
+};
 type ParsedIncomingMessage = {
   tipo: MsgTipo;
   contenido: string;
@@ -55,10 +67,14 @@ type BaileysIncomingEnvelope = {
       remoteJidAlt: string | null;
       senderPn: string | null;
       senderKey: string | null;
+      pnJid: string | null;
+      lidJid: string | null;
+      addressingMode: string | null;
       resolvedJid: string;
       recipientRawId: string | null;
       recipientPhone: string | null;
       pushName: string | null;
+      adContext: ExternalAdContext | null;
     };
     rawEvent: unknown;
   };
@@ -188,6 +204,11 @@ export class HandleIncomingMessageUseCase {
     return normalized.endsWith('@s.whatsapp.net') || normalized.endsWith('@whatsapp.net');
   }
 
+  private esLidJid(id: string): boolean {
+    const normalized = String(id || '').trim().toLowerCase();
+    return normalized.endsWith('@lid') || normalized.endsWith('@lid.c.us');
+  }
+
   private buildExternalEventId(msg: any, actorExternalId: string): string {
     const baileysMessageId = typeof msg?.key?.id === 'string' ? msg.key.id.trim() : '';
     const safeActor = this.sanitizeEventIdPart(actorExternalId || 'unknown');
@@ -226,6 +247,9 @@ export class HandleIncomingMessageUseCase {
   ): BaileysIncomingEnvelope {
     const messageExternalId = typeof msg?.key?.id === 'string' ? msg.key.id : null;
     const timestamp = Number(msg?.messageTimestamp) || Math.floor(occurredAt.getTime() / 1000);
+    const pnJid = this.extractPnJid(msg, identity);
+    const lidJid = this.extractLidJid(msg);
+    const adContext = this.extractExternalAdContext(msg?.message);
     const eventKind: 'message' | 'reaction' | 'unsupported' = parsed.isReaction
       ? 'reaction'
       : parsed.contenido === '[mensaje no soportado]'
@@ -277,14 +301,79 @@ export class HandleIncomingMessageUseCase {
           remoteJidAlt: this.nullableString(msg?.key?.remoteJidAlt),
           senderPn: this.nullableString(msg?.key?.senderPn),
           senderKey: this.nullableString(msg?.key?.senderKey),
+          pnJid,
+          lidJid,
+          addressingMode: this.nullableString(msg?.key?.addressingMode),
           resolvedJid: identity.actorExternalId,
           recipientRawId,
           recipientPhone: this.getRecipientPhone(recipientRawId),
           pushName: this.nullableString(msg?.pushName),
+          adContext,
         },
         rawEvent: upsert,
       },
     };
+  }
+
+  private extractPnJid(msg: any, identity: ClienteIdentity): string | null {
+    const candidates = [
+      identity.actorExternalId,
+      msg?.key?.remoteJidAlt,
+      msg?.key?.senderPn,
+      msg?.key?.senderKey,
+      msg?.key?.remoteJid,
+    ];
+
+    for (const candidate of candidates) {
+      const value = this.nullableString(candidate);
+      if (value && this.esPhoneJid(value)) return value;
+    }
+
+    return null;
+  }
+
+  private extractLidJid(msg: any): string | null {
+    const candidates = [
+      msg?.key?.remoteJid,
+      msg?.key?.senderKey,
+      msg?.key?.remoteJidAlt,
+      msg?.key?.senderPn,
+    ];
+
+    for (const candidate of candidates) {
+      const value = this.nullableString(candidate);
+      if (value && this.esLidJid(value)) return value;
+    }
+
+    return null;
+  }
+
+  private extractExternalAdContext(message: any): ExternalAdContext | null {
+    const candidates = [
+      message?.extendedTextMessage?.contextInfo?.externalAdReply,
+      message?.imageMessage?.contextInfo?.externalAdReply,
+      message?.videoMessage?.contextInfo?.externalAdReply,
+      message?.documentMessage?.contextInfo?.externalAdReply,
+      message?.conversationMessage?.contextInfo?.externalAdReply,
+    ];
+    const ad = candidates.find((candidate) => candidate && typeof candidate === 'object');
+    if (!ad) return null;
+
+    const context: ExternalAdContext = {
+      title: this.nullableString(ad.title),
+      body: this.nullableString(ad.body),
+      sourceId: this.nullableString(ad.sourceId),
+      sourceType: this.nullableString(ad.sourceType),
+      sourceUrl: this.nullableString(ad.sourceUrl),
+      sourceApp: this.nullableString(ad.sourceApp),
+      mediaType: this.nullableString(ad.mediaType),
+      thumbnailUrl: this.nullableString(ad.thumbnailUrl),
+      originalImageUrl: this.nullableString(ad.originalImageUrl),
+      clickToWhatsappCall:
+        typeof ad.clickToWhatsappCall === 'boolean' ? ad.clickToWhatsappCall : null,
+    };
+
+    return Object.values(context).some((value) => value !== null) ? context : null;
   }
 
   private resolveCanonicalMediaType(tipo: MsgTipo): 'audio' | 'image' | 'video' | 'document' {

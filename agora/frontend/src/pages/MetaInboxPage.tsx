@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Archive,
+  Ban,
   Bot,
   CheckCircle2,
   Facebook,
@@ -15,6 +16,7 @@ import {
   Save,
   Search,
   Send,
+  ShieldCheck,
   Workflow,
   X,
 } from "lucide-react";
@@ -33,6 +35,7 @@ import {
   sendMetaInboxText,
   updateMetaInboxContact,
   updateMetaInboxThreadControl,
+  updateWhatsappBlockStatus,
 } from "@/services/metaInbox.service";
 import type {
   MetaInboxContactUpdate,
@@ -219,6 +222,7 @@ const MetaInboxPage: React.FC = () => {
   const [pendingMedia, setPendingMedia] = useState<File | null>(null);
   const [savingThreadControl, setSavingThreadControl] = useState(false);
   const [reopeningThread, setReopeningThread] = useState(false);
+  const [updatingWhatsappBlock, setUpdatingWhatsappBlock] = useState<"block" | "unblock" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [openMenuForSessionId, setOpenMenuForSessionId] = useState<string | null>(null);
   const [detailSessionId, setDetailSessionId] = useState<string | null>(null);
@@ -601,6 +605,25 @@ const MetaInboxPage: React.FC = () => {
       setError(e?.message || "Error abriendo nueva atencion");
     } finally {
       setReopeningThread(false);
+    }
+  };
+
+  const handleWhatsappBlockStatus = async (action: "block" | "unblock") => {
+    if (!selectedThread?.sessionId) return;
+    setUpdatingWhatsappBlock(action);
+    setError(null);
+    try {
+      await updateWhatsappBlockStatus({
+        action,
+        sessionId: selectedThread.sessionId,
+        actorExternalId: selectedThread.actorExternalId,
+        phone: selectedThread.phone,
+      });
+      await loadThreads();
+    } catch (e: any) {
+      setError(e?.message || "Error actualizando bloqueo de WhatsApp");
+    } finally {
+      setUpdatingWhatsappBlock(null);
     }
   };
 
@@ -1145,6 +1168,32 @@ const MetaInboxPage: React.FC = () => {
                   : "sin registro"}
               </div>
             </div>
+            {String(selectedThread.objectType || "").toUpperCase() === "WHATSAPP" && (
+              <div className="space-y-2 border-b border-borde pb-3">
+                <div className="text-xs uppercase tracking-wide text-textoOscuro/70">WhatsApp</div>
+                <button
+                  type="button"
+                  onClick={() => void handleWhatsappBlockStatus("block")}
+                  disabled={!!updatingWhatsappBlock}
+                  className="flex w-full items-center justify-center gap-2 rounded-md border border-rose-400/50 bg-rose-500/10 px-3 py-2 text-sm font-semibold text-rose-200 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <Ban size={16} />
+                  {updatingWhatsappBlock === "block" ? "Bloqueando..." : "Bloquear contacto"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleWhatsappBlockStatus("unblock")}
+                  disabled={!!updatingWhatsappBlock}
+                  className="flex w-full items-center justify-center gap-2 rounded-md border border-emerald-400/50 bg-emerald-500/10 px-3 py-2 text-sm font-semibold text-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <ShieldCheck size={16} />
+                  {updatingWhatsappBlock === "unblock" ? "Desbloqueando..." : "Desbloquear contacto"}
+                </button>
+                <div className="text-[11px] leading-relaxed text-textoOscuro/70">
+                  Usa el par PN/LID persistido cuando existe. Si falta LID, el backend intenta resolverlo con Baileys.
+                </div>
+              </div>
+            )}
             <div className="text-xs uppercase tracking-wide text-textoOscuro/70">Contacto</div>
             <input
               value={contactForm.displayName || ""}

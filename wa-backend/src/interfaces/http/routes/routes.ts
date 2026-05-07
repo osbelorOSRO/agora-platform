@@ -15,13 +15,20 @@ export function createRoutes(gateway: WhatsAppGateway) {
 
   const controller = new MessageController(
     sendMessageUseCase,
-    sendMediaUseCase
+    sendMediaUseCase,
+    gateway,
   );
 
   router.post(
     '/api/enviar-mensaje',
     authMiddleware,
     controller.enviarMensaje.bind(controller)
+  );
+
+  router.post(
+    '/api/block-status',
+    authMiddleware,
+    controller.updateBlockStatus.bind(controller)
   );
 
   return router;

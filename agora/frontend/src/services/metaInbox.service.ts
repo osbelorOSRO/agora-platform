@@ -121,6 +121,21 @@ export const reopenMetaInboxThread = async (sessionId: string): Promise<MetaInbo
   return res.json();
 };
 
+export const updateWhatsappBlockStatus = async (payload: {
+  action: "block" | "unblock";
+  sessionId?: string;
+  actorExternalId?: string;
+  phone?: string | null;
+}) => {
+  const res = await fetch(`${API_URL}/meta-inbox/whatsapp/block-status`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("No se pudo actualizar el bloqueo de WhatsApp");
+  return res.json();
+};
+
 export const sendMetaInboxMedia = async (sessionId: string, file: File, caption?: string) => {
   const token = localStorage.getItem("token");
   const formData = new FormData();

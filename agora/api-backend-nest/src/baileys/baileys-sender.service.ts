@@ -118,4 +118,43 @@ export class BaileysSenderService {
       );
     }
   }
+
+  async updateBlockStatus(input: {
+    action: 'block' | 'unblock';
+    phone?: string | null;
+    jid?: string | null;
+    pnJid?: string | null;
+    lidJid?: string | null;
+  }): Promise<any> {
+    const gatewayUrl = this.getGatewayUrl();
+    const endpoint = `${gatewayUrl}/api/block-status`;
+
+    try {
+      const internalToken = process.env.BAILEYS_INTERNAL_TOKEN;
+      if (!internalToken) {
+        throw new Error('Missing required env BAILEYS_INTERNAL_TOKEN');
+      }
+
+      const response = await axios.post(endpoint, input, {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-internal-token': internalToken,
+        },
+        timeout: 15000,
+      });
+
+      return response.data;
+    } catch (error: any) {
+      console.error(`❌ Error al actualizar bloqueo vía Gateway:`, {
+        endpoint,
+        action: input.action,
+        status: error.response?.status,
+        data: error.response?.data,
+        error: error.message,
+      });
+      throw new InternalServerErrorException(
+        `No se pudo actualizar bloqueo vía Gateway: ${error.message}`,
+      );
+    }
+  }
 }

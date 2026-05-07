@@ -30,6 +30,8 @@ import { N8nOfferEventUpdateDto } from './dto/n8n-offer-event-update.dto';
 import { CreateWhatsappContactDto } from './dto/create-whatsapp-contact.dto';
 import { EnsureWhatsappThreadDto } from './dto/ensure-whatsapp-thread.dto';
 import { SendThreadMessageDto } from './dto/send-thread-message.dto';
+import { WhatsappIdentityResolveDto } from './dto/whatsapp-identity-resolve.dto';
+import { WhatsappBlockStatusDto } from './dto/whatsapp-block-status.dto';
 
 @Controller('meta-inbox')
 export class MetaInboxController {
@@ -74,6 +76,27 @@ export class MetaInboxController {
   @Post('contacts/whatsapp/thread')
   async ensureWhatsappThread(@Body() body: EnsureWhatsappThreadDto) {
     return this.metaInbox.ensureWhatsappThreadForContact(body.actorExternalId);
+  }
+
+  @Post('whatsapp/identity/resolve')
+  async resolveWhatsappIdentity(@Body() body: WhatsappIdentityResolveDto) {
+    return this.metaInbox.resolveWhatsappIdentity(body);
+  }
+
+  @Post('whatsapp/block-status')
+  async updateWhatsappBlockStatus(@Body() body: WhatsappBlockStatusDto) {
+    return this.metaInbox.updateWhatsappBlockStatus(body);
+  }
+
+  @Get('whatsapp/ad-leads/stats')
+  async listWhatsappAdLeadStats(
+    @Query('sourceId') sourceId?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.metaInbox.listWhatsappAdLeadStats({
+      sourceId,
+      limit: limit ? Number(limit) : undefined,
+    });
   }
 
   @Get('threads/:sessionId/messages')

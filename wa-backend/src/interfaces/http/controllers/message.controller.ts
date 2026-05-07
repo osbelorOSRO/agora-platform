@@ -3,6 +3,11 @@
 import { Request, Response, NextFunction } from 'express';
 import { SendMessageUseCase } from '../../../application/use-cases/send-message.usecase.js';
 import { SendMediaUseCase } from '../../../application/use-cases/send-media.usecase.js';
+import {
+  BlockAction,
+  updateBlockStatusNative,
+} from '../../../application/use-cases/update-block-status.usecase.js';
+import { WhatsAppGateway } from '../../../application/whatsapp.gateway.js';
 
 type MediaType = 'image' | 'audio' | 'video' | 'document';
 function normalizeMediaType(tipo: unknown): MediaType | null {
@@ -58,7 +63,8 @@ function getOutgoingMediaUrl(body: Record<string, any>): string | undefined {
 export class MessageController {
   constructor(
     private readonly sendMessageUseCase: SendMessageUseCase,
-    private readonly sendMediaUseCase: SendMediaUseCase
+    private readonly sendMediaUseCase: SendMediaUseCase,
+    private readonly gateway: WhatsAppGateway,
   ) {}
 
   async enviarMensaje(req: Request, res: Response, next: NextFunction) {
@@ -123,6 +129,34 @@ export class MessageController {
       return res.status(200).json({
         success: true,
         ejecutadoPor: 'api-gateway',
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateBlockStatus(req: Request, res: Response, next: NextFunction) {
+    try {
+      const body = req.body as Record<string, any>;
+      const action = body.action as BlockAction;
+
+      if (action !== 'block' && action !== 'unblock') {
+        return res.status(400).json({
+          error: 'action inválida. Debe ser "block" o "unblock".',
+        });
+      }
+
+      const result = await updateBlockStatusNative(this.gateway, {
+        action,
+        phone: body.phone,
+        jid: body.jid,
+        pnJid: body.pnJid,
+        lidJid: body.lidJid,
+      });
+
+      return res.status(200).json({
+        success: true,
+        ...result,
       });
     } catch (error) {
       next(error);
