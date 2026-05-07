@@ -18,6 +18,9 @@ export type MetaInboxThread = {
   email: string | null;
   notes: string | null;
   city: string | null;
+  whatsappBlockStatus?: string | null;
+  whatsappBlockUpdatedAt?: string | null;
+  whatsappBlockJidUsed?: string | null;
   actorScore?: string | null;
   actorLifecycleState?: string | null;
   actorLifecycleUpdatedAt?: string | null;

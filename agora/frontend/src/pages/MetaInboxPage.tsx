@@ -245,6 +245,9 @@ const MetaInboxPage: React.FC = () => {
     () => threads.find((item) => item.sessionId === selectedSessionId) || null,
     [threads, selectedSessionId],
   );
+  const selectedWhatsappBlocked =
+    String(selectedThread?.objectType || "").toUpperCase() === "WHATSAPP" &&
+    String(selectedThread?.whatsappBlockStatus || "").toLowerCase() === "blocked";
   const showContactPanel = !!selectedThread && detailSessionId === selectedSessionId;
 
   const providers = useMemo(() => {
@@ -305,6 +308,9 @@ const MetaInboxPage: React.FC = () => {
           email: payload.email ? String(payload.email) : null,
           notes: payload.notes ? String(payload.notes) : null,
           city: payload.city ? String(payload.city) : null,
+          whatsappBlockStatus: payload.whatsappBlockStatus ? String(payload.whatsappBlockStatus) : null,
+          whatsappBlockUpdatedAt: payload.whatsappBlockUpdatedAt ? String(payload.whatsappBlockUpdatedAt) : null,
+          whatsappBlockJidUsed: payload.whatsappBlockJidUsed ? String(payload.whatsappBlockJidUsed) : null,
           lastMessageText: payload.lastMessageText
             ? String(payload.lastMessageText)
             : payload.contentText
@@ -365,6 +371,24 @@ const MetaInboxPage: React.FC = () => {
               ? String(payload.city)
               : null
             : current.city,
+        whatsappBlockStatus:
+          payload.whatsappBlockStatus !== undefined
+            ? payload.whatsappBlockStatus
+              ? String(payload.whatsappBlockStatus)
+              : null
+            : current.whatsappBlockStatus,
+        whatsappBlockUpdatedAt:
+          payload.whatsappBlockUpdatedAt !== undefined
+            ? payload.whatsappBlockUpdatedAt
+              ? String(payload.whatsappBlockUpdatedAt)
+              : null
+            : current.whatsappBlockUpdatedAt,
+        whatsappBlockJidUsed:
+          payload.whatsappBlockJidUsed !== undefined
+            ? payload.whatsappBlockJidUsed
+              ? String(payload.whatsappBlockJidUsed)
+              : null
+            : current.whatsappBlockJidUsed,
         lastMessageText:
           payload.lastMessageText !== undefined
             ? payload.lastMessageText
@@ -627,6 +651,14 @@ const MetaInboxPage: React.FC = () => {
           ? `Contacto bloqueado${jidUsed ? ` (${jidUsed})` : ""}.`
           : `Contacto desbloqueado${jidUsed ? ` (${jidUsed})` : ""}.`,
       );
+      mergeThread({
+        sessionId: selectedThread.sessionId,
+        actorExternalId: selectedThread.actorExternalId,
+        objectType: selectedThread.objectType,
+        whatsappBlockStatus: action === "block" ? "blocked" : "unblocked",
+        whatsappBlockUpdatedAt: new Date().toISOString(),
+        whatsappBlockJidUsed: jidUsed || null,
+      });
       await loadThreads();
     } catch (e: any) {
       setError(e?.message || "Error actualizando bloqueo de WhatsApp");
@@ -637,6 +669,10 @@ const MetaInboxPage: React.FC = () => {
 
   const handleSend = async () => {
     if (!selectedThread?.sessionId || (!draft.trim() && !pendingMedia)) return;
+    if (selectedWhatsappBlocked) {
+      setError("Este contacto está bloqueado. Debes desbloquearlo antes de chatear.");
+      return;
+    }
     if (pendingMedia) {
       await handleSendMedia(pendingMedia, draft.trim());
       return;
@@ -687,6 +723,10 @@ const MetaInboxPage: React.FC = () => {
 
   const handleSendMedia = async (file: File, caption?: string) => {
     if (!selectedThread?.sessionId) return;
+    if (selectedWhatsappBlocked) {
+      setError("Este contacto está bloqueado. Debes desbloquearlo antes de chatear.");
+      return;
+    }
     setSending(true);
     setError(null);
     try {
@@ -974,6 +1014,11 @@ const MetaInboxPage: React.FC = () => {
                       <span className="inline-flex h-8 items-center rounded-md border border-primary/40 bg-primary/10 px-2.5 text-xs font-semibold text-primary">
                         {stageLabel(selectedThread.threadStage)}
                       </span>
+                      {selectedWhatsappBlocked && (
+                        <span className="inline-flex h-8 items-center rounded-md border border-rose-400/60 bg-rose-500/15 px-2.5 text-xs font-semibold text-rose-200">
+                          Bloqueado
+                        </span>
+                      )}
                     </div>
                   </div>
                   <button
@@ -993,6 +1038,11 @@ const MetaInboxPage: React.FC = () => {
               </div>
 
               <div className={estilos.metaInbox.messagesArea}>
+                {selectedWhatsappBlocked && (
+                  <div className="mb-3 rounded-lg border border-rose-400/50 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-100 shadow-[0_0_18px_rgba(244,63,94,0.18)]">
+                    Bloqueaste a este contacto. Desbloquéalo para volver a chatear.
+                  </div>
+                )}
                 {loadingMessages && <div className={estilos.metaInbox.loadingText}>Cargando mensajes...</div>}
                 {!loadingMessages &&
                   messages.map((msg) => {
@@ -1051,7 +1101,7 @@ const MetaInboxPage: React.FC = () => {
                   </button>
                 </div>
               )}
-              <div className={estilos.metaInbox.composer}>
+              <div className={`${estilos.metaInbox.composer} ${selectedWhatsappBlocked ? "opacity-60" : ""}`}>
                 <input
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
@@ -1061,10 +1111,21 @@ const MetaInboxPage: React.FC = () => {
                       handleSend();
                     }
                   }}
-                  placeholder={pendingMedia ? "Escribe un texto para la imagen..." : "Escribe un mensaje..."}
+                  placeholder={
+                    selectedWhatsappBlocked
+                      ? "Contacto bloqueado. Desbloquéalo para chatear."
+                      : pendingMedia
+                        ? "Escribe un texto para la imagen..."
+                        : "Escribe un mensaje..."
+                  }
                   className={estilos.metaInbox.composerInput}
+                  disabled={selectedWhatsappBlocked}
                 />
-                <label className={estilos.metaInbox.composerSend} aria-label="Adjuntar imagen" title="Adjuntar imagen">
+                <label
+                  className={`${estilos.metaInbox.composerSend} ${selectedWhatsappBlocked ? "pointer-events-none" : ""}`}
+                  aria-label="Adjuntar imagen"
+                  title="Adjuntar imagen"
+                >
                   <ImagePlus className={estilos.metaInbox.composerIcon} />
                   <input
                     type="file"
@@ -1080,6 +1141,7 @@ const MetaInboxPage: React.FC = () => {
                 <button
                   onClick={() => setShowRecorder((prev) => !prev)}
                   className={estilos.metaInbox.composerSend}
+                  disabled={selectedWhatsappBlocked}
                   aria-label="Grabar audio"
                   title="Grabar audio"
                 >
@@ -1087,7 +1149,7 @@ const MetaInboxPage: React.FC = () => {
                 </button>
                 <button
                   onClick={handleSend}
-                  disabled={sending || (!draft.trim() && !pendingMedia)}
+                  disabled={selectedWhatsappBlocked || sending || (!draft.trim() && !pendingMedia)}
                   className={estilos.metaInbox.composerSend}
                   aria-label="Enviar"
                   title="Enviar"

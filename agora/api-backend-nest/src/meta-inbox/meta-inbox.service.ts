@@ -29,6 +29,9 @@ type ThreadRow = {
   email: string | null;
   notes: string | null;
   city: string | null;
+  whatsappBlockStatus: string | null;
+  whatsappBlockUpdatedAt: Date | string | null;
+  whatsappBlockJidUsed: string | null;
   actorScore: string | null;
   actorLifecycleState: string | null;
   actorLifecycleUpdatedAt: Date | null;
@@ -716,6 +719,9 @@ export class MetaInboxService implements OnModuleInit {
         c.email AS "email",
         c.notes AS "notes",
         c.city AS "city",
+        c.metadata->'wa'->>'blockStatus' AS "whatsappBlockStatus",
+        c.metadata->'wa'->>'blockUpdatedAt' AS "whatsappBlockUpdatedAt",
+        c.metadata->'wa'->>'blockJidUsed' AS "whatsappBlockJidUsed",
         sc.score::text AS "actorScore",
         lc.state::text AS "actorLifecycleState",
         lc.occurred_at AS "actorLifecycleUpdatedAt",
@@ -2890,6 +2896,9 @@ export class MetaInboxService implements OnModuleInit {
         c.email AS "email",
         c.notes AS "notes",
         c.city AS "city",
+        c.metadata->'wa'->>'blockStatus' AS "whatsappBlockStatus",
+        c.metadata->'wa'->>'blockUpdatedAt' AS "whatsappBlockUpdatedAt",
+        c.metadata->'wa'->>'blockJidUsed' AS "whatsappBlockJidUsed",
         sc.score::text AS "actorScore",
         lc.state::text AS "actorLifecycleState",
         lc.occurred_at AS "actorLifecycleUpdatedAt",
