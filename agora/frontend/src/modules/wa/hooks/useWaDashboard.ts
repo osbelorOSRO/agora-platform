@@ -22,6 +22,7 @@ type WaStats = {
 };
 
 type WaConfig = {
+  automationPaused?: boolean;
   readReceipts?: boolean;
   showOnline?: boolean;
   blocks?: string[];
@@ -216,6 +217,11 @@ export function useWaDashboard() {
         const socket = getWaDashboardSocket();
         ensureWaDashboardConnected(socket);
         socket?.emit("logout");
+      },
+      setAutomationPaused: (paused: boolean) => {
+        const socket = getWaDashboardSocket();
+        ensureWaDashboardConnected(socket);
+        socket?.emit("setAutomationPaused", paused);
       },
       bloquear: (numero: string) => {
         const socket = getWaDashboardSocket();

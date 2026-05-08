@@ -1,4 +1,5 @@
 import { Server as IOServer } from 'socket.io'
+import axios from 'axios'
 import fs from 'fs'
 import path from 'path'
 import QRCode from 'qrcode'
@@ -12,6 +13,21 @@ import { runtimeState } from '../../shared/runtime-state.js'
 let blockQueue: Promise<void> = Promise.resolve()
 let lastQrData: string | null = null
 let lastQrImage: string | null = null
+
+async function authenticateDashboardToken(token: unknown): Promise<{ id: number; username?: string; rol?: string }> {
+  if (typeof token !== 'string' || !token.trim()) {
+    throw new Error('Token no enviado')
+  }
+
+  const response = await axios.get(`${env.accessBackendUrl}/api/auth/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    timeout: 5000,
+  })
+
+  return response.data
+}
 
 function enqueue<T>(job: () => Promise<T>): Promise<T> {
   const run = blockQueue.then(job, job)
@@ -161,6 +177,16 @@ async function updateBlockNative(
 }
 
 export function registerDashboardGateway(io: IOServer, gateway: WhatsAppGateway): void {
+  io.use(async (socket, next) => {
+    try {
+      const user = await authenticateDashboardToken(socket.handshake.auth?.token)
+      socket.data.user = user
+      next()
+    } catch (error: any) {
+      logger.warn(`Socket dashboard WA rechazado: ${error?.message || 'auth invalida'}`)
+      next(new Error('No autorizado'))
+    }
+  })
 
   gateway.onConnectionUpdate(async (update) => {
 
@@ -237,6 +263,19 @@ export function registerDashboardGateway(io: IOServer, gateway: WhatsAppGateway)
 
     socket.on('getEstado', () => {
       socket.emit('estadoCompleto', runtimeState.snapshotEstado())
+    })
+
+    socket.on('setAutomationPaused', (pausedRaw: boolean) => {
+      const config = loadConfig()
+      config.automationPaused = pausedRaw === true
+      saveConfig(config)
+      io.emit('config', config)
+      socket.emit('qrStatus', {
+        status: 'success',
+        message: config.automationPaused
+          ? 'Bot pausado. La conexión WhatsApp sigue activa.'
+          : 'Bot reanudado. La automatización vuelve a procesar mensajes.',
+      })
     })
 
     socket.on('restart', async () => {

@@ -12,6 +12,9 @@ export const getWaDashboardSocket = (): Socket | null => {
   if (!waDashboardSocket) {
     waDashboardSocket = io(waUrl, {
       autoConnect: false,
+      auth: {
+        token: localStorage.getItem("token"),
+      },
       transports: ["websocket", "polling"],
     });
   }

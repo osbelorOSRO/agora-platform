@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Bot, Clock3, Lock, LogOut, QrCode, RefreshCw, ShieldBan, Wrench } from "lucide-react";
+import { Bot, Clock3, Lock, LogOut, PauseCircle, PlayCircle, QrCode, RefreshCw, ShieldBan, Wrench } from "lucide-react";
 import { hasPermission } from "@/utils/permissions";
 import { getTokenData } from "@/utils/getTokenData";
 import { useWaDashboard } from "../hooks/useWaDashboard";
@@ -51,6 +51,7 @@ export default function WaControlPage() {
     generarQr,
     reiniciar,
     cerrarSesion,
+    setAutomationPaused,
     bloquear,
     desbloquear,
     refrescarStats,
@@ -170,6 +171,32 @@ export default function WaControlPage() {
           </div>
 
           <div className="mt-6 grid gap-4 md:grid-cols-3">
+            <button
+              type="button"
+              onClick={() => setAutomationPaused(!(config?.automationPaused === true))}
+              disabled={!canManageBot}
+              className={`rounded-[22px] border p-5 text-left transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                config?.automationPaused
+                  ? "border-amber-300/40 bg-amber-400/15 hover:bg-amber-400/20"
+                  : "border-emerald-300/30 bg-emerald-400/10 hover:bg-emerald-400/15"
+              }`}
+            >
+              {config?.automationPaused ? <PlayCircle className="h-6 w-6" /> : <PauseCircle className="h-6 w-6" />}
+              <div className="mt-4 text-lg font-semibold">
+                {config?.automationPaused ? "Reanudar bot" : "Pausar bot"}
+              </div>
+              <div className="mt-2 text-xs text-white/55">
+                {config?.automationPaused
+                  ? "WhatsApp sigue conectado; la automatizacion esta detenida."
+                  : "Detiene respuestas automaticas sin cerrar WhatsApp."}
+              </div>
+              {!canManageBot ? (
+                <div className="mt-2 inline-flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-white/45">
+                  <Lock className="h-3.5 w-3.5" />
+                  Solo lectura
+                </div>
+              ) : null}
+            </button>
             {[
               {
                 label: "Generar QR",

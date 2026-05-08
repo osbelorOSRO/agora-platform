@@ -1,9 +1,30 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
+import { PanelJwtAuthGuard } from '../auth/panel-jwt-auth.guard';
 import { CreateRespuestaRapidaDto } from './dto/create-respuesta-rapida.dto';
 import { UpdateRespuestaRapidaDto } from './dto/update-respuesta-rapida.dto';
 import { RespuestasRapidasService } from './respuestas-rapidas.service';
 
 @Controller('respuestas-rapidas')
+@UseGuards(PanelJwtAuthGuard)
+@UsePipes(
+  new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true,
+    transformOptions: { enableImplicitConversion: true },
+  }),
+)
 export class RespuestasRapidasController {
   constructor(private readonly service: RespuestasRapidasService) {}
 

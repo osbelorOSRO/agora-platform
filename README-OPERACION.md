@@ -58,6 +58,31 @@ export VAULT_SECRET_ID=<secret_id>
 Documentacion de policy/role:
 - `ops/docs/DOC-N8N-VAULT-APPROLE.md`
 
+## Vault compartido entre `api_backend_nest` y `websocket`
+`API_KEY_WS` es una clave de comunicacion interna. Debe existir con el mismo valor en ambos paths de Vault.
+
+Paths esperados en `prod.vps1`:
+- `secret/data/prod.vps1/agora/api-backend-nest`
+- `secret/data/prod.vps1/agora/websocket`
+
+Comando operativo en VPS1, ejecutado dentro del contenedor de Vault:
+```bash
+sudo docker exec -i \
+  -e VAULT_ADDR=http://127.0.0.1:8200 \
+  -e VAULT_TOKEN="$VAULT_TOKEN" \
+  vault sh -lc '
+    set -euo pipefail
+    secret="${API_KEY_WS:?export API_KEY_WS antes de ejecutar}"
+    vault kv patch secret/prod.vps1/agora/api-backend-nest API_KEY_WS="$secret"
+    vault kv patch secret/prod.vps1/agora/websocket API_KEY_WS="$secret"
+  '
+```
+
+Notas:
+- `vault kv patch` evita borrar otros campos ya existentes en el secreto.
+- Si el path no existe todavia, crear primero con `vault kv put` y luego usar `vault kv patch`.
+- Repetir el mismo valor en ambos paths; no son dos claves distintas.
+
 ## Arrancar
 ```bash
 cd <repo_root>

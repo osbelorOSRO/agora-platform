@@ -2,10 +2,11 @@ import fs from 'fs';
 import path from 'path';
 
 type BotConfig = {
+  automationPaused: boolean;
   blocks: string[];
 };
 
-const DEFAULT_CONFIG: BotConfig = { blocks: [] };
+const DEFAULT_CONFIG: BotConfig = { automationPaused: false, blocks: [] };
 const CONFIG_PATH = path.join(process.cwd(), 'config-bot.json');
 
 function ensureConfigFile(): void {
@@ -19,7 +20,10 @@ export function loadConfig(): BotConfig {
   try {
     const raw = fs.readFileSync(CONFIG_PATH, 'utf8');
     const parsed = JSON.parse(raw) as Partial<BotConfig>;
-    return { blocks: Array.isArray(parsed.blocks) ? parsed.blocks : [] };
+    return {
+      automationPaused: parsed.automationPaused === true,
+      blocks: Array.isArray(parsed.blocks) ? parsed.blocks : [],
+    };
   } catch {
     return DEFAULT_CONFIG;
   }

@@ -1,4 +1,4 @@
-import { IsString, Length } from 'class-validator';
+import { IsString, Length, MinLength } from 'class-validator';
 
 export class CreateRespuestaRapidaDto {
   @IsString()
@@ -6,5 +6,6 @@ export class CreateRespuestaRapidaDto {
   atajo: string;
 
   @IsString()
+  @MinLength(1)
   texto: string;
 }

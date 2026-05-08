@@ -1,7 +1,8 @@
-import { IsEmail, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsEmail, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class CreateWhatsappContactDto {
   @IsString()
+  @MinLength(1)
   @MaxLength(50)
   phone: string;
 

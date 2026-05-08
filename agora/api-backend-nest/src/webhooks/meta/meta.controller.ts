@@ -6,10 +6,19 @@ import {
   Res,
   Body,
   Logger,
+  Headers,
+  Req,
+  UnauthorizedException,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
+import { RawBodyRequest } from '@nestjs/common';
 import { Response } from 'express';
+import { Request } from 'express';
+import { createHmac, timingSafeEqual } from 'crypto';
 import { MetaService } from './meta.service';
 import { getRuntimeSecret } from '../../shared/runtime-secrets';
+import { VerifyMetaWebhookQueryDto } from './dto/verify-meta-webhook-query.dto';
 
 @Controller('webhooks/meta')
 export class MetaController {
@@ -23,7 +32,15 @@ export class MetaController {
    * =========================
   */
   @Get()
-  async verify(@Query() query: any, @Res() res: Response) {
+  @UsePipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+    }),
+  )
+  async verify(@Query() query: VerifyMetaWebhookQueryDto, @Res() res: Response) {
     const verifyToken = await getRuntimeSecret('META_VERIFY_TOKEN');
     const verifyIgToken = await getRuntimeSecret('META_IG_VERIFY_TOKEN');
     const VERIFY_TOKENS = [
@@ -49,20 +66,43 @@ export class MetaController {
    * =========================
    */
   @Post()
-  receive(@Body() body: any) {
+  async receive(
+    @Body() body: any,
+    @Headers('x-hub-signature-256') signature: string | undefined,
+    @Req() req: RawBodyRequest<Request>,
+  ) {
+    await this.assertMetaSignature(signature, req.rawBody);
 
     console.log('📩 POST webhook recibido desde Meta');
-    console.log('Objeto:', body.object);
-
-    console.log(
-      'RAW EVENT:',
-      JSON.stringify(body, null, 2),
-    );
+    console.log('Objeto:', body?.object);
+    console.log('Entradas:', Array.isArray(body?.entry) ? body.entry.length : 0);
 
     void this.metaService.handleEvent(body).catch((error) => {
       this.logger.error('Error procesando evento Meta', error?.stack || error);
     });
 
     return 'EVENT_RECEIVED';
+  }
+
+  private async assertMetaSignature(signature: string | undefined, rawBody?: Buffer) {
+    if (!signature?.startsWith('sha256=') || !rawBody?.length) {
+      throw new UnauthorizedException('Firma Meta requerida');
+    }
+
+    const appSecret = await getRuntimeSecret('META_APP_SECRET');
+    const expected = createHmac('sha256', appSecret)
+      .update(rawBody)
+      .digest('hex');
+    const provided = signature.slice('sha256='.length);
+
+    const expectedBuffer = Buffer.from(expected, 'hex');
+    const providedBuffer = Buffer.from(provided, 'hex');
+
+    if (
+      expectedBuffer.length !== providedBuffer.length ||
+      !timingSafeEqual(expectedBuffer, providedBuffer)
+    ) {
+      throw new UnauthorizedException('Firma Meta inválida');
+    }
   }
 }

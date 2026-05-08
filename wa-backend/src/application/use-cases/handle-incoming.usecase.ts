@@ -1,6 +1,7 @@
 import { downloadMediaMessage } from '@whiskeysockets/baileys';
 import { CoreIncomingMessage } from '../../core/whatsapp/index.js';
 import { backendApiClient } from '../../infrastructure/backend-api.client.js';
+import { loadConfig } from '../../infrastructure/config/config.repository.js';
 import { WhatsAppGateway } from '../whatsapp.gateway.js';
 
 type TipoId = 'jid' | 'lid';
@@ -103,6 +104,11 @@ export class HandleIncomingMessageUseCase {
       rawRemote.endsWith('@broadcast') ||
       rawRemote.includes('@newsletter')
     ) {
+      return;
+    }
+
+    if (loadConfig().automationPaused) {
+      console.log(`⏸️ Automatización pausada; mensaje entrante ignorado remoteJid=${rawRemote}`);
       return;
     }
 

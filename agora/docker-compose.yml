@@ -10,7 +10,6 @@ services:
         VITE_AUTH_API_URL: "${ABACKEND_PUBLIC_URL}/api/auth"
         VITE_ESTADO_BOT_URL: "${SOCKET_HTTP_PUBLIC_URL}"
         VITE_API_URL_ACCESOS: "${ABACKEND_PUBLIC_URL}"
-        VITE_SCRAPER_BASE_URL: "${SCRAPER_BASE_URL}"
         VITE_WA_PUBLIC_URL: "${WA_PUBLIC_URL}"
     container_name: panel_frontend
     restart: always
@@ -19,6 +18,13 @@ services:
     networks:
       - npm_network
     working_dir: /app
+    environment:
+      FRONTEND_CSP_SCRIPT_SRC: "${FRONTEND_CSP_SCRIPT_SRC:-'self' 'unsafe-inline'}"
+      FRONTEND_CSP_STYLE_SRC: "${FRONTEND_CSP_STYLE_SRC:-'self' 'unsafe-inline' https://fonts.googleapis.com}"
+      FRONTEND_CSP_FONT_SRC: "${FRONTEND_CSP_FONT_SRC:-'self' https://fonts.gstatic.com}"
+      FRONTEND_CSP_CONNECT_SRC: "${FRONTEND_CSP_CONNECT_SRC:-'self' ${API_PUBLIC_URL} ${ABACKEND_PUBLIC_URL} ${WS_PUBLIC_URL} ${WA_PUBLIC_URL} ${WA_WS_PUBLIC_URL:-} ${N8N_PUBLIC_URL}}"
+      FRONTEND_CSP_IMG_SRC: "${FRONTEND_CSP_IMG_SRC:-'self' data: blob: ${MEDIA_BASE_URL} https://facebook.com https://www.facebook.com https://*.facebook.com https://fbcdn.net https://*.fbcdn.net https://pps.whatsapp.net https://lookaside.fbsbx.com}"
+      FRONTEND_CSP_MEDIA_SRC: "${FRONTEND_CSP_MEDIA_SRC:-'self' data: blob: ${MEDIA_BASE_URL}}"
 
   websocket:
     build:

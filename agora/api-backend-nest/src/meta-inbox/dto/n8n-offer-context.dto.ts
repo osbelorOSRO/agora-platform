@@ -7,15 +7,18 @@ import {
   Max,
   MaxLength,
   Min,
+  MinLength,
 } from 'class-validator';
 
 export class N8nOfferContextDto {
   @IsString()
+  @MinLength(1)
   @MaxLength(255)
   sessionId!: string;
 
   @IsOptional()
   @IsString()
+  @MinLength(1)
   @MaxLength(64)
   stageActual?: string;
 
@@ -31,11 +34,13 @@ export class N8nOfferContextDto {
 
   @IsOptional()
   @IsString()
+  @MinLength(1)
   @MaxLength(120)
   currentOfferId?: string;
 
   @IsOptional()
   @IsString()
+  @MinLength(1)
   @MaxLength(120)
   currentCodigo?: string;
 

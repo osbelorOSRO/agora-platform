@@ -1,9 +1,12 @@
 import { RespuestaRapida } from '../types/respuestas-rapidas';
+import { getAuthHeaders } from '../utils/getAuthHeaders';
 
 const API_URL = `${import.meta.env.VITE_API_URL}/respuestas-rapidas`;  // ✅ CORRECTO
 
 export async function fetchRespuestas(): Promise<RespuestaRapida[]> {
-  const response = await fetch(API_URL);
+  const response = await fetch(API_URL, {
+    headers: getAuthHeaders(),
+  });
   if (!response.ok) {
     throw new Error('Error al obtener respuestas rápidas');
   }
@@ -11,7 +14,9 @@ export async function fetchRespuestas(): Promise<RespuestaRapida[]> {
 }
 
 export async function fetchRespuesta(uuid: string): Promise<RespuestaRapida> {
-  const response = await fetch(`${API_URL}/${uuid}`);
+  const response = await fetch(`${API_URL}/${uuid}`, {
+    headers: getAuthHeaders(),
+  });
   if (!response.ok) {
     throw new Error('Respuesta rápida no encontrada');
   }
@@ -21,9 +26,7 @@ export async function fetchRespuesta(uuid: string): Promise<RespuestaRapida> {
 export async function createRespuesta(data: Omit<RespuestaRapida, 'uuid'>): Promise<RespuestaRapida> {
   const response = await fetch(API_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
   if (!response.ok) {
@@ -35,9 +38,7 @@ export async function createRespuesta(data: Omit<RespuestaRapida, 'uuid'>): Prom
 export async function updateRespuesta(uuid: string, data: Partial<Omit<RespuestaRapida, 'uuid'>>): Promise<RespuestaRapida> {
   const response = await fetch(`${API_URL}/${uuid}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
   if (!response.ok) {
@@ -49,6 +50,7 @@ export async function updateRespuesta(uuid: string, data: Partial<Omit<Respuesta
 export async function deleteRespuesta(uuid: string): Promise<{ message: string }> {
   const response = await fetch(`${API_URL}/${uuid}`, {
     method: 'DELETE',
+    headers: getAuthHeaders(),
   });
   if (!response.ok) {
     throw new Error('Error al eliminar respuesta rápida');

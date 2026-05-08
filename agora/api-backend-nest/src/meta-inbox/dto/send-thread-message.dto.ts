@@ -11,11 +11,13 @@ export class SendThreadMessageDto {
 
   @ValidateIf((o) => !o.sessionId)
   @IsString()
+  @MinLength(1)
   @MaxLength(255)
   actorExternalId?: string;
 
   @ValidateIf((o) => !o.sessionId)
   @IsString()
+  @MinLength(1)
   @IsIn(['PAGE', 'INSTAGRAM', 'WHATSAPP'])
   objectType?: string;
 
@@ -32,6 +34,7 @@ export class SendThreadMessageDto {
 
   @ValidateIf((o) => !o.text)
   @IsString()
+  @MinLength(1)
   @MaxLength(4000)
   mediaUrl?: string;
 

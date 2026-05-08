@@ -1,19 +1,23 @@
-import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsIn, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class N8nOfferEventCreateDto {
   @IsString()
+  @MinLength(1)
   @MaxLength(255)
   sessionId!: string;
 
   @IsString()
+  @MinLength(1)
   @MaxLength(64)
   stageActual!: string;
 
   @IsString()
+  @MinLength(1)
   @IsIn(['alta', 'portabilidad'])
   tipo!: string;
 
   @IsString()
+  @MinLength(1)
   @MaxLength(120)
   codigo!: string;
 

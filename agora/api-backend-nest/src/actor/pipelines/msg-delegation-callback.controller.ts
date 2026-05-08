@@ -5,6 +5,8 @@ import {
   Logger,
   Post,
   UnauthorizedException,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MsgDelegationCompleteDto } from './dto/msg-delegation-complete.dto';
@@ -13,6 +15,14 @@ import { MsgDelegationCompletionService } from './msg-delegation-completion.serv
 import { getRuntimeSecret } from '../../shared/runtime-secrets';
 
 @Controller('actor/msg-delegation')
+@UsePipes(
+  new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true,
+    transformOptions: { enableImplicitConversion: true },
+  }),
+)
 export class MsgDelegationCallbackController {
   private readonly logger = new Logger(MsgDelegationCallbackController.name);
 

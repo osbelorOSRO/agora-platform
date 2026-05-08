@@ -26,11 +26,18 @@ export class BackendApiClient {
     form.append('tipo', tipo);
     form.append('tipo_id', tipo_id);
 
-    await axios.post(`${API_BACKEND_URL}/media/guardar`, form, {
-      headers: form.getHeaders(),
+    const response = await axios.post(`${API_BACKEND_URL}/media/guardar`, form, {
+      headers: {
+        ...form.getHeaders(),
+        'x-internal-token': env.baileysInternalToken,
+      },
+      timeout: env.proxyTimeoutMs,
+      maxContentLength: 50 * 1024 * 1024,
+      maxBodyLength: 50 * 1024 * 1024,
     });
 
-    return `${MEDIA_BASE_URL}/uploads/${filename}`;
+    const savedPath = response.data?.ruta || `/uploads/${filename}`;
+    return `${MEDIA_BASE_URL}${savedPath}`;
   }
 
   async enviarEventoBaileys(envelope: any): Promise<void> {

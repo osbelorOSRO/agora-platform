@@ -40,6 +40,7 @@ export const env = {
 
   // Internal services by docker name
   apiBackendUrl: required('API_BACKEND_URL'),
+  accessBackendUrl: required('ABACKEND_INTERNAL_URL'),
   mediaBaseUrl: required('MEDIA_BASE_URL'),
   baileysInternalToken: required('BAILEYS_INTERNAL_TOKEN'),
 

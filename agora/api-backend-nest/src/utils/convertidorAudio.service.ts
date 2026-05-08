@@ -1,16 +1,28 @@
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import fs from 'fs';
 import util from 'util';
-import path from 'path';
 
-const execPromise = util.promisify(exec);
+const execFilePromise = util.promisify(execFile);
 
 export async function convertirWebmAOgg(rutaOriginal: string): Promise<string | null> {
   const rutaOgg = rutaOriginal.replace(/\.webm$/, '_wa.ogg');
 
   try {
-    const cmd = `ffmpeg -i "${rutaOriginal}" -c:a libopus -b:a 32k -ar 48000 -ac 1 -vn "${rutaOgg}" -y`;
-    const { stdout, stderr } = await execPromise(cmd);
+    const { stdout, stderr } = await execFilePromise('ffmpeg', [
+      '-i',
+      rutaOriginal,
+      '-c:a',
+      'libopus',
+      '-b:a',
+      '32k',
+      '-ar',
+      '48000',
+      '-ac',
+      '1',
+      '-vn',
+      rutaOgg,
+      '-y',
+    ]);
     console.log('🎙️ Conversión completa:\n', stdout, stderr);
 
     if (fs.existsSync(rutaOgg)) {

@@ -54,3 +54,4 @@ mongo/mongo-init/
 # Local
 n8n_v2_blueprint/
 ops/docs/DOC-PLAN-MITIGACION-SUPERFICIES-ATAQUE.md
+ops/private/

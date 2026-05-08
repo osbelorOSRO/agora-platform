@@ -23,6 +23,12 @@ interface MensajeGlobitoPayload {
   fecha_envio: string;
 }
 
+const isNonEmptyString = (value: unknown): value is string =>
+  typeof value === "string" && value.trim().length > 0;
+
+const isSafeRoom = (room: string): boolean =>
+  /^(usuario_[A-Za-z0-9_-]+|[A-Za-z0-9:_-]{1,255})$/.test(room);
+
 // Estado de conexión del bot
 let estadoBot = false;
 
@@ -56,9 +62,20 @@ export const handleSocketConnection = async (socket: Socket, io: Server): Promis
     }
 
     socket.emit("conexion_autorizada", { usuario_id: decoded.id });
+    const ownUserRoom = `usuario_${decoded.id}`;
 
     // 📌 Unión explícita a una sala operativa.
     socket.on("joinRoom", (room: string) => {
+      if (!isNonEmptyString(room) || !isSafeRoom(room)) {
+        socket.emit("error", "Sala inválida");
+        return;
+      }
+
+      if (!esBot && room !== ownUserRoom) {
+        socket.emit("error", "No autorizado para unirse a esa sala");
+        return;
+      }
+
       socket.join(room);
       console.log(`📌 Socket unido a sala: ${room}`);
     });
@@ -71,17 +88,32 @@ export const handleSocketConnection = async (socket: Socket, io: Server): Promis
     };
 
     // 👤 El frontend también se une a su propia sala de usuario
-    socket.on("conectar_usuario", ({ usuario_id, rol }) => {
+    socket.on("conectar_usuario", ({ usuario_id, rol } = {}) => {
       if (!usuario_id) {
-        console.warn("⚠️ Datos faltantes en conectar_usuario");
+        socket.emit("error", "usuario_id requerido");
         return;
       }
 
-      joinUserRoom(usuario_id, rol);
+      if (!esBot && String(usuario_id) !== String(decoded.id)) {
+        socket.emit("error", "No autorizado para esa sala de usuario");
+        return;
+      }
+
+      joinUserRoom(esBot ? usuario_id : decoded.id, rol);
     });
 
     // 💬 Evento de sala directa por actor externo.
     socket.on("nuevoMensaje", (data: NuevoMensajePayload) => {
+      if (!esBot) {
+        socket.emit("error", "Evento no autorizado");
+        return;
+      }
+
+      if (!isNonEmptyString(data?.actorExternalId)) {
+        socket.emit("error", "actorExternalId requerido");
+        return;
+      }
+
       io.to(data.actorExternalId).emit("nuevoMensaje", data);
       console.log(`💬 Emitido nuevoMensaje a sala ${data.actorExternalId}`);
     });
@@ -89,20 +121,40 @@ export const handleSocketConnection = async (socket: Socket, io: Server): Promis
 
     // 📡 Emisión general de evento
     socket.on("emitir_evento_custom", (data: unknown) => {
+      if (!esBot) {
+        socket.emit("error", "Evento no autorizado");
+        return;
+      }
+
       console.log("📤 Evento recibido:", data);
       io.emit("evento_broadcast", data);
     });
 
-socket.on("emitirGlobito", (data: MensajeGlobitoPayload) => {
-  const sala = `usuario_${data.usuario_id}`;
-  io.to(sala).emit("nuevoMensajeGlobito", data);
-  console.log(`📣 Emitido nuevoMensajeGlobito a sala ${sala}`, data);
-});
+    socket.on("emitirGlobito", (data: MensajeGlobitoPayload) => {
+      if (!data?.usuario_id) {
+        socket.emit("error", "usuario_id requerido");
+        return;
+      }
+
+      if (!esBot && String(data.usuario_id) !== String(decoded.id)) {
+        socket.emit("error", "Evento no autorizado");
+        return;
+      }
+
+      const sala = `usuario_${data.usuario_id}`;
+      io.to(sala).emit("nuevoMensajeGlobito", data);
+      console.log(`📣 Emitido nuevoMensajeGlobito a sala ${sala}`, data);
+    });
 
 
     // 🤖 El bot puede enviar mensajes a cualquier sala (cliente o usuario)
     socket.on("mensaje_entrante", ({ sala, contenido }) => {
-      if (!sala || !contenido) {
+      if (!esBot) {
+        socket.emit("error", "Evento no autorizado");
+        return;
+      }
+
+      if (!isNonEmptyString(sala) || !isSafeRoom(sala) || !contenido) {
         console.warn("⚠️ mensaje_entrante recibido sin datos válidos");
         return;
       }

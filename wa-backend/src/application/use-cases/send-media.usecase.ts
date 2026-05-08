@@ -20,23 +20,64 @@ export interface SendMediaInput {
 export class SendMediaUseCase {
   constructor(private readonly gateway: WhatsAppGateway) {}
 
-  private resolveInternalDownloadUrl(rawUrl: string): string {
+  private assertTrustedMediaUrl(rawUrl: string): URL {
+    let parsed: URL;
     try {
-      const parsed = new URL(rawUrl);
-      if (parsed.pathname.startsWith('/uploads/')) {
-        return `${env.apiBackendUrl.replace(/\/+$/, '')}${parsed.pathname}${parsed.search}`;
-      }
-      return rawUrl;
+      parsed = new URL(rawUrl);
     } catch {
-      return rawUrl;
+      throw new Error('URL de archivo multimedia invalida');
     }
+
+    const mediaBase = new URL(env.mediaBaseUrl);
+    if (
+      !['http:', 'https:'].includes(parsed.protocol) ||
+      parsed.host !== mediaBase.host ||
+      !this.isSafeUploadsPath(parsed.pathname)
+    ) {
+      throw new Error('URL de archivo multimedia no confiable');
+    }
+
+    return parsed;
+  }
+
+  private isSafeUploadsPath(pathname: string): boolean {
+    if (!pathname.startsWith('/uploads/')) return false;
+    if (pathname.includes('\\') || /%2f|%5c/i.test(pathname)) return false;
+
+    const relative = pathname.slice('/uploads/'.length);
+    if (!relative || relative.includes('/')) return false;
+
+    let decoded: string;
+    try {
+      decoded = decodeURIComponent(relative);
+    } catch {
+      return false;
+    }
+    if (decoded !== relative || decoded.includes('..') || decoded.startsWith('.')) {
+      return false;
+    }
+
+    return /^[a-f0-9-]{36}(?:_(?:wa|ig))?\.(?:jpg|png|gif|webp|ogg|mp3|wav|m4a|mp4|webm|pdf)$/i.test(decoded);
+  }
+
+  private resolveInternalDownloadUrl(rawUrl: string): string {
+    const parsed = this.assertTrustedMediaUrl(rawUrl);
+    if (parsed.pathname.startsWith('/uploads/')) {
+      return `${env.apiBackendUrl.replace(/\/+$/, '')}${parsed.pathname}${parsed.search}`;
+    }
+    return rawUrl;
   }
 
   async execute(input: SendMediaInput): Promise<void> {
     const command = toBaileysOutgoingCommand(input);
 
     const downloadUrl = this.resolveInternalDownloadUrl(command.url_archivo!);
-    const { data } = await axios.get(downloadUrl, { responseType: 'arraybuffer' });
+    const { data } = await axios.get(downloadUrl, {
+      responseType: 'arraybuffer',
+      maxContentLength: 50 * 1024 * 1024,
+      maxBodyLength: 50 * 1024 * 1024,
+      timeout: env.proxyTimeoutMs,
+    });
     const buffer = Buffer.from(data);
 
     if (!buffer.length) {

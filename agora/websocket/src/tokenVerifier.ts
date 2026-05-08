@@ -11,10 +11,10 @@ let cachedKeyHuman = '';
 
 export const verifyTokenBot = async (token: string): Promise<any> => {
   if (!cachedKeyBot) {
-    // Clave pública del bot desde Vault
+    const path = process.env.VAULT_JWT_BOT_PUBLIC_KEY_PATH || 'accesos/keys/public_bot';
     cachedKeyBot = await vaultService.getSecretKey(
-      'accesos/keys/public_bot', // path en Vault (sin 'secret/')
-      'key',                      // campo dentro del secret
+      path,
+      'key',
     );
   }
 
@@ -32,10 +32,10 @@ export const verifyTokenBot = async (token: string): Promise<any> => {
 
 export const verifyTokenHuman = async (token: string): Promise<any> => {
   if (!cachedKeyHuman) {
-    // Clave pública del backend (human) desde Vault
+    const path = process.env.VAULT_JWT_PUBLIC_KEY_PATH || 'accesos/keys/public';
     cachedKeyHuman = await vaultService.getSecretKey(
-      'accesos/keys/public', // path en Vault
-      'key',                 // campo dentro del secret
+      path,
+      'key',
     );
   }
 

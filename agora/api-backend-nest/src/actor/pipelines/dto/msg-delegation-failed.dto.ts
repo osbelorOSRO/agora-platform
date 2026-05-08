@@ -1,11 +1,13 @@
 import { Transform } from 'class-transformer';
-import { IsOptional, IsString } from 'class-validator';
+import { IsObject, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class MsgDelegationFailedDto {
   @IsString()
+  @MinLength(1)
   externalEventId!: string;
 
   @IsString()
+  @MinLength(1)
   actorExternalId!: string;
 
   @IsOptional()
@@ -21,5 +23,6 @@ export class MsgDelegationFailedDto {
       return { raw: value };
     }
   })
+  @IsObject()
   metadata?: any;
 }

@@ -1,4 +1,4 @@
-import { IsOptional, IsString, Length } from 'class-validator';
+import { IsOptional, IsString, Length, MinLength } from 'class-validator';
 
 export class UpdateRespuestaRapidaDto {
   @IsOptional()
@@ -8,5 +8,6 @@ export class UpdateRespuestaRapidaDto {
 
   @IsOptional()
   @IsString()
+  @MinLength(1)
   texto?: string;
 }

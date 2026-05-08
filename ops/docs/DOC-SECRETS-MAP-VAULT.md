@@ -48,6 +48,10 @@ Keys:
 - `META_VERIFY_TOKEN`
 - `META_IG_VERIFY_TOKEN`
 
+Nota:
+- `api-backend-nest` lee `API_KEY_WS` desde su propio `VAULT_APP_SECRETS_PATH`.
+- El mismo valor puede existir tambien en el path del websocket, pero el backend no consulta el path del websocket.
+
 ### 3) agora/websocket
 Path sugerido:
 - `secret/data/agora/websocket`
@@ -95,4 +99,3 @@ Keys:
    - `./scripts/verify-env.sh <perfil>`
    - `./scripts/verify-compose.sh <perfil>`
    - `./scripts/smoke-core.sh <perfil>`
-

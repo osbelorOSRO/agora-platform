@@ -5,6 +5,7 @@ import {
   IsString,
   MaxLength,
 } from 'class-validator';
+import { IsBoundedJson } from './json-size.validator';
 
 export class UpdateThreadControlDto {
   @IsOptional()
@@ -24,5 +25,6 @@ export class UpdateThreadControlDto {
 
   @IsOptional()
   @IsObject()
+  @IsBoundedJson({ maxBytes: 4096, maxDepth: 4 })
   stageControl?: Record<string, unknown>;
 }

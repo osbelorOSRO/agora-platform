@@ -13,7 +13,11 @@ const getExpectedApiKey = async (): Promise<string> => {
     return cachedApiKey;
   }
 
-  const path = process.env.VAULT_WEBSOCKET_SECRETS_PATH || 'agora/websocket';
+  const path = process.env.VAULT_WEBSOCKET_SECRETS_PATH;
+  if (!path?.trim()) {
+    throw new Error('VAULT_WEBSOCKET_SECRETS_PATH no esta definido');
+  }
+
   cachedApiKey = await vaultService.getSecretKey(path, 'API_KEY_WS');
   return cachedApiKey;
 };

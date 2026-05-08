@@ -1,4 +1,4 @@
-import { IsEmail, IsIn, IsOptional, IsString, MaxLength, ValidateIf } from 'class-validator';
+import { IsEmail, IsIn, IsOptional, IsString, MaxLength, MinLength, ValidateIf } from 'class-validator';
 
 export class N8nContactUpsertDto {
   @IsOptional()
@@ -8,11 +8,13 @@ export class N8nContactUpsertDto {
 
   @ValidateIf((o) => !o.sessionId)
   @IsString()
+  @MinLength(1)
   @MaxLength(255)
   actorExternalId?: string;
 
   @ValidateIf((o) => !o.sessionId)
   @IsString()
+  @MinLength(1)
   @IsIn(['PAGE', 'INSTAGRAM', 'WHATSAPP'])
   objectType?: string;
 
@@ -33,6 +35,7 @@ export class N8nContactUpsertDto {
 
   @IsOptional()
   @IsString()
+  @MinLength(1)
   @MaxLength(50)
   phone?: string;
 

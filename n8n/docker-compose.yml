@@ -22,10 +22,16 @@ services:
       - DB_TYPE=sqlite
 
     volumes:
-      - /root/n8n/data:/home/node/.n8n
+      - type: ${N8N_DATA_TYPE:-bind}
+        source: ${N8N_DATA_VOLUME:-/root/n8n/data}
+        target: /home/node/.n8n
     networks:
       - npm_network
     restart: unless-stopped
+
+volumes:
+  n8n_dev_local1_data:
+    name: n8n_dev_local1_data
 
 networks:
   npm_network:

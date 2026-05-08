@@ -4,8 +4,10 @@ import {
   IsOptional,
   IsString,
   MaxLength,
+  MinLength,
   ValidateIf,
 } from 'class-validator';
+import { IsBoundedJson } from './json-size.validator';
 
 export class N8nThreadControlDto {
   @IsOptional()
@@ -15,11 +17,13 @@ export class N8nThreadControlDto {
 
   @ValidateIf((o) => !o.sessionId)
   @IsString()
+  @MinLength(1)
   @MaxLength(255)
   actorExternalId?: string;
 
   @ValidateIf((o) => !o.sessionId)
   @IsString()
+  @MinLength(1)
   @IsIn(['PAGE', 'INSTAGRAM', 'WHATSAPP'])
   objectType?: string;
 
@@ -40,5 +44,6 @@ export class N8nThreadControlDto {
 
   @IsOptional()
   @IsObject()
+  @IsBoundedJson({ maxBytes: 4096, maxDepth: 4 })
   stageControl?: Record<string, unknown>;
 }

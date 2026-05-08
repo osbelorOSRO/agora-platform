@@ -11,14 +11,16 @@ export class AuthService {
 
   private async getPublicKey(): Promise<string> {
     if (!this.publicKey) {
-      this.publicKey = await this.vaultService.getSecretKey('accesos/keys/public');
+      const path = process.env.VAULT_JWT_PUBLIC_KEY_PATH || 'accesos/keys/public';
+      this.publicKey = await this.vaultService.getSecretKey(path);
     }
     return this.publicKey;
   }
 
   private async getPublicKeyBot(): Promise<string> {
     if (!this.publicKeyBot) {
-      this.publicKeyBot = await this.vaultService.getSecretKey('accesos/keys/public_bot');
+      const path = process.env.VAULT_JWT_BOT_PUBLIC_KEY_PATH || 'accesos/keys/public_bot';
+      this.publicKeyBot = await this.vaultService.getSecretKey(path);
     }
     return this.publicKeyBot;
   }

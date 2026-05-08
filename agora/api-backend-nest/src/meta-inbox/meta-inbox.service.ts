@@ -7,12 +7,18 @@ import {
 import { PrismaService } from '../database/prisma/prisma.service';
 import axios from 'axios';
 import { WebsocketNotifierService } from '../websocket-notifier/websocket-notifier.service';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import util from 'util';
 import { getRuntimeSecret } from '../shared/runtime-secrets';
 import { BaileysSenderService } from '../baileys/baileys-sender.service';
+import {
+  assertTrustedMediaUrl,
+  ensureCanonicalExtension,
+  removeFileQuietly,
+  validateStoredMediaFile,
+} from '../media/media-security';
 
 type ThreadRow = {
   threadId: string;
@@ -203,7 +209,7 @@ type OfferEventRow = {
 @Injectable()
 export class MetaInboxService implements OnModuleInit {
   private readonly logger = new Logger(MetaInboxService.name);
-  private readonly execPromise = util.promisify(exec);
+  private readonly execFilePromise = util.promisify(execFile);
 
   constructor(
     private readonly prisma: PrismaService,
@@ -1833,9 +1839,10 @@ export class MetaInboxService implements OnModuleInit {
       throw new Error('media_type_required');
     }
 
+    const trustedMediaUrl = assertTrustedMediaUrl(mediaUrl);
     const result = await this.sendMediaByUrlInternal(
       sessionId,
-      mediaUrl,
+      trustedMediaUrl,
       mediaType,
       senderType,
       {
@@ -2332,10 +2339,18 @@ export class MetaInboxService implements OnModuleInit {
       thread.objectType,
       thread.sourceChannel,
     );
-    const mediaType = this.resolveOutgoingMediaType(file.mimetype);
+    const detected = await validateStoredMediaFile(file, [
+      'image',
+      'audio',
+      'video',
+      'document',
+    ]);
+    const mediaType = detected.family;
+    ensureCanonicalExtension(file, detected);
     const preparedMedia = await this.prepareOutgoingMediaForThread(file, {
       isInstagram,
       mediaType,
+      mimeType: detected.mimeType,
     });
     const publicBase = (process.env.MEDIA_BASE_URL || '').replace(/\/+$/, '');
     const mediaUrl = `${publicBase}/uploads/${preparedMedia.fileName}`;
@@ -3193,10 +3208,14 @@ export class MetaInboxService implements OnModuleInit {
 
   private async prepareOutgoingMediaForThread(
     file: Express.Multer.File,
-    input: { isInstagram: boolean; mediaType: ThreadMessageMediaType },
+    input: {
+      isInstagram: boolean;
+      mediaType: ThreadMessageMediaType;
+      mimeType: string;
+    },
   ): Promise<{ fileName: string; mimeType: string }> {
     if (!input.isInstagram || input.mediaType !== 'audio') {
-      return { fileName: file.filename, mimeType: file.mimetype };
+      return { fileName: file.filename, mimeType: input.mimeType };
     }
 
     const inputPath = file.path;
@@ -3204,14 +3223,28 @@ export class MetaInboxService implements OnModuleInit {
     const outputName = path.basename(outputPath);
 
     try {
-      const cmd = `ffmpeg -i "${inputPath}" -c:a aac -b:a 64k -ar 44100 -ac 1 "${outputPath}" -y`;
-      await this.execPromise(cmd);
+      await this.execFilePromise('ffmpeg', [
+        '-i',
+        inputPath,
+        '-c:a',
+        'aac',
+        '-b:a',
+        '64k',
+        '-ar',
+        '44100',
+        '-ac',
+        '1',
+        outputPath,
+        '-y',
+      ]);
       if (!fs.existsSync(outputPath)) {
         throw new Error('ffmpeg_output_missing');
       }
       fs.unlinkSync(inputPath);
       return { fileName: outputName, mimeType: 'audio/mp4' };
     } catch (error: any) {
+      removeFileQuietly(inputPath);
+      removeFileQuietly(outputPath);
       this.logger.warn(
         `audio conversion failed for IG: ${error?.message ?? 'unknown_error'}`,
       );

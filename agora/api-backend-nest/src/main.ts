@@ -2,11 +2,24 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { join } from 'path';
+import { basename, extname, join } from 'path';
 import { ValidationPipe } from '@nestjs/common';
 
+const activeUploadExtensions = new Set([
+  '.html',
+  '.htm',
+  '.svg',
+  '.js',
+  '.mjs',
+  '.css',
+  '.xml',
+  '.xhtml',
+]);
+
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    rawBody: true,
+  });
 
   const config = app.get(ConfigService);
   const port = config.get<number>('PORT') || 4001;
@@ -24,6 +37,17 @@ async function bootstrap() {
 
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/uploads/',
+    setHeaders: (res, filePath) => {
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('Content-Security-Policy', "default-src 'none'; img-src 'self'; media-src 'self'; sandbox");
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      if (activeUploadExtensions.has(extname(filePath).toLowerCase())) {
+        res.setHeader(
+          'Content-Disposition',
+          `attachment; filename="${basename(filePath).replace(/["\\]/g, '')}"`,
+        );
+      }
+    },
   });
 
   app.useGlobalPipes(new ValidationPipe({

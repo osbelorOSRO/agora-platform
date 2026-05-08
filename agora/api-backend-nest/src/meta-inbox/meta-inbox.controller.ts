@@ -10,7 +10,10 @@ import {
   Query,
   UnauthorizedException,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { MetaInboxService } from './meta-inbox.service';
 import { SendTextDto } from './dto/send-text.dto';
@@ -32,8 +35,18 @@ import { EnsureWhatsappThreadDto } from './dto/ensure-whatsapp-thread.dto';
 import { SendThreadMessageDto } from './dto/send-thread-message.dto';
 import { WhatsappIdentityResolveDto } from './dto/whatsapp-identity-resolve.dto';
 import { WhatsappBlockStatusDto } from './dto/whatsapp-block-status.dto';
+import { SendMediaDto } from './dto/send-media.dto';
+import { PanelJwtAuthGuard } from '../auth/panel-jwt-auth.guard';
 
 @Controller('meta-inbox')
+@UsePipes(
+  new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true,
+    transformOptions: { enableImplicitConversion: true },
+  }),
+)
 export class MetaInboxController {
   constructor(
     private readonly metaInbox: MetaInboxService,
@@ -41,19 +54,21 @@ export class MetaInboxController {
   ) {}
 
   @Get('threads')
+  @UseGuards(PanelJwtAuthGuard)
   async listThreads(
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
     @Query('includeClosed') includeClosed?: string,
   ) {
     return this.metaInbox.listThreads({
-      limit: limit ? Number(limit) : undefined,
-      offset: offset ? Number(offset) : undefined,
+      limit: this.parseLimit(limit, 100, 200),
+      offset: this.parseOffset(offset),
       includeClosed: includeClosed === 'true',
     });
   }
 
   @Get('contacts')
+  @UseGuards(PanelJwtAuthGuard)
   async listContacts(
     @Query('search') search?: string,
     @Query('objectType') objectType?: string,
@@ -63,43 +78,49 @@ export class MetaInboxController {
     return this.metaInbox.listContacts({
       search,
       objectType,
-      limit: limit ? Number(limit) : undefined,
-      offset: offset ? Number(offset) : undefined,
+      limit: this.parseLimit(limit, 50, 200),
+      offset: this.parseOffset(offset),
     });
   }
 
   @Post('contacts/whatsapp')
+  @UseGuards(PanelJwtAuthGuard)
   async createWhatsappContact(@Body() body: CreateWhatsappContactDto) {
     return this.metaInbox.createWhatsappContact(body);
   }
 
   @Post('contacts/whatsapp/thread')
+  @UseGuards(PanelJwtAuthGuard)
   async ensureWhatsappThread(@Body() body: EnsureWhatsappThreadDto) {
     return this.metaInbox.ensureWhatsappThreadForContact(body.actorExternalId);
   }
 
   @Post('whatsapp/identity/resolve')
+  @UseGuards(PanelJwtAuthGuard)
   async resolveWhatsappIdentity(@Body() body: WhatsappIdentityResolveDto) {
     return this.metaInbox.resolveWhatsappIdentity(body);
   }
 
   @Post('whatsapp/block-status')
+  @UseGuards(PanelJwtAuthGuard)
   async updateWhatsappBlockStatus(@Body() body: WhatsappBlockStatusDto) {
     return this.metaInbox.updateWhatsappBlockStatus(body);
   }
 
   @Get('whatsapp/ad-leads/stats')
+  @UseGuards(PanelJwtAuthGuard)
   async listWhatsappAdLeadStats(
     @Query('sourceId') sourceId?: string,
     @Query('limit') limit?: string,
   ) {
     return this.metaInbox.listWhatsappAdLeadStats({
       sourceId,
-      limit: limit ? Number(limit) : undefined,
+      limit: this.parseLimit(limit, 100, 1000),
     });
   }
 
   @Get('threads/:sessionId/messages')
+  @UseGuards(PanelJwtAuthGuard)
   async listMessages(
     @Param('sessionId') sessionId: string,
     @Query('includeSystem') includeSystem?: string,
@@ -108,11 +129,13 @@ export class MetaInboxController {
   }
 
   @Get('stage-templates/:stageActual')
+  @UseGuards(PanelJwtAuthGuard)
   async getStageTemplatePaths(@Param('stageActual') stageActual: string) {
     return this.metaInbox.getStageTemplatePaths(stageActual);
   }
 
   @Post('threads/:sessionId/send-text')
+  @UseGuards(PanelJwtAuthGuard)
   async sendText(
     @Param('sessionId') sessionId: string,
     @Body() body: SendTextDto,
@@ -121,6 +144,7 @@ export class MetaInboxController {
   }
 
   @Post('threads/:sessionId/send-message')
+  @UseGuards(PanelJwtAuthGuard)
   async sendThreadMessage(
     @Param('sessionId') sessionId: string,
     @Body() body: SendThreadMessageDto,
@@ -136,17 +160,19 @@ export class MetaInboxController {
   }
 
   @Post('threads/:sessionId/send-media')
+  @UseGuards(PanelJwtAuthGuard)
   @UseInterceptors(FileInterceptor('file', multerConfig))
   async sendMedia(
     @Param('sessionId') sessionId: string,
     @UploadedFile() file: Express.Multer.File,
-    @Body('caption') caption?: string,
+    @Body() body: SendMediaDto,
   ) {
     if (!file) throw new BadRequestException('Archivo no recibido');
-    return this.metaInbox.sendMedia(sessionId, file, caption?.trim());
+    return this.metaInbox.sendMedia(sessionId, file, body.caption?.trim());
   }
 
   @Patch('threads/:sessionId/contact')
+  @UseGuards(PanelJwtAuthGuard)
   async updateContact(
     @Param('sessionId') sessionId: string,
     @Body() body: UpdateContactDto,
@@ -155,6 +181,7 @@ export class MetaInboxController {
   }
 
   @Patch('threads/:sessionId/control')
+  @UseGuards(PanelJwtAuthGuard)
   async updateThreadControl(
     @Param('sessionId') sessionId: string,
     @Body() body: UpdateThreadControlDto,
@@ -163,6 +190,7 @@ export class MetaInboxController {
   }
 
   @Post('threads/:sessionId/reopen')
+  @UseGuards(PanelJwtAuthGuard)
   async reopenThread(@Param('sessionId') sessionId: string) {
     return this.metaInbox.reopenThread(sessionId);
   }
@@ -268,5 +296,17 @@ export class MetaInboxController {
     if (!provided || provided !== token) {
       throw new UnauthorizedException('Token inválido');
     }
+  }
+
+  private parseLimit(raw: string | undefined, fallback: number, max: number): number {
+    const parsed = raw ? Number(raw) : fallback;
+    if (!Number.isFinite(parsed) || parsed < 1) return fallback;
+    return Math.min(Math.floor(parsed), max);
+  }
+
+  private parseOffset(raw: string | undefined): number {
+    const parsed = raw ? Number(raw) : 0;
+    if (!Number.isFinite(parsed) || parsed < 0) return 0;
+    return Math.floor(parsed);
   }
 }
