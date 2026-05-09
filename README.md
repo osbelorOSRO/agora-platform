@@ -7,8 +7,8 @@ Monorepo operativo para una plataforma modular de atencion, automatizacion y con
 ![WA Control dashboard](docs/assets/wa-control.png)
 
 ## Version
-- Actual: `v1.3.1`
-- Fecha: `2026-05-03`
+- Actual: `v1.3.3`
+- Fecha: `2026-05-09`
 
 La evolución de cambios se documenta en `CHANGELOG.md`.
 

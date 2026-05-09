@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.3
+
+### Fixed
+- Endurecimiento de validacion de entrada en `api-backend-nest` y `abackend`.
+
+## 1.3.2
+
+### Fixed
+- Incorporacion de seguridad y boton stop global.
+
 ## 1.3.1
 
 ### Added
