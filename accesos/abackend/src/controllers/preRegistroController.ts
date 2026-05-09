@@ -12,6 +12,19 @@ export const registrarUsuario = async (req: Request, res: Response): Promise<voi
     return;
   }
 
+  if (typeof username !== 'string' || username.length > 100) {
+    res.status(400).json({ error: 'username inválido' });
+    return;
+  }
+  if (typeof password !== 'string' || password.length > 200) {
+    res.status(400).json({ error: 'password inválido' });
+    return;
+  }
+  if (typeof confirmarPassword !== 'string' || confirmarPassword.length > 200) {
+    res.status(400).json({ error: 'confirmarPassword inválido' });
+    return;
+  }
+
   if (password !== confirmarPassword) {
     res.status(400).json({ error: 'Las contraseñas no coinciden' });
     return;

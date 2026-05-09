@@ -43,6 +43,20 @@ export const actualizarUsuario = async (req: Request, res: Response): Promise<vo
   const id = Number(req.params.id);
   const data = req.body;
 
+  const isOptionalString = (v: unknown, max: number) =>
+    v === undefined || v === null || (typeof v === 'string' && v.length <= max);
+
+  if (
+    !isOptionalString(data.nombre, 120) ||
+    !isOptionalString(data.apellido, 120) ||
+    !isOptionalString(data.run, 20) ||
+    !isOptionalString(data.email, 200) ||
+    !isOptionalString(data.telefono, 30)
+  ) {
+    res.status(400).json({ error: 'Datos inválidos' });
+    return;
+  }
+
   try {
     const datosActualizados: Record<string, any> = {
       nombre: data.nombre,

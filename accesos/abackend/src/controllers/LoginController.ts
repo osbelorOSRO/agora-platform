@@ -22,6 +22,19 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
+  if (typeof username !== 'string' || username.length > 100) {
+    res.status(400).json({ error: "Credenciales inválidas" });
+    return;
+  }
+  if (typeof password !== 'string' || password.length > 200) {
+    res.status(400).json({ error: "Credenciales inválidas" });
+    return;
+  }
+  if (typeof token_2fa !== 'string' || !/^\d{6}$/.test(token_2fa)) {
+    res.status(400).json({ error: "Token 2FA inválido" });
+    return;
+  }
+
   try {
     const usuario: UsuarioConPermisos | null = await prisma.usuarios.findUnique({
       where: { username },

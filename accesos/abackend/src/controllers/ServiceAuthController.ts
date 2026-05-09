@@ -17,6 +17,15 @@ export async function issueServiceToken(
       return;
     }
 
+    if (typeof serviceId !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(serviceId) || serviceId.length > 64) {
+      res.status(400).json({ mensaje: "serviceId inválido" });
+      return;
+    }
+    if (typeof secretKey !== 'string' || secretKey.length > 256) {
+      res.status(400).json({ mensaje: "Credenciales inválidas" });
+      return;
+    }
+
     // Validar secretKey contra Vault
     const vaultPath = `accesos/service-keys/${serviceId}`;
     

@@ -11,6 +11,11 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
+  if (typeof username !== 'string' || username.length > 100) {
+    res.status(400).json({ error: "username inválido" });
+    return;
+  }
+
   try {
     const rol = await prisma.rol.findUnique({
       where: { id: Number(rolId) },

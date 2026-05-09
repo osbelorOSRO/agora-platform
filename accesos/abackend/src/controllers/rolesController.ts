@@ -83,6 +83,15 @@ export const crearRol = async (req: Request, res: Response): Promise<void> => {
   const { nombre, permisos } = req.body;
   const usuarioId = req.user?.id;
 
+  if (typeof nombre !== 'string' || nombre.length < 1 || nombre.length > 100) {
+    res.status(400).json({ error: 'nombre inválido' });
+    return;
+  }
+  if (!Array.isArray(permisos) || permisos.length > 100 || permisos.some((p) => typeof p !== 'number' || !Number.isInteger(p))) {
+    res.status(400).json({ error: 'permisos inválidos' });
+    return;
+  }
+
   try {
     const nuevoRol = await prisma.rol.create({
       data: {
@@ -120,6 +129,15 @@ export const actualizarRol = async (req: Request, res: Response): Promise<void> 
   const id = Number(req.params.id);
   const { nombre, permisos } = req.body;
   const usuarioId = req.user?.id;
+
+  if (typeof nombre !== 'string' || nombre.length < 1 || nombre.length > 100) {
+    res.status(400).json({ error: 'nombre inválido' });
+    return;
+  }
+  if (!Array.isArray(permisos) || permisos.length > 100 || permisos.some((p) => typeof p !== 'number' || !Number.isInteger(p))) {
+    res.status(400).json({ error: 'permisos inválidos' });
+    return;
+  }
 
   try {
     // Eliminar permisos anteriores

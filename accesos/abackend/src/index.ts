@@ -28,7 +28,7 @@ app.use(
 
 // Seguridad + parsing
 app.use(helmet());
-app.use(express.json());
+app.use(express.json({ limit: '10kb' }));
 
 // Rutas API
 app.get("/health", async (_req, res) => {
@@ -45,6 +45,16 @@ app.use("/api/service-auth", serviceAuthRoutes);
 app.use("/api/roles", rolesRoutes);
 app.use("/api/permisos", permisosRoutes);
 app.use("/api/reportes", reportesRoutes);
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  if (err?.type === 'entity.too.large' || err?.status === 413) {
+    res.status(413).json({ error: 'Payload demasiado grande' });
+    return;
+  }
+  console.error('Error interno:', err?.message ?? err);
+  res.status(err?.status ?? 500).json({ error: 'Error interno' });
+});
 
 // Puerto
 const PORT = process.env.PORT || 4002;
