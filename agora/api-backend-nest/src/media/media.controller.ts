@@ -15,6 +15,8 @@ import { secureMediaMulterOptions } from './media-security';
 import { ConfigService } from '@nestjs/config';
 import { getRuntimeSecret } from '../shared/runtime-secrets';
 
+const TIPOS_MEDIA_VALIDOS = new Set(['imagen', 'audio', 'video', 'documento']);
+
 @Controller('media')
 export class MediaController {
   constructor(
@@ -32,8 +34,8 @@ export class MediaController {
   ) {
     this.assertInternalToken(internalToken);
     if (!archivo) throw new BadRequestException('Archivo no recibido');
-    if (!actorId) throw new BadRequestException('actorId requerido');
-    if (!tipo) throw new BadRequestException('tipo requerido');
+    if (!actorId || actorId.length > 255) throw new BadRequestException('actorId requerido');
+    if (!tipo || !TIPOS_MEDIA_VALIDOS.has(tipo)) throw new BadRequestException('tipo invalido');
 
     return this.mediaService.procesarArchivo(archivo, actorId, tipo);
   }
