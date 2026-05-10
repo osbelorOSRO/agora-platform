@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.3.4
+
+### Added
+- Sistema completo de gestion de credenciales administrado por SuperAdmin: tokens de invitacion, reset de contrasena y reset de 2FA de un solo uso (bcrypt hash en BD, plain devuelto una sola vez).
+- Lockout automatico por intentos fallidos de login (5 intentos → cuenta bloqueada, desbloqueo solo por admin).
+- Soft delete de preregistros: campo `cancelado` en tabla `usuarios` — el registro queda en BD pero es invisible en el panel y no puede hacer login.
+- Campo `protegido` en tabla `usuarios`: usuario marcado como protegido es intocable por cualquier accion admin.
+- Guardas de auto-proteccion: ningun admin puede ejecutar acciones de credenciales sobre su propia cuenta activa.
+- Flujos publicos de recuperacion sin autenticacion: `/reset-password` y `/setup-2fa` (inicio, QR, confirmacion TOTP).
+- Estado calculado de usuario: `activo`, `preregistrado`, `invitacion_expirada`, `sin_invitacion`, `bloqueado`, `reset_contraseña`, `reset_2fa`.
+
+### Changed
+- Login ya no revela si el username existe (`"Credenciales incorrectas"` en todos los casos de fallo de identidad).
+- Formulario de registro ahora exige codigo de invitacion como primer campo.
+- Pantalla de login incluye links directos a recuperacion de contrasena y configuracion de autenticador.
+
+### Fixed
+- Cancelar preregistro ya no falla con FK constraint al existir sesiones asociadas al usuario (soft delete en lugar de hard delete).
+- Username duplicado (incluso de usuario cancelado) devuelve 409 con mensaje amigable en lugar de crash interno.
+
 ## 1.3.3
 
 ### Fixed
