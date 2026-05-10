@@ -13,18 +13,10 @@ function crearRedisClient(): Redis | null {
       host,
       port,
       password: password || undefined,
-      lazyConnect: true,
-      maxRetriesPerRequest: 1,
-      enableOfflineQueue: false,
+      maxRetriesPerRequest: null,
     });
-    client.on('error', (err: Error) => {
-      console.error('⚠️ Rate limiter Redis error:', err.message);
-    });
-    client.connect().then(() => {
-      console.log('✅ Rate limiter conectado a Redis');
-    }).catch((err: Error) => {
-      console.error('⚠️ Rate limiter no pudo conectar a Redis:', err.message);
-    });
+    client.on('connect', () => console.log('✅ Rate limiter conectado a Redis'));
+    client.on('error', (err: Error) => console.error('⚠️ Rate limiter Redis error:', err.message));
     return client;
   } catch {
     return null;
