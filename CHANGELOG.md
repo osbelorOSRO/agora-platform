@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.5
+
+### Added
+- Rate limiting con Redis en abackend para endpoints publicos de autenticacion.
+- Login: 10 requests por 15 minutos por IP.
+- Registro, reset de contrasena y setup 2FA: 5 requests por hora por IP.
+- Fail-open automatico si Redis no esta disponible para no bloquear el servicio.
+
 ## 1.3.4
 
 ### Added
