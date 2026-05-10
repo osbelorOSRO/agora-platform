@@ -1,27 +1,32 @@
 const BASE_URL = import.meta.env.VITE_AUTH_API_URL || "/api/auth";
 
-export async function login(username: string, password: string, token_2fa?: string) {
-  const res = await fetch(`${BASE_URL}/login`, {
+async function fetchJSON(url: string, body: object) {
+  const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password, token_2fa }),
+    body: JSON.stringify(body),
   });
-  if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.error || "Error al iniciar sesión");
-  }
-  return res.json();
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Error en la solicitud");
+  return data;
 }
 
-export async function registrarUsuario(username: string, password: string, confirmarPassword: string) {
-  const res = await fetch(`${BASE_URL}/registrar-usuario`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password, confirmarPassword }),
-  });
-  if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.error || "Error al registrar usuario");
-  }
-  return res.json(); // contiene { message, secret_otpauth_url, secret_base32 }
+export async function login(username: string, password: string, token_2fa?: string) {
+  return fetchJSON(`${BASE_URL}/login`, { username, password, token_2fa });
+}
+
+export async function registrarUsuario(username: string, invitationToken: string, password: string, confirmarPassword: string) {
+  return fetchJSON(`${BASE_URL}/registrar-usuario`, { username, invitationToken, password, confirmarPassword });
+}
+
+export async function resetPassword(username: string, resetToken: string, newPassword: string, confirmarPassword: string) {
+  return fetchJSON(`${BASE_URL}/reset-password`, { username, resetToken, newPassword, confirmarPassword });
+}
+
+export async function setup2FAInit(username: string, password: string, bypassToken: string): Promise<{ otpauth_url: string }> {
+  return fetchJSON(`${BASE_URL}/setup-2fa/init`, { username, password, bypassToken });
+}
+
+export async function setup2FAConfirmar(username: string, bypassToken: string, totpCode: string) {
+  return fetchJSON(`${BASE_URL}/setup-2fa/confirmar`, { username, bypassToken, totpCode });
 }

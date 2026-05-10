@@ -1,10 +1,32 @@
 import { Request, Response } from 'express';
 import prisma from '../utils/prisma.js';
 
+type EstadoUsuario = 'activo' | 'preregistrado' | 'invitacion_expirada' | 'sin_invitacion' | 'bloqueado' | 'reset_contraseña' | 'reset_2fa';
+
+function calcularEstado(u: {
+  password: string;
+  bloqueado: boolean;
+  invitation_token: string | null;
+  invitation_expires_at: Date | null;
+  reset_token: string | null;
+  mfa_bypass_token: string | null;
+}): EstadoUsuario {
+  if (u.bloqueado) return 'bloqueado';
+  if (!u.password) {
+    if (!u.invitation_token) return 'sin_invitacion';
+    if (u.invitation_expires_at && u.invitation_expires_at < new Date()) return 'invitacion_expirada';
+    return 'preregistrado';
+  }
+  if (u.mfa_bypass_token) return 'reset_2fa';
+  if (u.reset_token) return 'reset_contraseña';
+  return 'activo';
+}
+
 // Obtener todos los usuarios
 export const obtenerUsuarios = async (_req: Request, res: Response): Promise<void> => {
   try {
     const usuarios = await prisma.usuarios.findMany({
+      where: { cancelado: false },
       include: {
         rol_usuarios_rol_idTorol: true,
         usuarios_usuarios_creado_por_idTousuarios: { select: { username: true } },
@@ -27,7 +49,8 @@ export const obtenerUsuarios = async (_req: Request, res: Response): Promise<voi
         creado_por_username: u.usuarios_usuarios_creado_por_idTousuarios?.username || null,
         actualizado_por_username: u.usuarios_usuarios_actualizado_por_idTousuarios?.username || null,
         rol: rolObjeto ? { id: rolObjeto.id || null, nombre: rolObjeto.nombre || null } : null,
-        oficina: null
+        oficina: null,
+        estado: calcularEstado(u),
       };
     });
 

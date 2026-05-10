@@ -77,6 +77,19 @@ model usuarios {
   creado_por_id                                        Int?
   actualizado_en                                       DateTime?  @db.Timestamp(6)
   actualizado_por_id                                   Int?
+  invitation_token                                     String?
+  invitation_expires_at                                DateTime?  @db.Timestamp(6)
+  invitation_attempts                                  Int        @default(0)
+  reset_token                                          String?
+  reset_token_expires                                  DateTime?  @db.Timestamp(6)
+  mfa_bypass_token                                     String?
+  mfa_new_secret                                       String?
+  mfa_reset_expires                                    DateTime?  @db.Timestamp(6)
+  login_attempts                                       Int        @default(0)
+  bloqueado                                            Boolean    @default(false)
+  bloqueado_en                                         DateTime?  @db.Timestamp(6)
+  cancelado                                            Boolean    @default(false)
+  protegido                                            Boolean    @default(false)
   rol_rol_actualizado_por_idTousuarios                 rol[]      @relation("rol_actualizado_por_idTousuarios")
   rol_rol_creado_por_idTousuarios                      rol[]      @relation("rol_creado_por_idTousuarios")
   sesion                                               sesion[]

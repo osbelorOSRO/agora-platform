@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
 import EscaneoQR from "./pages/EscaneoQR";
+import ResetPassword from "./pages/ResetPassword";
+import Setup2FA from "./pages/Setup2FA";
 import BaseLayout from "./modules/accesos/layouts/BaseLayout";
 import Welcome from "./modules/accesos/pages/Welcome";
 import Agenda from "./modules/accesos/pages/Agenda";
@@ -21,6 +23,8 @@ function App() {
 
         <Route path="/login" element={<Login />} />
         <Route path="/escaneo-qr" element={<EscaneoQR />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/setup-2fa" element={<Setup2FA />} />
 
         <Route
           element={
