@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.7
+
+### Fixed
+- Inicializacion de RedisStore en rate limiter: eliminado `lazyConnect` y `enableOfflineQueue:false` para evitar error de timing al arrancar el contenedor. ioredis ahora conecta automaticamente y encola los comandos hasta estar listo.
+
 ## 1.3.6
 
 ### Fixed
