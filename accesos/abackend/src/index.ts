@@ -26,6 +26,9 @@ app.use(
   })
 );
 
+// Proxy trust (Nginx Proxy Manager en produccion)
+app.set('trust proxy', 1);
+
 // Seguridad + parsing
 app.use(helmet());
 app.use(express.json({ limit: '10kb' }));

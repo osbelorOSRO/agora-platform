@@ -89,8 +89,9 @@ export const actualizarUsuario = async (req: Request, res: Response): Promise<vo
       telefono: data.telefono,
     };
 
-    if (data.rolId !== undefined) {
-      datosActualizados.rol_usuarios_rol_idTorol = { connect: { id: data.rolId } };
+    const rolId = data.rolId ?? data.rol?.id;
+    if (rolId !== undefined && rolId !== null) {
+      datosActualizados.rol_usuarios_rol_idTorol = { connect: { id: Number(rolId) } };
     }
 
     const usuarioActualizado = await prisma.usuarios.update({
