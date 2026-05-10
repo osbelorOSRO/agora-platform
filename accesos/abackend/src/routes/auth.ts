@@ -10,15 +10,16 @@ import { registrarUsuario } from "../controllers/preRegistroController.js";
 import { obtenerUsuarios, actualizarUsuario } from "../controllers/usuariosController.js";
 import { resetPassword as adminResetPassword, reset2FA, desbloquear, regenerarInvitacion, cancelarPreregistro } from "../controllers/credencialesAdminController.js";
 import { resetPassword, setup2FAInit, setup2FAConfirmar } from "../controllers/recuperacionController.js";
+import { limitadorLogin, limitadorRecuperacion, limitadorRegistro } from "../utils/rateLimiter.js";
 
 const router = Router();
 
 // Auth pública
-router.post("/login", login);
-router.post("/registrar-usuario", registrarUsuario);
-router.post("/reset-password", resetPassword);
-router.post("/setup-2fa/init", setup2FAInit);
-router.post("/setup-2fa/confirmar", setup2FAConfirmar);
+router.post("/login", limitadorLogin, login);
+router.post("/registrar-usuario", limitadorRegistro, registrarUsuario);
+router.post("/reset-password", limitadorRecuperacion, resetPassword);
+router.post("/setup-2fa/init", limitadorRecuperacion, setup2FAInit);
+router.post("/setup-2fa/confirmar", limitadorRecuperacion, setup2FAConfirmar);
 
 // Auth privada
 router.get("/me", verifyToken, me);
