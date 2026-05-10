@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.6
+
+### Fixed
+- `trust proxy` habilitado en abackend para leer `X-Forwarded-For` correctamente detras de Nginx Proxy Manager — el rate limiter ahora identifica la IP real del cliente.
+- Actualizacion de rol de usuario ahora acepta `rol: {id, nombre}` ademas de `rolId` plano — el cambio de rol desde el panel quedaba silenciosamente ignorado.
+
 ## 1.3.5
 
 ### Added
