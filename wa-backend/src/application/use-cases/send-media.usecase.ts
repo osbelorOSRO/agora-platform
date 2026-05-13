@@ -41,10 +41,18 @@ export class SendMediaUseCase {
   }
 
   private isSafeUploadsPath(pathname: string): boolean {
-    if (!pathname.startsWith('/uploads/')) return false;
     if (pathname.includes('\\') || /%2f|%5c/i.test(pathname)) return false;
 
-    const relative = pathname.slice('/uploads/'.length);
+    let prefix: string;
+    if (pathname.startsWith('/uploads/')) {
+      prefix = '/uploads/';
+    } else if (pathname.startsWith('/agora-media/')) {
+      prefix = '/agora-media/';
+    } else {
+      return false;
+    }
+
+    const relative = pathname.slice(prefix.length);
     if (!relative || relative.includes('/')) return false;
 
     let decoded: string;
@@ -62,10 +70,12 @@ export class SendMediaUseCase {
 
   private resolveInternalDownloadUrl(rawUrl: string): string {
     const parsed = this.assertTrustedMediaUrl(rawUrl);
-    if (parsed.pathname.startsWith('/uploads/')) {
-      return `${env.apiBackendUrl.replace(/\/+$/, '')}${parsed.pathname}${parsed.search}`;
+    // Archivos en MinIO son públicos — usar URL directa
+    if (parsed.pathname.startsWith('/agora-media/')) {
+      return rawUrl;
     }
-    return rawUrl;
+    // Legacy disco local — bajar del API backend
+    return `${env.apiBackendUrl.replace(/\/+$/, '')}${parsed.pathname}${parsed.search}`;
   }
 
   async execute(input: SendMediaInput): Promise<void> {

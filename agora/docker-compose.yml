@@ -59,7 +59,7 @@ services:
     networks:
       - npm_network
     volumes:
-      - ${UPLOADS_DIR}:/app/uploads
+      # - ${UPLOADS_DIR}:/app/uploads  # legacy disco local — desactivado al migrar a MinIO
       - ./config:/app/config
     env_file:
       - ./api-backend-nest/.env
@@ -77,6 +77,12 @@ services:
       - VAULT_ADDR=${VAULT_ADDR}
       - VAULT_APP_SECRETS_PATH=${API_VAULT_APP_SECRETS_PATH:-dev.local1/agora/api-backend-nest}
       - GATEWAY_BASE_URL=${GATEWAY_BASE_URL:-https://gateway.example.com}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT}
+      - MINIO_PORT=${MINIO_PORT:-9000}
+      - MINIO_USE_SSL=${MINIO_USE_SSL:-false}
+      - MINIO_BUCKET=${MINIO_BUCKET:-agora-media}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:4001/ping/db >/dev/null || exit 1"]
       interval: 30s

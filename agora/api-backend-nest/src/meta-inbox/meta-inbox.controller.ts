@@ -290,7 +290,7 @@ export class MetaInboxController {
   private async assertN8nToken(auth: string) {
     const token =
       this.config.get<string>('N8N_SECRET_TOKEN') ||
-      (await getRuntimeSecret('N8N_SECRET_TOKEN'));
+      (await getRuntimeSecret('N8N_SECRET_TOKEN').catch(() => undefined));
     const provided = auth?.replace('Bearer ', '');
 
     if (!provided || provided !== token) {

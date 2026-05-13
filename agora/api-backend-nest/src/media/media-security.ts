@@ -17,7 +17,8 @@ export const MAX_MEDIA_UPLOAD_BYTES = Number(
   process.env.MAX_MEDIA_UPLOAD_BYTES || 50 * 1024 * 1024,
 );
 
-const UPLOAD_DIR = './uploads';
+const UPLOAD_DIR = '/tmp/agora-uploads';
+fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 const FAMILY_MAX_BYTES: Record<MediaFamily, number> = {
   image: Number(process.env.MAX_IMAGE_UPLOAD_BYTES || 10 * 1024 * 1024),
   audio: Number(process.env.MAX_AUDIO_UPLOAD_BYTES || 25 * 1024 * 1024),
@@ -166,7 +167,7 @@ export function assertTrustedMediaUrl(rawUrl: string): string {
   }
 
   if (!isSafeUploadsPath(parsed.pathname)) {
-    throw new BadRequestException('mediaUrl debe apuntar a /uploads');
+    throw new BadRequestException('mediaUrl debe apuntar a una ruta de media valida');
   }
 
   const allowedHosts = trustedMediaHosts();
@@ -179,10 +180,19 @@ export function assertTrustedMediaUrl(rawUrl: string): string {
 
 export function isSafeUploadsPath(pathname: string): boolean {
   const normalized = String(pathname || '');
-  if (!normalized.startsWith('/uploads/')) return false;
   if (normalized.includes('\\') || /%2f|%5c/i.test(normalized)) return false;
 
-  const relative = normalized.slice('/uploads/'.length);
+  // Acepta /uploads/<uuid>.<ext> (legacy disco local) y /agora-media/<uuid>.<ext> (MinIO)
+  let prefix: string;
+  if (normalized.startsWith('/uploads/')) {
+    prefix = '/uploads/';
+  } else if (normalized.startsWith('/agora-media/')) {
+    prefix = '/agora-media/';
+  } else {
+    return false;
+  }
+
+  const relative = normalized.slice(prefix.length);
   if (!relative || relative.includes('/')) return false;
 
   let decoded: string;

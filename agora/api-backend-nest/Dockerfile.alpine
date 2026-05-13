@@ -17,7 +17,7 @@ COPY prisma ./prisma/
 COPY prisma.config.ts ./
 
 # Instalar dependencias
-RUN npm ci
+RUN npm install
 
 # Copiar código fuente
 COPY . .
@@ -42,7 +42,7 @@ COPY prisma ./prisma/
 COPY prisma.config.ts ./
 
 # Instalar SOLO dependencias de producción
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 
 # Generar Prisma Client en producción
 RUN DATABASE_URL=postgresql://user:pass@localhost:5432/db npx prisma generate

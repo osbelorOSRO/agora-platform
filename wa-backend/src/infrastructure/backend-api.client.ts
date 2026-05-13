@@ -36,6 +36,8 @@ export class BackendApiClient {
       maxBodyLength: 50 * 1024 * 1024,
     });
 
+    // url es la URL completa retornada por MinIO; ruta es legacy disco local
+    if (response.data?.url) return response.data.url as string;
     const savedPath = response.data?.ruta || `/uploads/${filename}`;
     return `${MEDIA_BASE_URL}${savedPath}`;
   }

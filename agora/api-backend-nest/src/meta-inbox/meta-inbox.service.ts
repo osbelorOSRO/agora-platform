@@ -19,6 +19,7 @@ import {
   removeFileQuietly,
   validateStoredMediaFile,
 } from '../media/media-security';
+import { MinioService } from '../minio/minio.service';
 
 type ThreadRow = {
   threadId: string;
@@ -215,6 +216,7 @@ export class MetaInboxService implements OnModuleInit {
     private readonly prisma: PrismaService,
     private readonly websocketNotifier: WebsocketNotifierService,
     private readonly baileysSender: BaileysSenderService,
+    private readonly minio: MinioService,
   ) {}
 
   async onModuleInit() {
@@ -2352,8 +2354,7 @@ export class MetaInboxService implements OnModuleInit {
       mediaType,
       mimeType: detected.mimeType,
     });
-    const publicBase = (process.env.MEDIA_BASE_URL || '').replace(/\/+$/, '');
-    const mediaUrl = `${publicBase}/uploads/${preparedMedia.fileName}`;
+    const mediaUrl = preparedMedia.url;
 
     return this.sendMediaByUrlInternal(
       sessionId,
@@ -2362,7 +2363,7 @@ export class MetaInboxService implements OnModuleInit {
       'HUMAN',
       {
         mimeType: preparedMedia.mimeType,
-        fileName: preparedMedia.fileName,
+        fileName: file.filename,
         caption,
       },
     );
@@ -3213,9 +3214,11 @@ export class MetaInboxService implements OnModuleInit {
       mediaType: ThreadMessageMediaType;
       mimeType: string;
     },
-  ): Promise<{ fileName: string; mimeType: string }> {
+  ): Promise<{ url: string; mimeType: string }> {
     if (!input.isInstagram || input.mediaType !== 'audio') {
-      return { fileName: file.filename, mimeType: input.mimeType };
+      const url = await this.minio.uploadFile(file.path, file.filename, input.mimeType);
+      removeFileQuietly(file.path);
+      return { url, mimeType: input.mimeType };
     }
 
     const inputPath = file.path;
@@ -3224,30 +3227,25 @@ export class MetaInboxService implements OnModuleInit {
 
     try {
       await this.execFilePromise('ffmpeg', [
-        '-i',
-        inputPath,
-        '-c:a',
-        'aac',
-        '-b:a',
-        '64k',
-        '-ar',
-        '44100',
-        '-ac',
-        '1',
+        '-i', inputPath,
+        '-c:a', 'aac',
+        '-b:a', '64k',
+        '-ar', '44100',
+        '-ac', '1',
         outputPath,
         '-y',
       ]);
       if (!fs.existsSync(outputPath)) {
         throw new Error('ffmpeg_output_missing');
       }
-      fs.unlinkSync(inputPath);
-      return { fileName: outputName, mimeType: 'audio/mp4' };
+      removeFileQuietly(inputPath);
+      const url = await this.minio.uploadFile(outputPath, outputName, 'audio/mp4');
+      removeFileQuietly(outputPath);
+      return { url, mimeType: 'audio/mp4' };
     } catch (error: any) {
       removeFileQuietly(inputPath);
       removeFileQuietly(outputPath);
-      this.logger.warn(
-        `audio conversion failed for IG: ${error?.message ?? 'unknown_error'}`,
-      );
+      this.logger.warn(`audio conversion failed for IG: ${error?.message ?? 'unknown_error'}`);
       throw new BadRequestException(
         'No se pudo convertir el audio a formato compatible para Instagram (m4a).',
       );

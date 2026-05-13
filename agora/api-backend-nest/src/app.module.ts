@@ -3,7 +3,6 @@ import { ConfigModule } from '@nestjs/config';
 import { PrismaService } from './database/prisma/prisma.service';
 import { HealthModule } from './health/health.module';
 import { AuthModule } from './auth/auth.module';
-import { SesionModule } from './sesion/sesion.module';
 import { MediaModule } from './media/media.module';
 import { BaileysModule } from './baileys/baileys.module';
 import { CacheConfigModule } from './cache/cache.module';
@@ -15,6 +14,7 @@ import { ActorEventsModule } from './actor-events/actor-events.module';
 import { ActorModule } from './actor/actor.module';
 import { QueuesModule } from './queues/queues.module';
 import { MetaInboxModule } from './meta-inbox/meta-inbox.module';
+import { MinioModule } from './minio/minio.module';
 
 @Global()
 @Module({
@@ -24,7 +24,6 @@ import { MetaInboxModule } from './meta-inbox/meta-inbox.module';
     }),
     HealthModule,
     AuthModule,
-    SesionModule,
     MediaModule,
     BaileysModule,
     CacheConfigModule,
@@ -36,6 +35,7 @@ import { MetaInboxModule } from './meta-inbox/meta-inbox.module';
     ActorModule,
     QueuesModule,
     MetaInboxModule,
+    MinioModule,
   ],
   providers: [PrismaService],
   exports: [PrismaService],

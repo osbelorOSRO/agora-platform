@@ -9,12 +9,13 @@ import {
   removeFileQuietly,
   validateStoredMediaFile,
 } from './media-security';
+import { MinioService } from '../minio/minio.service';
 
 const execFilePromise = util.promisify(execFile);
-const MEDIA_BASE_URL = (process.env.MEDIA_BASE_URL || '').replace(/\/+$/, '');
 
 @Injectable()
 export class MediaService {
+  constructor(private readonly minio: MinioService) {}
 
   async procesarArchivo(
     archivo: Express.Multer.File,
@@ -24,11 +25,12 @@ export class MediaService {
     const detected = await validateStoredMediaFile(archivo, familiesForTipo(tipo));
     ensureCanonicalExtension(archivo, detected);
 
-    const ruta = `/uploads/${archivo.filename}`;
+    const url = await this.minio.uploadFile(archivo.path, archivo.filename, detected.mimeType);
+    removeFileQuietly(archivo.path);
 
     return {
       mensaje: 'Archivo guardado correctamente',
-      ruta,
+      url,
       nombre_original: archivo.originalname,
       mimeType: detected.mimeType,
       actorId,
@@ -36,26 +38,21 @@ export class MediaService {
     };
   }
 
-  // 🔹 NUEVO MÉTODO PARA TTS → CONVERSIÓN A NOTA DE VOZ
   async procesarTts(archivo: Express.Multer.File) {
     const detected = await validateStoredMediaFile(archivo, ['audio', 'video']);
     ensureCanonicalExtension(archivo, detected);
 
     const rutaOriginal = archivo.path;
     const rutaOgg = rutaOriginal.replace(path.extname(rutaOriginal), '_wa.ogg');
+    const nombreFinal = path.basename(rutaOgg);
 
     try {
       await execFilePromise('ffmpeg', [
-        '-i',
-        rutaOriginal,
-        '-c:a',
-        'libopus',
-        '-b:a',
-        '32k',
-        '-ar',
-        '48000',
-        '-ac',
-        '1',
+        '-i', rutaOriginal,
+        '-c:a', 'libopus',
+        '-b:a', '32k',
+        '-ar', '48000',
+        '-ac', '1',
         '-vn',
         rutaOgg,
         '-y',
@@ -70,14 +67,14 @@ export class MediaService {
       throw error;
     }
 
-    // eliminar mp3 original
-    fs.unlinkSync(rutaOriginal);
+    removeFileQuietly(rutaOriginal);
 
-    const nombreFinal = path.basename(rutaOgg);
+    const url = await this.minio.uploadFile(rutaOgg, nombreFinal, 'audio/ogg');
+    removeFileQuietly(rutaOgg);
 
     return {
       mensaje: 'TTS convertido correctamente',
-      url: `${MEDIA_BASE_URL}/uploads/${nombreFinal}`,
+      url,
     };
   }
 }
