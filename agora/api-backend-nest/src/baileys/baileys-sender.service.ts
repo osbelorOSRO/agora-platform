@@ -113,9 +113,7 @@ export class BaileysSenderService {
         status: error.response?.status,
         data: error.response?.data
       });
-      throw new InternalServerErrorException(
-        `No se pudo enviar mensaje vía Gateway: ${error.message}`
-      );
+      throw new InternalServerErrorException('No se pudo enviar el mensaje');
     }
   }
 
@@ -152,9 +150,7 @@ export class BaileysSenderService {
         data: error.response?.data,
         error: error.message,
       });
-      throw new InternalServerErrorException(
-        `No se pudo actualizar bloqueo vía Gateway: ${error.message}`,
-      );
+      throw new InternalServerErrorException('No se pudo actualizar el estado de bloqueo');
     }
   }
 }

@@ -1,17 +1,20 @@
 import { Transform } from 'class-transformer';
-import { IsObject, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsObject, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class MsgDelegationFailedDto {
   @IsString()
   @MinLength(1)
+  @MaxLength(255)
   externalEventId!: string;
 
   @IsString()
   @MinLength(1)
+  @MaxLength(255)
   actorExternalId!: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(500)
   reason?: string;
 
   @IsOptional()

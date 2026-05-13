@@ -1,13 +1,15 @@
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsObject, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsBoolean, IsObject, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class MsgDelegationCompleteDto {
   @IsString()
   @MinLength(1)
+  @MaxLength(255)
   externalEventId!: string;
 
   @IsString()
   @MinLength(1)
+  @MaxLength(255)
   actorExternalId!: string;
 
   @IsOptional()
@@ -16,6 +18,7 @@ export class MsgDelegationCompleteDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   signalType?: string;
 
   @IsOptional()

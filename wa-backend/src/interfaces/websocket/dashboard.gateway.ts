@@ -29,6 +29,17 @@ async function authenticateDashboardToken(token: unknown): Promise<{ id: number;
   return response.data
 }
 
+function makeThrottle(maxCalls: number, windowMs: number): () => boolean {
+  const timestamps: number[] = []
+  return function (): boolean {
+    const now = Date.now()
+    while (timestamps.length > 0 && timestamps[0] < now - windowMs) timestamps.shift()
+    if (timestamps.length >= maxCalls) return false
+    timestamps.push(now)
+    return true
+  }
+}
+
 function enqueue<T>(job: () => Promise<T>): Promise<T> {
   const run = blockQueue.then(job, job)
   blockQueue = run.then(() => undefined, () => undefined)
@@ -248,6 +259,10 @@ export function registerDashboardGateway(io: IOServer, gateway: WhatsAppGateway)
 
   io.on('connection', (socket) => {
 
+    const throttleDestructivo = makeThrottle(3, 5 * 60 * 1000) // restart/logout/generateQR: 3 por 5 min
+    const throttleBloqueo = makeThrottle(20, 60 * 1000)         // bloquear/desbloquear: 20 por min
+    const throttlePausa = makeThrottle(10, 60 * 1000)           // setAutomationPaused: 10 por min
+
     socket.emit('estadoCompleto', runtimeState.snapshotEstado())
     socket.emit('stats', runtimeState.snapshotStats())
     socket.emit('config', loadConfig())
@@ -266,6 +281,10 @@ export function registerDashboardGateway(io: IOServer, gateway: WhatsAppGateway)
     })
 
     socket.on('setAutomationPaused', (pausedRaw: boolean) => {
+      if (!throttlePausa()) {
+        socket.emit('qrStatus', { status: 'error', message: 'Demasiadas solicitudes. Intenta más tarde.' })
+        return
+      }
       const config = loadConfig()
       config.automationPaused = pausedRaw === true
       saveConfig(config)
@@ -279,6 +298,10 @@ export function registerDashboardGateway(io: IOServer, gateway: WhatsAppGateway)
     })
 
     socket.on('restart', async () => {
+      if (!throttleDestructivo()) {
+        socket.emit('qrStatus', { status: 'error', message: 'Demasiadas solicitudes. Intenta más tarde.' })
+        return
+      }
       try {
         socket.emit('qrStatus', { status: 'info', message: 'Reiniciando bot...' })
         await enqueue(async () => {
@@ -297,6 +320,10 @@ export function registerDashboardGateway(io: IOServer, gateway: WhatsAppGateway)
     })
 
     socket.on('logout', async () => {
+      if (!throttleDestructivo()) {
+        socket.emit('qrStatus', { status: 'error', message: 'Demasiadas solicitudes. Intenta más tarde.' })
+        return
+      }
       try {
         socket.emit('qrStatus', { status: 'info', message: 'Cerrando sesión de WhatsApp...' })
         await enqueue(async () => {
@@ -316,6 +343,10 @@ export function registerDashboardGateway(io: IOServer, gateway: WhatsAppGateway)
     })
 
     socket.on('generateQR', async () => {
+      if (!throttleDestructivo()) {
+        socket.emit('qrStatus', { status: 'error', message: 'Demasiadas solicitudes. Intenta más tarde.' })
+        return
+      }
       try {
         socket.emit('qrStatus', { status: 'info', message: 'Generando nuevo QR...' })
         await enqueue(async () => {
@@ -336,6 +367,10 @@ export function registerDashboardGateway(io: IOServer, gateway: WhatsAppGateway)
     })
 
     socket.on('bloquear', async (numeroRaw: string) => {
+      if (!throttleBloqueo()) {
+        socket.emit('bloqueado', { numero: numeroRaw, success: false, error: 'Demasiadas solicitudes. Intenta más tarde.' })
+        return
+      }
 
       const numero = normalizePhone(numeroRaw)
 
@@ -380,6 +415,10 @@ export function registerDashboardGateway(io: IOServer, gateway: WhatsAppGateway)
     })
 
     socket.on('desbloquear', async (numeroRaw: string) => {
+      if (!throttleBloqueo()) {
+        socket.emit('desbloqueado', { numero: numeroRaw, success: false, error: 'Demasiadas solicitudes. Intenta más tarde.' })
+        return
+      }
 
       const numero = normalizePhone(numeroRaw)
 

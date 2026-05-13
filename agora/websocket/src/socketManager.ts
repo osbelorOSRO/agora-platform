@@ -29,6 +29,17 @@ const isNonEmptyString = (value: unknown): value is string =>
 const isSafeRoom = (room: string): boolean =>
   /^(usuario_[A-Za-z0-9_-]+|[A-Za-z0-9:_-]{1,255})$/.test(room);
 
+function makeThrottle(maxCalls: number, windowMs: number): () => boolean {
+  const timestamps: number[] = [];
+  return function (): boolean {
+    const now = Date.now();
+    while (timestamps.length > 0 && timestamps[0] < now - windowMs) timestamps.shift();
+    if (timestamps.length >= maxCalls) return false;
+    timestamps.push(now);
+    return true;
+  };
+}
+
 // Estado de conexión del bot
 let estadoBot = false;
 
@@ -64,8 +75,15 @@ export const handleSocketConnection = async (socket: Socket, io: Server): Promis
     socket.emit("conexion_autorizada", { usuario_id: decoded.id });
     const ownUserRoom = `usuario_${decoded.id}`;
 
+    const throttleSetup = makeThrottle(5, 60 * 1000);    // joinRoom/conectar_usuario: 5 por min
+    const throttleGlobito = makeThrottle(30, 60 * 1000); // emitirGlobito: 30 por min
+
     // 📌 Unión explícita a una sala operativa.
     socket.on("joinRoom", (room: string) => {
+      if (!throttleSetup()) {
+        socket.emit("error", "Demasiadas solicitudes");
+        return;
+      }
       if (!isNonEmptyString(room) || !isSafeRoom(room)) {
         socket.emit("error", "Sala inválida");
         return;
@@ -89,6 +107,10 @@ export const handleSocketConnection = async (socket: Socket, io: Server): Promis
 
     // 👤 El frontend también se une a su propia sala de usuario
     socket.on("conectar_usuario", ({ usuario_id, rol } = {}) => {
+      if (!throttleSetup()) {
+        socket.emit("error", "Demasiadas solicitudes");
+        return;
+      }
       if (!usuario_id) {
         socket.emit("error", "usuario_id requerido");
         return;
@@ -131,6 +153,10 @@ export const handleSocketConnection = async (socket: Socket, io: Server): Promis
     });
 
     socket.on("emitirGlobito", (data: MensajeGlobitoPayload) => {
+      if (!esBot && !throttleGlobito()) {
+        socket.emit("error", "Demasiadas solicitudes");
+        return;
+      }
       if (!data?.usuario_id) {
         socket.emit("error", "usuario_id requerido");
         return;

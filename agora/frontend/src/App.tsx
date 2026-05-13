@@ -12,6 +12,7 @@ import Roles from "./modules/accesos/pages/Roles";
 import MetaInboxPage from "./pages/MetaInboxPage";
 import WhatsappAdsPage from "./pages/WhatsappAdsPage";
 import Ajustes from "./modules/accesos/pages/Ajustes";
+import Sesiones from "./modules/accesos/pages/Sesiones";
 import Reportes from "./modules/accesos/pages/Reportes";
 import WaControlPage from "./modules/wa/pages/WaControlPage";
 
@@ -96,6 +97,14 @@ function App() {
             element={
               <ProtectedRoute requiredPermissions={["editar_configuracion"]}>
                 <Roles />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/accesos/ajustes/sesiones"
+            element={
+              <ProtectedRoute requiredPermissions={["editar_configuracion"]}>
+                <Sesiones />
               </ProtectedRoute>
             }
           />

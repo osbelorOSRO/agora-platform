@@ -66,3 +66,13 @@ export const limitadorRegistro = rateLimit({
   handler: (_req, res) => respuestaLimite(res),
   skip: () => !redisClient,
 });
+
+export const limitadorSesionesAdmin = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  store: crearStore('sesiones:admin'),
+  handler: (_req, res) => respuestaLimite(res),
+  skip: () => !redisClient,
+});

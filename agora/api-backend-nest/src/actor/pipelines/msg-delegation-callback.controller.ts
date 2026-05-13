@@ -78,7 +78,7 @@ export class MsgDelegationCallbackController {
       this.config.get<string>('N8N_CALLBACK_SECRET_TOKEN') ||
       this.config.get<string>('N8N_SECRET_TOKEN') ||
       (await getRuntimeSecret('N8N_CALLBACK_SECRET_TOKEN').catch(async () =>
-        getRuntimeSecret('N8N_SECRET_TOKEN'),
+        getRuntimeSecret('N8N_SECRET_TOKEN').catch(() => undefined),
       ));
     const provided = authHeader?.replace('Bearer ', '');
 

@@ -62,6 +62,17 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
 // Puerto
 const PORT = process.env.PORT || 4002;
 
+const JWT_TTL_MS = 12 * 60 * 60 * 1000; // 12h — igual al TTL del JWT
+
+async function limpiarSesionesExpiradas() {
+  const corte = new Date(Date.now() - JWT_TTL_MS);
+  const { count } = await prisma.sesion.updateMany({
+    where: { activo: true, horaLogin: { lt: corte } },
+    data: { activo: false },
+  });
+  if (count > 0) console.log(`🧹 Sesiones expiradas cerradas: ${count}`);
+}
+
 const start = async () => {
   try {
     await prisma.$queryRawUnsafe("SELECT 1");
@@ -69,6 +80,10 @@ const start = async () => {
   } catch (error) {
     console.error("⚠️ Smoke check DB falló al iniciar:", error);
   }
+
+  // Limpieza inicial + cada hora
+  limpiarSesionesExpiradas().catch(() => {});
+  setInterval(() => limpiarSesionesExpiradas().catch(() => {}), 60 * 60 * 1000);
 
   app.listen(PORT, () => {
     console.log(`✅ Backend corriendo en el puerto ${PORT}`);

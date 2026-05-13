@@ -110,6 +110,21 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       { algorithm: "RS256", expiresIn: "12h" }
     );
 
+    try {
+      await prisma.sesion.create({
+        data: {
+          usuarioId: usuario.id,
+          ip: req.ip ?? '0.0.0.0',
+          userAgent: req.headers['user-agent'] ?? 'desconocido',
+          horaLogin: new Date(),
+          ultimaInteraccion: new Date(),
+          activo: true,
+        },
+      });
+    } catch (e) {
+      console.error('Error registrando sesión:', e);
+    }
+
     res.json({
       token: tokenJwt,
       usuario: { id: usuario.id, username: usuario.username, nombre: usuario.nombre, apellido: usuario.apellido, email: usuario.email, rol: nombreRol, permisos },

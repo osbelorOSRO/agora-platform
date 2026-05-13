@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { KeyRound, Users } from "lucide-react";
+import { KeyRound, Users, Activity } from "lucide-react";
 
 const cards = [
   {
@@ -13,6 +13,12 @@ const cards = [
     title: "Roles y permisos",
     description: "Configuración de permisos por rol según la nueva matriz de acceso.",
     Icon: KeyRound,
+  },
+  {
+    to: "/accesos/ajustes/sesiones",
+    title: "Sesiones activas",
+    description: "Control en vivo de sesiones abiertas. Permite cerrar sesiones individualmente.",
+    Icon: Activity,
   },
 ];
 

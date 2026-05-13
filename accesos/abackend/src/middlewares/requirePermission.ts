@@ -27,6 +27,23 @@ export function requirePermission(permission: string) {
   };
 }
 
+export function requireRoles(...roles: string[]) {
+  const allowed = new Set(roles.map(normalize));
+
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (!req.user) {
+      res.status(401).json({ error: 'No autorizado' });
+      return;
+    }
+    const userRol = normalize(String(req.user.rol ?? ''));
+    if (!allowed.has(userRol)) {
+      res.status(403).json({ error: 'Acceso denegado' });
+      return;
+    }
+    next();
+  };
+}
+
 export function requireAnyPermission(permissions: string[]) {
   const normalized = permissions.map(normalize);
 
