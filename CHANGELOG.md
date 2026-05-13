@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.0
+
+### Changed
+- Migración del sistema de almacenamiento de archivos multimedia (imágenes, audio, video, documentos) de disco local a un gestor de objetos S3-compatible.
+- Los archivos subidos por usuarios y los generados internamente (conversiones de audio, medios salientes) ahora se almacenan y sirven desde el nuevo gestor de media, con acceso HTTPS público.
+- El backend ya no sirve archivos estáticos directamente — la responsabilidad de entrega de media queda en el gestor de objetos.
+- Variables de entorno actualizadas para reflejar el nuevo origen de media en CSP y configuración del cliente S3.
+- Validación de URLs de media actualizada para aceptar el nuevo esquema de rutas.
+
 ## 1.3.7
 
 ### Fixed
