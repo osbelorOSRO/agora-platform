@@ -4,10 +4,10 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 services=(
-  "agora/api-backend-nest"
-  "agora/websocket"
-  "accesos/abackend"
-  "wa-backend"
+  "app/agora/api-backend-nest"
+  "app/agora/websocket"
+  "app/accesos/abackend"
+  "app/wa-backend"
 )
 
 for svc in "${services[@]}"; do

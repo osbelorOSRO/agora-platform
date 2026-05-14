@@ -9,8 +9,8 @@ if [[ -z "$PROFILE" ]]; then
   exit 1
 fi
 
-PROFILE_SECRET_FILE="$ROOT_DIR/env/${PROFILE}.secrets.env"
-PROFILE_PUBLIC_FILE="$ROOT_DIR/env/${PROFILE}.env"
+PROFILE_SECRET_FILE="$ROOT_DIR/app/env/${PROFILE}.secrets.env"
+PROFILE_PUBLIC_FILE="$ROOT_DIR/app/env/${PROFILE}.env"
 if [[ -f "$PROFILE_SECRET_FILE" ]]; then
   PROFILE_FILE="$PROFILE_SECRET_FILE"
 elif [[ -f "$PROFILE_PUBLIC_FILE" ]]; then
@@ -24,25 +24,20 @@ set -a
 source "$PROFILE_FILE"
 set +a
 
-N8N_SECRET_FILE="$ROOT_DIR/n8n/env/${PROFILE}.secrets.env"
-N8N_PUBLIC_FILE="$ROOT_DIR/n8n/env/${PROFILE}.env"
-if [[ -f "$N8N_SECRET_FILE" ]]; then
-  export N8N_ENV_FILE="$N8N_SECRET_FILE"
 else
-  export N8N_ENV_FILE="$N8N_PUBLIC_FILE"
 fi
 
 project_for_file() {
   case "$1" in
-    "accesos/docker-compose.yml") echo "stack_accesos" ;;
-    "agora/docker-compose.yml") echo "stack_agora" ;;
-    "infraestructura/docker-compose.yml") echo "stack_infra_pgadmin" ;;
+    "app/accesos/docker-compose.yml") echo "stack_accesos" ;;
+    "app/agora/docker-compose.yml") echo "stack_agora" ;;
+    
     "n8n/docker-compose.yml") echo "stack_n8n" ;;
-    "nmp/docker-compose.yml") echo "stack_nmp" ;;
-    "redis/docker-compose.yml") echo "stack_redis" ;;
-    "tesseract/docker-compose.yml") echo "stack_tesseract" ;;
-    "wa-backend/docker-compose.yml") echo "stack_wa_backend" ;;
-    "whisper/docker-compose.yml") echo "stack_whisper" ;;
+    
+    
+    
+    "app/wa-backend/docker-compose.yml") echo "stack_wa_backend" ;;
+    
     *) echo "stack_misc" ;;
   esac
 }
@@ -55,15 +50,10 @@ compose_down() {
   docker compose -p "$project" -f "$ROOT_DIR/$file" down
 }
 
-compose_down "nmp/docker-compose.yml"
 compose_down "n8n/docker-compose.yml"
-compose_down "wa-backend/docker-compose.yml"
-compose_down "agora/docker-compose.yml"
-compose_down "accesos/docker-compose.yml"
-compose_down "infraestructura/docker-compose.yml"
-compose_down "tesseract/docker-compose.yml"
-compose_down "whisper/docker-compose.yml"
-compose_down "redis/docker-compose.yml"
+compose_down "app/wa-backend/docker-compose.yml"
+compose_down "app/agora/docker-compose.yml"
+compose_down "app/accesos/docker-compose.yml"
 
 echo ""
 echo "Perfil detenido: $PROFILE"

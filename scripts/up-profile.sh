@@ -9,8 +9,8 @@ if [[ -z "$PROFILE" ]]; then
   exit 1
 fi
 
-PROFILE_SECRET_FILE="$ROOT_DIR/env/${PROFILE}.secrets.env"
-PROFILE_PUBLIC_FILE="$ROOT_DIR/env/${PROFILE}.env"
+PROFILE_SECRET_FILE="$ROOT_DIR/app/env/${PROFILE}.secrets.env"
+PROFILE_PUBLIC_FILE="$ROOT_DIR/app/env/${PROFILE}.env"
 
 if [[ -f "$PROFILE_SECRET_FILE" ]]; then
   PROFILE_FILE="$PROFILE_SECRET_FILE"
@@ -28,12 +28,12 @@ set +a
 
 project_for_file() {
   case "$1" in
-    "accesos/docker-compose.yml") echo "stack_accesos" ;;
-    "agora/docker-compose.yml") echo "stack_agora" ;;
+    "app/accesos/docker-compose.yml") echo "stack_accesos" ;;
+    "app/agora/docker-compose.yml") echo "stack_agora" ;;
     "n8n/docker-compose.yml") echo "stack_n8n" ;;
     "redis/docker-compose.yml") echo "stack_redis" ;;
     "n8n/tesseract/docker-compose.yml") echo "stack_tesseract" ;;
-    "wa-backend/docker-compose.yml") echo "stack_wa_backend" ;;
+    "app/wa-backend/docker-compose.yml") echo "stack_wa_backend" ;;
     "n8n/whisper/docker-compose.yml") echo "stack_whisper" ;;
     *) echo "stack_misc" ;;
   esac
@@ -54,9 +54,9 @@ fi
 
 compose_up "n8n/whisper/docker-compose.yml"
 compose_up "n8n/tesseract/docker-compose.yml"
-compose_up "accesos/docker-compose.yml"
-compose_up "agora/docker-compose.yml"
-compose_up "wa-backend/docker-compose.yml"
+compose_up "app/accesos/docker-compose.yml"
+compose_up "app/agora/docker-compose.yml"
+compose_up "app/wa-backend/docker-compose.yml"
 N8N_ENV_FILE="$ROOT_DIR/n8n/env/${PROFILE}.secrets.env"
 [[ -f "$N8N_ENV_FILE" ]] || N8N_ENV_FILE="$ROOT_DIR/n8n/env/${PROFILE}.env"
 echo ">>> up: n8n/docker-compose.yml (project=stack_n8n)"

@@ -9,8 +9,8 @@ if [[ -z "$PROFILE" ]]; then
   exit 1
 fi
 
-PROFILE_SECRET_FILE="$ROOT_DIR/env/${PROFILE}.secrets.env"
-PROFILE_PUBLIC_FILE="$ROOT_DIR/env/${PROFILE}.env"
+PROFILE_SECRET_FILE="$ROOT_DIR/app/env/${PROFILE}.secrets.env"
+PROFILE_PUBLIC_FILE="$ROOT_DIR/app/env/${PROFILE}.env"
 if [[ -f "$PROFILE_SECRET_FILE" ]]; then
   PROFILE_FILE="$PROFILE_SECRET_FILE"
 elif [[ -f "$PROFILE_PUBLIC_FILE" ]]; then

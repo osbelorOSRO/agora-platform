@@ -9,8 +9,8 @@ if [[ -z "$PROFILE" ]]; then
   exit 1
 fi
 
-PROFILE_SECRET_FILE="$ROOT_DIR/env/${PROFILE}.secrets.env"
-PROFILE_PUBLIC_FILE="$ROOT_DIR/env/${PROFILE}.env"
+PROFILE_SECRET_FILE="$ROOT_DIR/app/env/${PROFILE}.secrets.env"
+PROFILE_PUBLIC_FILE="$ROOT_DIR/app/env/${PROFILE}.env"
 if [[ -f "$PROFILE_SECRET_FILE" ]]; then
   PROFILE_FILE="$PROFILE_SECRET_FILE"
 elif [[ -f "$PROFILE_PUBLIC_FILE" ]]; then
@@ -39,7 +39,7 @@ echo ">>> env n8n: $N8N_ENV_FILE"
 
 (
   cd "$ROOT_DIR"
-  docker compose --env-file "$PROFILE_FILE" -f agora/docker-compose.yml up -d --force-recreate api_backend_nest websocket
+  docker compose --env-file "$PROFILE_FILE" -f app/agora/docker-compose.yml up -d --force-recreate api_backend_nest websocket
 )
 
 (
