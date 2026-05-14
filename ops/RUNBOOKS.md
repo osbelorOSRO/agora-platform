@@ -108,5 +108,6 @@ Cada servicio resuelve `VAULT_ADDR` desde su propio `.env` (no versionado). Si e
 
 ### Documentación de referencia
 
+- Mapa completo de secretos por servicio y path: `ops/docs/DOC-SECRETS-MAP-VAULT.md`
 - AppRoles, policies y bootstrap de n8n: `ops/docs/DOC-N8N-VAULT-APPROLE.md`
 - Gestión del secreto compartido entre servicios: `README-OPERACION.md` → sección "Vault compartido entre api_backend_nest y websocket"
