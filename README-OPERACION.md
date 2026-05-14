@@ -1,7 +1,7 @@
 # Operacion de Stack por Perfil
 
 ## Version
-- Actual: `v1.3.7` (2026-05-10)
+- Actual: `v1.4.1` (2026-05-14)
 - Al hacer release: actualizar versión aquí y en `README.md`, y crear tag `vX.Y.Z`.
 
 Scripts:
@@ -21,15 +21,22 @@ Perfiles disponibles:
 - `prod.vps2`
 
 ## Modelo de archivos env
-- Repo (sin secretos): `env/<perfil>.env` y `n8n/env/<perfil>.env`
-- Local privado (con secretos): `env/<perfil>.secrets.env` y `n8n/env/<perfil>.secrets.env`
-- Los scripts usan prioridad:
-1. `*.secrets.env`
-2. `*.env`
+
+El repo separa los env en dos grupos independientes:
+
+**App** (agora, accesos, wa-backend):
+- Template: `app/env/<perfil>.env`
+- Secretos locales: `app/env/<perfil>.secrets.env`
+
+**N8N** (n8n, whisper, tesseract):
+- Template: `n8n/env/<perfil>.env`
+- Secretos locales: `n8n/env/<perfil>.secrets.env`
+
+Los scripts usan prioridad: `*.secrets.env` > `*.env`.
 
 Inicializacion recomendada en un host nuevo:
 ```bash
-cp env/dev.local1.env env/dev.local1.secrets.env
+cp app/env/dev.local1.env app/env/dev.local1.secrets.env
 cp n8n/env/dev.local1.env n8n/env/dev.local1.secrets.env
 # luego editar *.secrets.env con valores reales
 ```
@@ -39,6 +46,20 @@ Si faltan `.env` no versionados de servicios (api/websocket/abackend/wa-backend)
 ./scripts/init-service-envs.sh
 ```
 Luego completar valores reales antes de validar o levantar.
+
+## Servicios externos al repo
+
+Los siguientes servicios operan con su propio compose fuera del repo y se unen a `npm_network`:
+
+- **Postgres**: compose en el host, fuera del repo
+- **Redis**: `sudo docker compose -p stack_redis --env-file /root/redis/.env -f /root/redis/docker-compose.yml up -d`
+- **Nginx Proxy Manager**: `sudo docker compose -p stack_npm -f /root/nginx-proxy-manager/docker-compose.yml up -d`
+
+La red Docker compartida debe existir antes de levantar cualquier stack:
+```bash
+docker network create npm_network
+```
+(el script `up-profile.sh` la crea automaticamente si no existe)
 
 ## N8N con Vault (sin token root)
 Script:
@@ -109,19 +130,14 @@ cd <repo_root>
 ./scripts/down-profile.sh dev.local1
 ```
 
-## Compose en repo
-- PgAdmin: `infraestructura/docker-compose.yml`
-
-Nota:
-- Compose de BD (`postgres`) queda fuera del repo y se opera externamente por host.
-- Desde `v1.3.0`, el nucleo conversacional opera solo sobre `threads`, `thread_messages`, `thread_events` y `meta_inbox_contacts`
-
 ## N8N por perfil
-`n8n/docker-compose.yml` toma env exclusivo por perfil desde:
-- `n8n/env/dev.local1.env`
-- `n8n/env/dev.vps1.env`
-- `n8n/env/dev.vps2.env`
-- `n8n/env/prod.vps1.env`
-- `n8n/env/prod.vps2.env`
+`n8n/docker-compose.yml` es independiente del env de app. Toma su propia configuracion desde:
+- `n8n/env/<perfil>.secrets.env` (si existe)
+- `n8n/env/<perfil>.env` (fallback)
 
-Si existe `n8n/env/<perfil>.secrets.env`, se usa ese archivo automaticamente.
+Cada archivo de env de n8n incluye `HOST_BIND_IP`, `N8N_DATA_TYPE`, `N8N_DATA_VOLUME` y `N8N_ENV_FILE` — no depende del env global de app.
+
+Para levantar n8n de forma independiente:
+```bash
+docker compose -p stack_n8n --env-file n8n/env/prod.vps1.secrets.env -f n8n/docker-compose.yml up -d
+```

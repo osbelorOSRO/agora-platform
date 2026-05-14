@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.1
+
+### Changed
+- Repositorio reorganizado en dos grupos independientes: `app/` (agora, accesos, wa-backend, env) y `n8n/` (n8n, whisper, tesseract, env).
+- N8N ahora es completamente autónomo: su env incluye `HOST_BIND_IP`, `N8N_DATA_TYPE` y `N8N_DATA_VOLUME`; no depende del env global de app.
+- Whisper y Tesseract movidos a `n8n/whisper/` y `n8n/tesseract/` — reflejan que son exclusivos de n8n.
+- Redis, Nginx Proxy Manager y PgAdmin removidos del repo; operan con compose propio en el host.
+- Scripts actualizados para reflejar nuevas rutas de compose y env.
+
 ## 1.4.0
 
 ### Changed
