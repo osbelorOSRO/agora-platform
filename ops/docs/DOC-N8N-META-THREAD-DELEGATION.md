@@ -22,7 +22,7 @@ Este documento reemplaza el enfoque viejo de `clientes`, `procesos`, `map_journe
 
 ## Variables n8n vigentes
 
-Variables que pueden quedar en `n8n/env/<perfil>.env`:
+Variables que pueden quedar en `n8n/app/env/<perfil>.env`:
 
 ```txt
 N8N_CUSTOM_API_TOKEN=http://abackend:4002/api/service-auth/service-token

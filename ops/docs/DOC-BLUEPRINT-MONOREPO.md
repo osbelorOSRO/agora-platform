@@ -15,7 +15,7 @@ agora-platform/
     api-backend-nest/
     abackend/
     websocket/
-    wa-backend/
+    app/wa-backend/
   infra/
     edge/
       nmp/

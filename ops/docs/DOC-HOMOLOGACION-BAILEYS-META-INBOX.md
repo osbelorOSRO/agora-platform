@@ -21,18 +21,18 @@ En salida, `wa-backend` no debe intentar transportar todo el envelope canonico h
 
 Baileys actual:
 
-- `wa-backend/src/core/whatsapp/message.handler.ts`
-- `wa-backend/src/core/whatsapp/types.ts`
-- `wa-backend/src/application/use-cases/handle-incoming.usecase.ts`
-- `wa-backend/src/infrastructure/backend-api.client.ts`
+- `app/wa-backend/src/core/whatsapp/message.handler.ts`
+- `app/wa-backend/src/core/whatsapp/types.ts`
+- `app/wa-backend/src/application/use-cases/handle-incoming.usecase.ts`
+- `app/wa-backend/src/infrastructure/backend-api.client.ts`
 
 Meta Inbox actual:
 
-- `agora/api-backend-nest/src/webhooks/meta/meta.service.ts`
-- `agora/api-backend-nest/src/actor-events/actor-events.service.ts`
-- `agora/api-backend-nest/src/actor/pipelines/messages.processor.ts`
-- `agora/api-backend-nest/src/meta-inbox/meta-inbox.service.ts`
-- `agora/api-backend-nest/prisma/schema.prisma`
+- `app/agora/api-backend-nest/src/webhooks/meta/meta.service.ts`
+- `app/agora/api-backend-nest/src/actor-events/actor-events.service.ts`
+- `app/agora/api-backend-nest/src/actor/pipelines/messages.processor.ts`
+- `app/agora/api-backend-nest/src/meta-inbox/meta-inbox.service.ts`
+- `app/agora/api-backend-nest/prisma/schema.prisma`
 
 ## Contrato Canonico Propuesto
 

@@ -8,10 +8,10 @@ Fecha de corte: 2026-03-08
 - Avanzar gradualmente hacia Vault sin frenar operacion.
 
 ## Esquema aplicado
-- Perfil publico (versionable): `env/<perfil>.env`
-- Perfil secreto (no versionable): `env/<perfil>.secrets.env`
-- N8N publico: `n8n/env/<perfil>.env`
-- N8N secreto: `n8n/env/<perfil>.secrets.env`
+- Perfil publico (versionable): `app/env/<perfil>.env`
+- Perfil secreto (no versionable): `app/env/<perfil>.secrets.env`
+- N8N publico: `n8n/app/env/<perfil>.env`
+- N8N secreto: `n8n/app/env/<perfil>.secrets.env`
 
 Los scripts (`up/down/status/verify-compose`) priorizan `*.secrets.env`.
 
@@ -25,7 +25,7 @@ Los scripts (`up/down/status/verify-compose`) priorizan `*.secrets.env`.
 2. Mover gradualmente secretos de N8N a Vault (api keys, passwords, tokens).
 3. Antes de iniciar n8n, ejecutar un script bootstrap que:
    - lea secretos desde Vault,
-   - genere archivo temporal `n8n/env/<perfil>.secrets.env`,
+   - genere archivo temporal `n8n/app/env/<perfil>.secrets.env`,
    - levante n8n,
    - opcionalmente elimine el temporal al detener.
 
