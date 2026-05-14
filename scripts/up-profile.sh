@@ -25,13 +25,6 @@ set -a
 source "$PROFILE_FILE"
 set +a
 
-N8N_SECRET_FILE="$ROOT_DIR/n8n/env/${PROFILE}.secrets.env"
-N8N_PUBLIC_FILE="$ROOT_DIR/n8n/env/${PROFILE}.env"
-if [[ -f "$N8N_SECRET_FILE" ]]; then
-  export N8N_ENV_FILE="$N8N_SECRET_FILE"
-else
-  export N8N_ENV_FILE="$N8N_PUBLIC_FILE"
-fi
 
 project_for_file() {
   case "$1" in
@@ -39,11 +32,10 @@ project_for_file() {
     "agora/docker-compose.yml") echo "stack_agora" ;;
     "infraestructura/docker-compose.yml") echo "stack_infra_pgadmin" ;;
     "n8n/docker-compose.yml") echo "stack_n8n" ;;
-    "nmp/docker-compose.yml") echo "stack_nmp" ;;
     "redis/docker-compose.yml") echo "stack_redis" ;;
-    "tesseract/docker-compose.yml") echo "stack_tesseract" ;;
+    "n8n/tesseract/docker-compose.yml") echo "stack_tesseract" ;;
     "wa-backend/docker-compose.yml") echo "stack_wa_backend" ;;
-    "whisper/docker-compose.yml") echo "stack_whisper" ;;
+    "n8n/whisper/docker-compose.yml") echo "stack_whisper" ;;
     *) echo "stack_misc" ;;
   esac
 }
@@ -62,14 +54,17 @@ if ! docker network inspect npm_network >/dev/null 2>&1; then
 fi
 
 compose_up "redis/docker-compose.yml"
-compose_up "whisper/docker-compose.yml"
-compose_up "tesseract/docker-compose.yml"
+compose_up "n8n/whisper/docker-compose.yml"
+compose_up "n8n/tesseract/docker-compose.yml"
 compose_up "infraestructura/docker-compose.yml"
 compose_up "accesos/docker-compose.yml"
 compose_up "agora/docker-compose.yml"
 compose_up "wa-backend/docker-compose.yml"
-compose_up "n8n/docker-compose.yml"
-compose_up "nmp/docker-compose.yml"
+N8N_ENV_FILE="$ROOT_DIR/n8n/env/${PROFILE}.secrets.env"
+[[ -f "$N8N_ENV_FILE" ]] || N8N_ENV_FILE="$ROOT_DIR/n8n/env/${PROFILE}.env"
+echo ">>> up: n8n/docker-compose.yml (project=stack_n8n)"
+docker compose -p stack_n8n --env-file "$N8N_ENV_FILE" -f "$ROOT_DIR/n8n/docker-compose.yml" up -d
+
 
 echo ""
 echo "Perfil cargado: $PROFILE"

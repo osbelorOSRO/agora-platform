@@ -44,8 +44,8 @@ mongo/mongo-init/dump/
 **/*.tsbuildinfo
 
 # Local service runtime data/config that should not be in repo
-nmp/data/
-whisper/models/
+nmp/
+n8n/whisper/models/
 uploads/
 
 # Mongo seed/restore kept out of repo
