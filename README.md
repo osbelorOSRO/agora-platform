@@ -67,7 +67,8 @@ cp n8n/env/dev.local1.env n8n/env/dev.local1.secrets.env
 ## Documentacion
 - `README-OPERACION.md`: guia principal de operacion por perfil.
 - `CHANGELOG.md`: historial de releases.
-- `ops/docs/`: runbooks, matriz de ambientes, validaciones y gobierno de release.
+- `ops/RUNBOOKS.md`: guía operativa de referencia rápida (bootstrap, deploy, rollback, Vault).
+- `ops/docs/`: matriz de ambientes, diseño técnico y documentos de referencia internos.
 
 ## Licencia
 Pendiente de definir.
