@@ -30,7 +30,6 @@ project_for_file() {
   case "$1" in
     "accesos/docker-compose.yml") echo "stack_accesos" ;;
     "agora/docker-compose.yml") echo "stack_agora" ;;
-    "infraestructura/docker-compose.yml") echo "stack_infra_pgadmin" ;;
     "n8n/docker-compose.yml") echo "stack_n8n" ;;
     "redis/docker-compose.yml") echo "stack_redis" ;;
     "n8n/tesseract/docker-compose.yml") echo "stack_tesseract" ;;
@@ -56,7 +55,6 @@ fi
 compose_up "redis/docker-compose.yml"
 compose_up "n8n/whisper/docker-compose.yml"
 compose_up "n8n/tesseract/docker-compose.yml"
-compose_up "infraestructura/docker-compose.yml"
 compose_up "accesos/docker-compose.yml"
 compose_up "agora/docker-compose.yml"
 compose_up "wa-backend/docker-compose.yml"

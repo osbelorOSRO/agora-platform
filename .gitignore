@@ -29,6 +29,8 @@ wa-backend/auth_info_baileys/
 redis/redis_cache/
 n8n/n8n-data/
 
+infraestructura/
+
 # DB exports / dumps / backups
 infraestructura/postgres-init/*.sql
 mongo/mongo-init/*.archive
