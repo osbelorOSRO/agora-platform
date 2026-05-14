@@ -52,7 +52,6 @@ if ! docker network inspect npm_network >/dev/null 2>&1; then
   docker network create npm_network >/dev/null
 fi
 
-compose_up "redis/docker-compose.yml"
 compose_up "n8n/whisper/docker-compose.yml"
 compose_up "n8n/tesseract/docker-compose.yml"
 compose_up "accesos/docker-compose.yml"
