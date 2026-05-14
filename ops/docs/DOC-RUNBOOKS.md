@@ -10,8 +10,8 @@
    ```
 4. Levantar servicios externos al repo (con compose propios en el host):
    - Postgres — compose en el host
-   - Redis — `sudo docker compose -p stack_redis --env-file /root/redis/.env -f /root/redis/docker-compose.yml up -d`
-   - Nginx Proxy Manager — `sudo docker compose -p stack_npm -f /root/nginx-proxy-manager/docker-compose.yml up -d`
+   - Redis — compose propio en el host, levantar desde la ruta donde este ubicado
+   - Nginx Proxy Manager — compose propio en el host, levantar desde la ruta donde este ubicado
 5. Clonar el repo y preparar secretos:
    ```bash
    cp app/env/dev.local1.env app/env/dev.local1.secrets.env

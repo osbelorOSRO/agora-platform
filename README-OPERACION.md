@@ -52,8 +52,8 @@ Luego completar valores reales antes de validar o levantar.
 Los siguientes servicios operan con su propio compose fuera del repo y se unen a `npm_network`:
 
 - **Postgres**: compose en el host, fuera del repo
-- **Redis**: `sudo docker compose -p stack_redis --env-file /root/redis/.env -f /root/redis/docker-compose.yml up -d`
-- **Nginx Proxy Manager**: `sudo docker compose -p stack_npm -f /root/nginx-proxy-manager/docker-compose.yml up -d`
+- **Redis**: compose propio en el host, levantar desde la ruta donde este ubicado
+- **Nginx Proxy Manager**: compose propio en el host, levantar desde la ruta donde este ubicado
 
 La red Docker compartida debe existir antes de levantar cualquier stack:
 ```bash
