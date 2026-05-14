@@ -1,7 +1,5 @@
 # DOC-SECRETS-MAP-VAULT
 
-Fecha de corte: 2026-03-08
-
 ## Regla base
 - En repo (`*.env`, `.env.example`): solo placeholders de acceso a Vault.
   - `VAULT_ADDR`

@@ -353,7 +353,7 @@ Salida hacia Baileys debe reducirse a:
 
 ```ts
 {
-  to: '56912345678@s.whatsapp.net',
+  to: '<actor_phone>@s.whatsapp.net',
   content: {
     text?: string,
     image?: Buffer,
@@ -514,7 +514,7 @@ Ejemplo para texto entrante:
 ```json
 {
   "externalEventId": "BAILEYS:message-id",
-  "actorExternalId": "56912345678",
+  "actorExternalId": "<actor_phone>",
   "provider": "BAILEYS",
   "objectType": "WHATSAPP",
   "pipeline": "MESSAGES",
@@ -524,8 +524,8 @@ Ejemplo para texto entrante:
   "payload": {
     "platform": "whatsapp",
     "eventKind": "message",
-    "senderId": "56912345678",
-    "recipientId": "56999999999:1@s.whatsapp.net",
+    "senderId": "<actor_phone>",
+    "recipientId": "<bot_phone>:1@s.whatsapp.net",
     "timestamp": 1777138800,
     "message": {
       "mid": "message-id",
@@ -539,13 +539,13 @@ Ejemplo para texto entrante:
     },
     "wa": {
       "tipoId": "jid",
-      "remoteJid": "56912345678@s.whatsapp.net",
+      "remoteJid": "<actor_phone>@s.whatsapp.net",
       "remoteJidAlt": null,
       "senderPn": null,
       "senderKey": null,
-      "resolvedJid": "56912345678@s.whatsapp.net",
-      "recipientRawId": "56999999999:1@s.whatsapp.net",
-      "recipientPhone": "56999999999",
+      "resolvedJid": "<actor_phone>@s.whatsapp.net",
+      "recipientRawId": "<bot_phone>:1@s.whatsapp.net",
+      "recipientPhone": "<bot_phone>",
       "pushName": "Cliente desde bot"
     },
     "rawEvent": {}
@@ -558,7 +558,7 @@ Ejemplo para media entrante:
 ```json
 {
   "externalEventId": "BAILEYS:message-id",
-  "actorExternalId": "56912345678",
+  "actorExternalId": "<actor_phone>",
   "provider": "BAILEYS",
   "objectType": "WHATSAPP",
   "pipeline": "MESSAGES",
@@ -568,8 +568,8 @@ Ejemplo para media entrante:
   "payload": {
     "platform": "whatsapp",
     "eventKind": "message",
-    "senderId": "56912345678",
-    "recipientId": "56999999999:1@s.whatsapp.net",
+    "senderId": "<actor_phone>",
+    "recipientId": "<bot_phone>:1@s.whatsapp.net",
     "message": {
       "mid": "message-id",
       "text": "[audio]",
@@ -587,7 +587,7 @@ Ejemplo para media entrante:
     },
     "wa": {
       "tipoId": "jid",
-      "resolvedJid": "56912345678@s.whatsapp.net"
+      "resolvedJid": "<actor_phone>@s.whatsapp.net"
     },
     "rawEvent": {}
   }
