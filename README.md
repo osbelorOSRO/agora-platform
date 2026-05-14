@@ -72,7 +72,7 @@ cp n8n/env/dev.local1.env n8n/env/dev.local1.secrets.env
 
 ## Licencia
 
-El código propio de este repositorio es propietario y confidencial. Ver `LICENSE`.
+El código propio de este repositorio se distribuye bajo la licencia **MIT** — libre para cualquier uso. Ver `LICENSE`.
 
 Dependencias de terceros incluidas o referenciadas, cada una bajo su propia licencia:
 
