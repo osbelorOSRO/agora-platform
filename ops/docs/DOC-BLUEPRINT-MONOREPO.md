@@ -1,141 +1,113 @@
 # DOC-BLUEPRINT-MONOREPO
 
 ## 1. Identidad del Proyecto
-- Nombre oficial del monorepo: `agora-platform`
-- Nota: `example.com` y `example.org` son dominios de entorno, no nombre de proyecto.
 
-## 2. Estructura Objetivo (Opción A)
-Se adopta estructura por dominio funcional para evitar mezcla:
+- Nombre oficial del monorepo: `agora-platform`
+- Plataforma modular de atención, automatización y control de conversaciones.
+
+## 2. Estructura del Repo
 
 ```text
 agora-platform/
-  apps/
-    frontend/
-  services/
-    api-backend-nest/
-    abackend/
-    websocket/
-    app/wa-backend/
-  infra/
-    edge/
-      nmp/
-    messaging/
-      n8n/
-    ai/
-      whisper/
-      tesseract/
-    cache/
-      redis/
-    security/
-      vault/
-    admin/
-      pgadmin/
+  app/
+    agora/
+      frontend/          # React (Nginx)
+      api-backend-nest/  # API REST principal (NestJS)
+      websocket/         # WebSocket panel humano (Socket.IO)
+    accesos/
+      abackend/          # Autenticación y accesos (Express)
+    wa-backend/          # Bridge WhatsApp/Baileys (Express)
+    env/                 # Templates de configuración por perfil (app)
+
+  n8n/
+    docker-compose.yml
+    whisper/             # STT — solo usado por n8n
+    tesseract/           # OCR — solo usado por n8n
+    env/                 # Templates de configuración por perfil (n8n)
+
+  scripts/               # Operación del stack por perfil
   ops/
-    scripts/
-    docs/
-  env/
+    docs/                # Diseño, arquitectura, DDL de Postgres
+    RUNBOOKS.md          # Guía operativa de referencia rápida
+    RELEASE-CHECKLIST.md # Checklist genérico de release
 ```
 
-Regla de frontera:
-- `apps/`: interfaces de usuario
-- `services/`: lógica de negocio core
-- `infra/`: servicios de soporte operacional/técnico
-- `ops/`: operación, runbooks, scripts de despliegue/verificación
-- `env/`: perfiles declarativos por entorno físico+lógico
+## 3. Servicios Core
 
-## 3. Core Product Definido
-Servicios core del producto:
-- `frontend`
-- `abackend`
-- `websocket`
-- `api-backend-nest`
-- `wa-backend`
+| Contenedor | Stack | Descripción |
+|---|---|---|
+| `panel_frontend` | app/agora | Frontend React |
+| `api_backend_nest` | app/agora | API REST principal |
+| `panel_websocket` | app/agora | WebSocket panel humano |
+| `abackend` | app/accesos | Autenticación y accesos |
+| `wa-backend` | app/wa-backend | Bridge WhatsApp/Baileys |
 
-## 4. Infra Declarativa en Repo
-Se mantiene declarativa en repo (compose/config), no estado persistente:
-- `n8n`
-- `pgadmin`
-- `tesseract`
-- `whisper`
-- `nmp`
-- `redis`
+## 4. Servicios de Soporte (fuera del repo)
 
-Nota operativa actual:
-- `vault` en produccion/dev real se opera fuera de repo (`/root/vault`).
-- En repo solo puede existir referencia documental o template no operativo.
+Los siguientes servicios operan con su propio compose en el host, fuera del árbol del repo:
 
-## 5. Política de Estado Persistente
-Todo estado persistente o sensible va fuera del repo.
+- **Postgres** — BD principal, accedida por DSN (`DATABASE_URL`)
+- **Redis** — caché y rate limiting
+- **Nginx Proxy Manager** — proxy inverso y TLS
+- **Vault** — gestor de secretos (ver sección 7)
 
-Ejemplos fuera del repo:
-- `n8n-data`
-- `nmp/data`
-- `nmp/letsencrypt`
-- `uploads`
-- `auth`
-- backups/dumps
-- volúmenes de BD
+Todos se unen a la red Docker compartida `npm_network`.
 
-Principio:
-- Repo = configuración declarativa versionada
-- Host/VPS = estado operativo mutable
+## 5. Automatización e IA
 
-## 6. NPM (Nginx Proxy Manager)
-Decisión oficial:
-- NPM forma parte del stack de `infra` (sí dentro del monorepo a nivel declarativo)
-- Su estado queda fuera del repo (`/data`, `/etc/letsencrypt`, certs)
+N8N es completamente autónomo: su compose y env son independientes del stack de app.
 
-Esto aplica también a certificados de Cloudflare Origin: material sensible/operativo fuera de Git.
+- `n8n/` — orquestador de flujos
+- `n8n/whisper/` — Speech-to-Text (solo usado por n8n)
+- `n8n/tesseract/` — OCR (solo usado por n8n)
 
-## 7. Bases de Datos: Arquitectura Operativa
-### 7.1 Regla General
-El monorepo **no depende** de que Postgres este dentro del mismo repo ni en el mismo compose del producto.
+## 6. Política de Configuración
 
-Las apps consumen Postgres por DSN/URL (`DATABASE_URL`) como servicio externo.
+Los archivos `*.env` versionados en `app/env/` y `n8n/env/` son **templates con placeholders** — nunca contienen valores reales.
 
-### 7.2 Mapa físico/lógico definido
-- Producción oficial BD: `VPS1` (permanente)
-- Pruebas BD: copia restaurada en `VPS2` (solo dev/pruebas)
-- Compose de BD fuera de `/proyectos`, gestionado en `/root` de cada VPS
+Cada despliegue completa su propia capa de secretos en `*.secrets.env` (ignorados por git).
 
-### 7.3 Conectividad de seguridad
-- Acceso a BD por red privada Tailscale (no por dominio público)
-- Recomendación operativa: puertos de BD sin exposición a Internet pública
+Convenciones:
+- `HOST_BIND_IP` — IP de bind de puertos públicos por entorno
+- `*_PUBLIC_URL` — URLs accesibles desde el exterior
+- `*_INTERNAL_URL` — URLs internas de red Docker
 
-## 8. Ambientes físicos y lógicos
-Perfiles activos definidos:
-- `dev.local1` (`<host_bind_ip>`)
-- `dev.vps1` (`<host_bind_ip>`)
-- `dev.vps2` (`<host_bind_ip>`)
-- `prod.vps1` (`<host_bind_ip>`, dominio `example.com`)
-- `prod.vps2` (`<host_bind_ip>`, dominio `example.org`)
+## 7. Vault
 
-## 9. Convención de configuración
-- Variables públicas por perfil: `*_PUBLIC_URL`
-- Variables internas de red Docker: `*_INTERNAL_URL`
-- Bind de puertos públicos por entorno: `HOST_BIND_IP`
+Vault es el gestor centralizado de secretos. Los servicios que lo consumen leen sus variables sensibles desde Vault en arranque, usando AppRole con policy estricta por servicio.
 
-## 10. Criterio de No Mezcla
-Para evitar enredo operativo:
-- No guardar datos persistentes en repo
-- No mezclar estado de NPM/certs entre entornos
-- No acoplar compose de aplicación al ciclo de vida de BD
-- Operar BD como capa externa controlada
+Vault opera fuera del repo (compose propio en el host). En repo solo existe documentación de referencia:
 
-## 11. Estado de Aprobación
-Este blueprint consolida decisiones aprobadas en sesión y sirve como base para:
-- `DOC-MIGRACION-FASES.md`
-- `DOC-GIT-RELEASE-GOVERNANCE.md`
-- `DOC-VALIDACIONES.md`
-- `DOC-GO-NO-GO.md`
+- `ops/docs/DOC-SECRETS-MAP-VAULT.md` — mapa de paths y secretos por servicio
+- `ops/docs/DOC-N8N-VAULT-APPROLE.md` — configuración de AppRole para n8n
 
-## 12. Política Operativa de Vault (Acordada)
-Modelo definido para esta etapa:
-- `Vault VPS2`: unseal manual (ancla operativa)
-- `Vault VPS1`: auto-unseal vía transit apuntando a `Vault VPS2`
+## 8. Política de Estado Persistente
 
-Reglas operativas:
-- No se asume reinicio conjunto de ambos VPS.
-- Antes de reiniciar `Vault VPS1`, verificar `Vault VPS2` en estado `unsealed`.
-- Si `Vault VPS2` cae, `Vault VPS1` sigue operativo mientras no reinicie.
-- Mantener procedimiento de contingencia manual (claves Shamir resguardadas).
+El repo contiene únicamente configuración declarativa versionada. Todo estado operativo queda en el host:
+
+- Sesiones WhatsApp (`auth/`)
+- Datos de n8n
+- Uploads y media (almacenados en gestor de objetos S3-compatible, fuera del repo)
+- Volúmenes de BD
+- Certificados TLS
+- Backups y dumps
+
+## 9. Bases de Datos
+
+Las apps consumen Postgres como servicio externo por DSN (`DATABASE_URL`). El repo no incluye compose de BD.
+
+Los DDL necesarios para crear las tablas del sistema están en `ops/docs/*.sql`.
+
+## 10. Ambientes
+
+Perfiles definidos:
+
+| Perfil | Uso |
+|---|---|
+| `dev.local1` | Desarrollo en máquina local |
+| `dev.vps1` | Desarrollo en VPS1 |
+| `dev.vps2` | Desarrollo en VPS2 |
+| `prod.vps1` | Producción VPS1 |
+| `prod.vps2` | Producción VPS2 |
+
+Cada perfil tiene su propio par `<perfil>.env` (template) + `<perfil>.secrets.env` (valores reales, no versionado).
