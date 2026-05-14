@@ -1,0 +1,39 @@
+Copyright (c) 2026 Agora Platform. All rights reserved.
+
+This software and its source code are proprietary and confidential.
+Unauthorized copying, distribution, modification, or use of this software,
+in whole or in part, is strictly prohibited without explicit written
+permission from the copyright holder.
+
+---
+
+THIRD-PARTY LICENSES
+
+This software includes or depends on the following third-party components,
+each governed by its own license. Users of this software must comply with
+the terms of these licenses independently.
+
+1. Baileys (@whiskeysockets/baileys)
+   License: GNU General Public License v3.0 (GPL-3.0)
+   Source:  https://github.com/WhiskeySockets/Baileys
+   Used by: wa-backend (WhatsApp bridge)
+   Note:    Any distribution of code that directly links or incorporates
+            Baileys must comply with GPL-3.0 terms.
+
+2. n8n
+   License: n8n Sustainable Use License
+   Source:  https://github.com/n8n-io/n8n
+   Used by: n8n workflow automation service
+   Note:    Internal business use is permitted. Use as a managed service
+            offered to third parties or to build a competing product
+            requires an n8n Enterprise license.
+
+3. OpenAI Whisper (via whisper-asr-webservice)
+   License: MIT License
+   Source:  https://github.com/openai/whisper
+   Used by: whisper speech-to-text service (auxiliary to n8n)
+
+4. Tesseract OCR (via tesseract-server)
+   License: Apache License 2.0
+   Source:  https://github.com/tesseract-ocr/tesseract
+   Used by: tesseract OCR service (auxiliary to n8n)

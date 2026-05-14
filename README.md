@@ -71,4 +71,14 @@ cp n8n/env/dev.local1.env n8n/env/dev.local1.secrets.env
 - `ops/docs/`: matriz de ambientes, diseño técnico y documentos de referencia internos.
 
 ## Licencia
-Pendiente de definir.
+
+El código propio de este repositorio es propietario y confidencial. Ver `LICENSE`.
+
+Dependencias de terceros incluidas o referenciadas, cada una bajo su propia licencia:
+
+| Componente | Licencia | Restricción relevante |
+|---|---|---|
+| [Baileys](https://github.com/WhiskeySockets/Baileys) | GPL-3.0 | Distribución de código que lo use debe ser GPL-3.0 |
+| [n8n](https://github.com/n8n-io/n8n) | Sustainable Use License | No puede ofrecerse como servicio gestionado a terceros |
+| [Whisper](https://github.com/openai/whisper) | MIT | Sin restricciones relevantes |
+| [Tesseract](https://github.com/tesseract-ocr/tesseract) | Apache 2.0 | Requiere atribución |
