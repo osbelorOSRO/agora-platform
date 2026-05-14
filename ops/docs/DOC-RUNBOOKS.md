@@ -53,29 +53,7 @@
    ./scripts/smoke-core.sh <perfil>
    ```
 
-### 3.1) Permisos persistentes (`uploads`)
-
-Objetivo: evitar errores `EACCES` al subir archivos en host nuevo o ruta nueva.
-
-```bash
-cd <repo_root>/app/agora
-sudo mkdir -p uploads
-sudo chown -R 1000:1000 uploads
-sudo find uploads -type d -exec chmod 775 {} \;
-sudo find uploads -type f -exec chmod 664 {} \;
-```
-
-Validar dentro del contenedor:
-```bash
-docker exec -it api_backend_nest sh -lc 'touch /app/uploads/.perm_check && ls -l /app/uploads/.perm_check'
-```
-
-Si falla, recrear solo el servicio:
-```bash
-docker compose -p stack_agora --env-file app/env/<perfil>.secrets.env -f app/agora/docker-compose.yml up -d --force-recreate api_backend_nest
-```
-
-### 3.2) config-bot.json (wa-backend)
+### 3.1) config-bot.json (wa-backend)
 
 Si el contenedor crashea con `EISDIR` al pausar el bot, significa que Docker montó un directorio en lugar del archivo:
 
