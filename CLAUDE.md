@@ -19,7 +19,7 @@ Infra de soporte: Vault, Redis, Postgres — todos en red Docker interna `npm_ne
 - **IP Tailscale de Local1:** `100.110.37.17`
 - **Protocolo:** HTTP (sin TLS en dev)
 - **Base de curl:** `http://100.110.37.17:<puerto>/ruta`
-- El `HOST_BIND_IP` real está en `env/dev.local1.secrets.env`
+- El `HOST_BIND_IP` real está en `app/env/dev.local1.secrets.env`
 
 Ejemplo base:
 ```bash
@@ -76,10 +76,10 @@ Cuando termino un bloque, entrego esa estructura — no un resumen narrativo.
 
 ```bash
 # Ver variables efectivas de un servicio
-docker compose -p stack_agora --env-file env/dev.local1.secrets.env -f app/agora/docker-compose.yml config api_backend_nest
+docker compose -p stack_agora --env-file app/env/dev.local1.secrets.env -f app/agora/docker-compose.yml config api_backend_nest
 
 # Rebuild de un servicio (dejar arriba)
-docker compose -p stack_agora --env-file env/dev.local1.secrets.env -f app/agora/docker-compose.yml up -d --build --force-recreate api_backend_nest
+docker compose -p stack_agora --env-file app/env/dev.local1.secrets.env -f app/agora/docker-compose.yml up -d --build --force-recreate api_backend_nest
 
 # Logs en vivo
 docker logs -f api_backend_nest
