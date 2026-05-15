@@ -134,6 +134,15 @@ export class MetaInboxController {
     return this.metaInbox.getStageTemplatePaths(stageActual);
   }
 
+  @Get('n8n/stage-templates/:stageActual')
+  async getStageTemplatePathsForN8n(
+    @Headers('authorization') auth: string,
+    @Param('stageActual') stageActual: string,
+  ) {
+    await this.assertN8nToken(auth);
+    return this.metaInbox.getStageTemplatePaths(stageActual);
+  }
+
   @Post('threads/:sessionId/send-text')
   @UseGuards(PanelJwtAuthGuard)
   async sendText(
