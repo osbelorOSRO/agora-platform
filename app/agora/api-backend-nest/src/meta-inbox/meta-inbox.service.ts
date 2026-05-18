@@ -2105,10 +2105,11 @@ export class MetaInboxService implements OnModuleInit {
 
     const modo = this.normalizeOfferMode(input.modo);
     const eventTipo = modo === 'portabilidad_postpago' ? 'portabilidad' : modo;
+    const lookingForAccepted = input.decision?.trim().toLowerCase() === 'acepta';
     const recentEvents = await this.listOfferEvents({
       sessionId,
       stageActual: input.stageActual?.trim() || undefined,
-      tipo: eventTipo,
+      tipo: lookingForAccepted ? undefined : eventTipo,
     });
 
     let currentOffer: OfferEventRow | null = null;
