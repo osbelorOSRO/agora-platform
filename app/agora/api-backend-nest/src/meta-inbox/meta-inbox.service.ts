@@ -160,6 +160,10 @@ type OfferPlanRow = {
   precioNormal: string | number | null;
   urlArchivo: string | null;
   duracionPrecio: string | null;
+  gigas: number | null;
+  minutos: string | null;
+  tieneRedesLibres: boolean | null;
+  roaming: string | null;
 };
 
 type OfferPlanCatalogRow = OfferPlanRow & {
@@ -191,6 +195,10 @@ type OfferCandidateRow = {
   descripcion: string | null;
   urlArchivo: string | null;
   duracionPrecio: string | null;
+  gigas: number | null;
+  minutos: string | null;
+  tieneRedesLibres: boolean | null;
+  roaming: string | null;
 };
 
 type OfferEventRow = {
@@ -205,6 +213,10 @@ type OfferEventRow = {
   precioNormal: string | null;
   urlArchivo: string | null;
   duracionPrecio: string | null;
+  gigas: number | null;
+  minutos: string | null;
+  tieneRedesLibres: boolean | null;
+  roaming: string | null;
   decision: string;
   createdAt: Date;
   updatedAt: Date | null;
@@ -3435,7 +3447,11 @@ export class MetaInboxService implements OnModuleInit {
         COALESCE(excluye_portabilidad_postpago, false) AS "excluyePortabilidadPostpago",
         url_archivo AS "urlArchivo",
         precio_normal AS "precioNormal",
-        duracion_precio AS "duracionPrecio"
+        duracion_precio AS "duracionPrecio",
+        gigas,
+        minutos,
+        tiene_redes_libres AS "tieneRedesLibres",
+        roaming
       FROM precios_planes
       ORDER BY precio_normal ASC NULLS LAST, lineas ASC NULLS LAST, codigo ASC
     `,
@@ -3495,6 +3511,10 @@ export class MetaInboxService implements OnModuleInit {
         descripcion: plan.descripcion,
         urlArchivo: plan.urlArchivo,
         duracionPrecio: plan.duracionPrecio ?? null,
+        gigas: plan.gigas ?? null,
+        minutos: plan.minutos ?? null,
+        tieneRedesLibres: plan.tieneRedesLibres ?? null,
+        roaming: plan.roaming ?? null,
       }))
       .filter((candidate) => candidate.nivel > 0)
       .sort(
@@ -3526,6 +3546,10 @@ export class MetaInboxService implements OnModuleInit {
           : String(plan.precioNormal),
       urlArchivo: plan.urlArchivo,
       duracionPrecio: plan.duracionPrecio ?? null,
+      gigas: plan.gigas ?? null,
+      minutos: plan.minutos ?? null,
+      tieneRedesLibres: plan.tieneRedesLibres ?? null,
+      roaming: plan.roaming ?? null,
       decision: 'indefinido',
       createdAt: new Date(),
       updatedAt: null,
@@ -3555,7 +3579,11 @@ export class MetaInboxService implements OnModuleInit {
         descripcion,
         precio_normal AS "precioNormal",
         url_archivo AS "urlArchivo",
-        duracion_precio AS "duracionPrecio"
+        duracion_precio AS "duracionPrecio",
+        gigas,
+        minutos,
+        tiene_redes_libres AS "tieneRedesLibres",
+        roaming
       FROM precios_planes
       WHERE codigo = $1
       LIMIT 1
