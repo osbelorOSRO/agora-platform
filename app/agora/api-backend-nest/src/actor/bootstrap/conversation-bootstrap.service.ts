@@ -9,10 +9,11 @@ export type ConversationBootstrapDecision = {
 @Injectable()
 export class ConversationBootstrapService {
   private static readonly WELCOME_TEXT =
-    '¡Hola! 👋 Soy tu Asistente Digital 🤖 Estoy aquí para ayudarte con tu plan.\n' +
-    'Selecciona una opción para continuar 👇\n' +
-    '1️⃣ Ver ofertas\n' +
-    '2️⃣ Evaluar RUN\n' +
+    '¡Hola! 👋 Gracias por escribirnos.\n' +
+    'Soy tu ejecutivo de ventas Movistar Chile y voy a ayudarte a encontrar el plan perfecto para ti 📱\n' +
+    '¿Por dónde quieres empezar?\n' +
+    '1️⃣ Ver ofertas disponibles\n' +
+    '2️⃣ Revisar mi RUN\n' +
     '3️⃣ Hablar con un ejecutivo';
 
   decideForFirstIncoming(input: {
