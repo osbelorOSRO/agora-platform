@@ -159,6 +159,7 @@ type OfferPlanRow = {
   descripcion: string | null;
   precioNormal: string | number | null;
   urlArchivo: string | null;
+  duracionPrecio: string | null;
 };
 
 type OfferPlanCatalogRow = OfferPlanRow & {
@@ -189,6 +190,7 @@ type OfferCandidateRow = {
   lineas: number | null;
   descripcion: string | null;
   urlArchivo: string | null;
+  duracionPrecio: string | null;
 };
 
 type OfferEventRow = {
@@ -202,6 +204,7 @@ type OfferEventRow = {
   descripcion: string | null;
   precioNormal: string | null;
   urlArchivo: string | null;
+  duracionPrecio: string | null;
   decision: string;
   createdAt: Date;
   updatedAt: Date | null;
@@ -3431,7 +3434,8 @@ export class MetaInboxService implements OnModuleInit {
         COALESCE(excluye_alta, false) AS "excluyeAlta",
         COALESCE(excluye_portabilidad_postpago, false) AS "excluyePortabilidadPostpago",
         url_archivo AS "urlArchivo",
-        precio_normal AS "precioNormal"
+        precio_normal AS "precioNormal",
+        duracion_precio AS "duracionPrecio"
       FROM precios_planes
       ORDER BY precio_normal ASC NULLS LAST, lineas ASC NULLS LAST, codigo ASC
     `,
@@ -3490,6 +3494,7 @@ export class MetaInboxService implements OnModuleInit {
         lineas: plan.lineas ?? null,
         descripcion: plan.descripcion,
         urlArchivo: plan.urlArchivo,
+        duracionPrecio: plan.duracionPrecio ?? null,
       }))
       .filter((candidate) => candidate.nivel > 0)
       .sort(
@@ -3520,6 +3525,7 @@ export class MetaInboxService implements OnModuleInit {
           ? null
           : String(plan.precioNormal),
       urlArchivo: plan.urlArchivo,
+      duracionPrecio: plan.duracionPrecio ?? null,
       decision: 'indefinido',
       createdAt: new Date(),
       updatedAt: null,
@@ -3548,7 +3554,8 @@ export class MetaInboxService implements OnModuleInit {
         precio_base AS "precioBase",
         descripcion,
         precio_normal AS "precioNormal",
-        url_archivo AS "urlArchivo"
+        url_archivo AS "urlArchivo",
+        duracion_precio AS "duracionPrecio"
       FROM precios_planes
       WHERE codigo = $1
       LIMIT 1
