@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.5.0
+
+### Added
+- Módulo `stage-templates` en `api-backend-nest`: CRUD completo (`GET`, `POST`, `PATCH`, `DELETE`) sobre la tabla `stage_templates`, restringido a rol `superadmin` mediante nuevo guard `SuperadminJwtGuard`.
+- Módulo `offers` en `api-backend-nest`: CRUD completo sobre la tabla `precios_planes`, restringido a superadmin. Incluye validación de `tipo` (`individual`, `multilineas`, `adicional`) y detección de código duplicado en create.
+- `SuperadminJwtGuard` en `auth/`: guard independiente que valida JWT de panel y exige `rol === 'superadmin'`, retorna 403 si no cumple.
+- Página `StageTemplatesPage` en el panel frontend: tabla completa de `stage_templates` con todas las columnas, filtro por `stage_actual`, scroll horizontal/vertical, badges coloreados por `accion` y `decision`, modal de create/edit, y acceso exclusivo a superadmin.
+- Página `OffersPage` en el panel frontend: tabla completa de `precios_planes` con miniatura de imagen derivada de `url_archivo`, lightbox al doble click, badges por `tipo`, precios formateados en CLP, modal de create/edit, y acceso exclusivo a superadmin.
+- `ProtectedRoute` extendido con prop `requiredRole` para restringir rutas por rol además de permisos.
+- Rutas `/stage-templates` y `/offers` en el router, con ítems en sidebar visibles solo para superadmin.
+
+### Changed
+- `MetaInboxThread` y `MetaInboxContactUpdate` ahora incluyen `firstName`, `lastName`, `rut`, `address` y `region` — campos que ya existían en la tabla pero no se exponían en el panel ni en el endpoint de actualización de contacto.
+- `getThreadRow` en `meta-inbox.service.ts` actualizado para hacer SELECT de los nuevos campos de contacto.
+- Panel de contacto en `MetaInboxPage` actualizado con inputs para todos los campos del contacto.
+- Baileys actualizado de `7.0.0-rc10` a `7.0.0-rc11`: `libsignal` migra de dependencia git a NPM (`^6.0.0`), `whatsapp-rust-bridge` sube a `0.5.4`, fix para VPS sin soporte SIMD en WASM.
+- Workflows de N8N actualizados: `Meta_Signal_Clasifier`, `SWF_Precheck`, `SWF_RAG_Orchestrator`.
+
+### Fixed
+- Campo `accion` corregido de `delegar` a `enviar` en `stage_templates` para las rutas `requisitos_rut_factible → requisitos_oferta_alta` (id 39) y `requisitos_lineas_factibles → requisitos_acepta_porta` (id 66), en ambos entornos (local y remoto).
+
 ## 1.4.1
 
 ### Changed

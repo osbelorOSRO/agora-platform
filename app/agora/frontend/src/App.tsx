@@ -15,6 +15,8 @@ import Ajustes from "./modules/accesos/pages/Ajustes";
 import Sesiones from "./modules/accesos/pages/Sesiones";
 import Reportes from "./modules/accesos/pages/Reportes";
 import WaControlPage from "./modules/wa/pages/WaControlPage";
+import StageTemplatesPage from "./pages/StageTemplatesPage";
+import OffersPage from "./pages/OffersPage";
 
 function App() {
   return (
@@ -115,6 +117,22 @@ function App() {
           <Route
             path="/accesos/roles"
             element={<Navigate to="/accesos/ajustes/roles" replace />}
+          />
+          <Route
+            path="/stage-templates"
+            element={
+              <ProtectedRoute requiredRole="superadmin">
+                <StageTemplatesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/offers"
+            element={
+              <ProtectedRoute requiredRole="superadmin">
+                <OffersPage />
+              </ProtectedRoute>
+            }
           />
         </Route>
       </Routes>

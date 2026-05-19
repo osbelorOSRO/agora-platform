@@ -15,6 +15,8 @@ import { ActorModule } from './actor/actor.module';
 import { QueuesModule } from './queues/queues.module';
 import { MetaInboxModule } from './meta-inbox/meta-inbox.module';
 import { MinioModule } from './minio/minio.module';
+import { StageTemplatesModule } from './stage-templates/stage-templates.module';
+import { OffersModule } from './offers/offers.module';
 
 @Global()
 @Module({
@@ -36,6 +38,8 @@ import { MinioModule } from './minio/minio.module';
     QueuesModule,
     MetaInboxModule,
     MinioModule,
+    StageTemplatesModule,
+    OffersModule,
   ],
   providers: [PrismaService],
   exports: [PrismaService],

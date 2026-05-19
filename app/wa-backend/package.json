@@ -10,7 +10,7 @@
     "start": "node dist/main.js"
   },
   "dependencies": {
-    "@whiskeysockets/baileys": "7.0.0-rc10",
+    "@whiskeysockets/baileys": "7.0.0-rc11",
     "axios": "^1.9.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",

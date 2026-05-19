@@ -234,10 +234,15 @@ const MetaInboxPage: React.FC = () => {
   const [attentionFilter, setAttentionFilter] = useState("ALL");
   const [contactForm, setContactForm] = useState<MetaInboxContactUpdate>({
     displayName: "",
+    firstName: "",
+    lastName: "",
     phone: "",
+    rut: "",
+    address: "",
     email: "",
     notes: "",
     city: "",
+    region: "",
   });
   const [showRecorder, setShowRecorder] = useState(false);
 
@@ -519,10 +524,15 @@ const MetaInboxPage: React.FC = () => {
     if (!selectedThread) return;
     setContactForm({
       displayName: selectedThread.displayName || "",
+      firstName: selectedThread.firstName || "",
+      lastName: selectedThread.lastName || "",
       phone: selectedThread.phone || "",
+      rut: selectedThread.rut || "",
+      address: selectedThread.address || "",
       email: selectedThread.email || "",
       notes: selectedThread.notes || "",
       city: selectedThread.city || "",
+      region: selectedThread.region || "",
     });
   }, [selectedThread]);
 
@@ -570,10 +580,15 @@ const MetaInboxPage: React.FC = () => {
     try {
       const normalizedContact: MetaInboxContactUpdate = {
         displayName: contactForm.displayName?.trim() || undefined,
+        firstName: contactForm.firstName?.trim() || undefined,
+        lastName: contactForm.lastName?.trim() || undefined,
         phone: contactForm.phone?.trim() || undefined,
+        rut: contactForm.rut?.trim() || undefined,
+        address: contactForm.address?.trim() || undefined,
         email: contactForm.email?.trim() || undefined,
         notes: contactForm.notes?.trim() || undefined,
         city: contactForm.city?.trim() || undefined,
+        region: contactForm.region?.trim() || undefined,
       };
 
       await updateMetaInboxContact(selectedThread.sessionId, normalizedContact);
@@ -582,10 +597,15 @@ const MetaInboxPage: React.FC = () => {
         actorExternalId: selectedThread.actorExternalId,
         objectType: selectedThread.objectType,
         displayName: normalizedContact.displayName,
+        firstName: normalizedContact.firstName ?? null,
+        lastName: normalizedContact.lastName ?? null,
         phone: normalizedContact.phone,
+        rut: normalizedContact.rut ?? null,
+        address: normalizedContact.address ?? null,
         email: normalizedContact.email,
         notes: normalizedContact.notes,
         city: normalizedContact.city,
+        region: normalizedContact.region ?? null,
       });
     } catch (e: any) {
       setError(e?.message || "Error guardando contacto");
@@ -1273,7 +1293,28 @@ const MetaInboxPage: React.FC = () => {
             <input
               value={contactForm.displayName || ""}
               onChange={(e) => setContactForm((prev) => ({ ...prev, displayName: e.target.value }))}
-              placeholder="Nombre"
+              placeholder="Nombre completo"
+              className={estilos.metaInbox.contactInput}
+              disabled={!selectedThread}
+            />
+            <input
+              value={contactForm.firstName || ""}
+              onChange={(e) => setContactForm((prev) => ({ ...prev, firstName: e.target.value }))}
+              placeholder="Nombres"
+              className={estilos.metaInbox.contactInput}
+              disabled={!selectedThread}
+            />
+            <input
+              value={contactForm.lastName || ""}
+              onChange={(e) => setContactForm((prev) => ({ ...prev, lastName: e.target.value }))}
+              placeholder="Apellidos"
+              className={estilos.metaInbox.contactInput}
+              disabled={!selectedThread}
+            />
+            <input
+              value={contactForm.rut || ""}
+              onChange={(e) => setContactForm((prev) => ({ ...prev, rut: e.target.value }))}
+              placeholder="RUT"
               className={estilos.metaInbox.contactInput}
               disabled={!selectedThread}
             />
@@ -1285,6 +1326,20 @@ const MetaInboxPage: React.FC = () => {
               disabled={!selectedThread}
             />
             <input
+              value={contactForm.email || ""}
+              onChange={(e) => setContactForm((prev) => ({ ...prev, email: e.target.value }))}
+              placeholder="Email"
+              className={estilos.metaInbox.contactInput}
+              disabled={!selectedThread}
+            />
+            <input
+              value={contactForm.address || ""}
+              onChange={(e) => setContactForm((prev) => ({ ...prev, address: e.target.value }))}
+              placeholder="Dirección"
+              className={estilos.metaInbox.contactInput}
+              disabled={!selectedThread}
+            />
+            <input
               value={contactForm.city || ""}
               onChange={(e) => setContactForm((prev) => ({ ...prev, city: e.target.value }))}
               placeholder="Ciudad"
@@ -1292,9 +1347,9 @@ const MetaInboxPage: React.FC = () => {
               disabled={!selectedThread}
             />
             <input
-              value={contactForm.email || ""}
-              onChange={(e) => setContactForm((prev) => ({ ...prev, email: e.target.value }))}
-              placeholder="Email"
+              value={contactForm.region || ""}
+              onChange={(e) => setContactForm((prev) => ({ ...prev, region: e.target.value }))}
+              placeholder="Región"
               className={estilos.metaInbox.contactInput}
               disabled={!selectedThread}
             />

@@ -32,10 +32,15 @@ type ThreadRow = {
   threadStage: string;
   metadata: any;
   displayName: string;
+  firstName: string | null;
+  lastName: string | null;
   phone: string | null;
+  rut: string | null;
+  address: string | null;
   email: string | null;
   notes: string | null;
   city: string | null;
+  region: string | null;
   whatsappBlockStatus: string | null;
   whatsappBlockUpdatedAt: Date | string | null;
   whatsappBlockJidUsed: string | null;
@@ -3006,10 +3011,15 @@ export class MetaInboxService implements OnModuleInit {
         t.attention_mode AS "attentionMode",
         t.thread_stage AS "threadStage",
         COALESCE(c.display_name, 'Nuevo') AS "displayName",
+        c.first_name AS "firstName",
+        c.last_name AS "lastName",
         c.phone AS "phone",
+        c.rut AS "rut",
+        c.address AS "address",
         c.email AS "email",
         c.notes AS "notes",
         c.city AS "city",
+        c.region AS "region",
         sc.score::text AS "actorScore",
         lc.state::text AS "actorLifecycleState",
         lc.occurred_at AS "actorLifecycleUpdatedAt",

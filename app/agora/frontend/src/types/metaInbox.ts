@@ -14,10 +14,15 @@ export type MetaInboxThread = {
   attentionMode: string;
   threadStage: string;
   displayName: string;
+  firstName: string | null;
+  lastName: string | null;
   phone: string | null;
+  rut: string | null;
+  address: string | null;
   email: string | null;
   notes: string | null;
   city: string | null;
+  region: string | null;
   whatsappBlockStatus?: string | null;
   whatsappBlockUpdatedAt?: string | null;
   whatsappBlockJidUsed?: string | null;
@@ -45,10 +50,15 @@ export type MetaInboxMessage = {
 
 export type MetaInboxContactUpdate = {
   displayName?: string;
+  firstName?: string;
+  lastName?: string;
   phone?: string;
+  rut?: string;
+  address?: string;
   email?: string;
   notes?: string;
   city?: string;
+  region?: string;
 };
 
 export type MetaInboxThreadControlUpdate = {
