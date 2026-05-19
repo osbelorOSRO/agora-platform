@@ -2,6 +2,9 @@
 app/env/*.secrets.env
 n8n/env/*.secrets.env
 
+# N8N workflows (contienen configuración interna, gestionar fuera del repo)
+n8n/workflows/
+
 # Local runtime secrets/services
 app/agora/.env
 app/agora/frontend/.env
