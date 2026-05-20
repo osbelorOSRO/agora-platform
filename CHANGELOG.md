@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.1
+
+### Fixed
+- `message_echo` enviados desde la app de Messenger directamente (no desde el sistema) ahora se persisten como mensajes salientes en el thread correcto del cliente, usando `recipient.id` para hacer match con el `session_id` existente (cualquier estado). Si no existe thread para el destinatario, se ignora sin efectos secundarios. Echoes del propio sistema siguen siendo descartados por `ON CONFLICT (external_event_id) DO NOTHING`.
+
 ## 1.6.0
 
 ### Added

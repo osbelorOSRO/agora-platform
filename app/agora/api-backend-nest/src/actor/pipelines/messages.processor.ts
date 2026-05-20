@@ -66,6 +66,12 @@ export class MessagesProcessor extends WorkerHost {
       this.logger.log(`FLOW[MESSAGE] bootstrap ok actorExternalId=${env.actorExternalId}`);
     });
 
+    if (eventKind === 'message_echo') {
+      await this.handlePageEcho(env);
+      this.logger.log(`FLOW[MESSAGE] done externalEventId=${env.externalEventId}`);
+      return;
+    }
+
     let inboxPersistResult: { inserted: boolean; primedFirstDelegate: boolean } | null = null;
     if (this.isInboxMessageEvent(env?.eventType)) {
       inboxPersistResult = await this.persistMessageSession(env);
@@ -1179,5 +1185,142 @@ export class MessagesProcessor extends WorkerHost {
     if (rawType === 'video') return 'video';
     if (rawType === 'document' || rawType === 'documento' || rawType === 'file') return 'document';
     return null;
+  }
+
+  private async handlePageEcho(env: any): Promise<void> {
+    const payload = env?.payload || {};
+    const recipientId = String(payload?.recipient?.id || '').trim();
+    const objectType = String(env.objectType || 'PAGE');
+
+    if (!recipientId) {
+      this.logger.log(`FLOW[MESSAGE] page_echo skip no_recipient externalEventId=${env.externalEventId}`);
+      return;
+    }
+
+    const threadRows = await this.prisma.$queryRawUnsafe<Array<{ sessionId: string }>>(
+      `
+      SELECT session_id AS "sessionId"
+      FROM threads
+      WHERE actor_external_id = $1
+        AND object_type = $2
+      ORDER BY updated_at DESC, last_message_at DESC NULLS LAST
+      LIMIT 1
+      `,
+      recipientId,
+      objectType,
+    );
+
+    const sessionId = threadRows[0]?.sessionId;
+    if (!sessionId) {
+      this.logger.log(`FLOW[MESSAGE] page_echo skip no_thread recipient=${recipientId} externalEventId=${env.externalEventId}`);
+      return;
+    }
+
+    const eventKind = 'message_echo';
+    const direction = 'OUTGOING' as const;
+    const media = this.extractIncomingMedia(payload);
+    const contentText = this.resolveVisibleContentText(payload, eventKind, media);
+    const mediaCaption = this.resolveIncomingMediaCaption(payload, media, contentText);
+    const sourceChannel = this.resolveSourceChannel(payload, eventKind);
+    const messageType = this.resolveMessageType(eventKind, media);
+    const senderType = 'META_PAGE';
+    const structuredPayload = this.resolveStructuredPayload(payload, eventKind);
+    const contentJson = {
+      ...(payload || {}),
+      senderType,
+      messageType,
+      sourceChannel,
+      structuredPayload,
+      ...(media ? { mediaType: media.mediaType, mediaUrl: media.mediaUrl, caption: mediaCaption } : {}),
+      _sourceApp: payload?.message?.appId || payload?.message?.app_id || 'external',
+    };
+
+    const insertedRows = await this.prisma.$queryRawUnsafe<Array<{ externalEventId: string }>>(
+      `
+      INSERT INTO thread_messages (
+        session_id, external_event_id, message_external_id, actor_external_id,
+        provider, object_type, source_channel, event_kind, direction,
+        content_text, content_json, status, occurred_at, received_at, created_at, updated_at
+      ) VALUES (
+        $1, $2, $3, $4,
+        $5, $6, $7, $8, $9,
+        $10, $11::jsonb, 'received', $12, now(), now(), now()
+      )
+      ON CONFLICT (external_event_id) DO NOTHING
+      RETURNING external_event_id AS "externalEventId"
+      `,
+      sessionId,
+      env.externalEventId,
+      payload?.message?.mid || null,
+      recipientId,
+      env.provider || 'META',
+      objectType,
+      sourceChannel,
+      eventKind,
+      direction,
+      contentText,
+      JSON.stringify(contentJson),
+      new Date(env.occurredAt),
+    );
+
+    if (insertedRows.length === 0) {
+      this.logger.log(`FLOW[MESSAGE] page_echo duplicate skip externalEventId=${env.externalEventId}`);
+      return;
+    }
+
+    this.logger.log(`FLOW[MESSAGE] page_echo persisted recipient=${recipientId} sessionId=${sessionId} externalEventId=${env.externalEventId}`);
+
+    await this.upsertThreadRecord({
+      sessionId,
+      actorExternalId: recipientId,
+      objectType,
+      sourceChannel,
+      lastMessageText: contentText,
+      lastDirection: direction,
+      lastMessageAt: new Date(env.occurredAt),
+    });
+
+    await this.metaInbox.recordThreadEvent({
+      sessionId,
+      actorExternalId: recipientId,
+      objectType,
+      eventType: 'MESSAGE_OUTGOING',
+      eventSource: env.provider || 'META',
+      externalEventId: env.externalEventId,
+      messageExternalId: payload?.message?.mid || null,
+      direction,
+      provider: env.provider || 'META',
+      sourceChannel,
+      metadata: { eventKind, messageType, senderType, status: 'received', externalEcho: true },
+      occurredAt: new Date(env.occurredAt),
+      dedupeKey: `MESSAGE_OUTGOING:${env.externalEventId}`,
+    });
+
+    await this.websocketNotifier.notificarMetaInboxMessageNew({
+      sessionId,
+      actorExternalId: recipientId,
+      objectType,
+      externalEventId: env.externalEventId,
+      messageExternalId: payload?.message?.mid || null,
+      senderType,
+      messageType,
+      sourceChannel,
+      direction,
+      eventKind,
+      contentText,
+      contentJson,
+      status: 'received',
+      occurredAt: env.occurredAt,
+    });
+
+    await this.websocketNotifier.notificarMetaInboxThreadUpsert({
+      sessionId,
+      actorExternalId: recipientId,
+      objectType,
+      sourceChannel,
+      lastMessageText: contentText,
+      lastDirection: direction,
+      lastMessageAt: env.occurredAt,
+    });
   }
 }
