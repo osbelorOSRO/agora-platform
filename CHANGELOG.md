@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.0
+
+### Added
+- Módulo `meta-config` en `api-backend-nest`: configuración de credenciales Meta/Facebook Developer desde el panel superadmin, sin depender de Vault ni reinicio de contenedor.
+- Tabla `meta_app_config` en Postgres: singleton con 13 campos, campos sensibles cifrados con AES-256-GCM (`app_secret`, `meta_page_access_token`, `meta_ig_access_token`, `admin_access_token`).
+- Cache Redis (TTL 5 min) para las 5 claves Meta operativas — `getRuntimeSecret` las resuelve desde DB/Redis, nunca desde Vault.
+- Endpoint `GET /meta-config` y `PATCH /meta-config` protegidos con `SuperadminJwtGuard`.
+- Endpoint `GET /meta-config/reveal/:field` para descifrar campos sensibles bajo demanda, sin exponer valores en el GET general.
+- Página `MetaConfigPage` en el panel frontend: navbar interno con tabs Basic, Messenger, Instagram y Configuración API Graph. Replica visual del portal de Facebook Developers con campos enmascarados, ojito para revelar valores (llamada al endpoint reveal) y edición inline.
+- Ruta `/integraciones` protegida con `requiredRole=superadmin` y acceso desde sidebar.
+
 ## 1.5.0
 
 ### Added
