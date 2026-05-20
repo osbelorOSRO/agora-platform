@@ -14,6 +14,24 @@ model configuracion_bot {
   updated_at         DateTime? @default(now()) @db.Timestamp(6)
 }
 
+model meta_app_config {
+  id                    Int       @id @default(1)
+  app_id                String?
+  app_secret            String?
+  display_name          String?
+  namespace             String?
+  app_domains           String?
+  contact_email         String?
+  privacy_policy_url    String?
+  terms_of_service_url  String?
+  meta_verify_token     String?
+  meta_page_access_token String?
+  meta_ig_verify_token  String?
+  meta_ig_access_token  String?
+  admin_access_token    String?
+  updated_at            DateTime? @default(now()) @updatedAt @db.Timestamp(6)
+}
+
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model n8n_chat_histories {
   id         Int       @id @default(autoincrement())

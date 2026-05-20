@@ -17,6 +17,7 @@ import Reportes from "./modules/accesos/pages/Reportes";
 import WaControlPage from "./modules/wa/pages/WaControlPage";
 import StageTemplatesPage from "./pages/StageTemplatesPage";
 import OffersPage from "./pages/OffersPage";
+import MetaConfigPage from "./pages/MetaConfigPage";
 
 function App() {
   return (
@@ -131,6 +132,14 @@ function App() {
             element={
               <ProtectedRoute requiredRole="superadmin">
                 <OffersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/integraciones"
+            element={
+              <ProtectedRoute requiredRole="superadmin">
+                <MetaConfigPage />
               </ProtectedRoute>
             }
           />

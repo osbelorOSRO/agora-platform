@@ -17,6 +17,7 @@ import { MetaInboxModule } from './meta-inbox/meta-inbox.module';
 import { MinioModule } from './minio/minio.module';
 import { StageTemplatesModule } from './stage-templates/stage-templates.module';
 import { OffersModule } from './offers/offers.module';
+import { MetaConfigModule } from './meta-config/meta-config.module';
 
 @Global()
 @Module({
@@ -40,6 +41,7 @@ import { OffersModule } from './offers/offers.module';
     MinioModule,
     StageTemplatesModule,
     OffersModule,
+    MetaConfigModule,
   ],
   providers: [PrismaService],
   exports: [PrismaService],

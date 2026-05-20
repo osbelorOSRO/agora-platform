@@ -1,6 +1,8 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
+import { MetaConfigService } from './meta-config/meta-config.service';
+import { setMetaConfigService } from './shared/runtime-secrets';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
 import {
@@ -26,6 +28,8 @@ async function bootstrap() {
   });
 
   app.set('trust proxy', 1);
+
+  setMetaConfigService(app.get(MetaConfigService));
 
   const config = app.get(ConfigService);
   const port = config.get<number>('PORT') || 4001;

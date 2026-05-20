@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Home, Settings, FileSpreadsheet, MessagesSquare, LogOut, Wrench, ContactRound, Megaphone, LayoutList, PackageOpen } from "lucide-react";
+import { Home, Settings, FileSpreadsheet, MessagesSquare, LogOut, Wrench, ContactRound, Megaphone, LayoutList, PackageOpen, Plug } from "lucide-react";
 import { getTokenData } from "@/utils/getTokenData";
 import { hasPermission } from "@/utils/permissions";
 
@@ -31,6 +31,7 @@ export default function SidebarCompacto() {
     canViewBot ? { to: "/wa-control", icon: Wrench, label: "Bot" } : null,
     isSuperadmin ? { to: "/stage-templates", icon: LayoutList, label: "Stages" } : null,
     isSuperadmin ? { to: "/offers", icon: PackageOpen, label: "Offers" } : null,
+    isSuperadmin ? { to: "/integraciones", icon: Plug, label: "Integrations" } : null,
   ].filter(Boolean) as Array<{
     to: string;
     icon: React.ComponentType<{ size?: number; className?: string }>;
