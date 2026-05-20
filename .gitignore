@@ -39,6 +39,8 @@ infraestructura/postgres-init/*.sql
 mongo/mongo-init/*.archive
 mongo/mongo-init/*.dump
 mongo/mongo-init/dump/
+ops/docs/*.sql
+ops/scripts/*.sql
 *.bak
 *.backup
 
@@ -60,3 +62,6 @@ mongo/mongo-init/
 n8n_v2_blueprint/
 ops/docs/DOC-PLAN-MITIGACION-SUPERFICIES-ATAQUE.md
 ops/private/
+
+# Claude Code skills (agente local, no versionar)
+.claude/skills/
