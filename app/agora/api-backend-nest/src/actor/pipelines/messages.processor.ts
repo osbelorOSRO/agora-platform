@@ -1189,7 +1189,7 @@ export class MessagesProcessor extends WorkerHost {
 
   private async handlePageEcho(env: any): Promise<void> {
     const payload = env?.payload || {};
-    const recipientId = String(payload?.recipient?.id || '').trim();
+    const recipientId = String(payload?.recipientId || payload?.recipient?.id || '').trim();
     const objectType = String(env.objectType || 'PAGE');
 
     if (!recipientId) {

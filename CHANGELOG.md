@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.2
+
+### Fixed
+- `handlePageEcho` ahora extrae correctamente el `recipientId` desde `payload.recipientId` (campo plano del mensaje normalizado) en lugar de `payload.recipient.id` que no existe en la estructura interna — corrige el `page_echo skip no_recipient` que bloqueaba todos los echoes.
+- Delivery events ya no usan `delivery.mids[0]` como `externalEventId` — evita la colisión de jobId con el `message_echo` del mismo mensaje en BullMQ, que causaba que el echo de Messenger externo fuera descartado silenciosamente antes de procesarse.
+
 ## 1.6.1
 
 ### Fixed

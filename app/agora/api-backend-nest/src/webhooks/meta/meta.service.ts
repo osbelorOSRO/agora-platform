@@ -100,8 +100,7 @@ export class MetaService {
 
     const primaryMid =
       message?.mid ||
-      event?.reaction?.mid ||
-      (Array.isArray(event?.delivery?.mids) ? event.delivery.mids[0] : undefined);
+      event?.reaction?.mid;
 
     const externalEventId = this.buildMessagingExternalEventId({
       event,
