@@ -63,5 +63,10 @@ n8n_v2_blueprint/
 ops/docs/DOC-PLAN-MITIGACION-SUPERFICIES-ATAQUE.md
 ops/private/
 
-# Claude Code skills (agente local, no versionar)
-.claude/skills/
+# Claude Code / agentes AI (configuración local, no versionar)
+.claude/
+.agents/
+CLAUDE.md
+AGENTS.md
+skills-lock.json
+.ipynb_checkpoints/
