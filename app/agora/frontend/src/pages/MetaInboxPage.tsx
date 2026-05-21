@@ -946,7 +946,7 @@ const MetaInboxPage: React.FC = () => {
                 key={thread.sessionId}
                 className={`${s.threadItem} ${
                   active ? s.threadItemActive : ""
-                }`}
+                } [content-visibility:auto] [contain-intrinsic-size:0_72px]`}
               >
                 <div className={s.threadRow}>
                     <button

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.9
+
+### Fixed
+- Glitch GPU compositor (causa raíz confirmada por comportamiento en tablet y zoom): el problema real es tile cache overflow por alto DPR en móvil. Con DPR=3, cada card de 360×180px CSS = 1080×540 píxeles físicos ≈ 2.3MB. Con 24 cards + elementos fijos, el presupuesto de tiles del GPU (20–50MB en móvil mid-range) se agota. Confirmado porque tablet (DPR 1–1.5x) no presenta glitch, y zoom >100% en móvil tampoco (reduce el área física renderizada).
+- Aplicado `content-visibility: auto` + `contain-intrinsic-size` en los tres puntos críticos: contact cards de Agenda (180px), module cards de Welcome (160px), y thread items de MetaInbox (72px). Esta propiedad CSS instruye a Chrome a omitir completamente el rendering de elementos fuera del viewport — sin tiles asignados, sin GPU budget consumido para contenido no visible. También implica `contain: layout style paint` por elemento, que aísla cada card en su propio contexto de layout.
+
 ## 1.7.8
 
 ### Fixed

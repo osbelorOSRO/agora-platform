@@ -422,7 +422,7 @@ export default function Welcome() {
         {moduleCards.map(({ title, value, subtitle, to, actionLabel, onAction, enabled, status, Icon }) => (
           <article
             key={title}
-            className={`rounded-xl border p-3 md:p-5 min-w-0 overflow-hidden ${
+            className={`rounded-xl border p-3 md:p-5 min-w-0 overflow-hidden [content-visibility:auto] [contain-intrinsic-size:0_160px] ${
               enabled ? "border-border bg-card shadow-xl" : "border-muted bg-background"
             }`}
           >

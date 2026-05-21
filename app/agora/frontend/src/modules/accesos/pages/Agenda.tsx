@@ -280,7 +280,7 @@ export default function Agenda() {
                   return (
                     <article
                       key={`${contact.objectType}:${contact.actorExternalId}`}
-                      className="rounded-xl border border-border bg-muted p-4 md:p-5 shadow-lg transition-colors hover:border-primary/20 hover:bg-card"
+                      className="rounded-xl border border-border bg-muted p-4 md:p-5 shadow-lg transition-colors hover:border-primary/20 hover:bg-card [content-visibility:auto] [contain-intrinsic-size:0_180px]"
                     >
                       <div className="flex items-start gap-4">
                         <span
