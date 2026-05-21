@@ -7,20 +7,19 @@ import type { Rol } from "../types/rol";
 import { Pencil, Save, Trash2, CirclePlus, KeyRound, Smartphone, Unlock, UserX, RefreshCw, Copy, Check } from "lucide-react";
 
 const ESTADO_CONFIG: Record<EstadoUsuario, { label: string; color: string }> = {
-  activo: { label: "Activo", color: "text-green-400" },
-  preregistrado: { label: "Pendiente registro", color: "text-yellow-400" },
-  invitacion_expirada: { label: "Invitación expirada", color: "text-orange-400" },
-  sin_invitacion: { label: "Sin invitación", color: "text-gray-400" },
-  bloqueado: { label: "Bloqueado", color: "text-red-400" },
-  reset_contraseña: { label: "Reset contraseña", color: "text-blue-400" },
-  reset_2fa: { label: "Reset 2FA", color: "text-purple-400" },
+  activo:               { label: "Activo",              color: "text-emerald-400" },
+  preregistrado:        { label: "Pendiente registro",  color: "text-yellow-400"  },
+  invitacion_expirada:  { label: "Invitación expirada", color: "text-orange-400"  },
+  sin_invitacion:       { label: "Sin invitación",      color: "text-white/40"    },
+  bloqueado:            { label: "Bloqueado",           color: "text-red-400"     },
+  reset_contraseña:     { label: "Reset contraseña",   color: "text-blue-400"    },
+  reset_2fa:            { label: "Reset 2FA",           color: "text-purple-400"  },
 };
 
-interface ModalToken {
-  titulo: string;
-  token: string;
-  expira: string;
-}
+const INPUT_CLS = "w-full min-w-[80px] bg-transparent border border-white/20 rounded px-2 py-0.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary";
+const SELECT_CLS = "bg-background border border-white/20 rounded px-2 py-0.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary";
+
+interface ModalToken { titulo: string; token: string; expira: string; }
 
 export default function Usuarios() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
@@ -30,17 +29,15 @@ export default function Usuarios() {
   const [modal, setModal] = useState<ModalToken | null>(null);
   const [copiado, setCopiado] = useState(false);
 
-  useEffect(() => {
-    cargar();
-  }, []);
+  useEffect(() => { cargar(); }, []);
 
   const cargar = async () => {
-    const [usuariosData, rolesData] = await Promise.all([obtenerUsuarios(), obtenerRoles()]);
-    setUsuarios(usuariosData);
-    setRoles(rolesData);
+    const [u, r] = await Promise.all([obtenerUsuarios(), obtenerRoles()]);
+    setUsuarios(u);
+    setRoles(r);
   };
 
-  const handleEdit = (usuario: Usuario) => { setEditandoId(usuario.id); setForm(usuario); };
+  const handleEdit   = (u: Usuario) => { setEditandoId(u.id); setForm(u); };
   const handleCancel = () => { setEditandoId(null); setForm({}); };
   const handleChange = (campo: keyof Usuario, valor: any) => setForm({ ...form, [campo]: valor });
 
@@ -64,32 +61,11 @@ export default function Usuarios() {
     setForm(nuevo);
   };
 
-  const accionResetPassword = async (id: number) => {
-    const res = await adminResetPassword(id);
-    setModal({ titulo: "Código de reset de contraseña", token: res.resetToken, expira: new Date(res.expiresAt).toLocaleString() });
-  };
-
-  const accionReset2FA = async (id: number) => {
-    const res = await adminReset2FA(id);
-    setModal({ titulo: "Código de reset 2FA", token: res.bypassToken, expira: new Date(res.expiresAt).toLocaleString() });
-  };
-
-  const accionDesbloquear = async (id: number) => {
-    await desbloquearUsuario(id);
-    await cargar();
-  };
-
-  const accionRegenerarInvitacion = async (id: number) => {
-    const res = await regenerarInvitacion(id);
-    setModal({ titulo: "Nuevo código de invitación", token: res.invitationToken, expira: new Date(res.expiresAt).toLocaleString() });
-    await cargar();
-  };
-
-  const accionCancelarPreregistro = async (id: number) => {
-    if (!confirm("¿Cancelar el preregistro de este usuario? Esta acción no se puede deshacer.")) return;
-    await cancelarPreregistro(id);
-    await cargar();
-  };
+  const accionResetPassword       = async (id: number) => { const res = await adminResetPassword(id);       setModal({ titulo: "Código de reset de contraseña", token: res.resetToken,      expira: new Date(res.expiresAt).toLocaleString() }); };
+  const accionReset2FA            = async (id: number) => { const res = await adminReset2FA(id);            setModal({ titulo: "Código de reset 2FA",           token: res.bypassToken,     expira: new Date(res.expiresAt).toLocaleString() }); };
+  const accionDesbloquear         = async (id: number) => { await desbloquearUsuario(id); await cargar(); };
+  const accionRegenerarInvitacion = async (id: number) => { const res = await regenerarInvitacion(id);      setModal({ titulo: "Nuevo código de invitación",    token: res.invitationToken, expira: new Date(res.expiresAt).toLocaleString() }); await cargar(); };
+  const accionCancelarPreregistro = async (id: number) => { if (!confirm("¿Cancelar el preregistro de este usuario?")) return; await cancelarPreregistro(id); await cargar(); };
 
   const copiarToken = () => {
     if (!modal) return;
@@ -98,10 +74,10 @@ export default function Usuarios() {
     setTimeout(() => setCopiado(false), 2000);
   };
 
-  const estaPreregistrado = (u: Usuario) => ['preregistrado', 'invitacion_expirada', 'sin_invitacion'].includes(u.estado);
+  const estaPreregistrado = (u: Usuario) => ["preregistrado", "invitacion_expirada", "sin_invitacion"].includes(u.estado);
 
   return (
-    <div>
+    <section className="space-y-6">
       {modal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
           <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-2xl space-y-3">
@@ -115,10 +91,7 @@ export default function Usuarios() {
             </div>
             <p className="text-xs text-amber-400">Este código se muestra una sola vez. No se puede recuperar después de cerrar esta ventana.</p>
             <div className="flex justify-end pt-1">
-              <button
-                onClick={() => { setModal(null); setCopiado(false); }}
-                className="rounded-xl border border-border bg-input px-4 py-1.5 text-sm font-bold text-foreground hover:border-primary/30 hover:text-primary transition"
-              >
+              <button onClick={() => { setModal(null); setCopiado(false); }} className="rounded-xl border border-border bg-input px-4 py-1.5 text-sm font-bold text-foreground hover:border-primary/30 hover:text-primary transition">
                 Cerrar
               </button>
             </div>
@@ -126,98 +99,122 @@ export default function Usuarios() {
         </div>
       )}
 
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="mb-4 text-2xl font-bold text-white">Usuarios</h2>
-        <button onClick={handleAgregar} className="w-5 h-5 text-white"><CirclePlus size={28} /></button>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-white">Usuarios</h1>
+          <p className="mt-2 text-sm text-white/60">Gestión de cuentas, roles y acceso al panel.</p>
+        </div>
+        <button
+          type="button"
+          onClick={handleAgregar}
+          className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/70 transition hover:bg-white/10 hover:text-white"
+        >
+          <CirclePlus size={15} />
+          Agregar
+        </button>
       </div>
 
-      <div className="overflow-x-auto scrollbar-custom">
-        <table className="w-full text-left text-sm text-white font-montserrat">
+      <div className="overflow-x-auto rounded-2xl border border-white/10 scrollbar-custom">
+        <table className="w-full text-sm">
           <thead>
-            <tr className="bg-white/10">
-              <th className="p-2">ID</th>
-              <th className="p-2">Username</th>
-              <th className="p-2">Nombre</th>
-              <th className="p-2">Apellido</th>
-              <th className="p-2">RUN</th>
-              <th className="p-2">Teléfono</th>
-              <th className="p-2">Email</th>
-              <th className="p-2">Rol</th>
-              <th className="p-2">Creado Por</th>
-              <th className="p-2">Estado</th>
-              <th className="p-2">Acciones</th>
+            <tr className="border-b border-white/10 bg-white/5 text-left text-xs font-semibold uppercase tracking-wider text-white/40">
+              <th className="px-4 py-3">ID</th>
+              <th className="px-4 py-3">Username</th>
+              <th className="px-4 py-3">Nombre</th>
+              <th className="px-4 py-3">Apellido</th>
+              <th className="px-4 py-3">RUN</th>
+              <th className="px-4 py-3">Teléfono</th>
+              <th className="px-4 py-3">Email</th>
+              <th className="px-4 py-3">Rol</th>
+              <th className="px-4 py-3">Creado por</th>
+              <th className="px-4 py-3">Estado</th>
+              <th className="px-4 py-3"></th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-white/5">
             {usuarios.map((usuario) => (
-              <tr key={usuario.id} className="border-b border-white/10">
-                <td className="p-2">{usuario.id || "—"}</td>
-                <td className="p-2">
-                  {editandoId === usuario.id ? (
-                    <input className="bg-transparent border border-white/20 px-1" value={form.username || ""} onChange={(e) => handleChange("username", e.target.value)} disabled={usuario.id !== 0} />
-                  ) : usuario.username}
+              <tr key={usuario.id} className="transition hover:bg-white/5">
+                <td className="px-4 py-3 text-white/60">{usuario.id || "—"}</td>
+
+                <td className="px-4 py-3">
+                  {editandoId === usuario.id
+                    ? <input className={INPUT_CLS} value={form.username || ""} onChange={(e) => handleChange("username", e.target.value)} disabled={usuario.id !== 0} />
+                    : <span className="font-medium text-white">{usuario.username}</span>}
                 </td>
-                <td className="p-2">
-                  {editandoId === usuario.id ? (
-                    <input value={form.nombre || ""} onChange={(e) => handleChange("nombre", e.target.value)} className="bg-transparent border border-white/20 px-1" />
-                  ) : usuario.nombre}
+
+                <td className="px-4 py-3">
+                  {editandoId === usuario.id
+                    ? <input className={INPUT_CLS} value={form.nombre || ""} onChange={(e) => handleChange("nombre", e.target.value)} />
+                    : <span className="text-white/80">{usuario.nombre}</span>}
                 </td>
-                <td className="p-2">
-                  {editandoId === usuario.id ? (
-                    <input value={form.apellido || ""} onChange={(e) => handleChange("apellido", e.target.value)} className="bg-transparent border border-white/20 px-1" />
-                  ) : usuario.apellido}
+
+                <td className="px-4 py-3">
+                  {editandoId === usuario.id
+                    ? <input className={INPUT_CLS} value={form.apellido || ""} onChange={(e) => handleChange("apellido", e.target.value)} />
+                    : <span className="text-white/80">{usuario.apellido}</span>}
                 </td>
-                <td className="p-2">
-                  {editandoId === usuario.id ? (
-                    <input value={form.run || ""} onChange={(e) => handleChange("run", e.target.value)} className="bg-transparent border border-white/20 px-1" />
-                  ) : usuario.run}
+
+                <td className="px-4 py-3">
+                  {editandoId === usuario.id
+                    ? <input className={INPUT_CLS} value={form.run || ""} onChange={(e) => handleChange("run", e.target.value)} />
+                    : <span className="font-mono text-xs text-white/70">{usuario.run}</span>}
                 </td>
-                <td className="p-2">
-                  {editandoId === usuario.id ? (
-                    <input value={form.telefono || ""} onChange={(e) => handleChange("telefono", e.target.value)} className="bg-transparent border border-white/20 px-1" />
-                  ) : usuario.telefono}
+
+                <td className="px-4 py-3">
+                  {editandoId === usuario.id
+                    ? <input className={INPUT_CLS} value={form.telefono || ""} onChange={(e) => handleChange("telefono", e.target.value)} />
+                    : <span className="text-white/70">{usuario.telefono}</span>}
                 </td>
-                <td className="p-2">
-                  {editandoId === usuario.id ? (
-                    <input value={form.email || ""} onChange={(e) => handleChange("email", e.target.value)} className="bg-transparent border border-white/20 px-1" />
-                  ) : usuario.email}
+
+                <td className="px-4 py-3">
+                  {editandoId === usuario.id
+                    ? <input className={INPUT_CLS} value={form.email || ""} onChange={(e) => handleChange("email", e.target.value)} />
+                    : <span className="text-white/70">{usuario.email}</span>}
                 </td>
-                <td className="p-2">
+
+                <td className="px-4 py-3">
                   {editandoId === usuario.id ? (
-                    <select value={form.rol?.id || ""} onChange={(e) => { const id = parseInt(e.target.value); const rol = roles.find((r) => r.id === id) || null; handleChange("rol", rol); }} className="bg-transparent border border-white/20 px-1">
+                    <select className={SELECT_CLS} value={form.rol?.id || ""} onChange={(e) => { const id = parseInt(e.target.value); const rol = roles.find((r) => r.id === id) || null; handleChange("rol", rol); }}>
                       <option value="">Seleccionar</option>
-                      {roles.map((rol) => <option key={rol.id} value={rol.id}>{rol.nombre}</option>)}
+                      {roles.map((r) => <option key={r.id} value={r.id}>{r.nombre}</option>)}
                     </select>
-                  ) : usuario.rol?.nombre}
+                  ) : (
+                    <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/70">
+                      {usuario.rol?.nombre ?? "—"}
+                    </span>
+                  )}
                 </td>
-                <td className="p-2">{usuario.creado_por_username || "—"}</td>
-                <td className="p-2">
+
+                <td className="px-4 py-3 text-xs text-white/60">{usuario.creado_por_username || "—"}</td>
+
+                <td className="px-4 py-3">
                   {usuario.estado ? (
-                    <span className={`text-xs font-semibold ${ESTADO_CONFIG[usuario.estado]?.color ?? "text-gray-400"}`}>
+                    <span className={`text-xs font-semibold ${ESTADO_CONFIG[usuario.estado]?.color ?? "text-white/40"}`}>
                       {ESTADO_CONFIG[usuario.estado]?.label ?? usuario.estado}
                     </span>
                   ) : "—"}
                 </td>
-                <td className="p-2">
+
+                <td className="px-4 py-3">
                   {editandoId === usuario.id ? (
-                    <div className="flex gap-2">
-                      <button onClick={handleGuardar} className="w-5 h-5 text-white" title="Guardar"><Save size={18} /></button>
-                      <button onClick={handleCancel} className="w-5 h-5 text-white" title="Cancelar"><Trash2 size={18} /></button>
+                    <div className="flex items-center gap-2">
+                      <button type="button" onClick={handleGuardar} title="Guardar" className="text-emerald-400 hover:text-emerald-300 transition"><Save size={16} /></button>
+                      <button type="button" onClick={handleCancel}  title="Cancelar" className="text-white/40 hover:text-white/70 transition"><Trash2 size={16} /></button>
                     </div>
                   ) : (
-                    <div className="flex gap-2 flex-wrap">
-                      <button onClick={() => handleEdit(usuario)} className="w-5 h-5 text-white" title="Editar"><Pencil size={18} /></button>
+                    <div className="flex items-center gap-2">
+                      <button type="button" onClick={() => handleEdit(usuario)} title="Editar" className="text-white/50 hover:text-white transition"><Pencil size={15} /></button>
                       {estaPreregistrado(usuario) ? (
                         <>
-                          <button onClick={() => accionRegenerarInvitacion(usuario.id)} className="w-5 h-5 text-yellow-400" title="Regenerar invitación"><RefreshCw size={18} /></button>
-                          <button onClick={() => accionCancelarPreregistro(usuario.id)} className="w-5 h-5 text-red-400" title="Cancelar preregistro"><UserX size={18} /></button>
+                          <button type="button" onClick={() => accionRegenerarInvitacion(usuario.id)} title="Regenerar invitación" className="text-yellow-400 hover:text-yellow-300 transition"><RefreshCw size={15} /></button>
+                          <button type="button" onClick={() => accionCancelarPreregistro(usuario.id)} title="Cancelar preregistro"  className="text-red-400 hover:text-red-300 transition"><UserX size={15} /></button>
                         </>
                       ) : (
                         <>
-                          <button onClick={() => accionResetPassword(usuario.id)} className="w-5 h-5 text-blue-400" title="Resetear contraseña"><KeyRound size={18} /></button>
-                          <button onClick={() => accionReset2FA(usuario.id)} className="w-5 h-5 text-purple-400" title="Resetear autenticador 2FA"><Smartphone size={18} /></button>
-                          {usuario.estado === 'bloqueado' && (
-                            <button onClick={() => accionDesbloquear(usuario.id)} className="w-5 h-5 text-green-400" title="Desbloquear cuenta"><Unlock size={18} /></button>
+                          <button type="button" onClick={() => accionResetPassword(usuario.id)} title="Resetear contraseña"     className="text-blue-400 hover:text-blue-300 transition"><KeyRound size={15} /></button>
+                          <button type="button" onClick={() => accionReset2FA(usuario.id)}      title="Resetear autenticador 2FA" className="text-purple-400 hover:text-purple-300 transition"><Smartphone size={15} /></button>
+                          {usuario.estado === "bloqueado" && (
+                            <button type="button" onClick={() => accionDesbloquear(usuario.id)} title="Desbloquear cuenta" className="text-emerald-400 hover:text-emerald-300 transition"><Unlock size={15} /></button>
                           )}
                         </>
                       )}
@@ -229,6 +226,8 @@ export default function Usuarios() {
           </tbody>
         </table>
       </div>
-    </div>
+
+      <p className="text-xs text-white/30">Total: {usuarios.length} usuario{usuarios.length !== 1 ? "s" : ""}</p>
+    </section>
   );
 }

@@ -283,19 +283,19 @@ export default function StageTemplatesPage() {
   };
 
   return (
-    <div className="flex h-full flex-col bg-background text-foreground gap-6 p-6">
-      <header className="rounded-xl border border-border bg-card p-6 flex items-end justify-between gap-4">
+    <div className="flex h-full flex-col bg-background text-foreground gap-4 md:gap-6 p-3 md:p-6">
+      <header className="rounded-xl border border-border bg-card p-4 md:p-6 flex flex-col md:flex-row md:items-end justify-between gap-3 md:gap-4">
         <div>
           <p className="page-label">Stages</p>
           <h1 className="page-title mt-3">Stage Templates</h1>
           <p className="page-subtitle mt-2">{rows.length} registros · solo superadmin</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
           <input
             value={filterInput}
             onChange={(e) => handleFilterChange(e.target.value)}
             placeholder="Filtrar por stage_actual..."
-            className="rounded-xl border border-border bg-input px-3 py-2.5 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/40 w-56"
+            className="flex-1 md:w-56 rounded-xl border border-border bg-input px-3 py-2.5 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/40"
           />
           <button
             onClick={() => setModal({ mode: "create" })}

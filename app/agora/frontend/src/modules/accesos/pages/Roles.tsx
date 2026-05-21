@@ -1,14 +1,13 @@
-// src/modules/accesos/pages/Roles.tsx
 import { useEffect, useState } from "react";
 import { CirclePlus, Save, Trash2, Pencil } from "lucide-react";
-import style from "../styles/style";
 import { obtenerRoles, crearRol, actualizarRol } from "../services/rolService";
 import { obtenerPermisos } from "../services/permisoService";
-
 import type { Rol } from "../types/rol";
 import type { Permiso } from "../types/permiso";
 
 type DatosRolEditado = { nombre: string; permisos: number[] };
+
+const INPUT_CLS = "w-full bg-transparent border border-white/20 rounded px-2 py-0.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary";
 
 export default function Roles() {
   const [roles, setRoles] = useState<Rol[]>([]);
@@ -26,48 +25,34 @@ export default function Roles() {
     cargar();
   }, []);
 
-  const manejarCambio = (
-    id: number,
-    campo: keyof DatosRolEditado,
-    valor: any
-  ) => {
+  const manejarCambio = (id: number, campo: keyof DatosRolEditado, valor: any) => {
     const actual = editados[id] || {
       nombre: roles.find((r) => r.id === id)?.nombre || "",
       permisos: roles.find((r) => r.id === id)?.permisos || [],
     };
-    setEditados((prev) => ({
-      ...prev,
-      [id]: { ...actual, [campo]: valor },
-    }));
+    setEditados((prev) => ({ ...prev, [id]: { ...actual, [campo]: valor } }));
   };
 
   const togglePermiso = (id: number, permisoId: number) => {
-    const permisosActuales =
-      editados[id]?.permisos ?? roles.find((r) => r.id === id)?.permisos ?? [];
-    const nuevos = permisosActuales.includes(permisoId)
-      ? permisosActuales.filter((p) => p !== permisoId)
-      : [...permisosActuales, permisoId];
+    const actuales = editados[id]?.permisos ?? roles.find((r) => r.id === id)?.permisos ?? [];
+    const nuevos = actuales.includes(permisoId)
+      ? actuales.filter((p) => p !== permisoId)
+      : [...actuales, permisoId];
     manejarCambio(id, "permisos", nuevos);
   };
 
   const guardar = async (id: number) => {
     const datos = editados[id];
     if (!datos) return;
-
     try {
       if (id < 0) {
         await crearRol(datos);
-        const rolesActualizados = await obtenerRoles();
-        setRoles(rolesActualizados);
+        setRoles(await obtenerRoles());
       } else {
         const actualizado = await actualizarRol(id, datos);
         setRoles((prev) => prev.map((r) => (r.id === id ? actualizado : r)));
       }
-      setEditados((prev) => {
-        const copia = { ...prev };
-        delete copia[id];
-        return copia;
-      });
+      setEditados((prev) => { const c = { ...prev }; delete c[id]; return c; });
       setFilaEditandoId(null);
     } catch (err) {
       console.error("Error al guardar rol:", err);
@@ -76,133 +61,118 @@ export default function Roles() {
 
   const agregar = () => {
     const id = tempId;
-    const nuevo: Rol = {
-      id,
-      nombre: "",
-      permisos: [],
-      creado_en: "",
-      actualizado_en: "",
-      creado_por_username: null,
-      actualizado_por_username: null,
-    };
+    const nuevo: Rol = { id, nombre: "", permisos: [], creado_en: "", actualizado_en: "", creado_por_username: null, actualizado_por_username: null };
     setRoles((prev) => [nuevo, ...prev]);
-    setEditados((prev) => ({
-      ...prev,
-      [id]: { nombre: "", permisos: [] },
-    }));
+    setEditados((prev) => ({ ...prev, [id]: { nombre: "", permisos: [] } }));
     setFilaEditandoId(id);
     setTempId(id - 1);
   };
 
   const cancelarNuevo = (id: number) => {
     setRoles((prev) => prev.filter((r) => r.id !== id));
-    setEditados((prev) => {
-      const copia = { ...prev };
-      delete copia[id];
-      return copia;
-    });
+    setEditados((prev) => { const c = { ...prev }; delete c[id]; return c; });
     setFilaEditandoId(null);
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="mb-4 text-2xl font-bold text-white">Roles</h2>
-        <button onClick={agregar}>
-          <CirclePlus className="w-5 h-5 text-white" />
+    <section className="space-y-6">
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-white">Roles</h1>
+          <p className="mt-2 text-sm text-white/60">Permisos agrupados por rol. Cada usuario hereda los permisos del rol asignado.</p>
+        </div>
+        <button
+          type="button"
+          onClick={agregar}
+          className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/70 transition hover:bg-white/10 hover:text-white"
+        >
+          <CirclePlus size={15} />
+          Agregar
         </button>
       </div>
 
-      <table className={style.table}>
-        <thead>
-          <tr>
-            <th className={style.tableHeader}>ID</th>
-            <th className={style.tableHeader}>Nombre</th>
-            <th className={style.tableHeader}>Permisos</th>
-            <th className={style.tableHeader}>Creado por</th>
-            <th className={style.tableHeader}>Actualizado por</th>
-            <th className={style.tableHeader}>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {roles.map((rol) => {
-            const editando = filaEditandoId === rol.id;
-            const permisosActuales =
-              editados[rol.id]?.permisos ?? rol.permisos;
-            const nombreActual = editados[rol.id]?.nombre ?? rol.nombre;
+      <div className="overflow-x-auto rounded-2xl border border-white/10 scrollbar-custom">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-white/10 bg-white/5 text-left text-xs font-semibold uppercase tracking-wider text-white/40">
+              <th className="px-4 py-3">ID</th>
+              <th className="px-4 py-3">Nombre</th>
+              <th className="px-4 py-3">Permisos</th>
+              <th className="px-4 py-3">Creado por</th>
+              <th className="px-4 py-3">Actualizado por</th>
+              <th className="px-4 py-3"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5">
+            {roles.map((rol) => {
+              const editando = filaEditandoId === rol.id;
+              const permisosActuales = editados[rol.id]?.permisos ?? rol.permisos;
+              const nombreActual = editados[rol.id]?.nombre ?? rol.nombre;
 
-            return (
-              <tr key={rol.id} className={style.filaTabla}>
-                <td className={style.celdaTabla}>{rol.id > 0 ? rol.id : "—"}</td>
-                <td className={style.celdaTabla}>
-                  {editando ? (
-                    <input
-                      className="w-full px-2 py-1 rounded bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:ring-1 focus:ring-pink-500"
-                      value={nombreActual}
-                      onChange={(e) =>
-                        manejarCambio(rol.id, "nombre", e.target.value)
-                      }
-                    />
-                  ) : (
-                    rol.nombre
-                  )}
-                </td>
-                <td className={style.celdaTabla}>
-                  {editando ? (
-                    <div className="flex flex-col gap-1 max-h-28 overflow-y-auto">
-                      {permisos.map((p) => (
-                        <label key={p.id} className="inline-flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            className={style.checkboxPermiso}
-                            checked={permisosActuales.includes(p.id)}
-                            onChange={() => togglePermiso(rol.id, p.id)}
-                          />
-                          <span className="text-sm text-white">{p.nombre}</span>
-                        </label>
-                      ))}
-                    </div>
-                  ) : (
-                    permisos
-                      .filter((p) => rol.permisos.includes(p.id))
-                      .map((p) => p.nombre)
-                      .join(", ")
-                  )}
-                </td>
-                <td className={style.celdaTabla}>
-                  {rol.creado_por_username ?? "—"}
-                </td>
-                <td className={style.celdaTabla}>
-                  {rol.actualizado_por_username ?? "—"}
-                </td>
-                <td className={style.accionesCell}>
-                  <div>
+              return (
+                <tr key={rol.id} className="transition hover:bg-white/5">
+                  <td className="px-4 py-3 text-white/60">{rol.id > 0 ? rol.id : "—"}</td>
+
+                  <td className="px-4 py-3">
                     {editando ? (
-                      <>
-                        <button onClick={() => guardar(rol.id)} title="Guardar">
-                          <Save className="w-5 h-5 text-white" />
-                        </button>
-                        {rol.id < 0 && (
-                          <button
-                            onClick={() => cancelarNuevo(rol.id)}
-                            title="Cancelar"
-                          >
-                            <Trash2 className="w-5 h-5 text-white" />
-                          </button>
-                        )}
-                      </>
+                      <input className={INPUT_CLS} value={nombreActual} onChange={(e) => manejarCambio(rol.id, "nombre", e.target.value)} />
                     ) : (
-                      <button onClick={() => setFilaEditandoId(rol.id)} title="Editar">
-                        <Pencil className="w-5 h-5 text-white" />
-                      </button>
+                      <span className="font-medium text-white">{rol.nombre}</span>
                     )}
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+                  </td>
+
+                  <td className="px-4 py-3">
+                    {editando ? (
+                      <div className="flex flex-col gap-1 max-h-32 overflow-y-auto pr-1 scrollbar-custom">
+                        {permisos.map((p) => (
+                          <label key={p.id} className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              className="accent-primary w-4 h-4 shrink-0"
+                              checked={permisosActuales.includes(p.id)}
+                              onChange={() => togglePermiso(rol.id, p.id)}
+                            />
+                            <span className="text-sm text-white/80">{p.nombre}</span>
+                          </label>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap gap-1">
+                        {permisos.filter((p) => rol.permisos.includes(p.id)).map((p) => (
+                          <span key={p.id} className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/60">
+                            {p.nombre}
+                          </span>
+                        ))}
+                        {rol.permisos.length === 0 && <span className="text-xs text-white/30">Sin permisos</span>}
+                      </div>
+                    )}
+                  </td>
+
+                  <td className="px-4 py-3 text-xs text-white/60">{rol.creado_por_username ?? "—"}</td>
+                  <td className="px-4 py-3 text-xs text-white/60">{rol.actualizado_por_username ?? "—"}</td>
+
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      {editando ? (
+                        <>
+                          <button type="button" onClick={() => guardar(rol.id)} title="Guardar" className="text-emerald-400 hover:text-emerald-300 transition"><Save size={16} /></button>
+                          {rol.id < 0 && (
+                            <button type="button" onClick={() => cancelarNuevo(rol.id)} title="Cancelar" className="text-white/40 hover:text-white/70 transition"><Trash2 size={16} /></button>
+                          )}
+                        </>
+                      ) : (
+                        <button type="button" onClick={() => setFilaEditandoId(rol.id)} title="Editar" className="text-white/50 hover:text-white transition"><Pencil size={15} /></button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <p className="text-xs text-white/30">Total: {roles.length} rol{roles.length !== 1 ? "es" : ""}</p>
+    </section>
   );
 }

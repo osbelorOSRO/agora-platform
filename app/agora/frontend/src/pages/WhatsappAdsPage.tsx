@@ -84,15 +84,15 @@ export default function WhatsappAdsPage() {
   const totalSeen = ads.reduce((acc, item) => acc + Number(item.seenCount || 0), 0);
 
   return (
-    <div className="mx-auto flex min-h-[calc(100vh-120px)] w-full max-w-7xl flex-col gap-6 text-foreground">
-      <header className="flex flex-col gap-4 rounded-3xl border border-border bg-card p-6 shadow-[0_24px_80px_rgba(0,0,0,0.28)] lg:flex-row lg:items-center lg:justify-between">
+    <div className="mx-auto flex min-h-[calc(100vh-120px)] w-full max-w-7xl flex-col gap-4 md:gap-6 text-foreground">
+      <header className="flex flex-col gap-3 rounded-3xl border border-border bg-card p-4 md:p-6 shadow-[0_24px_80px_rgba(0,0,0,0.28)] lg:flex-row lg:items-center lg:justify-between">
         <div>
           <div className="flex items-center gap-3 text-primary">
-            <Megaphone size={22} />
+            <Megaphone size={20} />
             <span className="text-xs font-black uppercase tracking-[0.28em]">WhatsApp Ads</span>
           </div>
-          <h1 className="mt-3 text-3xl font-black tracking-tight text-foreground">Leads por anuncio</h1>
-          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+          <h1 className="mt-2 md:mt-3 text-2xl md:text-3xl font-black tracking-tight text-foreground">Leads por anuncio</h1>
+          <p className="mt-1 md:mt-2 max-w-2xl text-sm text-muted-foreground hidden sm:block">
             Una página por `sourceId` detectado en Baileys. El conteo único usa `sourceId + sessionId`.
           </p>
         </div>
@@ -100,25 +100,26 @@ export default function WhatsappAdsPage() {
           type="button"
           onClick={() => downloadCsv(leads, ads)}
           disabled={leads.length === 0}
-          className="inline-flex items-center justify-center gap-2 rounded-2xl border border-primary/30 bg-primary/10 px-5 py-3 text-sm font-black uppercase tracking-[0.18em] text-primary transition hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-2 rounded-2xl border border-primary/30 bg-primary/10 px-4 py-2.5 md:px-5 md:py-3 text-sm font-black uppercase tracking-[0.18em] text-primary transition hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-50 self-start lg:self-auto shrink-0"
         >
-          <Download size={18} />
-          Descargar CSV completo
+          <Download size={16} />
+          <span className="hidden sm:inline">Descargar CSV completo</span>
+          <span className="sm:hidden">CSV</span>
         </button>
       </header>
 
-      <section className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-2xl border border-border bg-card p-5">
-          <div className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Anuncios detectados</div>
-          <div className="mt-2 text-4xl font-black text-foreground">{ads.length}</div>
+      <section className="grid grid-cols-3 gap-3 md:gap-4">
+        <div className="rounded-2xl border border-border bg-card p-3 md:p-5">
+          <div className="text-[10px] md:text-xs font-medium uppercase tracking-[0.14em] md:tracking-[0.18em] text-muted-foreground">Anuncios</div>
+          <div className="mt-1 md:mt-2 text-2xl md:text-4xl font-black text-foreground">{ads.length}</div>
         </div>
-        <div className="rounded-2xl border border-border bg-card p-5">
-          <div className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Personas únicas</div>
-          <div className="mt-2 text-4xl font-black text-primary">{totalUnique}</div>
+        <div className="rounded-2xl border border-border bg-card p-3 md:p-5">
+          <div className="text-[10px] md:text-xs font-medium uppercase tracking-[0.14em] md:tracking-[0.18em] text-muted-foreground">Únicos</div>
+          <div className="mt-1 md:mt-2 text-2xl md:text-4xl font-black text-primary">{totalUnique}</div>
         </div>
-        <div className="rounded-2xl border border-border bg-card p-5">
-          <div className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Eventos con contexto ad</div>
-          <div className="mt-2 text-4xl font-black text-foreground">{totalSeen}</div>
+        <div className="rounded-2xl border border-border bg-card p-3 md:p-5">
+          <div className="text-[10px] md:text-xs font-medium uppercase tracking-[0.14em] md:tracking-[0.18em] text-muted-foreground">Eventos</div>
+          <div className="mt-1 md:mt-2 text-2xl md:text-4xl font-black text-foreground">{totalSeen}</div>
         </div>
       </section>
 
@@ -206,25 +207,25 @@ export default function WhatsappAdsPage() {
               </button>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="rounded-2xl border border-primary/20 bg-primary/10 p-5">
-                <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-primary/80">
-                  <UsersRound size={16} />
-                  Personas únicas
+            <div className="grid grid-cols-2 gap-3 md:gap-4">
+              <div className="rounded-2xl border border-primary/20 bg-primary/10 p-3 md:p-5">
+                <div className="flex items-center gap-1.5 text-[10px] md:text-xs font-medium uppercase tracking-[0.14em] md:tracking-[0.18em] text-primary/80">
+                  <UsersRound size={13} />
+                  Únicos
                 </div>
-                <div className="mt-3 text-5xl font-black text-primary">{current.uniqueSessions}</div>
+                <div className="mt-2 md:mt-3 text-3xl md:text-5xl font-black text-primary">{current.uniqueSessions}</div>
               </div>
-              <div className="rounded-2xl border border-foreground/20 bg-foreground/5 p-5">
-                <div className="text-xs font-medium uppercase tracking-[0.18em] text-foreground/60">Eventos registrados</div>
-                <div className="mt-3 text-5xl font-black text-foreground">{current.seenCount}</div>
+              <div className="rounded-2xl border border-foreground/20 bg-foreground/5 p-3 md:p-5">
+                <div className="text-[10px] md:text-xs font-medium uppercase tracking-[0.14em] md:tracking-[0.18em] text-foreground/60">Eventos</div>
+                <div className="mt-2 md:mt-3 text-3xl md:text-5xl font-black text-foreground">{current.seenCount}</div>
               </div>
-              <div className="rounded-2xl border border-border bg-card p-5">
-                <div className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Primer lead</div>
-                <div className="mt-2 text-sm font-bold text-foreground">{formatDate(current.firstSeenAt)}</div>
+              <div className="rounded-2xl border border-border bg-card p-3 md:p-5">
+                <div className="text-[10px] md:text-xs font-medium uppercase tracking-[0.14em] md:tracking-[0.18em] text-muted-foreground">Primer lead</div>
+                <div className="mt-1 md:mt-2 text-xs md:text-sm font-bold text-foreground">{formatDate(current.firstSeenAt)}</div>
               </div>
-              <div className="rounded-2xl border border-border bg-card p-5">
-                <div className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Último lead</div>
-                <div className="mt-2 text-sm font-bold text-foreground">{formatDate(current.lastSeenAt)}</div>
+              <div className="rounded-2xl border border-border bg-card p-3 md:p-5">
+                <div className="text-[10px] md:text-xs font-medium uppercase tracking-[0.14em] md:tracking-[0.18em] text-muted-foreground">Último lead</div>
+                <div className="mt-1 md:mt-2 text-xs md:text-sm font-bold text-foreground">{formatDate(current.lastSeenAt)}</div>
               </div>
             </div>
 

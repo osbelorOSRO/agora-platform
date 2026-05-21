@@ -95,8 +95,8 @@ export default function WaControlPage() {
     <section className="space-y-6 text-foreground">
 
       {/* ── Header ── */}
-      <header className="rounded-xl border border-border bg-card p-6">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+      <header className="rounded-xl border border-border bg-card p-4 md:p-6">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
           <div>
             <p className="page-label">WA Backend</p>
             <h1 className="page-title mt-3">Control operativo del bot</h1>
@@ -104,8 +104,8 @@ export default function WaControlPage() {
               Integración nativa del dashboard de wa-backend. Aquí se concentran estado, QR, controles y trazas recientes.
             </p>
           </div>
-          <div className="inline-flex items-center gap-3 rounded-full border border-border bg-input px-4 py-2 text-sm text-foreground shrink-0">
-            <span className={`h-2.5 w-2.5 rounded-full ${estatus.color}`} />
+          <div className="flex flex-wrap items-center gap-2 rounded-full border border-border bg-input px-4 py-2 text-sm text-foreground self-start xl:self-auto xl:shrink-0">
+            <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${estatus.color}`} />
             <span>{estatus.label}</span>
             <span className="text-muted-foreground/50">/</span>
             <span className="text-muted-foreground">{socketDetail}</span>
@@ -115,22 +115,22 @@ export default function WaControlPage() {
       </header>
 
       {/* ── Stats ── */}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
         {[
-          { label: "Número vinculado", value: estado?.numero ? `+${estado.numero}` : "Esperando conexión", Icon: Bot },
-          { label: "Mensajes recibidos", value: String(stats?.mensajesRecibidos ?? 0), Icon: Bot },
-          { label: "Mensajes enviados",  value: String(stats?.mensajesEnviados ?? 0),  Icon: Bot },
-          { label: "Tiempo conectado",   value: formatDuration(tiempoConectadoMs),       Icon: Clock3 },
+          { label: "Número vinculado", value: estado?.numero ? `+${estado.numero}` : "Esperando", Icon: Bot },
+          { label: "Msj. recibidos",   value: String(stats?.mensajesRecibidos ?? 0), Icon: Bot },
+          { label: "Msj. enviados",    value: String(stats?.mensajesEnviados ?? 0),  Icon: Bot },
+          { label: "Tiempo conectado", value: formatDuration(tiempoConectadoMs),      Icon: Clock3 },
         ].map(({ label, value, Icon }) => (
-          <div key={label} className="rounded-xl border border-border bg-card p-5 shadow-xl">
-            <div className="flex items-center gap-3 text-muted-foreground">
-              <Icon className="h-5 w-5" />
-              <span className="text-xs uppercase tracking-[0.24em]">{label}</span>
+          <div key={label} className="rounded-xl border border-border bg-card p-3 md:p-5 shadow-xl">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Icon className="h-4 w-4 shrink-0" />
+              <span className="text-[10px] md:text-xs uppercase tracking-[0.18em] md:tracking-[0.24em] leading-tight">{label}</span>
             </div>
-            <div className="mt-4 text-2xl font-bold text-foreground">{value}</div>
+            <div className="mt-2 md:mt-4 text-lg md:text-2xl font-bold text-foreground">{value}</div>
             {label === "Tiempo conectado" ? (
-              <div className="mt-2 text-xs text-muted-foreground">
-                Último mensaje: {relativeTime(stats?.ultimoMensaje ?? estado?.ultimoMensaje)}
+              <div className="mt-1 md:mt-2 text-[10px] md:text-xs text-muted-foreground">
+                Último: {relativeTime(stats?.ultimoMensaje ?? estado?.ultimoMensaje)}
               </div>
             ) : null}
           </div>
@@ -146,11 +146,11 @@ export default function WaControlPage() {
       {/* ── Controles + aside ── */}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(340px,0.8fr)]">
 
-        <section className="rounded-xl border border-border bg-card p-6 shadow-2xl">
+        <section className="rounded-xl border border-border bg-card p-4 md:p-6 shadow-2xl">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-2xl font-bold text-foreground">Controles</h2>
-              <p className="mt-2 text-sm text-muted-foreground">
+              <h2 className="text-xl md:text-2xl font-bold text-foreground">Controles</h2>
+              <p className="mt-1 md:mt-2 text-sm text-muted-foreground">
                 {canManageBot
                   ? "Tienes control total sobre las acciones del bot."
                   : "Tu acceso es informativo. Las acciones operativas están bloqueadas."}
@@ -159,39 +159,39 @@ export default function WaControlPage() {
             <button
               type="button"
               onClick={refrescarStats}
-              className="inline-flex items-center gap-2 rounded-xl border border-border bg-input px-4 py-2 text-sm font-bold text-foreground transition hover:border-primary/30 hover:text-primary"
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-input px-3 md:px-4 py-2 text-sm font-bold text-foreground transition hover:border-primary/30 hover:text-primary shrink-0"
             >
               <RefreshCw className="h-4 w-4" />
-              Refrescar
+              <span className="hidden sm:inline">Refrescar</span>
             </button>
           </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-4">
+          <div className="mt-4 md:mt-6 grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-4">
             {/* Pausar / Reanudar */}
             <button
               type="button"
               onClick={() => setAutomationPaused(!(config?.automationPaused === true))}
               disabled={!canManageBot}
-              className={`rounded-xl border p-5 text-left transition disabled:cursor-not-allowed disabled:opacity-50 ${
+              className={`rounded-xl border p-3 md:p-5 text-left transition disabled:cursor-not-allowed disabled:opacity-50 ${
                 config?.automationPaused
                   ? "border-amber-400/30 bg-amber-400/10 hover:bg-amber-400/15"
                   : "border-border bg-input hover:bg-card"
               }`}
             >
               {config?.automationPaused
-                ? <PlayCircle className="h-6 w-6 text-amber-400" />
-                : <PauseCircle className="h-6 w-6 text-foreground" />
+                ? <PlayCircle className="h-5 w-5 md:h-6 md:w-6 text-amber-400" />
+                : <PauseCircle className="h-5 w-5 md:h-6 md:w-6 text-foreground" />
               }
-              <div className="mt-4 text-base font-bold text-foreground">
+              <div className="mt-2 md:mt-4 text-sm md:text-base font-bold text-foreground">
                 {config?.automationPaused ? "Reanudar bot" : "Pausar bot"}
               </div>
-              <div className="mt-2 text-xs text-muted-foreground">
+              <div className="mt-1 md:mt-2 text-xs text-muted-foreground hidden sm:block">
                 {config?.automationPaused
                   ? "Automatización detenida; WhatsApp sigue conectado."
                   : "Detiene respuestas automáticas sin cerrar WhatsApp."}
               </div>
               {!canManageBot ? (
-                <div className="mt-3 inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.18em] text-muted-foreground/50">
+                <div className="mt-2 md:mt-3 inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.18em] text-muted-foreground/50">
                   <Lock className="h-3.5 w-3.5" /> Solo lectura
                 </div>
               ) : null}
@@ -207,12 +207,12 @@ export default function WaControlPage() {
                 type="button"
                 onClick={onClick}
                 disabled={!canManageBot}
-                className="rounded-xl border border-border bg-input p-5 text-left transition hover:border-primary/30 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-xl border border-border bg-input p-3 md:p-5 text-left transition hover:border-primary/30 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <Icon className="h-6 w-6" />
-                <div className="mt-4 text-base font-bold text-foreground">{label}</div>
+                <Icon className="h-5 w-5 md:h-6 md:w-6" />
+                <div className="mt-2 md:mt-4 text-sm md:text-base font-bold text-foreground">{label}</div>
                 {!canManageBot ? (
-                  <div className="mt-3 inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.18em] text-muted-foreground/50">
+                  <div className="mt-2 md:mt-3 inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.18em] text-muted-foreground/50">
                     <Lock className="h-3.5 w-3.5" /> Solo lectura
                   </div>
                 ) : null}
@@ -268,14 +268,14 @@ export default function WaControlPage() {
           </div>
         </section>
 
-        <aside className="space-y-6">
+        <aside className="space-y-4 md:space-y-6">
           {/* QR */}
-          <section className="rounded-xl border border-border bg-card p-6 shadow-2xl">
+          <section className="rounded-xl border border-border bg-card p-4 md:p-6 shadow-2xl">
             <div className="flex items-center gap-3">
               <QrCode className="h-5 w-5 text-primary" />
-              <h2 className="text-xl font-bold text-foreground">QR de vinculación</h2>
+              <h2 className="text-lg md:text-xl font-bold text-foreground">QR de vinculación</h2>
             </div>
-            <div className="mt-5 rounded-xl border border-dashed border-border bg-input p-5">
+            <div className="mt-4 md:mt-5 rounded-xl border border-dashed border-border bg-input p-4 md:p-5">
               {qrImage ? (
                 <div className="space-y-4 text-center">
                   <img src={qrImage} alt="QR WhatsApp" className="mx-auto w-full max-w-[280px] rounded-2xl bg-white p-4" />
@@ -290,12 +290,12 @@ export default function WaControlPage() {
           </section>
 
           {/* Actividad reciente */}
-          <section className="rounded-xl border border-border bg-card p-6 shadow-2xl">
+          <section className="rounded-xl border border-border bg-card p-4 md:p-6 shadow-2xl">
             <div className="flex items-center gap-3">
               <Wrench className="h-5 w-5 text-primary" />
-              <h2 className="text-xl font-bold text-foreground">Actividad reciente</h2>
+              <h2 className="text-lg md:text-xl font-bold text-foreground">Actividad reciente</h2>
             </div>
-            <div className="mt-5 space-y-3">
+            <div className="mt-4 md:mt-5 space-y-3">
               {logs.length === 0 ? (
                 <div className="rounded-xl border border-border bg-input p-4 text-sm text-muted-foreground">
                   Aún no hay eventos del panel.
