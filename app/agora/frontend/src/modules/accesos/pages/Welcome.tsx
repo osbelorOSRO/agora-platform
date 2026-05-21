@@ -418,12 +418,12 @@ export default function Welcome() {
       </header>
 
       {/* ── Module cards ── */}
-      <div className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-5">
+      <div className="isolate grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-5">
         {moduleCards.map(({ title, value, subtitle, to, actionLabel, onAction, enabled, status, Icon }) => (
           <article
             key={title}
-            className={`rounded-xl border p-3 md:p-5 transition ${
-              enabled ? "border-border bg-card shadow-xl" : "border-border/50 bg-muted opacity-80"
+            className={`rounded-xl border p-3 md:p-5 ${
+              enabled ? "border-border bg-card shadow-xl" : "border-border/40 bg-muted/50"
             }`}
           >
             <div className="rounded-xl bg-input p-2 md:p-3 w-fit">
@@ -437,7 +437,7 @@ export default function Welcome() {
             {to && enabled ? (
               <Link
                 to={to}
-                className="mt-4 inline-flex items-center gap-2 rounded-xl border border-border bg-input px-4 py-2 text-sm font-bold text-foreground transition hover:border-primary/30 hover:text-primary"
+                className="mt-4 inline-flex items-center gap-2 rounded-xl border border-border bg-input px-4 py-2 text-sm font-bold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
               >
                 Ir al módulo
               </Link>

@@ -99,6 +99,14 @@
 }
 
 /* ============================================================
+   Mobile: eliminar tap-highlight layer de Chrome (evita artefactos
+   de compositing en iOS/Android sobre elementos <a> y <button>)
+   ============================================================ */
+a, button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ============================================================
    Tipografía de componentes — patrones reutilizables
    Usar estas clases en lugar de repetir grupos de Tailwind.
    ============================================================ */
