@@ -85,7 +85,7 @@ export default function WhatsappAdsPage() {
 
   return (
     <div className="mx-auto flex min-h-[calc(100vh-120px)] w-full max-w-7xl flex-col gap-4 md:gap-6 text-foreground">
-      <header className="flex flex-col gap-3 rounded-3xl border border-border bg-card p-4 md:p-6 shadow-[0_24px_80px_rgba(0,0,0,0.28)] lg:flex-row lg:items-center lg:justify-between">
+      <header className="flex flex-col gap-3 rounded-3xl border border-border bg-card p-4 md:p-6 md:shadow-[0_24px_80px_rgba(0,0,0,0.28)] lg:flex-row lg:items-center lg:justify-between">
         <div>
           <div className="flex items-center gap-3 text-primary">
             <Megaphone size={20} />
@@ -134,7 +134,7 @@ export default function WhatsappAdsPage() {
 
       {current && (
         <main className="grid flex-1 gap-6 lg:grid-cols-[minmax(320px,430px)_1fr]">
-          <article className="overflow-hidden rounded-[2rem] border border-border bg-card shadow-[0_30px_80px_rgba(0,0,0,0.35)]">
+          <article className="overflow-hidden rounded-[2rem] border border-border bg-card md:shadow-[0_30px_80px_rgba(0,0,0,0.35)]">
             <div className="border-b border-border p-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-sm font-black text-primary">

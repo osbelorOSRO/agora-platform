@@ -193,17 +193,17 @@ const AttentionIcon: React.FC<{ mode?: string; className?: string }> = ({ mode, 
 
 const attentionClass = (mode?: string) => {
   const normalized = String(mode || "").toUpperCase();
-  if (normalized === "HUMAN") return "border-sky-300/70 bg-sky-400/15 text-sky-300 shadow-[0_0_14px_rgba(56,189,248,0.35)]";
-  if (normalized === "SYSTEM") return "border-emerald-300/70 bg-emerald-400/15 text-emerald-300 shadow-[0_0_14px_rgba(52,211,153,0.35)]";
-  if (normalized === "PAUSED") return "border-amber-300/70 bg-amber-400/15 text-amber-300 shadow-[0_0_14px_rgba(251,191,36,0.35)]";
-  return "border-rose-300/70 bg-rose-400/15 text-rose-300 shadow-[0_0_14px_rgba(251,113,133,0.35)]";
+  if (normalized === "HUMAN") return "border-sky-300/70 bg-[#182D46] text-sky-300 md:shadow-[0_0_14px_rgba(56,189,248,0.35)]";
+  if (normalized === "SYSTEM") return "border-emerald-300/70 bg-[#173038] text-emerald-300 md:shadow-[0_0_14px_rgba(52,211,153,0.35)]";
+  if (normalized === "PAUSED") return "border-amber-300/70 bg-[#352D27] text-amber-300 md:shadow-[0_0_14px_rgba(251,191,36,0.35)]";
+  return "border-rose-300/70 bg-[#352135] text-rose-300 md:shadow-[0_0_14px_rgba(251,113,133,0.35)]";
 };
 
 const channelClass = (objectType?: string) => {
   const normalized = String(objectType || "").toUpperCase();
-  if (normalized === "WHATSAPP") return "border-emerald-300/60 bg-emerald-400/15 text-emerald-300";
-  if (normalized === "INSTAGRAM") return "border-fuchsia-300/60 bg-fuchsia-400/15 text-fuchsia-300";
-  return "border-sky-300/60 bg-sky-400/15 text-sky-300";
+  if (normalized === "WHATSAPP") return "border-emerald-300/60 bg-[#173038] text-emerald-300";
+  if (normalized === "INSTAGRAM") return "border-fuchsia-300/60 bg-[#322247] text-fuchsia-300";
+  return "border-sky-300/60 bg-[#182D46] text-sky-300";
 };
 
 const s = {

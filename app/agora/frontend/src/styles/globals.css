@@ -115,6 +115,23 @@ a, button {
   }
 }
 
+/* En móvil: eliminar box-shadows pesados — los valores rgba en box-shadow
+   (shadow-lg/xl/2xl de Tailwind) requieren alpha blending GPU en cada frame
+   de scroll. El sidebar fixed con sombra rgba es especialmente dañino porque
+   su sombra se extiende sobre los tiles scrolleados, forzando repintura en
+   cada frame. En desktop se mantienen. */
+@media (max-width: 768px) {
+  .shadow-sm,
+  .shadow,
+  .shadow-md,
+  .shadow-lg,
+  .shadow-xl,
+  .shadow-2xl,
+  .shadow-inner {
+    box-shadow: none !important;
+  }
+}
+
 /* En móvil: desactivar backdrop-filter en todos sus usos — genera compositor layer
    por elemento en Chrome Android. Cubre tanto las utilidades .glass-* propias
    como las clases backdrop-blur-* de Tailwind usadas directamente en JSX. */

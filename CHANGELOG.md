@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.7.8
+
+### Fixed
+- Glitch GPU compositor Agenda (scroll) — causa raíz: `box-shadow` rgba en el sidebar fixed (`shadow-[4px_0_24px_rgba(0,0,0,0.45)]`) extiende su sombra 24px hacia el contenido scrolleado; Chrome debe alpha-blendear esa sombra contra cada tile scrolleado en CADA FRAME de scroll → tile cache overflow. Eliminado con `md:shadow-[...]` (solo desktop). Eliminados `shadow-lg/xl/2xl` de Tailwind en ≤ 768px via CSS override global (los valores box-shadow también usan rgba).
+- Glitch GPU compositor Welcome (entry 1 segundo) — `shadow-2xl/xl` en 5+ secciones y module cards de la página Welcome causan heavy rgba painting en el frame inicial. Cubierto por el mismo CSS override de shadows en mobile. `transition-all` en las barras del gráfico reemplazado por `transition-[height]` para no activar compositor durante el resize de barras. Sombra de glow de barras a `md:shadow-[...]`.
+- MetaInboxPage — status badges (`attentionClass`) y canal badges (`channelClass`): backgrounds rgba (`bg-sky-400/15`, `bg-emerald-400/15`, etc.) reemplazados por hex sólidos pre-calculados; glow shadows a `md:shadow-[...]`. Cada item de la lista de threads tiene uno de estos badges — con 50+ threads son 50+ rgba fills.
+- WhatsappAdsPage — sombras arbitrarias `shadow-[0_24px_80px_rgba(...)]` en header y article a `md:shadow-[...]`.
+
 ## 1.7.7
 
 ### Fixed

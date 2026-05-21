@@ -550,7 +550,7 @@ export default function Welcome() {
                       <div className="text-xs md:text-sm font-bold text-foreground">{item.total}</div>
                       <div className="flex h-28 md:h-44 w-full items-end rounded-xl bg-muted px-1">
                         <div
-                          className="w-full rounded-t-xl bg-gradient-to-t from-primary via-primary/50 to-primary/20 shadow-[0_10px_30px_var(--primary-glow)] transition-all"
+                          className="w-full rounded-t-xl bg-gradient-to-t from-primary via-primary/50 to-primary/20 md:shadow-[0_10px_30px_var(--primary-glow)] transition-[height]"
                           style={{ height }}
                           title={`${item.total} eventos`}
                         />
