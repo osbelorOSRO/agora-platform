@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.2
+
+### Fixed
+- Welcome móvil: corregido glitch visual (artifact GPU compositor de Chrome Android) al renderizar las tarjetas de módulos. La causa raíz era un apilamiento de tres contextos compositor anidados — `overflow: hidden` en el wrapper externo de `BaseLayout`, `overflow: hidden auto` en `<main>` (generado por la combinación de clase `overflow-x-hidden` + inline style `overflowY: auto`), y las tarjetas semitransparentes con `shadow-2xl`. Se eliminó `overflow-hidden` del wrapper externo y se simplificó `<main>` a un único `overflow-y-auto` limpio.
+- Mobile pull-to-refresh: `overscroll-behavior-y: none` movido desde `body` (que no scrollea) al `<main>` que es el scroll container real — ahora el bloqueo tiene efecto efectivo.
+
 ## 1.7.1
 
 ### Fixed

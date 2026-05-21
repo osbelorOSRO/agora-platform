@@ -98,16 +98,7 @@
   --borde:              var(--border);
 }
 
-/* ============================================================
-   Mobile: contener overscroll en el body para bloquear pull-to-refresh
-   de Chrome sin romper el scroll normal. contain permite scroll pero
-   impide que el gesto de overscroll dispare la capa de recarga nativa.
-   También eliminar tap-highlight layer sobre <a> y <button>.
-   ============================================================ */
-body {
-  overscroll-behavior-y: none;
-}
-
+/* Eliminar tap-highlight layer sobre <a> y <button> en mobile */
 a, button {
   -webkit-tap-highlight-color: transparent;
 }

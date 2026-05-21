@@ -23,7 +23,7 @@ export default function BaseLayout() {
   })();
 
   return (
-    <div className="bg-background flex min-h-screen w-full max-w-full overflow-hidden">
+    <div className="bg-background flex min-h-screen w-full max-w-full">
       <SidebarCompacto />
       <header className="fixed left-14 md:left-64 right-0 top-0 z-30 flex h-16 items-center justify-between border-b border-border glass-md px-4 md:px-8">
         <div className="flex items-center space-x-4">
@@ -68,12 +68,12 @@ export default function BaseLayout() {
         </div>
       </header>
       <main
-        className={`flex-1 overflow-x-hidden ml-14 md:ml-64 bg-background ${
+        className={`flex-1 ml-14 md:ml-64 bg-background ${
           isImmersiveSection
             ? "pt-16 h-screen flex flex-col overflow-hidden"
-            : "pt-[88px] px-4 pb-4 md:px-6 md:pb-6 min-h-screen"
+            : "pt-[88px] px-4 pb-4 md:px-6 md:pb-6 min-h-screen overflow-y-auto"
         }`}
-        style={{ overflowY: isImmersiveSection ? "hidden" : "auto" }}
+        style={isImmersiveSection ? undefined : { overscrollBehaviorY: "none" }}
       >
         <Outlet />
       </main>
