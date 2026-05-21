@@ -99,9 +99,14 @@
 }
 
 /* ============================================================
-   Mobile: eliminar tap-highlight layer de Chrome (evita artefactos
-   de compositing en iOS/Android sobre elementos <a> y <button>)
+   Mobile: deshabilitar pull-to-refresh nativo de Chrome para evitar
+   que el compositor acumule capas del estado anterior (bfcache/Lottie)
+   en SPAs. También eliminar tap-highlight layer sobre <a> y <button>.
    ============================================================ */
+html, body {
+  overscroll-behavior: none;
+}
+
 a, button {
   -webkit-tap-highlight-color: transparent;
 }
