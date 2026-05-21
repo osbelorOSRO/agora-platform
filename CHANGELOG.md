@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.8.0
+
+### Fixed
+- Glitch GPU compositor (causa raíz del scroll): `100vh` en el sidebar `position:fixed` y en el wrapper del layout causaba que Chrome Android reconstruyera la capa compositor del sidebar cada vez que la URL bar se auto-ocultaba al hacer scroll (el viewport crece ~56px CSS y `100vh` cambia). Durante esa reconstrucción mid-scroll → tile corruption → scanlines. Reemplazado por `100svh` (small viewport height) que está fijado al viewport mínimo (URL bar visible) y nunca cambia durante el scroll. Explicación del patrón observado: tablet sin glitch (URL bar no se auto-oculta igual), zoom >100% sin glitch (viewport ya ajustado, URL bar no se mueve).
+
 ## 1.7.9
 
 ### Fixed
