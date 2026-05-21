@@ -108,6 +108,13 @@ a, button {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Prevenir auto-zoom de Chrome Android al enfocar inputs con font < 16px */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px;
+  }
+}
+
 /* ============================================================
    Tipografía de componentes — patrones reutilizables
    Usar estas clases en lugar de repetir grupos de Tailwind.

@@ -217,7 +217,7 @@ export default function Agenda() {
 
         {/* ── Filtros y grilla ── */}
         <section className="rounded-xl border border-border bg-card p-4 md:p-6 shadow-xl">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          <div className="relative z-10 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="grid w-full gap-3 lg:grid-cols-[minmax(0,1fr)_180px]">
               <div className="relative">
                 <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -250,7 +250,7 @@ export default function Agenda() {
             </button>
           </div>
 
-          <div className="mt-6">
+          <div className="mt-6 isolate">
             {loading ? (
               <div className="rounded-xl border border-dashed border-border bg-background/20 px-6 py-12 text-center text-sm text-muted-foreground">
                 Cargando agenda...

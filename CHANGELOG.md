@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.5
+
+### Fixed
+- Agenda: elementos de tarjetas de contacto superpuestos sobre la barra de búsqueda — corregido con `relative z-10` en el wrapper de controles de filtro y `isolate` en el contenedor del grid de tarjetas. Ambos establecen stacking contexts explícitos que garantizan que los controles pinten siempre por encima de las tarjetas.
+- Global móvil: auto-zoom de Chrome Android al enfocar `<input>`, `<select>` y `<textarea>` — Chrome autozoomea cualquier input con font-size < 16px, lo que crea una transformación compositor que dispara el glitch GPU. Añadido `font-size: 16px` para todos los campos de formulario en viewports ≤ 768px via `globals.css`.
+
 ## 1.7.4
 
 ### Fixed
