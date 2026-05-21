@@ -99,10 +99,15 @@
 }
 
 /* ============================================================
-   Mobile: deshabilitar pull-to-refresh nativo de Chrome para evitar
-   que el compositor acumule capas del estado anterior (bfcache/Lottie)
-   en SPAs. También eliminar tap-highlight layer sobre <a> y <button>.
+   Mobile: contener overscroll en el body para bloquear pull-to-refresh
+   de Chrome sin romper el scroll normal. contain permite scroll pero
+   impide que el gesto de overscroll dispare la capa de recarga nativa.
+   También eliminar tap-highlight layer sobre <a> y <button>.
    ============================================================ */
+body {
+  overscroll-behavior-y: contain;
+}
+
 a, button {
   -webkit-tap-highlight-color: transparent;
 }
