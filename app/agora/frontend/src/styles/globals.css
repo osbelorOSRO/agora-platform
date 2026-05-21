@@ -104,6 +104,10 @@
    impide que el gesto de overscroll dispare la capa de recarga nativa.
    También eliminar tap-highlight layer sobre <a> y <button>.
    ============================================================ */
+body {
+  overscroll-behavior-y: none;
+}
+
 a, button {
   -webkit-tap-highlight-color: transparent;
 }
