@@ -68,7 +68,7 @@ export default function BaseLayout() {
         </div>
       </header>
       <main
-        className={`flex-1 overflow-x-hidden ml-14 md:ml-64 bg-background overscroll-none ${
+        className={`flex-1 overflow-x-hidden ml-14 md:ml-64 bg-background overscroll-y-contain ${
           isImmersiveSection
             ? "pt-16 h-screen flex flex-col overflow-hidden"
             : "pt-[88px] px-4 pb-4 md:px-6 md:pb-6 min-h-screen"

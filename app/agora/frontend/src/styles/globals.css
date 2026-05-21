@@ -103,10 +103,6 @@
    que el compositor acumule capas del estado anterior (bfcache/Lottie)
    en SPAs. También eliminar tap-highlight layer sobre <a> y <button>.
    ============================================================ */
-html, body {
-  overscroll-behavior: none;
-}
-
 a, button {
   -webkit-tap-highlight-color: transparent;
 }
