@@ -1,12 +1,29 @@
-import { Outlet, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import style from "../styles/style";
 import SidebarCompacto from "../components/SidebarCompacto";
-import { Bell, LayoutGrid } from "lucide-react";
+import BottomNav from "../components/BottomNav";
+import { Bell, ChevronLeft, LayoutGrid } from "lucide-react";
 import { getTokenData } from "@/utils/getTokenData";
+
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.innerWidth < 768
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const handler = () => setIsMobile(mq.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return isMobile;
+}
 
 export default function BaseLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const user = getTokenData();
+  const isMobile = useIsMobile();
   const isImmersiveSection = location.pathname.startsWith("/meta-inbox");
 
   const currentSection = (() => {
@@ -22,6 +39,37 @@ export default function BaseLayout() {
     return "Home";
   })();
 
+  // ── Layout móvil — cero position:fixed, máximo 1 capa compositor GPU ──
+  if (isMobile) {
+    return (
+      <div className="flex flex-col h-[100svh] overflow-hidden bg-background">
+        {isImmersiveSection && (
+          <div className="shrink-0 flex items-center h-12 px-4 border-b border-border bg-background">
+            <button
+              type="button"
+              onClick={() => navigate("/accesos/welcome")}
+              className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ChevronLeft size={18} />
+              Volver
+            </button>
+          </div>
+        )}
+        <main
+          className={`flex-1 min-h-0 bg-background ${
+            isImmersiveSection
+              ? "overflow-hidden flex flex-col"
+              : "overflow-y-auto overscroll-y-contain px-4 pt-4 pb-4"
+          }`}
+        >
+          <Outlet />
+        </main>
+        {!isImmersiveSection && <BottomNav />}
+      </div>
+    );
+  }
+
+  // ── Layout desktop — sin cambios ──
   return (
     <div className="bg-background flex min-h-[100svh] w-full max-w-full">
       <SidebarCompacto />
