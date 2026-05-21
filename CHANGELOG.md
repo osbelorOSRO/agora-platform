@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.4
+
+### Fixed
+- Agenda móvil: eliminado glitch GPU compositor durante swipe — causa raíz: `transition` (que incluye `transform` en su scope) en cada uno de los 24 artículos de contacto hacía que Chrome Android promoviera cada card a una capa compositor individual al inicio de cualquier gesto táctil, desbordando el buffer GPU. Cambiado a `transition-colors` en todos los artículos, botones de contacto y controles de paginación.
+- Agenda móvil: responsividad corregida — título `text-4xl` fijo reducido a `text-2xl md:text-4xl`, padding de secciones responsivo (`p-4 md:p-6`), stats siempre en 3 columnas (era 1 columna en mobile por `sm:grid-cols-3`), stats con tamaños responsivos y `min-w-0 overflow-hidden`. Botón "Nuevo contacto WhatsApp" a `w-full` en mobile.
+
 ## 1.7.3
 
 ### Fixed

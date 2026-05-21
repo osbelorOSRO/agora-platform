@@ -183,41 +183,41 @@ export default function Agenda() {
     <>
       <div className="space-y-6">
         {/* ── Header con stats ── */}
-        <section className="rounded-xl border border-border bg-card p-6 shadow-2xl">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <section className="rounded-xl border border-border bg-card p-4 md:p-6 shadow-2xl">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
               <p className="text-xs font-black uppercase tracking-[0.28em] text-primary">
                 Agenda
               </p>
-              <h1 className="mt-3 text-4xl font-black tracking-tight text-foreground">
+              <h1 className="mt-2 md:mt-3 text-2xl md:text-4xl font-black tracking-tight text-foreground">
                 Contactos conversacionales
               </h1>
-              <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
+              <p className="mt-2 md:mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
                 Directorio de actores/contactos basado en Meta Inbox y Baileys. La agenda permite encontrar,
                 clasificar y preparar contactos sin borrar registros.
               </p>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-lg border border-border bg-background/40 px-5 py-4">
-                <p className="text-[10px] font-medium uppercase tracking-[0.26em] text-muted-foreground">Contactos</p>
-                <p className="mt-2 text-3xl font-black text-foreground">{total}</p>
+            <div className="grid grid-cols-3 gap-2 md:gap-3 min-w-0">
+              <div className="rounded-lg border border-border bg-background/40 px-3 md:px-5 py-3 md:py-4 min-w-0 overflow-hidden">
+                <p className="text-[9px] md:text-[10px] font-medium uppercase tracking-[0.18em] md:tracking-[0.26em] text-muted-foreground truncate">Contactos</p>
+                <p className="mt-1 md:mt-2 text-xl md:text-3xl font-black text-foreground">{total}</p>
               </div>
-              <div className="rounded-lg border border-border bg-background/40 px-5 py-4">
-                <p className="text-[10px] font-medium uppercase tracking-[0.26em] text-muted-foreground">Canal</p>
-                <p className="mt-2 truncate text-sm font-semibold text-foreground">{providerLabel(provider)}</p>
+              <div className="rounded-lg border border-border bg-background/40 px-3 md:px-5 py-3 md:py-4 min-w-0 overflow-hidden">
+                <p className="text-[9px] md:text-[10px] font-medium uppercase tracking-[0.18em] md:tracking-[0.26em] text-muted-foreground truncate">Canal</p>
+                <p className="mt-1 md:mt-2 truncate text-xs md:text-sm font-semibold text-foreground">{providerLabel(provider)}</p>
               </div>
-              <div className="rounded-lg border border-border bg-background/40 px-5 py-4">
-                <p className="text-[10px] font-medium uppercase tracking-[0.26em] text-muted-foreground">Búsqueda</p>
-                <p className="mt-2 truncate text-sm font-semibold text-foreground">{search || "Sin filtro"}</p>
+              <div className="rounded-lg border border-border bg-background/40 px-3 md:px-5 py-3 md:py-4 min-w-0 overflow-hidden">
+                <p className="text-[9px] md:text-[10px] font-medium uppercase tracking-[0.18em] md:tracking-[0.26em] text-muted-foreground truncate">Búsqueda</p>
+                <p className="mt-1 md:mt-2 truncate text-xs md:text-sm font-semibold text-foreground">{search || "Sin filtro"}</p>
               </div>
             </div>
           </div>
         </section>
 
         {/* ── Filtros y grilla ── */}
-        <section className="rounded-xl border border-border bg-card p-6 shadow-xl">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <section className="rounded-xl border border-border bg-card p-4 md:p-6 shadow-xl">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="grid w-full gap-3 lg:grid-cols-[minmax(0,1fr)_180px]">
               <div className="relative">
                 <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -225,14 +225,14 @@ export default function Agenda() {
                   type="text"
                   value={searchInput}
                   onChange={(event) => setSearchInput(event.target.value)}
-                  placeholder="Buscar nombre, telefono, rut, email o actor id..."
-                  className="h-11 w-full rounded-md border border-border bg-input pl-11 pr-4 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/50 focus:border-primary/40"
+                  placeholder="Buscar nombre, teléfono, rut, email o actor id..."
+                  className="h-11 w-full rounded-md border border-border bg-input pl-11 pr-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary/40"
                 />
               </div>
               <select
                 value={provider}
                 onChange={(event) => setProvider(event.target.value as (typeof PROVIDERS)[number])}
-                className="h-11 rounded-md border border-border bg-input px-3 text-sm text-foreground outline-none transition focus:border-primary/40"
+                className="h-11 rounded-md border border-border bg-input px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/40"
               >
                 {PROVIDERS.map((item) => (
                   <option key={item} value={item}>{providerLabel(item)}</option>
@@ -243,10 +243,10 @@ export default function Agenda() {
             <button
               type="button"
               onClick={() => setShowCreateWhatsapp(true)}
-              className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-4 text-sm font-semibold text-foreground transition hover:border-primary/40 hover:bg-primary/10"
+              className="inline-flex w-full xl:w-auto h-11 shrink-0 items-center justify-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-4 text-sm font-semibold text-foreground transition-colors hover:border-primary/40 hover:bg-primary/10"
             >
               <Plus size={16} />
-              WhatsApp
+              Nuevo contacto WhatsApp
             </button>
           </div>
 
@@ -280,7 +280,7 @@ export default function Agenda() {
                   return (
                     <article
                       key={`${contact.objectType}:${contact.actorExternalId}`}
-                      className="rounded-xl border border-border bg-background/40 p-5 shadow-lg transition hover:border-primary/20 hover:bg-card"
+                      className="rounded-xl border border-border bg-background/40 p-4 md:p-5 shadow-lg transition-colors hover:border-primary/20 hover:bg-card"
                     >
                       <div className="flex items-start gap-4">
                         <span
@@ -321,7 +321,7 @@ export default function Agenda() {
                           type="button"
                           onClick={() => void handleOpenInbox(contact)}
                           disabled={!canOpenInbox || preparing}
-                          className="inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-md border border-primary/20 bg-primary/5 text-sm font-semibold text-foreground/80 transition hover:border-primary/40 hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-45"
+                          className="inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-md border border-primary/20 bg-primary/5 text-sm font-semibold text-foreground/80 transition-colors hover:border-primary/40 hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-45"
                         >
                           <MessageCircle size={15} />
                           {preparing ? "Preparando..." : inboxLabel}
@@ -349,7 +349,7 @@ export default function Agenda() {
                 type="button"
                 onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                 disabled={page <= 1 || loading}
-                className="rounded-md border border-border px-4 py-2 text-sm font-semibold text-foreground/80 transition hover:bg-card disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-md border border-border px-4 py-2 text-sm font-semibold text-foreground/80 transition-colors hover:bg-card disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Anterior
               </button>
@@ -360,7 +360,7 @@ export default function Agenda() {
                 type="button"
                 onClick={() => setPage((prev) => prev + 1)}
                 disabled={!data?.hasNext || loading}
-                className="rounded-md border border-border px-4 py-2 text-sm font-semibold text-foreground/80 transition hover:bg-card disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-md border border-border px-4 py-2 text-sm font-semibold text-foreground/80 transition-colors hover:bg-card disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Siguiente
               </button>
