@@ -22,9 +22,112 @@ import {
   obtenerActividadSemanalThreads,
   type ThreadWeeklyActivityRow,
 } from "../services/reportesService";
-import { useWaDashboard } from "@/modules/wa/hooks/useWaDashboard";
 import { useNotificaciones } from "@/context/NotificacionContext";
 import { listMetaInboxContacts, listMetaInboxThreads } from "@/services/metaInbox.service";
+
+function WaActivitySection() {
+  const navigate = useNavigate();
+  const { notificaciones, eliminar, eliminarTodas, markAllRead } = useNotificaciones();
+
+  const activityFeed = useMemo(() => {
+    const appMap = new Map<
+      string,
+      { actorExternalId: string; label: string; timestamp: string; latestContent: string; count: number }
+    >();
+    notificaciones.forEach((item) => {
+      const prev = appMap.get(item.actorExternalId);
+      const label = item.phone || item.actorExternalId;
+      if (!prev) {
+        appMap.set(item.actorExternalId, { actorExternalId: item.actorExternalId, label, timestamp: item.fecha, latestContent: item.contenido, count: 1 });
+        return;
+      }
+      const prevTs = +new Date(prev.timestamp);
+      const nextTs = +new Date(item.fecha);
+      appMap.set(item.actorExternalId, {
+        actorExternalId: item.actorExternalId,
+        label: prev.label || label,
+        timestamp: nextTs > prevTs ? item.fecha : prev.timestamp,
+        latestContent: nextTs > prevTs ? item.contenido : prev.latestContent,
+        count: prev.count + 1,
+      });
+    });
+
+    return Array.from(appMap.values())
+      .map((item) => ({
+        id: `threads-${item.actorExternalId}-${item.timestamp}`,
+        source: "THREADS",
+        message: item.count > 1
+          ? `${item.count} mensajes nuevos del actor ${item.label}`
+          : `Nuevo mensaje del actor ${item.label}: ${item.latestContent}`,
+        timestamp: item.timestamp,
+        actorExternalId: item.actorExternalId,
+        appCount: item.count,
+      }))
+      .sort((a, b) => +new Date(b.timestamp) - +new Date(a.timestamp))
+      .slice(0, 8);
+  }, [notificaciones]);
+
+  const relativeActivityTime = (value: string) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "--";
+    return new Intl.DateTimeFormat("es-CL", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(date);
+  };
+
+  return (
+    <section className="rounded-xl border border-border bg-card p-6 shadow-2xl">
+      <div className="flex items-center gap-3">
+        <Bell className="h-5 w-5 text-primary" />
+        <h2 className="text-xl font-bold text-foreground">Notificaciones</h2>
+      </div>
+
+      <div className="mt-4 flex items-center gap-2">
+        <button type="button" onClick={markAllRead} className="rounded-lg border border-border bg-input px-3 py-1.5 text-xs font-bold text-foreground transition hover:border-primary/30 hover:text-primary">Marcar como leídas</button>
+        <button type="button" onClick={eliminarTodas} className="rounded-lg border border-border bg-input px-3 py-1.5 text-xs font-bold text-foreground transition hover:border-primary/30 hover:text-primary">Limpiar Threads</button>
+      </div>
+
+      <div className="mt-5 space-y-3">
+        {activityFeed.length === 0 ? (
+          <div className="rounded-xl border border-border bg-input p-4 text-sm text-muted-foreground">
+            Aún no hay actividad reciente para mostrar.
+          </div>
+        ) : (
+          activityFeed.map((item) => (
+            <div key={item.id} className="group relative rounded-xl border border-border bg-input p-4">
+              <div className="flex items-center justify-between gap-3 text-[11px] uppercase tracking-[0.18em]">
+                <span className="font-bold text-primary">{item.source}</span>
+                <span className="text-muted-foreground/60">{relativeActivityTime(item.timestamp)}</span>
+              </div>
+              <p className="mt-2 text-sm text-foreground">{item.message}</p>
+              {item.actorExternalId ? (
+                <div className="absolute right-3 top-3 flex items-center gap-2 rounded-full border border-border bg-card px-2 py-1 opacity-0 transition group-hover:opacity-100">
+                  {item.appCount ? (
+                    <span className="rounded-full bg-primary/20 px-2 py-1 text-[10px] font-bold text-primary">{item.appCount}</span>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/meta-inbox?actor=${encodeURIComponent(item.actorExternalId)}`)}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-input text-foreground transition hover:bg-card"
+                    title="Ir al thread"
+                  >
+                    <ArrowUpRight className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => eliminar(item.actorExternalId)}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-input text-muted-foreground transition hover:bg-rose-500/40 hover:text-foreground"
+                    title="Eliminar notificación"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ))
+        )}
+      </div>
+    </section>
+  );
+}
 
 type WeeklyBucket = {
   weekStart: string;
@@ -138,7 +241,7 @@ export default function Welcome() {
   const user = getTokenData();
   const navigate = useNavigate();
   const permissions = user?.permisos ?? [];
-  const { notificaciones, eliminar, eliminarTodas, unreadCount, markAllRead } = useNotificaciones();
+  const { unreadCount } = useNotificaciones();
   const [weeklyRows, setWeeklyRows] = useState<ThreadWeeklyActivityRow[]>([]);
   const [loadingChart, setLoadingChart] = useState(true);
   const [chartError, setChartError] = useState("");
@@ -152,13 +255,6 @@ export default function Welcome() {
   const canViewBot = hasPermission("vista_bot", permissions);
   const canManageBot = hasPermission("control_bot", permissions);
   const canManageAgenda = hasPermission("control_agenda", permissions);
-  const {
-    qrStatus,
-    logs: waLogs,
-    generarQr,
-    reiniciar,
-    cerrarSesion,
-  } = useWaDashboard();
 
   useEffect(() => {
     const load = async () => {
@@ -224,64 +320,6 @@ export default function Welcome() {
       ? "Solo lectura"
       : "Sin acceso";
 
-  const activityFeed = useMemo(() => {
-    const waEntries = waLogs.map((item) => ({
-      id: `wa-${item.id}`,
-      source: "WA",
-      message: item.message,
-      timestamp: item.timestamp,
-      tone: item.type,
-      actorExternalId: "",
-      appCount: 0,
-    }));
-
-    const appMap = new Map<
-      string,
-      { actorExternalId: string; label: string; timestamp: string; latestContent: string; count: number }
-    >();
-    notificaciones.forEach((item) => {
-      const prev = appMap.get(item.actorExternalId);
-      const label = item.phone || item.actorExternalId;
-      if (!prev) {
-        appMap.set(item.actorExternalId, {
-          actorExternalId: item.actorExternalId,
-          label,
-          timestamp: item.fecha,
-          latestContent: item.contenido,
-          count: 1,
-        });
-        return;
-      }
-
-      const prevTs = +new Date(prev.timestamp);
-      const nextTs = +new Date(item.fecha);
-      appMap.set(item.actorExternalId, {
-        actorExternalId: item.actorExternalId,
-        label: prev.label || label,
-        timestamp: nextTs > prevTs ? item.fecha : prev.timestamp,
-        latestContent: nextTs > prevTs ? item.contenido : prev.latestContent,
-        count: prev.count + 1,
-      });
-    });
-
-    const appEntries = Array.from(appMap.values()).map((item) => ({
-      id: `threads-${item.actorExternalId}-${item.timestamp}`,
-      source: "THREADS",
-      message:
-        item.count > 1
-          ? `${item.count} mensajes nuevos del actor ${item.label}`
-          : `Nuevo mensaje del actor ${item.label}: ${item.latestContent}`,
-      timestamp: item.timestamp,
-      tone: "info" as const,
-      actorExternalId: item.actorExternalId,
-      appCount: item.count,
-    }));
-
-    return [...waEntries, ...appEntries]
-      .sort((a, b) => +new Date(b.timestamp) - +new Date(a.timestamp))
-      .slice(0, 8);
-  }, [notificaciones, waLogs]);
-
   const moduleCards: ModuleCard[] = [
     {
       title: "Contacts",
@@ -334,7 +372,7 @@ export default function Welcome() {
       value: `${unreadCount} ${unreadCount === 1 ? "no leída" : "no leídas"}`,
       subtitle: "Actividad reciente consolidada.",
       enabled: true,
-      status: activityFeed.length > 0 ? "Activo" : "Sin eventos",
+      status: "",
       Icon: Bell,
     },
   ];
@@ -388,17 +426,8 @@ export default function Welcome() {
               enabled ? "border-border bg-card shadow-xl" : "border-border/50 bg-muted opacity-80"
             }`}
           >
-            <div className="flex items-start justify-between gap-2">
-              <div className="rounded-xl bg-input p-2 md:p-3">
-                <Icon className="h-4 w-4 md:h-6 md:w-6 text-foreground" />
-              </div>
-              <span
-                className={`rounded-full px-2 md:px-3 py-0.5 md:py-1 text-[10px] font-bold uppercase tracking-[0.15em] ${
-                  enabled ? "bg-primary/15 text-primary" : "bg-card text-muted-foreground"
-                }`}
-              >
-                {status}
-              </span>
+            <div className="rounded-xl bg-input p-2 md:p-3 w-fit">
+              <Icon className="h-4 w-4 md:h-6 md:w-6 text-foreground" />
             </div>
 
             <h2 className="mt-2 md:mt-4 text-sm md:text-xl font-bold text-foreground">{title}</h2>
@@ -431,13 +460,6 @@ export default function Welcome() {
               </div>
             ) : null}
 
-            {title === "WA Backend" && canManageBot ? (
-              <div className="mt-4 flex flex-wrap gap-2">
-                <button type="button" onClick={generarQr} className="rounded-lg border border-border bg-input px-3 py-2 text-xs font-bold text-foreground transition hover:border-primary/30 hover:text-primary">Generar QR</button>
-                <button type="button" onClick={reiniciar} className="rounded-lg border border-border bg-input px-3 py-2 text-xs font-bold text-foreground transition hover:border-primary/30 hover:text-primary">Reiniciar</button>
-                <button type="button" onClick={cerrarSesion} className="rounded-lg border border-border bg-input px-3 py-2 text-xs font-bold text-foreground transition hover:border-primary/30 hover:text-primary">Logout</button>
-              </div>
-            ) : null}
           </article>
         ))}
       </div>
@@ -559,74 +581,7 @@ export default function Welcome() {
         </div>
 
         <aside className="space-y-6">
-          {/* Notificaciones */}
-          <section className="rounded-xl border border-border bg-card p-6 shadow-2xl">
-            <div className="flex items-center gap-3">
-              <Bell className="h-5 w-5 text-primary" />
-              <h2 className="text-xl font-bold text-foreground">Notificaciones</h2>
-            </div>
-
-            {qrStatus ? (
-              <div className="mt-4 rounded-xl border border-border bg-input p-4 text-sm text-muted-foreground">{qrStatus.message}</div>
-            ) : null}
-
-            <div className="mt-4 flex items-center gap-2">
-              <button type="button" onClick={markAllRead} className="rounded-lg border border-border bg-input px-3 py-1.5 text-xs font-bold text-foreground transition hover:border-primary/30 hover:text-primary">Marcar como leídas</button>
-              <button type="button" onClick={eliminarTodas} className="rounded-lg border border-border bg-input px-3 py-1.5 text-xs font-bold text-foreground transition hover:border-primary/30 hover:text-primary">Limpiar Threads</button>
-            </div>
-
-            <div className="mt-5 space-y-3">
-              {activityFeed.length === 0 ? (
-                <div className="rounded-xl border border-border bg-input p-4 text-sm text-muted-foreground">
-                  Aún no hay actividad reciente para mostrar.
-                </div>
-              ) : (
-                activityFeed.map((item) => (
-                  <div key={item.id} className="group relative rounded-xl border border-border bg-input p-4">
-                    <div className="flex items-center justify-between gap-3 text-[11px] uppercase tracking-[0.18em]">
-                      <span
-                        className={`font-bold ${
-                          item.tone === "success" ? "text-emerald-300"
-                            : item.tone === "error" ? "text-rose-300"
-                            : item.tone === "warning" ? "text-amber-300"
-                            : "text-primary"
-                        }`}
-                      >
-                        {item.source}
-                      </span>
-                      <span className="text-muted-foreground/60">{relativeActivityTime(item.timestamp)}</span>
-                    </div>
-                    <p className="mt-2 text-sm text-foreground">{item.message}</p>
-                    {item.source === "THREADS" && item.actorExternalId ? (
-                      <div className="absolute right-3 top-3 flex items-center gap-2 rounded-full border border-border bg-card px-2 py-1 opacity-0 transition group-hover:opacity-100">
-                        {item.appCount ? (
-                          <span className="rounded-full bg-primary/20 px-2 py-1 text-[10px] font-bold text-primary">
-                            {item.appCount}
-                          </span>
-                        ) : null}
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/meta-inbox?actor=${encodeURIComponent(item.actorExternalId)}`)}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-input text-foreground transition hover:bg-card"
-                          title="Ir al thread" aria-label="Ir al thread"
-                        >
-                          <ArrowUpRight className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => eliminar(item.actorExternalId)}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-input text-muted-foreground transition hover:bg-rose-500/40 hover:text-foreground"
-                          title="Eliminar notificación" aria-label="Eliminar notificación"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ) : null}
-                  </div>
-                ))
-              )}
-            </div>
-          </section>
+          <WaActivitySection />
 
           {/* Permisos */}
           <section className="rounded-xl border border-border bg-card p-6 shadow-2xl">

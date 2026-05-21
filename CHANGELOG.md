@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.7.1
+
+### Fixed
+- Welcome: eliminado `useWaDashboard` del componente raíz — su ciclo de socket (múltiples `setState` por evento + reconexiones móviles) causaba re-renders continuos que se manifestaban como artefactos visuales de tipo "ghost frame" en las tarjetas de módulos en móvil.
+- Welcome: lógica de notificaciones de actividad extraída a componente aislado `WaActivitySection` para que sus re-renders no propaguen al árbol padre.
+- Welcome: eliminado badge "ACTIVO" de tarjetas de módulo (no aportaba información y participaba en el ciclo de re-render).
+- Welcome: corregido import faltante de `Users` que causaba pantalla en blanco al cargar.
+
 ## 1.7.0
 
 ### Changed
