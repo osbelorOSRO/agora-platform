@@ -397,21 +397,21 @@ export default function Welcome() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 md:gap-3">
-            <div className="rounded-xl border border-border bg-input p-2 md:p-4">
-              <div className="text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground">Perfil</div>
-              <div className="mt-1 md:mt-2 text-base md:text-xl font-bold capitalize text-foreground">{user?.rol ?? "sin rol"}</div>
-              <div className="mt-0.5 md:mt-1 text-xs md:text-sm text-muted-foreground truncate">{user?.username ?? "usuario"}</div>
+          <div className="grid grid-cols-3 gap-2 md:gap-3 min-w-0">
+            <div className="rounded-xl border border-border bg-input p-2 md:p-4 min-w-0 overflow-hidden">
+              <div className="text-[9px] md:text-[10px] font-medium uppercase tracking-[0.18em] md:tracking-[0.22em] text-muted-foreground truncate">Perfil</div>
+              <div className="mt-1 md:mt-2 text-sm md:text-xl font-bold capitalize text-foreground truncate">{user?.rol ?? "sin rol"}</div>
+              <div className="mt-0.5 md:mt-1 text-[10px] md:text-sm text-muted-foreground truncate">{user?.username ?? "usuario"}</div>
             </div>
-            <div className="rounded-xl border border-border bg-input p-2 md:p-4">
-              <div className="text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground">Módulos</div>
-              <div className="mt-1 md:mt-2 text-base md:text-xl font-bold text-foreground">{enabledModulesCount}</div>
-              <div className="mt-0.5 md:mt-1 text-xs md:text-sm text-muted-foreground">Activos</div>
+            <div className="rounded-xl border border-border bg-input p-2 md:p-4 min-w-0 overflow-hidden">
+              <div className="text-[9px] md:text-[10px] font-medium uppercase tracking-[0.18em] md:tracking-[0.22em] text-muted-foreground truncate">Módulos</div>
+              <div className="mt-1 md:mt-2 text-sm md:text-xl font-bold text-foreground">{enabledModulesCount}</div>
+              <div className="mt-0.5 md:mt-1 text-[10px] md:text-sm text-muted-foreground">Activos</div>
             </div>
-            <div className="rounded-xl border border-border bg-input p-2 md:p-4">
-              <div className="text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground">Bot WA</div>
-              <div className="mt-1 md:mt-2 text-base md:text-xl font-bold text-foreground">{botStatus}</div>
-              <div className="mt-0.5 md:mt-1 text-xs md:text-sm text-muted-foreground">{canManageAgenda ? "Editable" : "Sin control"}</div>
+            <div className="rounded-xl border border-border bg-input p-2 md:p-4 min-w-0 overflow-hidden">
+              <div className="text-[9px] md:text-[10px] font-medium uppercase tracking-[0.18em] md:tracking-[0.22em] text-muted-foreground truncate">Bot WA</div>
+              <div className="mt-1 md:mt-2 text-sm md:text-xl font-bold text-foreground truncate">{botStatus}</div>
+              <div className="mt-0.5 md:mt-1 text-[10px] md:text-sm text-muted-foreground truncate">{canManageAgenda ? "Editable" : "Sin control"}</div>
             </div>
           </div>
         </div>
@@ -422,7 +422,7 @@ export default function Welcome() {
         {moduleCards.map(({ title, value, subtitle, to, actionLabel, onAction, enabled, status, Icon }) => (
           <article
             key={title}
-            className={`rounded-xl border p-3 md:p-5 ${
+            className={`rounded-xl border p-3 md:p-5 min-w-0 overflow-hidden ${
               enabled ? "border-border bg-card shadow-xl" : "border-border/40 bg-muted/50"
             }`}
           >
@@ -430,15 +430,15 @@ export default function Welcome() {
               <Icon className="h-4 w-4 md:h-6 md:w-6 text-foreground" />
             </div>
 
-            <h2 className="mt-2 md:mt-4 text-sm md:text-xl font-bold text-foreground">{title}</h2>
-            <p className="mt-1 md:mt-3 text-base md:text-2xl font-black leading-tight text-foreground">{value}</p>
+            <h2 className="mt-2 md:mt-4 text-sm md:text-xl font-bold text-foreground truncate">{title}</h2>
+            <p className="mt-1 md:mt-3 text-sm md:text-2xl font-black leading-tight text-foreground break-words">{value}</p>
             <p className="mt-1 md:mt-2 hidden md:block text-sm text-muted-foreground">{subtitle}</p>
 
             {to && enabled ? (
               <button
                 type="button"
                 onClick={() => navigate(to)}
-                className="mt-4 inline-flex items-center gap-2 rounded-xl border border-border bg-input px-4 py-2 text-sm font-bold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+                className="mt-3 md:mt-4 inline-flex w-full items-center justify-center gap-1 rounded-xl border border-border bg-input px-2 md:px-4 py-2 text-xs md:text-sm font-bold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
               >
                 Ir al módulo
               </button>
@@ -455,9 +455,9 @@ export default function Welcome() {
             ) : null}
 
             {!enabled ? (
-              <div className="mt-4 inline-flex items-center gap-2 rounded-xl border border-border bg-input px-4 py-2 text-sm text-muted-foreground">
-                <Lock className="h-4 w-4" />
-                Sin permiso para operar
+              <div className="mt-3 md:mt-4 flex items-center gap-1 rounded-xl border border-border bg-input px-2 md:px-4 py-2 text-xs md:text-sm text-muted-foreground">
+                <Lock className="h-3 w-3 md:h-4 md:w-4 shrink-0" />
+                <span className="truncate">Sin permiso</span>
               </div>
             ) : null}
 

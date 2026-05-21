@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.7.3
+
+### Fixed
+- Welcome móvil: scroll del documento restaurado — `<main>` tenía `overflow-y-auto` en un contenedor flex sin altura fija, por lo que Chrome Android capturaba los touch events sin poder scrollear, dejando solo funcional el scroll interno del sidebar. Quitado `overflow-y-auto` del `<main>` no-inmersivo; el documento scrollea naturalmente.
+- Pull-to-refresh: `overscroll-behavior-y: none` movido a `html, body` donde aplica al scroll del documento real.
+- Header mobile: texto de nombre y rol oculto en mobile (`hidden md:block`), botón LayoutGrid oculto en mobile — libera ~80px en el header para evitar desbordamiento.
+- Welcome móvil: stats grid (Perfil / Módulos / Bot WA) con `min-w-0 overflow-hidden` y `truncate` en todos los textos — las celdas de ~88px ya no desbordan con valores largos como "Control total" o "Superadmin".
+- Welcome móvil: module cards con `min-w-0 overflow-hidden`, valor con `break-words`, botón "Ir al módulo" a `w-full text-xs` en mobile, badge "Sin permiso" truncado — las tarjetas de ~130px ya no desbordan.
+
 ## 1.7.2
 
 ### Fixed

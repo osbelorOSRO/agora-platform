@@ -47,13 +47,13 @@ export default function BaseLayout() {
 
           <button
             type="button"
-            className="text-foreground transition-colors hover:text-primary"
+            className="hidden md:block text-foreground transition-colors hover:text-primary"
           >
             <LayoutGrid size={18} />
           </button>
 
-          <div className="flex items-center gap-3 border-l border-border pl-4">
-            <div className="text-right">
+          <div className="flex items-center gap-2 md:gap-3 border-l border-border pl-3 md:pl-4">
+            <div className="hidden md:block text-right">
               <p className="text-xs font-bold uppercase text-foreground">
                 {user?.nombre || user?.username || "Usuario"}
               </p>
@@ -61,7 +61,7 @@ export default function BaseLayout() {
                 {user?.rol ?? "sin rol"}
               </p>
             </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/30 glass-sm text-xs font-bold text-foreground">
+            <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-full border border-primary/30 glass-sm text-xs font-bold text-foreground">
               {(user?.nombre?.[0] ?? user?.username?.[0] ?? "U").toUpperCase()}
             </div>
           </div>
@@ -71,9 +71,8 @@ export default function BaseLayout() {
         className={`flex-1 ml-14 md:ml-64 bg-background ${
           isImmersiveSection
             ? "pt-16 h-screen flex flex-col overflow-hidden"
-            : "pt-[88px] px-4 pb-4 md:px-6 md:pb-6 min-h-screen overflow-y-auto"
+            : "pt-[88px] px-4 pb-4 md:px-6 md:pb-6"
         }`}
-        style={isImmersiveSection ? undefined : { overscrollBehaviorY: "none" }}
       >
         <Outlet />
       </main>
