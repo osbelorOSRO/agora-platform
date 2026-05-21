@@ -44,7 +44,7 @@ export default function SidebarCompacto() {
   };
 
   return (
-    <aside className="flex h-[100svh] w-14 md:w-64 shrink-0 flex-col border-r border-border bg-background md:shadow-[4px_0_24px_rgba(0,0,0,0.45)]">
+    <aside className="fixed left-0 top-0 z-40 flex h-[100svh] w-14 md:w-64 flex-col border-r border-border bg-background md:shadow-[4px_0_24px_rgba(0,0,0,0.45)]">
       {/* Desktop logo */}
       <div className="hidden md:block p-6">
         <h1 className="text-2xl font-black tracking-tight text-primary">AGORA</h1>
