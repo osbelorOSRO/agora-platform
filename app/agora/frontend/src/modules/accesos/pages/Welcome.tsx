@@ -418,7 +418,7 @@ export default function Welcome() {
       </header>
 
       {/* ── Module cards ── */}
-      <div className="isolate grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-5">
         {moduleCards.map(({ title, value, subtitle, to, actionLabel, onAction, enabled, status, Icon }) => (
           <article
             key={title}
@@ -435,12 +435,13 @@ export default function Welcome() {
             <p className="mt-1 md:mt-2 hidden md:block text-sm text-muted-foreground">{subtitle}</p>
 
             {to && enabled ? (
-              <Link
-                to={to}
+              <button
+                type="button"
+                onClick={() => navigate(to)}
                 className="mt-4 inline-flex items-center gap-2 rounded-xl border border-border bg-input px-4 py-2 text-sm font-bold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
               >
                 Ir al módulo
-              </Link>
+              </button>
             ) : null}
 
             {!to && enabled && onAction && actionLabel ? (
