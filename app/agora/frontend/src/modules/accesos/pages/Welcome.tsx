@@ -5,7 +5,11 @@ import {
   Bell,
   Lock,
   ContactRound,
+  LayoutList,
   MessageSquare,
+  Megaphone,
+  PackageOpen,
+  Plug,
   ArrowUpRight,
   X,
   Shield,
@@ -141,6 +145,7 @@ export default function Welcome() {
   const [agendaTotal, setAgendaTotal] = useState<number | null>(null);
   const [metaThreadsCount, setMetaThreadsCount] = useState<number | null>(null);
 
+  const isSuperadmin = user?.rol === "superadmin";
   const canUseThreads = hasPermission("gestionar_usuarios", permissions);
   const canSeeReports = hasPermission("ver_reportes", permissions);
   const canEditSettings = hasPermission("editar_configuracion", permissions);
@@ -209,6 +214,8 @@ export default function Welcome() {
     canSeeReports,
     canEditSettings,
     canViewBot,
+    canManageBot,
+    canManageAgenda,
   ].filter(Boolean).length;
 
   const botStatus = canManageBot
@@ -277,7 +284,7 @@ export default function Welcome() {
 
   const moduleCards: ModuleCard[] = [
     {
-      title: "Agenda",
+      title: "Contacts",
       value:
         agendaTotal === null
           ? "--"
@@ -285,7 +292,7 @@ export default function Welcome() {
       subtitle: "Contactos conversacionales disponibles en agenda.",
       to: "/agenda",
       enabled: canUseThreads,
-      status: canUseThreads ? "Disponible" : "Restringido",
+      status: canUseThreads ? "Activo" : "Restringido",
       Icon: ContactRound,
     },
     {
@@ -294,11 +301,20 @@ export default function Welcome() {
         metaThreadsCount === null
           ? "--"
           : `${metaThreadsCount} ${metaThreadsCount === 1 ? "thread activo" : "threads activos"}`,
-      subtitle: "Conversaciones operativas detectadas en Threads.",
+      subtitle: "Conversaciones operativas detectadas en Meta Inbox.",
       to: "/meta-inbox",
       enabled: canUseThreads,
-      status: canUseThreads ? "Disponible" : "Restringido",
+      status: canUseThreads ? "Activo" : "Restringido",
       Icon: MessageSquare,
+    },
+    {
+      title: "Ads WA",
+      value: canUseThreads ? "Acceso habilitado" : "Sin acceso",
+      subtitle: "Campañas y plantillas de mensajes de WhatsApp Ads.",
+      to: canUseThreads ? "/meta-ads" : undefined,
+      enabled: canUseThreads,
+      status: canUseThreads ? "Activo" : "Restringido",
+      Icon: Megaphone,
     },
     {
       title: "WA Backend",
@@ -307,7 +323,7 @@ export default function Welcome() {
         ? "Panel operativo conectado con acciones habilitadas."
         : canViewBot
           ? "Acceso informativo al bot en modo lectura."
-          : "Sin acceso al modulo del bot.",
+          : "Sin acceso al módulo del bot.",
       to: canViewBot ? "/wa-control" : undefined,
       enabled: canViewBot,
       status: botStatus,
@@ -324,91 +340,77 @@ export default function Welcome() {
   ];
 
   return (
-    <section className="space-y-8 text-white">
-      <header className="rounded-[28px] border border-white/10 bg-black/20 p-6 shadow-2xl backdrop-blur-xl">
+    <section className="space-y-4 md:space-y-8 text-foreground">
+      {/* ── Header ── */}
+      <header className="rounded-xl border border-border bg-card p-6 shadow-2xl">
         <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-200/80">
+            <p className="text-xs font-black uppercase tracking-[0.3em] text-primary">
               Agora Dashboard
             </p>
             <div>
-              <h1 className="text-3xl font-bold md:text-4xl">
+              <h1 className="text-3xl font-black md:text-4xl text-foreground">
                 Bienvenido{user?.nombre ? `, ${user.nombre}` : ""}
               </h1>
-              <p className="mt-2 max-w-3xl text-sm text-white/75 md:text-base">
-                Este es el hub transversal de operacion. Desde aqui centralizamos
-                accesos, permisos y el pulso semanal de actividad conversacional.
+              <p className="mt-2 max-w-3xl text-sm text-muted-foreground md:text-base">
+                Hub transversal de operación. Desde aquí centralizamos accesos, permisos
+                y el pulso semanal de actividad conversacional.
               </p>
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-white/10 bg-white/8 p-4">
-              <div className="text-xs uppercase tracking-[0.2em] text-white/55">
-                Perfil
-              </div>
-              <div className="mt-2 text-xl font-semibold capitalize">
-                {user?.rol ?? "sin rol"}
-              </div>
-              <div className="mt-1 text-sm text-white/60">{user?.username ?? "usuario"}</div>
+          <div className="grid grid-cols-3 gap-2 md:gap-3">
+            <div className="rounded-xl border border-border bg-input p-2 md:p-4">
+              <div className="text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground">Perfil</div>
+              <div className="mt-1 md:mt-2 text-base md:text-xl font-bold capitalize text-foreground">{user?.rol ?? "sin rol"}</div>
+              <div className="mt-0.5 md:mt-1 text-xs md:text-sm text-muted-foreground truncate">{user?.username ?? "usuario"}</div>
             </div>
-
-            <div className="rounded-2xl border border-white/10 bg-white/8 p-4">
-              <div className="text-xs uppercase tracking-[0.2em] text-white/55">
-                Modulos activos
-              </div>
-              <div className="mt-2 text-xl font-semibold">{enabledModulesCount}</div>
-              <div className="mt-1 text-sm text-white/60">
-                Segun permisos vigentes
-              </div>
+            <div className="rounded-xl border border-border bg-input p-2 md:p-4">
+              <div className="text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground">Módulos</div>
+              <div className="mt-1 md:mt-2 text-base md:text-xl font-bold text-foreground">{enabledModulesCount}</div>
+              <div className="mt-0.5 md:mt-1 text-xs md:text-sm text-muted-foreground">Activos</div>
             </div>
-
-            <div className="rounded-2xl border border-white/10 bg-white/8 p-4">
-              <div className="text-xs uppercase tracking-[0.2em] text-white/55">
-                Bot WhatsApp
-              </div>
-              <div className="mt-2 text-xl font-semibold">{botStatus}</div>
-              <div className="mt-1 text-sm text-white/60">
-                Agenda {canManageAgenda ? "editable" : "sin control"}
-              </div>
+            <div className="rounded-xl border border-border bg-input p-2 md:p-4">
+              <div className="text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground">Bot WA</div>
+              <div className="mt-1 md:mt-2 text-base md:text-xl font-bold text-foreground">{botStatus}</div>
+              <div className="mt-0.5 md:mt-1 text-xs md:text-sm text-muted-foreground">{canManageAgenda ? "Editable" : "Sin control"}</div>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      {/* ── Module cards ── */}
+      <div className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-5">
         {moduleCards.map(({ title, value, subtitle, to, actionLabel, onAction, enabled, status, Icon }) => (
           <article
             key={title}
-            className={`rounded-[24px] border p-5 transition ${
-              enabled
-                ? "border-white/15 bg-white/8 shadow-xl"
-                : "border-white/8 bg-black/15 opacity-80"
+            className={`rounded-xl border p-3 md:p-5 transition ${
+              enabled ? "border-border bg-card shadow-xl" : "border-border/50 bg-muted opacity-80"
             }`}
           >
-            <div className="flex items-start justify-between gap-4">
-              <div className="rounded-2xl bg-white/10 p-3">
-                <Icon className="h-6 w-6" />
+            <div className="flex items-start justify-between gap-2">
+              <div className="rounded-xl bg-input p-2 md:p-3">
+                <Icon className="h-4 w-4 md:h-6 md:w-6 text-foreground" />
               </div>
               <span
-                className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${
-                  enabled ? "bg-emerald-400/15 text-emerald-100" : "bg-white/10 text-white/55"
+                className={`rounded-full px-2 md:px-3 py-0.5 md:py-1 text-[10px] font-bold uppercase tracking-[0.15em] ${
+                  enabled ? "bg-primary/15 text-primary" : "bg-card text-muted-foreground"
                 }`}
               >
                 {status}
               </span>
             </div>
 
-            <h2 className="mt-4 text-xl font-semibold">{title}</h2>
-            <p className="mt-3 text-2xl font-black leading-tight text-white">{value}</p>
-            <p className="mt-2 min-h-16 text-sm text-white/70">{subtitle}</p>
+            <h2 className="mt-2 md:mt-4 text-sm md:text-xl font-bold text-foreground">{title}</h2>
+            <p className="mt-1 md:mt-3 text-base md:text-2xl font-black leading-tight text-foreground">{value}</p>
+            <p className="mt-1 md:mt-2 hidden md:block text-sm text-muted-foreground">{subtitle}</p>
 
             {to && enabled ? (
               <Link
                 to={to}
-                className="mt-4 inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium transition hover:bg-white/15"
+                className="mt-4 inline-flex items-center gap-2 rounded-xl border border-border bg-input px-4 py-2 text-sm font-bold text-foreground transition hover:border-primary/30 hover:text-primary"
               >
-                Ir al modulo
+                Ir al módulo
               </Link>
             ) : null}
 
@@ -416,105 +418,123 @@ export default function Welcome() {
               <button
                 type="button"
                 onClick={onAction}
-                className="mt-4 inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium transition hover:bg-white/15"
+                className="mt-4 inline-flex items-center gap-2 rounded-xl border border-border bg-input px-4 py-2 text-sm font-bold text-foreground transition hover:border-primary/30 hover:text-primary"
               >
                 {actionLabel}
               </button>
             ) : null}
 
             {!enabled ? (
-              <div className="mt-4 inline-flex items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-4 py-2 text-sm text-white/55">
+              <div className="mt-4 inline-flex items-center gap-2 rounded-xl border border-border bg-input px-4 py-2 text-sm text-muted-foreground">
                 <Lock className="h-4 w-4" />
                 Sin permiso para operar
               </div>
             ) : null}
 
-            {title === "WA Control" && canManageBot ? (
+            {title === "WA Backend" && canManageBot ? (
               <div className="mt-4 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={generarQr}
-                  className="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-xs font-medium transition hover:bg-white/15"
-                >
-                  Generar QR
-                </button>
-                <button
-                  type="button"
-                  onClick={reiniciar}
-                  className="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-xs font-medium transition hover:bg-white/15"
-                >
-                  Reiniciar
-                </button>
-                <button
-                  type="button"
-                  onClick={cerrarSesion}
-                  className="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-xs font-medium transition hover:bg-white/15"
-                >
-                  Logout
-                </button>
+                <button type="button" onClick={generarQr} className="rounded-lg border border-border bg-input px-3 py-2 text-xs font-bold text-foreground transition hover:border-primary/30 hover:text-primary">Generar QR</button>
+                <button type="button" onClick={reiniciar} className="rounded-lg border border-border bg-input px-3 py-2 text-xs font-bold text-foreground transition hover:border-primary/30 hover:text-primary">Reiniciar</button>
+                <button type="button" onClick={cerrarSesion} className="rounded-lg border border-border bg-input px-3 py-2 text-xs font-bold text-foreground transition hover:border-primary/30 hover:text-primary">Logout</button>
               </div>
             ) : null}
           </article>
         ))}
       </div>
 
+      {/* ── Módulos superadmin ── */}
+      {isSuperadmin && (
+        <div className="space-y-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-primary">Superadmin</p>
+          <div className="grid gap-4 md:grid-cols-3">
+            {[
+              {
+                title: "Stage Templates",
+                subtitle: "Configuración de flujos y etapas de conversación del bot.",
+                to: "/stage-templates",
+                Icon: LayoutList,
+              },
+              {
+                title: "Offers",
+                subtitle: "Catálogo de ofertas y planes disponibles en el motor.",
+                to: "/offers",
+                Icon: PackageOpen,
+              },
+              {
+                title: "Integrations",
+                subtitle: "Tokens, webhooks y accesos de la app Meta / Facebook.",
+                to: "/integraciones",
+                Icon: Plug,
+              },
+            ].map(({ title, subtitle, to, Icon }) => (
+              <article key={title} className="rounded-xl border border-primary/20 bg-primary/5 p-5 transition hover:border-primary/40">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="rounded-xl bg-primary/10 p-3">
+                    <Icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <span className="rounded-full bg-primary/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
+                    Superadmin
+                  </span>
+                </div>
+                <h2 className="mt-4 text-xl font-bold text-foreground">{title}</h2>
+                <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>
+                <Link
+                  to={to}
+                  className="mt-4 inline-flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-bold text-primary transition hover:bg-primary/20"
+                >
+                  Ir al módulo
+                </Link>
+              </article>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Chart + sidebar ── */}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(360px,0.9fr)]">
-        <section className="rounded-[28px] border border-white/10 bg-black/20 p-6 shadow-2xl backdrop-blur-xl">
+        <div className="flex flex-col gap-6">
+        <section className="rounded-xl border border-border bg-card p-6 shadow-2xl">
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-200/80">
-                Actividad semanal
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold">
-                Eventos registrados por semana
-              </h2>
-              <p className="mt-2 text-sm text-white/70">
-                Ventana movil de ocho semanas, agrupada de lunes a domingo.
-              </p>
+              <p className="text-xs font-black uppercase tracking-[0.3em] text-primary">Actividad semanal</p>
+              <h2 className="mt-2 text-2xl font-bold text-foreground">Eventos registrados por semana</h2>
+              <p className="mt-2 text-sm text-muted-foreground">Ventana móvil de ocho semanas, agrupada de lunes a domingo.</p>
             </div>
-
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/65">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-input px-4 py-2 text-sm text-muted-foreground">
               <BarChart3 className="h-4 w-4" />
               {weeklyData[0] ? formatDateLabel(weeklyData[0].weekStart) : "--"} a{" "}
-              {weeklyData[weeklyData.length - 1]
-                ? formatDateLabel(weeklyData[weeklyData.length - 1].weekEnd)
-                : "--"}
+              {weeklyData[weeklyData.length - 1] ? formatDateLabel(weeklyData[weeklyData.length - 1].weekEnd) : "--"}
             </div>
           </div>
 
           {loadingChart ? (
-            <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-white/70">
-              Cargando grafico semanal...
+            <div className="mt-8 rounded-xl border border-border bg-input p-6 text-sm text-muted-foreground">
+              Cargando gráfico semanal...
             </div>
           ) : null}
 
           {chartError ? (
-            <div className="mt-8 rounded-2xl border border-red-400/25 bg-red-500/10 p-6 text-sm text-red-100">
-              {chartError}
-            </div>
+            <div className="mt-8 rounded-xl border border-rose-400/25 bg-rose-500/10 p-6 text-sm text-rose-300">{chartError}</div>
           ) : null}
 
           {!loadingChart && !chartError ? (
             <div className="mt-8">
-              <div className="flex h-72 items-end gap-3 overflow-x-auto rounded-[24px] border border-white/10 bg-white/5 p-5">
+              <div className="flex h-44 md:h-72 items-end gap-1.5 md:gap-3 overflow-x-auto rounded-xl border border-border bg-input p-3 md:p-5">
                 {weeklyData.map((item) => {
                   const height = `${Math.max((item.total / maxWeeklyTotal) * 100, item.total > 0 ? 12 : 4)}%`;
                   return (
-                    <div
-                      key={item.weekStart}
-                      className="flex h-full min-w-[88px] flex-1 flex-col items-center justify-end gap-3"
-                    >
-                      <div className="text-sm font-semibold text-white/90">{item.total}</div>
-                      <div className="flex h-44 w-full items-end rounded-[18px] bg-white/[0.03] px-1">
+                    <div key={item.weekStart} className="flex h-full min-w-[52px] md:min-w-[88px] flex-1 flex-col items-center justify-end gap-1.5 md:gap-3">
+                      <div className="text-xs md:text-sm font-bold text-foreground">{item.total}</div>
+                      <div className="flex h-28 md:h-44 w-full items-end rounded-xl bg-muted px-1">
                         <div
-                          className="w-full rounded-t-[18px] bg-gradient-to-t from-cyan-400 via-sky-400 to-orange-300 shadow-[0_10px_30px_rgba(56,189,248,0.35)] transition-all"
+                          className="w-full rounded-t-xl bg-gradient-to-t from-primary via-primary/50 to-primary/20 shadow-[0_10px_30px_var(--primary-glow)] transition-all"
                           style={{ height }}
                           title={`${item.total} eventos`}
                         />
                       </div>
-                      <div className="text-center text-xs text-white/65">
+                      <div className="text-center text-[10px] md:text-xs text-muted-foreground">
                         <div>{formatDateLabel(item.weekStart)}</div>
-                        <div>{formatDateLabel(item.weekEnd)}</div>
+                        <div className="hidden md:block">{formatDateLabel(item.weekEnd)}</div>
                       </div>
                     </div>
                   );
@@ -524,86 +544,79 @@ export default function Welcome() {
           ) : null}
         </section>
 
-        <aside className="space-y-6">
-          <section className="rounded-[28px] border border-white/10 bg-black/20 p-6 shadow-2xl backdrop-blur-xl">
+          {/* Lectura rápida */}
+          <section className="rounded-xl border border-border bg-card p-6 shadow-2xl">
             <div className="flex items-center gap-3">
-              <Bell className="h-5 w-5 text-cyan-200" />
-              <h2 className="text-xl font-semibold">Notificaciones</h2>
+              <Users className="h-5 w-5 text-primary" />
+              <h2 className="text-xl font-bold text-foreground">Lectura rápida</h2>
+            </div>
+            <div className="mt-5 space-y-4 text-sm text-muted-foreground">
+              <p>Todos los perfiles autenticados entran por esta vista. Las acciones visibles cambian según el rol y los permisos incluidos en el token.</p>
+              <p>El módulo de reportes queda dedicado a exportación CSV, mientras que el gráfico semanal vive solo aquí como pulso operativo resumido.</p>
+              <p>Ajustes concentra usuarios y roles.</p>
+            </div>
+          </section>
+        </div>
+
+        <aside className="space-y-6">
+          {/* Notificaciones */}
+          <section className="rounded-xl border border-border bg-card p-6 shadow-2xl">
+            <div className="flex items-center gap-3">
+              <Bell className="h-5 w-5 text-primary" />
+              <h2 className="text-xl font-bold text-foreground">Notificaciones</h2>
             </div>
 
             {qrStatus ? (
-              <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-white/75">
-                {qrStatus.message}
-              </div>
+              <div className="mt-4 rounded-xl border border-border bg-input p-4 text-sm text-muted-foreground">{qrStatus.message}</div>
             ) : null}
 
             <div className="mt-4 flex items-center gap-2">
-              <button
-                type="button"
-                onClick={markAllRead}
-                className="rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium transition hover:bg-white/15"
-              >
-                Marcar como leídas
-              </button>
-              <button
-                type="button"
-                onClick={eliminarTodas}
-                className="rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium transition hover:bg-white/15"
-              >
-                Limpiar Threads
-              </button>
+              <button type="button" onClick={markAllRead} className="rounded-lg border border-border bg-input px-3 py-1.5 text-xs font-bold text-foreground transition hover:border-primary/30 hover:text-primary">Marcar como leídas</button>
+              <button type="button" onClick={eliminarTodas} className="rounded-lg border border-border bg-input px-3 py-1.5 text-xs font-bold text-foreground transition hover:border-primary/30 hover:text-primary">Limpiar Threads</button>
             </div>
 
             <div className="mt-5 space-y-3">
               {activityFeed.length === 0 ? (
-                <div className="rounded-xl border border-white/10 bg-black/10 p-4 text-sm text-white/60">
-                  Aun no hay actividad reciente para mostrar.
+                <div className="rounded-xl border border-border bg-input p-4 text-sm text-muted-foreground">
+                  Aún no hay actividad reciente para mostrar.
                 </div>
               ) : (
                 activityFeed.map((item) => (
-                  <div
-                    key={item.id}
-                    className="group relative rounded-xl border border-white/10 bg-black/10 p-4"
-                  >
+                  <div key={item.id} className="group relative rounded-xl border border-border bg-input p-4">
                     <div className="flex items-center justify-between gap-3 text-[11px] uppercase tracking-[0.18em]">
                       <span
-                        className={`font-semibold ${
-                          item.tone === "success"
-                            ? "text-emerald-200"
-                            : item.tone === "error"
-                              ? "text-red-200"
-                              : item.tone === "warning"
-                                ? "text-amber-200"
-                                : "text-cyan-200"
+                        className={`font-bold ${
+                          item.tone === "success" ? "text-emerald-300"
+                            : item.tone === "error" ? "text-rose-300"
+                            : item.tone === "warning" ? "text-amber-300"
+                            : "text-primary"
                         }`}
                       >
                         {item.source}
                       </span>
-                      <span className="text-white/35">{relativeActivityTime(item.timestamp)}</span>
+                      <span className="text-muted-foreground/60">{relativeActivityTime(item.timestamp)}</span>
                     </div>
-                    <p className="mt-2 text-sm text-white/80">{item.message}</p>
+                    <p className="mt-2 text-sm text-foreground">{item.message}</p>
                     {item.source === "THREADS" && item.actorExternalId ? (
-                      <div className="absolute right-3 top-3 flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-2 py-1 opacity-0 transition group-hover:opacity-100">
+                      <div className="absolute right-3 top-3 flex items-center gap-2 rounded-full border border-border bg-card px-2 py-1 opacity-0 transition group-hover:opacity-100">
                         {item.appCount ? (
-                          <span className="rounded-full bg-cyan-300/20 px-2 py-1 text-[10px] font-semibold text-cyan-100">
+                          <span className="rounded-full bg-primary/20 px-2 py-1 text-[10px] font-bold text-primary">
                             {item.appCount}
                           </span>
                         ) : null}
                         <button
                           type="button"
                           onClick={() => navigate(`/meta-inbox?actor=${encodeURIComponent(item.actorExternalId)}`)}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/90 transition hover:bg-white/20"
-                          title="Ir al thread"
-                          aria-label="Ir al thread"
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-input text-foreground transition hover:bg-card"
+                          title="Ir al thread" aria-label="Ir al thread"
                         >
                           <ArrowUpRight className="h-4 w-4" />
                         </button>
                         <button
                           type="button"
                           onClick={() => eliminar(item.actorExternalId)}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/70 transition hover:bg-red-500/40 hover:text-white"
-                          title="Eliminar notificación"
-                          aria-label="Eliminar notificación"
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-input text-muted-foreground transition hover:bg-rose-500/40 hover:text-foreground"
+                          title="Eliminar notificación" aria-label="Eliminar notificación"
                         >
                           <X className="h-4 w-4" />
                         </button>
@@ -615,31 +628,25 @@ export default function Welcome() {
             </div>
           </section>
 
-          <section className="rounded-[28px] border border-white/10 bg-black/20 p-6 shadow-2xl backdrop-blur-xl">
+          {/* Permisos */}
+          <section className="rounded-xl border border-border bg-card p-6 shadow-2xl">
             <div className="flex items-center gap-3">
-              <Shield className="h-5 w-5 text-cyan-200" />
-              <h2 className="text-xl font-semibold">Estado de permisos</h2>
+              <Shield className="h-5 w-5 text-primary" />
+              <h2 className="text-xl font-bold text-foreground">Estado de permisos</h2>
             </div>
-
             <div className="mt-5 space-y-3">
-              {[
-                ["Operacion Threads", canUseThreads],
+              {([
+                ["Contacts / Threads / Ads WA", canUseThreads],
                 ["Reportes CSV", canSeeReports],
-                ["Ajustes y configuracion", canEditSettings],
-                ["Vista bot", canViewBot],
-                ["Control bot", canManageBot],
+                ["Ajustes y config.", canEditSettings],
+                ["Vista bot WA", canViewBot],
+                ["Control bot WA", canManageBot],
                 ["Control agenda", canManageAgenda],
-              ].map(([label, active]) => (
-                <div
-                  key={label}
-                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
-                >
-                  <span className="text-sm text-white/80">{label}</span>
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${
-                      active ? "bg-emerald-400/15 text-emerald-100" : "bg-white/10 text-white/55"
-                    }`}
-                  >
+                ...(isSuperadmin ? [["Stages / Offers / Integrations", true]] : []),
+              ] as [string, boolean][]).map(([label, active]) => (
+                <div key={String(label)} className="flex items-center justify-between gap-2 rounded-xl border border-border bg-input px-3 md:px-4 py-2 md:py-3">
+                  <span className="min-w-0 flex-1 text-xs md:text-sm text-foreground">{label}</span>
+                  <span className={`shrink-0 rounded-full px-2 md:px-3 py-0.5 md:py-1 text-[10px] md:text-xs font-bold uppercase tracking-[0.15em] ${active ? "bg-primary/15 text-primary" : "bg-card text-muted-foreground"}`}>
                     {active ? "Activo" : "No"}
                   </span>
                 </div>
@@ -647,27 +654,6 @@ export default function Welcome() {
             </div>
           </section>
 
-          <section className="rounded-[28px] border border-white/10 bg-black/20 p-6 shadow-2xl backdrop-blur-xl">
-            <div className="flex items-center gap-3">
-              <Users className="h-5 w-5 text-orange-200" />
-              <h2 className="text-xl font-semibold">Lectura rapida</h2>
-            </div>
-
-            <div className="mt-5 space-y-4 text-sm text-white/75">
-              <p>
-                Todos los perfiles autenticados entran por esta vista. Las acciones
-                visibles y operables cambian segun el rol y los permisos incluidos en el token.
-              </p>
-              <p>
-                El modulo de reportes queda dedicado a exportacion CSV, mientras que el
-                grafico semanal vive solo aqui como pulso operativo resumido.
-              </p>
-              <p>
-                Ajustes concentra usuarios y roles. Oficinas queda fuera de esta nueva
-                navegacion principal.
-              </p>
-            </div>
-          </section>
         </aside>
       </div>
     </section>

@@ -20,6 +20,7 @@ import {
   Workflow,
   X,
 } from "lucide-react";
+import useEsMovil from "@/hooks/useEsMovil";
 import {
   connectSocket,
   offMetaInboxMessageNew,
@@ -44,7 +45,6 @@ import type {
   MetaInboxThread,
   MetaInboxThreadControlUpdate,
 } from "@/types/metaInbox";
-import { estilos } from "@/theme/estilos";
 import ChatAnimation from "@/components/ChatAnimation";
 import VoiceRecorder from "@/components/VoiceRecorder";
 import { normalizeMediaUrl } from "@/utils/mediaUrl";
@@ -143,7 +143,7 @@ const compactActorId = (thread: MetaInboxThread) => {
 const normalizeText = (value?: string | null) =>
   String(value || "")
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .toLowerCase();
 
 const stageLabel = (value?: string | null) => {
@@ -206,8 +206,55 @@ const channelClass = (objectType?: string) => {
   return "border-sky-300/60 bg-sky-400/15 text-sky-300";
 };
 
+const s = {
+  pagina: "flex flex-1 flex-col overflow-hidden bg-background text-foreground",
+  errorBanner: "sticky top-0 z-50 border-b border-rose-400/30 bg-rose-500/10 px-4 py-2 text-sm font-bold text-rose-400",
+  mainBase: "flex min-h-0 flex-1 overflow-hidden",
+  mainWithContact: "grid grid-cols-[280px_1fr_320px]",
+  mainWithoutContact: "grid grid-cols-[280px_1fr]",
+  sidebar: "flex flex-col overflow-y-auto border-r border-border bg-card scrollbar-custom",
+  sidebarInfo: "mt-2 text-[11px] text-muted-foreground",
+  threadItem: "border-b border-border px-2 py-2 transition hover:bg-input/60",
+  threadItemActive: "bg-input",
+  threadRow: "flex items-start gap-1",
+  threadMainButton: "min-w-0 flex-1 text-left",
+  threadTop: "flex items-center justify-between gap-2",
+  threadName: "text-sm font-bold text-foreground",
+  threadTime: "text-[10px] text-muted-foreground",
+  threadPreview: "text-xs text-muted-foreground",
+  menuButton: "flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-input hover:text-foreground",
+  menuPopup: "absolute right-0 top-8 z-30 min-w-[140px] rounded-md border border-border bg-card shadow-xl",
+  menuOption: "block w-full px-3 py-2 text-left text-sm text-foreground hover:bg-input transition-colors",
+  chatPanel: "flex min-h-0 flex-1 flex-col overflow-hidden",
+  chatHeader: "border-b border-border bg-card/90 px-4 py-3",
+  chatHeaderRow: "flex items-start justify-between gap-2",
+  chatName: "text-base font-bold text-foreground",
+  chatChannel: "",
+  closeButton: "flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground hover:border-rose-400/30 hover:text-rose-400 transition-colors",
+  messagesArea: "flex-1 overflow-y-auto space-y-2 p-4 scrollbar-custom",
+  loadingText: "py-4 text-center text-sm text-muted-foreground",
+  bubbleWrapOutgoing: "flex justify-end",
+  bubbleWrapIncoming: "flex justify-start",
+  bubbleOutgoing: "max-w-[75%] rounded-2xl rounded-tr-sm border border-primary/30 bg-primary/15 px-3 py-2 text-sm text-foreground",
+  bubbleIncoming: "max-w-[75%] rounded-2xl rounded-tl-sm border border-border bg-card px-3 py-2 text-sm text-foreground",
+  bubbleTsOutgoing: "mt-1 text-right text-[10px] text-muted-foreground",
+  bubbleTsIncoming: "mt-1 text-[10px] text-muted-foreground",
+  composer: "flex items-center gap-2 border-t border-border bg-card/90 px-3 py-2",
+  composerInput: "min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/50",
+  composerSend: "flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground hover:border-primary/30 hover:text-primary transition-colors",
+  composerIcon: "h-4 w-4",
+  contactAside: "flex flex-col gap-2 overflow-y-auto border-l border-border bg-card p-3 scrollbar-custom",
+  contactHead: "flex items-center justify-between pb-2 border-b border-border",
+  contactTitle: "text-xs font-bold uppercase tracking-[0.22em] text-primary",
+  contactInput: "w-full rounded-md border border-border bg-input px-2 py-1.5 text-sm text-foreground outline-none focus:border-primary/60 transition disabled:opacity-60",
+  contactTextarea: "w-full rounded-md border border-border bg-input px-2 py-1.5 text-sm text-foreground outline-none focus:border-primary/60 transition disabled:opacity-60 min-h-[72px] resize-none",
+  contactSave: "flex items-center justify-center gap-2 w-full rounded-md border border-primary/50 bg-primary/10 px-3 py-2 text-sm font-bold text-primary hover:bg-primary/20 transition disabled:cursor-not-allowed disabled:opacity-60",
+};
+
 const MetaInboxPage: React.FC = () => {
   const navigate = useNavigate();
+  const esMovil = useEsMovil();
+  const [mobileShowChat, setMobileShowChat] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedSessionId = searchParams.get("sessionId");
   const requestedActorId = searchParams.get("actor");
@@ -801,16 +848,23 @@ const MetaInboxPage: React.FC = () => {
   };
 
   return (
-    <div className={estilos.metaInbox.pagina}>
-      {error && <div className={estilos.metaInbox.errorBanner}>{error}</div>}
+    <div className={s.pagina}>
+      {error && <div className={s.errorBanner}>{error}</div>}
 
       <main
-        className={`${estilos.metaInbox.mainBase} ${
-          showContactPanel ? estilos.metaInbox.mainWithContact : estilos.metaInbox.mainWithoutContact
+        className={`${s.mainBase} ${
+          esMovil
+            ? ""
+            : showContactPanel ? s.mainWithContact : s.mainWithoutContact
         }`}
       >
-        <section className={estilos.metaInbox.sidebar}>
-          <div className="sticky top-0 z-20 border-b border-borde bg-fondoCard/95 p-3 backdrop-blur-md">
+        <section className={esMovil
+          ? mobileShowChat
+            ? "hidden"
+            : "flex flex-col w-full overflow-y-auto bg-card scrollbar-custom"
+          : s.sidebar
+        }>
+          <div className="sticky top-0 z-20 border-b border-border bg-card/95 p-3 backdrop-blur-md">
             <div className="grid grid-cols-3 gap-1">
               {STATUS_VIEWS.map((view) => {
                 const Icon = statusIcon(view);
@@ -820,10 +874,10 @@ const MetaInboxPage: React.FC = () => {
                   <button
                     key={view}
                     onClick={() => setStatusView(view)}
-                    className={`flex h-9 items-center justify-center gap-1.5 rounded-md border text-[11px] font-semibold transition ${
+                    className={`flex h-9 items-center justify-center gap-1.5 rounded-md border text-[11px] font-bold transition ${
                       active
-                        ? "border-primary bg-primary/15 text-primary shadow-[0_0_14px_rgba(0,255,136,0.2)]"
-                        : "border-borde bg-fondoClient/60 text-textoSecundario hover:border-primary/50 hover:text-textoOscuro"
+                        ? "border-primary bg-primary/15 text-primary"
+                        : "border-border bg-input/60 text-muted-foreground hover:border-primary/50 hover:text-foreground"
                     }`}
                     title={statusLabel(view)}
                   >
@@ -834,13 +888,13 @@ const MetaInboxPage: React.FC = () => {
               })}
             </div>
 
-            <div className="mt-3 flex h-9 items-center gap-2 rounded-md border border-borde bg-fondoClient px-2">
-              <Search className="h-4 w-4 shrink-0 text-textoSecundario" />
+            <div className="mt-3 flex h-9 items-center gap-2 rounded-md border border-border bg-input px-2">
+              <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Buscar actor, mensaje, etapa..."
-                className="min-w-0 flex-1 bg-transparent text-sm text-textoOscuro outline-none placeholder:text-textoSecundario/70"
+                className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/70"
               />
             </div>
 
@@ -848,7 +902,7 @@ const MetaInboxPage: React.FC = () => {
               <select
                 value={providerFilter}
                 onChange={(e) => setProviderFilter(e.target.value)}
-                className="h-8 rounded-md border border-borde bg-fondoClient px-2 text-xs text-textoOscuro outline-none"
+                className="h-8 rounded-md border border-border bg-input px-2 text-xs text-foreground outline-none"
                 title="Canal"
               >
                 <option value="ALL">Todos</option>
@@ -861,7 +915,7 @@ const MetaInboxPage: React.FC = () => {
               <select
                 value={attentionFilter}
                 onChange={(e) => setAttentionFilter(e.target.value)}
-                className="h-8 rounded-md border border-borde bg-fondoClient px-2 text-xs text-textoOscuro outline-none"
+                className="h-8 rounded-md border border-border bg-input px-2 text-xs text-foreground outline-none"
                 title="Modo"
               >
                 <option value="ALL">Modos</option>
@@ -873,7 +927,7 @@ const MetaInboxPage: React.FC = () => {
               </select>
             </div>
 
-            <div className={estilos.metaInbox.sidebarInfo}>
+            <div className={s.sidebarInfo}>
               {loadingThreads ? "Cargando conversaciones..." : `${filteredThreads.length}/${threads.length} conversaciones`}
             </div>
           </div>
@@ -890,17 +944,18 @@ const MetaInboxPage: React.FC = () => {
             return (
               <div
                 key={thread.sessionId}
-                className={`${estilos.metaInbox.threadItem} ${
-                  active ? estilos.metaInbox.threadItemActive : ""
+                className={`${s.threadItem} ${
+                  active ? s.threadItemActive : ""
                 }`}
               >
-                <div className={estilos.metaInbox.threadRow}>
+                <div className={s.threadRow}>
                     <button
                       onClick={() => {
                         setChatManuallyClosed(false);
                         setSelectedSessionId(thread.sessionId);
+                        if (esMovil) setMobileShowChat(true);
                       }}
-                      className={estilos.metaInbox.threadMainButton}
+                      className={s.threadMainButton}
                     >
                     <div className="flex min-w-0 items-start gap-2">
                       <span
@@ -913,13 +968,13 @@ const MetaInboxPage: React.FC = () => {
                         />
                       </span>
                       <div className="min-w-0 flex-1">
-                        <div className={estilos.metaInbox.threadTop}>
-                          <span className={`${estilos.metaInbox.threadName} truncate`}>{title}</span>
-                          <span className={`${estilos.metaInbox.threadTime} shrink-0`}>
+                        <div className={s.threadTop}>
+                          <span className={`${s.threadName} truncate`}>{title}</span>
+                          <span className={`${s.threadTime} shrink-0`}>
                             {formatRelativeTs(thread.lastMessageAt)}
                           </span>
                         </div>
-                        <div className={`${estilos.metaInbox.threadPreview} mt-1 truncate`}>
+                        <div className={`${s.threadPreview} mt-1 truncate`}>
                           {thread.lastMessageText || "(sin texto)"}
                         </div>
                         <div className="mt-2 flex min-w-0 items-center gap-1.5">
@@ -930,13 +985,13 @@ const MetaInboxPage: React.FC = () => {
                             <AttentionIcon mode={attentionMode} className="h-3.5 w-3.5" />
                           </span>
                           <span
-                            className="min-w-0 truncate rounded-md border border-primary/40 bg-primary/10 px-1.5 py-1 text-[10px] font-semibold text-primary"
+                            className="min-w-0 truncate rounded-md border border-primary/40 bg-primary/10 px-1.5 py-1 text-[10px] font-bold text-primary"
                             title={thread.threadStage || ""}
                           >
                             {stage}
                           </span>
                           {subtitle && (
-                            <span className="min-w-0 truncate text-[10px] text-textoSecundario">
+                            <span className="min-w-0 truncate text-[10px] text-muted-foreground">
                               {subtitle}
                             </span>
                           )}
@@ -948,13 +1003,13 @@ const MetaInboxPage: React.FC = () => {
                   <div className="relative">
                     <button
                       onClick={() => setOpenMenuForSessionId((prev) => (prev === thread.sessionId ? null : thread.sessionId))}
-                      className={estilos.metaInbox.menuButton}
+                      className={s.menuButton}
                       aria-label="menu actor"
                     >
                       <MoreVertical size={14} />
                     </button>
                     {openMenuForSessionId === thread.sessionId && (
-                      <div className={estilos.metaInbox.menuPopup}>
+                      <div className={s.menuPopup}>
                         <button
                           onClick={() => {
                             setChatManuallyClosed(false);
@@ -962,7 +1017,7 @@ const MetaInboxPage: React.FC = () => {
                             setDetailSessionId(thread.sessionId);
                             setOpenMenuForSessionId(null);
                           }}
-                          className={estilos.metaInbox.menuOption}
+                          className={s.menuOption}
                         >
                           Ver detalle
                         </button>
@@ -975,7 +1030,7 @@ const MetaInboxPage: React.FC = () => {
                               setOpenMenuForSessionId(null);
                               void handleReopenThread(thread.sessionId);
                             }}
-                            className={estilos.metaInbox.menuOption}
+                            className={s.menuOption}
                           >
                             Nueva atencion
                           </button>
@@ -988,34 +1043,39 @@ const MetaInboxPage: React.FC = () => {
             );
           })}
           {!loadingThreads && filteredThreads.length === 0 && (
-            <div className="px-4 py-8 text-center text-sm text-textoSecundario">
+            <div className="px-4 py-8 text-center text-sm text-muted-foreground">
               Sin conversaciones en esta vista
             </div>
           )}
         </section>
 
-        <section className={estilos.metaInbox.chatPanel}>
+        <section className={esMovil
+          ? mobileShowChat
+            ? "flex flex-col flex-1 overflow-hidden"
+            : "hidden"
+          : s.chatPanel
+        }>
           {!selectedThread ? (
             <div className="flex h-full flex-col items-center justify-center text-center">
               <ChatAnimation />
-              <h1 className="mt-8 text-3xl font-normal text-textoOscuro font-montserrat">
+              <h1 className="mt-8 text-3xl font-bold text-foreground">
                 Agora Web
               </h1>
-              <p className="mt-4 max-w-md text-center font-montserrat text-textoOscuro">
+              <p className="mt-4 max-w-md text-center text-muted-foreground">
                 Envía y recibe mensajes de tus contactos.
               </p>
             </div>
           ) : (
             <>
-              <div className={estilos.metaInbox.chatHeader}>
-                <div className={estilos.metaInbox.chatHeaderRow}>
+              <div className={s.chatHeader}>
+                <div className={s.chatHeaderRow}>
                   <div>
-                    <div className={estilos.metaInbox.chatName}>
+                    <div className={s.chatName}>
                       {normalizeText(selectedThread.displayName) !== "nuevo"
                         ? selectedThread.displayName
                         : compactActorId(selectedThread) || "Nuevo"}
                     </div>
-                    <div className={`${estilos.metaInbox.chatChannel} mt-2 flex items-center gap-2.5`}>
+                    <div className={`${s.chatChannel} mt-2 flex items-center gap-2.5`}>
                       <span
                         className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${channelClass(selectedThread.objectType)}`}
                         title={String(selectedThread.objectType || "PAGE").toUpperCase()}
@@ -1031,11 +1091,11 @@ const MetaInboxPage: React.FC = () => {
                       >
                         <AttentionIcon mode={selectedThread.attentionMode} className="h-4 w-4" />
                       </span>
-                      <span className="inline-flex h-8 items-center rounded-md border border-primary/40 bg-primary/10 px-2.5 text-xs font-semibold text-primary">
+                      <span className="inline-flex h-8 items-center rounded-md border border-primary/40 bg-primary/10 px-2.5 text-xs font-bold text-primary">
                         {stageLabel(selectedThread.threadStage)}
                       </span>
                       {selectedWhatsappBlocked && (
-                        <span className="inline-flex h-8 items-center rounded-md border border-rose-400/60 bg-rose-500/15 px-2.5 text-xs font-semibold text-rose-200">
+                        <span className="inline-flex h-8 items-center rounded-md border border-rose-400/60 bg-rose-500/15 px-2.5 text-xs font-bold text-rose-200">
                           Bloqueado
                         </span>
                       )}
@@ -1043,12 +1103,20 @@ const MetaInboxPage: React.FC = () => {
                   </div>
                   <button
                     onClick={() => {
-                      setChatManuallyClosed(true);
-                      setSelectedSessionId(null);
-                      setDetailSessionId(null);
-                      setMessages([]);
+                      if (esMovil) {
+                        setMobileShowChat(false);
+                        setChatManuallyClosed(true);
+                        setSelectedSessionId(null);
+                        setDetailSessionId(null);
+                        setMessages([]);
+                      } else {
+                        setChatManuallyClosed(true);
+                        setSelectedSessionId(null);
+                        setDetailSessionId(null);
+                        setMessages([]);
+                      }
                     }}
-                    className={estilos.metaInbox.closeButton}
+                    className={s.closeButton}
                     aria-label="Cerrar chat"
                     title="Cerrar chat"
                   >
@@ -1057,13 +1125,13 @@ const MetaInboxPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className={estilos.metaInbox.messagesArea}>
+              <div className={s.messagesArea}>
                 {selectedWhatsappBlocked && (
-                  <div className="mb-3 rounded-lg border border-rose-400/50 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-100 shadow-[0_0_18px_rgba(244,63,94,0.18)]">
+                  <div className="mb-3 rounded-lg border border-rose-400/50 bg-rose-500/10 px-4 py-3 text-sm font-bold text-rose-100">
                     Bloqueaste a este contacto. Desbloquéalo para volver a chatear.
                   </div>
                 )}
-                {loadingMessages && <div className={estilos.metaInbox.loadingText}>Cargando mensajes...</div>}
+                {loadingMessages && <div className={s.loadingText}>Cargando mensajes...</div>}
                 {!loadingMessages &&
                   messages.map((msg) => {
                     const outgoing = msg.direction === "OUTGOING";
@@ -1071,16 +1139,16 @@ const MetaInboxPage: React.FC = () => {
                     return (
                       <div
                         key={msg.externalEventId}
-                        className={outgoing ? estilos.metaInbox.bubbleWrapOutgoing : estilos.metaInbox.bubbleWrapIncoming}
+                        className={outgoing ? s.bubbleWrapOutgoing : s.bubbleWrapIncoming}
                       >
                         <div
-                          className={outgoing ? estilos.metaInbox.bubbleOutgoing : estilos.metaInbox.bubbleIncoming}
+                          className={outgoing ? s.bubbleOutgoing : s.bubbleIncoming}
                         >
                           {media?.mediaType === "image" && (
                             <img
                               src={media.mediaUrl}
                               alt="imagen"
-                              className="max-w-[220px] rounded-md border border-borde mb-1"
+                              className="max-w-[220px] rounded-md border border-border mb-1"
                             />
                           )}
                           {media?.mediaType === "audio" && (
@@ -1095,7 +1163,7 @@ const MetaInboxPage: React.FC = () => {
                                 ? "(mensaje sin texto)"
                                 : null}
                           </div>
-                          <div className={outgoing ? estilos.metaInbox.bubbleTsOutgoing : estilos.metaInbox.bubbleTsIncoming}>
+                          <div className={outgoing ? s.bubbleTsOutgoing : s.bubbleTsIncoming}>
                             {formatRelativeTs(msg.occurredAt)}
                           </div>
                         </div>
@@ -1105,15 +1173,15 @@ const MetaInboxPage: React.FC = () => {
               </div>
 
               {pendingMedia && (
-                <div className="flex items-center justify-between gap-3 border-t border-borde bg-fondoCard/70 px-3 py-2">
-                  <div className="min-w-0 text-sm text-texto">
-                    <span className="font-semibold">Imagen adjunta</span>
-                    <span className="ml-2 text-textoOscuro">{pendingMedia.name}</span>
+                <div className="flex items-center justify-between gap-3 border-t border-border bg-card/70 px-3 py-2">
+                  <div className="min-w-0 text-sm text-foreground">
+                    <span className="font-bold">Imagen adjunta</span>
+                    <span className="ml-2 text-foreground/70">{pendingMedia.name}</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => setPendingMedia(null)}
-                    className={estilos.metaInbox.closeButton}
+                    className={s.closeButton}
                     aria-label="Quitar adjunto"
                     title="Quitar adjunto"
                   >
@@ -1121,7 +1189,7 @@ const MetaInboxPage: React.FC = () => {
                   </button>
                 </div>
               )}
-              <div className={`${estilos.metaInbox.composer} ${selectedWhatsappBlocked ? "opacity-60" : ""}`}>
+              <div className={`${s.composer} ${selectedWhatsappBlocked ? "opacity-60" : ""}`}>
                 <input
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
@@ -1138,15 +1206,15 @@ const MetaInboxPage: React.FC = () => {
                         ? "Escribe un texto para la imagen..."
                         : "Escribe un mensaje..."
                   }
-                  className={estilos.metaInbox.composerInput}
+                  className={s.composerInput}
                   disabled={selectedWhatsappBlocked}
                 />
                 <label
-                  className={`${estilos.metaInbox.composerSend} ${selectedWhatsappBlocked ? "pointer-events-none" : ""}`}
+                  className={`${s.composerSend} ${selectedWhatsappBlocked ? "pointer-events-none" : ""}`}
                   aria-label="Adjuntar imagen"
                   title="Adjuntar imagen"
                 >
-                  <ImagePlus className={estilos.metaInbox.composerIcon} />
+                  <ImagePlus className={s.composerIcon} />
                   <input
                     type="file"
                     accept="image/*"
@@ -1160,25 +1228,25 @@ const MetaInboxPage: React.FC = () => {
                 </label>
                 <button
                   onClick={() => setShowRecorder((prev) => !prev)}
-                  className={estilos.metaInbox.composerSend}
+                  className={s.composerSend}
                   disabled={selectedWhatsappBlocked}
                   aria-label="Grabar audio"
                   title="Grabar audio"
                 >
-                  <Mic className={estilos.metaInbox.composerIcon} />
+                  <Mic className={s.composerIcon} />
                 </button>
                 <button
                   onClick={handleSend}
                   disabled={selectedWhatsappBlocked || sending || (!draft.trim() && !pendingMedia)}
-                  className={estilos.metaInbox.composerSend}
+                  className={s.composerSend}
                   aria-label="Enviar"
                   title="Enviar"
                 >
-                  <Send className={estilos.metaInbox.composerIcon} />
+                  <Send className={s.composerIcon} />
                 </button>
               </div>
               {showRecorder && (
-                <div className="px-3 pb-3 bg-fondoCard/40 backdrop-blur-sm border-t border-borde">
+                <div className="px-3 pb-3 bg-card/40 backdrop-blur-sm border-t border-border">
                   <VoiceRecorder
                     onAudioReady={(file) => {
                       setShowRecorder(false);
@@ -1192,25 +1260,25 @@ const MetaInboxPage: React.FC = () => {
         </section>
 
         {showContactPanel && (
-          <aside className={estilos.metaInbox.contactAside}>
-            <div className={estilos.metaInbox.contactHead}>
-              <h2 className={estilos.metaInbox.contactTitle}>Detalle</h2>
+          <aside className={s.contactAside}>
+            <div className={s.contactHead}>
+              <h2 className={s.contactTitle}>Detalle</h2>
               <button
                 onClick={() => setDetailSessionId(null)}
-                className={estilos.metaInbox.closeButton}
+                className={s.closeButton}
                 aria-label="Cerrar detalle"
                 title="Cerrar detalle"
               >
                 <X size={16} />
               </button>
             </div>
-            <div className="space-y-2 border-b border-borde pb-3">
-              <div className="text-xs uppercase tracking-wide text-textoOscuro/70">Thread</div>
+            <div className="space-y-2 border-b border-border pb-3">
+              <div className="text-xs uppercase tracking-wide text-foreground/70">Thread</div>
               <select
                 value={selectedThread.threadStatus}
                 onChange={(e) => void handleThreadControlChange({ threadStatus: e.target.value })}
                 disabled={savingThreadControl}
-                className={estilos.metaInbox.contactInput}
+                className={s.contactInput}
               >
                 {THREAD_STATUS_OPTIONS.map((option) => (
                   <option key={option} value={option}>
@@ -1222,7 +1290,7 @@ const MetaInboxPage: React.FC = () => {
                 value={selectedThread.attentionMode}
                 onChange={(e) => void handleThreadControlChange({ attentionMode: e.target.value })}
                 disabled={savingThreadControl}
-                className={estilos.metaInbox.contactInput}
+                className={s.contactInput}
               >
                 {ATTENTION_MODE_OPTIONS.map((option) => (
                   <option key={option} value={option}>
@@ -1234,7 +1302,7 @@ const MetaInboxPage: React.FC = () => {
                 value={selectedThread.threadStage}
                 onChange={(e) => void handleThreadControlChange({ threadStage: e.target.value })}
                 disabled={savingThreadControl}
-                className={estilos.metaInbox.contactInput}
+                className={s.contactInput}
               >
                 {THREAD_STAGE_OPTIONS.map((option) => (
                   <option key={option} value={option}>
@@ -1243,15 +1311,15 @@ const MetaInboxPage: React.FC = () => {
                 ))}
               </select>
             </div>
-            <div className="space-y-2 border-b border-borde pb-3">
-              <div className="text-xs uppercase tracking-wide text-textoOscuro/70">Actor</div>
-              <div className={estilos.metaInbox.contactInput}>
+            <div className="space-y-2 border-b border-border pb-3">
+              <div className="text-xs uppercase tracking-wide text-foreground/70">Actor</div>
+              <div className={s.contactInput}>
                 Score: {selectedThread.actorScore ?? "0"}
               </div>
-              <div className={estilos.metaInbox.contactInput}>
+              <div className={s.contactInput}>
                 Lifecycle: {selectedThread.actorLifecycleState ?? "SIN_ESTADO"}
               </div>
-              <div className={estilos.metaInbox.contactInput}>
+              <div className={s.contactInput}>
                 Actualizado:{" "}
                 {selectedThread.actorLifecycleUpdatedAt
                   ? formatRelativeTs(selectedThread.actorLifecycleUpdatedAt)
@@ -1259,13 +1327,13 @@ const MetaInboxPage: React.FC = () => {
               </div>
             </div>
             {String(selectedThread.objectType || "").toUpperCase() === "WHATSAPP" && (
-              <div className="space-y-2 border-b border-borde pb-3">
-                <div className="text-xs uppercase tracking-wide text-textoOscuro/70">WhatsApp</div>
+              <div className="space-y-2 border-b border-border pb-3">
+                <div className="text-xs uppercase tracking-wide text-foreground/70">WhatsApp</div>
                 <button
                   type="button"
                   onClick={() => void handleWhatsappBlockStatus("block")}
                   disabled={!!updatingWhatsappBlock}
-                  className="flex w-full items-center justify-center gap-2 rounded-md border border-rose-400/50 bg-rose-500/10 px-3 py-2 text-sm font-semibold text-rose-200 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex w-full items-center justify-center gap-2 rounded-md border border-rose-400/50 bg-rose-500/10 px-3 py-2 text-sm font-bold text-rose-200 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Ban size={16} />
                   {updatingWhatsappBlock === "block" ? "Bloqueando..." : "Bloquear contacto"}
@@ -1274,12 +1342,12 @@ const MetaInboxPage: React.FC = () => {
                   type="button"
                   onClick={() => void handleWhatsappBlockStatus("unblock")}
                   disabled={!!updatingWhatsappBlock}
-                  className="flex w-full items-center justify-center gap-2 rounded-md border border-emerald-400/50 bg-emerald-500/10 px-3 py-2 text-sm font-semibold text-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex w-full items-center justify-center gap-2 rounded-md border border-emerald-400/50 bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <ShieldCheck size={16} />
                   {updatingWhatsappBlock === "unblock" ? "Desbloqueando..." : "Desbloquear contacto"}
                 </button>
-                <div className="text-[11px] leading-relaxed text-textoOscuro/70">
+                <div className="text-[11px] leading-relaxed text-foreground/70">
                   Usa el par PN/LID persistido cuando existe. Si falta LID, el backend intenta resolverlo con Baileys.
                 </div>
                 {whatsappBlockFeedback && (
@@ -1289,81 +1357,81 @@ const MetaInboxPage: React.FC = () => {
                 )}
               </div>
             )}
-            <div className="text-xs uppercase tracking-wide text-textoOscuro/70">Contacto</div>
+            <div className="text-xs uppercase tracking-wide text-foreground/70">Contacto</div>
             <input
               value={contactForm.displayName || ""}
               onChange={(e) => setContactForm((prev) => ({ ...prev, displayName: e.target.value }))}
               placeholder="Nombre completo"
-              className={estilos.metaInbox.contactInput}
+              className={s.contactInput}
               disabled={!selectedThread}
             />
             <input
               value={contactForm.firstName || ""}
               onChange={(e) => setContactForm((prev) => ({ ...prev, firstName: e.target.value }))}
               placeholder="Nombres"
-              className={estilos.metaInbox.contactInput}
+              className={s.contactInput}
               disabled={!selectedThread}
             />
             <input
               value={contactForm.lastName || ""}
               onChange={(e) => setContactForm((prev) => ({ ...prev, lastName: e.target.value }))}
               placeholder="Apellidos"
-              className={estilos.metaInbox.contactInput}
+              className={s.contactInput}
               disabled={!selectedThread}
             />
             <input
               value={contactForm.rut || ""}
               onChange={(e) => setContactForm((prev) => ({ ...prev, rut: e.target.value }))}
               placeholder="RUT"
-              className={estilos.metaInbox.contactInput}
+              className={s.contactInput}
               disabled={!selectedThread}
             />
             <input
               value={contactForm.phone || ""}
               onChange={(e) => setContactForm((prev) => ({ ...prev, phone: e.target.value }))}
               placeholder="Teléfono"
-              className={estilos.metaInbox.contactInput}
+              className={s.contactInput}
               disabled={!selectedThread}
             />
             <input
               value={contactForm.email || ""}
               onChange={(e) => setContactForm((prev) => ({ ...prev, email: e.target.value }))}
               placeholder="Email"
-              className={estilos.metaInbox.contactInput}
+              className={s.contactInput}
               disabled={!selectedThread}
             />
             <input
               value={contactForm.address || ""}
               onChange={(e) => setContactForm((prev) => ({ ...prev, address: e.target.value }))}
               placeholder="Dirección"
-              className={estilos.metaInbox.contactInput}
+              className={s.contactInput}
               disabled={!selectedThread}
             />
             <input
               value={contactForm.city || ""}
               onChange={(e) => setContactForm((prev) => ({ ...prev, city: e.target.value }))}
               placeholder="Ciudad"
-              className={estilos.metaInbox.contactInput}
+              className={s.contactInput}
               disabled={!selectedThread}
             />
             <input
               value={contactForm.region || ""}
               onChange={(e) => setContactForm((prev) => ({ ...prev, region: e.target.value }))}
               placeholder="Región"
-              className={estilos.metaInbox.contactInput}
+              className={s.contactInput}
               disabled={!selectedThread}
             />
             <textarea
               value={contactForm.notes || ""}
               onChange={(e) => setContactForm((prev) => ({ ...prev, notes: e.target.value }))}
               placeholder="Notas"
-              className={estilos.metaInbox.contactTextarea}
+              className={s.contactTextarea}
               disabled={!selectedThread}
             />
             <button
               onClick={handleSaveContact}
               disabled={!selectedThread || savingContact}
-              className={estilos.metaInbox.contactSave}
+              className={s.contactSave}
             >
               <Save size={16} />
               Guardar contacto

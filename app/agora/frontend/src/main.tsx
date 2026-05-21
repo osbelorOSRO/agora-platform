@@ -2,7 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
-import './styles/theme.css'; // Carga el tema y estilos globales
 import { NotificacionProvider } from './context/NotificacionContext';
 import { Toaster } from "sonner";
 

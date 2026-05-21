@@ -32,6 +32,9 @@ const EMPTY_FORM: CreateStageTemplateInput = {
   accion: null,
 };
 
+const inp = "w-full rounded border border-border bg-input px-2 py-1 text-xs text-foreground focus:outline-none focus:border-primary/50 placeholder:text-muted-foreground/50";
+const lbl = "block text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground mb-0.5";
+
 function TemplateModal({
   initial,
   onSave,
@@ -48,16 +51,13 @@ function TemplateModal({
   const field = (key: keyof CreateStageTemplateInput, value: unknown) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
-  const inp = "w-full rounded border border-white/10 bg-white/5 px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-[#6dfe9c]/50";
-  const lbl = "block text-[10px] uppercase tracking-wide text-slate-500 mb-0.5";
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl border border-white/10 bg-[#0a1f27] p-6 shadow-2xl">
-        <button onClick={onClose} className="absolute right-4 top-4 text-slate-500 hover:text-white">
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-2xl">
+        <button onClick={onClose} className="absolute right-4 top-4 text-muted-foreground hover:text-foreground">
           <X size={16} />
         </button>
-        <h2 className="mb-4 text-sm font-bold uppercase tracking-widest text-[#6dfe9c]">
+        <h2 className="mb-4 text-sm font-black uppercase tracking-[0.3em] text-primary">
           {initial.stage_actual ? "Editar Template" : "Nuevo Template"}
         </h2>
 
@@ -117,22 +117,22 @@ function TemplateModal({
           </div>
 
           <div className="flex items-center gap-4 col-span-2">
-            <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+            <label className="flex items-center gap-2 text-xs text-foreground/80 cursor-pointer">
               <input type="checkbox" checked={form.es_fallback ?? false} onChange={(e) => field("es_fallback", e.target.checked)} />
               es_fallback
             </label>
-            <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+            <label className="flex items-center gap-2 text-xs text-foreground/80 cursor-pointer">
               <input type="checkbox" checked={form.procesa_datos ?? false} onChange={(e) => field("procesa_datos", e.target.checked)} />
               procesa_datos
             </label>
-            <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+            <label className="flex items-center gap-2 text-xs text-foreground/80 cursor-pointer">
               <input type="checkbox" checked={form.activo ?? true} onChange={(e) => field("activo", e.target.checked)} />
               activo
             </label>
             <div className="ml-4 flex items-center gap-2">
               <label className={lbl + " mb-0"}>factible</label>
               <select
-                className="rounded border border-white/10 bg-white/5 px-2 py-1 text-xs text-slate-200"
+                className="rounded border border-border bg-input px-2 py-1 text-xs text-foreground"
                 value={form.factible === null ? "" : String(form.factible)}
                 onChange={(e) => field("factible", e.target.value === "" ? null : e.target.value === "true")}
               >
@@ -163,13 +163,13 @@ function TemplateModal({
         </div>
 
         <div className="mt-4 flex justify-end gap-2">
-          <button onClick={onClose} className="rounded border border-white/10 px-4 py-1.5 text-xs text-slate-400 hover:text-white">
+          <button onClick={onClose} className="rounded border border-border px-4 py-1.5 text-xs text-muted-foreground hover:text-foreground">
             Cancelar
           </button>
           <button
             onClick={() => onSave(form)}
             disabled={saving || !form.stage_actual || !form.nuevo_stage || !form.posibles_match || !form.tipo_respuesta}
-            className="flex items-center gap-1.5 rounded bg-[#6dfe9c]/10 border border-[#6dfe9c]/30 px-4 py-1.5 text-xs font-bold text-[#6dfe9c] hover:bg-[#6dfe9c]/20 disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded bg-primary/10 border border-primary/30 px-4 py-1.5 text-xs font-bold text-primary hover:bg-primary/20 disabled:opacity-40"
           >
             <Save size={13} />
             {saving ? "Guardando..." : "Guardar"}
@@ -264,8 +264,8 @@ export default function StageTemplatesPage() {
     accion: row.accion,
   });
 
-  const badge = (val: string | null | boolean | undefined, color = "slate") => {
-    if (val === null || val === undefined || val === "") return <span className="text-slate-600">—</span>;
+  const badge = (val: string | null | boolean | undefined) => {
+    if (val === null || val === undefined || val === "") return <span className="text-muted-foreground/50">—</span>;
     const colors: Record<string, string> = {
       enviar: "text-emerald-400 bg-emerald-400/10",
       delegar: "text-amber-400 bg-amber-400/10",
@@ -278,120 +278,121 @@ export default function StageTemplatesPage() {
       reiniciar: "text-yellow-400 bg-yellow-400/10",
     };
     const str = String(val);
-    const cls = colors[str] ?? "text-slate-400 bg-slate-400/10";
+    const cls = colors[str] ?? "text-muted-foreground bg-muted";
     return <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${cls}`}>{str}</span>;
   };
 
   return (
-    <div className="flex h-full flex-col bg-[#031015] text-slate-200">
-      <div className="flex items-center justify-between border-b border-white/5 px-6 py-4">
+    <div className="flex h-full flex-col bg-background text-foreground gap-6 p-6">
+      <header className="rounded-xl border border-border bg-card p-6 flex items-end justify-between gap-4">
         <div>
-          <h1 className="text-sm font-black uppercase tracking-widest text-[#6dfe9c]">Stage Templates</h1>
-          <p className="text-[10px] text-slate-500">{rows.length} registros · solo superadmin</p>
+          <p className="page-label">Stages</p>
+          <h1 className="page-title mt-3">Stage Templates</h1>
+          <p className="page-subtitle mt-2">{rows.length} registros · solo superadmin</p>
         </div>
         <div className="flex items-center gap-3">
           <input
             value={filterInput}
             onChange={(e) => handleFilterChange(e.target.value)}
             placeholder="Filtrar por stage_actual..."
-            className="rounded border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-[#6dfe9c]/40 w-56"
+            className="rounded-xl border border-border bg-input px-3 py-2.5 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/40 w-56"
           />
           <button
             onClick={() => setModal({ mode: "create" })}
-            className="flex items-center gap-1.5 rounded border border-[#6dfe9c]/30 bg-[#6dfe9c]/10 px-3 py-1.5 text-xs font-bold text-[#6dfe9c] hover:bg-[#6dfe9c]/20"
+            className="flex shrink-0 items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-4 py-2.5 text-xs font-bold text-primary hover:bg-primary/20 transition"
           >
-            <Plus size={13} /> Nuevo
+            <Plus size={14} /> Nuevo
           </button>
         </div>
-      </div>
+      </header>
 
       {error && (
-        <div className="mx-6 mt-3 rounded border border-rose-400/30 bg-rose-500/10 px-4 py-2 text-xs text-rose-300">
+        <div className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-4 py-2 text-xs text-rose-300">
           {error}
         </div>
       )}
 
-      <div className="flex-1 overflow-auto px-6 py-4">
+      <div className="flex-1 overflow-auto rounded-xl border border-border bg-card px-6 py-4">
         {loading ? (
-          <p className="text-xs text-slate-500">Cargando...</p>
+          <p className="text-xs text-muted-foreground">Cargando...</p>
         ) : (
           <div className="overflow-auto max-h-full">
-          <table className="min-w-max text-left text-xs">
-            <thead>
-              <tr className="sticky top-0 z-10 bg-[#031015] border-b border-white/5 text-[10px] uppercase tracking-widest text-slate-500">
-                <th className="pb-2 pr-3 w-10">ID</th>
-                <th className="pb-2 pr-3">stage_actual</th>
-                <th className="pb-2 pr-3 w-8">pos</th>
-                <th className="pb-2 pr-3">nuevo_stage</th>
-                <th className="pb-2 pr-3">decision</th>
-                <th className="pb-2 pr-3">accion</th>
-                <th className="pb-2 pr-3">modo</th>
-                <th className="pb-2 pr-3">stage_route</th>
-                <th className="pb-2 pr-3">dato_esperado</th>
-                <th className="pb-2 pr-3">factible</th>
-                <th className="pb-2 pr-3">activo</th>
-                <th className="pb-2 pr-3">fallback</th>
-                <th className="pb-2 pr-3">proc_datos</th>
-                <th className="pb-2 pr-3">posibles_match</th>
-                <th className="pb-2 pr-3">tipo_respuesta</th>
-                <th className="pb-2" />
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.id} className="border-b border-white/5 hover:bg-white/3 transition-colors">
-                  <td className="py-2 pr-4 text-slate-600 whitespace-nowrap">{row.id}</td>
-                  <td className="py-2 pr-4 font-mono text-[11px] text-slate-300 whitespace-nowrap">{row.stage_actual}</td>
-                  <td className="py-2 pr-4 text-slate-500 whitespace-nowrap">{row.posicion ?? "—"}</td>
-                  <td className="py-2 pr-4 font-mono text-[11px] text-slate-400 whitespace-nowrap">{row.nuevo_stage}</td>
-                  <td className="py-2 pr-4 whitespace-nowrap">{badge(row.decision)}</td>
-                  <td className="py-2 pr-4 whitespace-nowrap">{badge(row.accion)}</td>
-                  <td className="py-2 pr-4 text-slate-500 whitespace-nowrap">{row.modo_default ?? "—"}</td>
-                  <td className="py-2 pr-4 text-slate-500 whitespace-nowrap">{row.stage_route ?? "—"}</td>
-                  <td className="py-2 pr-4 text-slate-500 whitespace-nowrap">{row.dato_esperado ?? "—"}</td>
-                  <td className="py-2 pr-4 whitespace-nowrap">
-                    {row.factible === null ? <span className="text-slate-600">—</span>
-                      : <span className={row.factible ? "text-emerald-400" : "text-rose-400"}>{String(row.factible)}</span>}
-                  </td>
-                  <td className="py-2 pr-4 whitespace-nowrap">
-                    <span className={row.activo ? "text-emerald-400" : "text-slate-600"}>{row.activo ? "sí" : "no"}</span>
-                  </td>
-                  <td className="py-2 pr-4 whitespace-nowrap">
-                    <span className={row.es_fallback ? "text-amber-400" : "text-slate-600"}>{row.es_fallback ? "sí" : "no"}</span>
-                  </td>
-                  <td className="py-2 pr-4 whitespace-nowrap">
-                    <span className={row.procesa_datos ? "text-sky-400" : "text-slate-600"}>{row.procesa_datos ? "sí" : "no"}</span>
-                  </td>
-                  <td className="py-2 pr-4 text-[11px] text-slate-500 max-w-[220px] truncate" title={row.posibles_match}>{row.posibles_match}</td>
-                  <td className="py-2 pr-4 text-[11px] text-slate-500 max-w-[220px] truncate" title={row.tipo_respuesta}>{row.tipo_respuesta}</td>
-                  <td className="py-2 flex items-center gap-2">
-                    <button
-                      onClick={() => setModal({ mode: "edit", row })}
-                      className="text-slate-500 hover:text-[#6dfe9c] transition-colors"
-                      title="Editar"
-                    >
-                      <Pencil size={13} />
-                    </button>
-                    <button
-                      onClick={() => void handleDelete(row.id)}
-                      disabled={deleting === row.id}
-                      className="text-slate-500 hover:text-rose-400 transition-colors"
-                      title="Eliminar"
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </td>
+            <table className="min-w-max text-left text-xs">
+              <thead>
+                <tr className="sticky top-0 z-10 bg-background border-b border-border text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  <th className="pb-2 pr-3 w-10">ID</th>
+                  <th className="pb-2 pr-3">stage_actual</th>
+                  <th className="pb-2 pr-3 w-8">pos</th>
+                  <th className="pb-2 pr-3">nuevo_stage</th>
+                  <th className="pb-2 pr-3">decision</th>
+                  <th className="pb-2 pr-3">accion</th>
+                  <th className="pb-2 pr-3">modo</th>
+                  <th className="pb-2 pr-3">stage_route</th>
+                  <th className="pb-2 pr-3">dato_esperado</th>
+                  <th className="pb-2 pr-3">factible</th>
+                  <th className="pb-2 pr-3">activo</th>
+                  <th className="pb-2 pr-3">fallback</th>
+                  <th className="pb-2 pr-3">proc_datos</th>
+                  <th className="pb-2 pr-3">posibles_match</th>
+                  <th className="pb-2 pr-3">tipo_respuesta</th>
+                  <th className="pb-2" />
                 </tr>
-              ))}
-              {rows.length === 0 && (
-                <tr>
-                  <td colSpan={16} className="py-8 text-center text-slate-600">
-                    {filter ? `Sin resultados para "${filter}"` : "Sin registros"}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.id} className="border-b border-border hover:bg-card transition-colors">
+                    <td className="py-2 pr-4 text-muted-foreground/50 whitespace-nowrap">{row.id}</td>
+                    <td className="py-2 pr-4 text-[11px] text-foreground/80 whitespace-nowrap">{row.stage_actual}</td>
+                    <td className="py-2 pr-4 text-muted-foreground whitespace-nowrap">{row.posicion ?? "—"}</td>
+                    <td className="py-2 pr-4 text-[11px] text-muted-foreground whitespace-nowrap">{row.nuevo_stage}</td>
+                    <td className="py-2 pr-4 whitespace-nowrap">{badge(row.decision)}</td>
+                    <td className="py-2 pr-4 whitespace-nowrap">{badge(row.accion)}</td>
+                    <td className="py-2 pr-4 text-muted-foreground whitespace-nowrap">{row.modo_default ?? "—"}</td>
+                    <td className="py-2 pr-4 text-muted-foreground whitespace-nowrap">{row.stage_route ?? "—"}</td>
+                    <td className="py-2 pr-4 text-muted-foreground whitespace-nowrap">{row.dato_esperado ?? "—"}</td>
+                    <td className="py-2 pr-4 whitespace-nowrap">
+                      {row.factible === null ? <span className="text-muted-foreground/50">—</span>
+                        : <span className={row.factible ? "text-emerald-400" : "text-rose-400"}>{String(row.factible)}</span>}
+                    </td>
+                    <td className="py-2 pr-4 whitespace-nowrap">
+                      <span className={row.activo ? "text-emerald-400" : "text-muted-foreground/50"}>{row.activo ? "sí" : "no"}</span>
+                    </td>
+                    <td className="py-2 pr-4 whitespace-nowrap">
+                      <span className={row.es_fallback ? "text-amber-400" : "text-muted-foreground/50"}>{row.es_fallback ? "sí" : "no"}</span>
+                    </td>
+                    <td className="py-2 pr-4 whitespace-nowrap">
+                      <span className={row.procesa_datos ? "text-sky-400" : "text-muted-foreground/50"}>{row.procesa_datos ? "sí" : "no"}</span>
+                    </td>
+                    <td className="py-2 pr-4 text-[11px] text-muted-foreground max-w-[220px] truncate" title={row.posibles_match}>{row.posibles_match}</td>
+                    <td className="py-2 pr-4 text-[11px] text-muted-foreground max-w-[220px] truncate" title={row.tipo_respuesta}>{row.tipo_respuesta}</td>
+                    <td className="py-2 flex items-center gap-2">
+                      <button
+                        onClick={() => setModal({ mode: "edit", row })}
+                        className="text-muted-foreground hover:text-primary transition-colors"
+                        title="Editar"
+                      >
+                        <Pencil size={13} />
+                      </button>
+                      <button
+                        onClick={() => void handleDelete(row.id)}
+                        disabled={deleting === row.id}
+                        className="text-muted-foreground hover:text-rose-400 transition-colors"
+                        title="Eliminar"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {rows.length === 0 && (
+                  <tr>
+                    <td colSpan={16} className="py-8 text-center text-muted-foreground/50">
+                      {filter ? `Sin resultados para "${filter}"` : "Sin registros"}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

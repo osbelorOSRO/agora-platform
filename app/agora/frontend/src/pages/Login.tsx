@@ -1,15 +1,17 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 import BackgroundAnimation from "@/components/BackgroundAnimation";
 import { login, registrarUsuario } from "@/services/authService";
-import { Eye, EyeOff } from "lucide-react";
-import { estilos } from "@/theme/estilos";
-import LoginCard from "@/components/LoginCard";
 import { guardarToken } from "@/utils/getTokenData";
+
+const inp = "w-full rounded-full border border-border bg-input px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/60 transition-all";
+const btnPrimary = "w-full rounded-full border-2 border-primary py-2.5 text-sm font-bold text-foreground transition-all hover:bg-primary/30 hover:border-primary active:scale-[0.98] focus:outline-none";
+const btnSecondary = "w-full text-center text-sm text-muted-foreground hover:text-foreground underline transition-colors";
 
 const MENSAJE_BLOQUEADO = "Cuenta bloqueada. Contacta al administrador del sistema.";
 
-function Login() {
+export default function Login() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [loginData, setLoginData] = useState({ username: "", password: "", token_2fa: "" });
   const [registerData, setRegisterData] = useState({ username: "", invitationToken: "", password: "", confirmarPassword: "" });
@@ -17,24 +19,23 @@ function Login() {
   const [mensaje, setMensaje] = useState("");
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
-  const [showRegisterConfirmPassword, setShowRegisterConfirmPassword] = useState(false);
-
+  const [showRegisterConfirm, setShowRegisterConfirm] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     try {
       const response = await login(loginData.username, loginData.password, loginData.token_2fa);
       guardarToken(response.token);
-      setMensaje("Login exitoso 🔐");
+      setMensaje("Login exitoso");
       navigate("/accesos/welcome");
     } catch (err: any) {
       setError(err.message || "Error al iniciar sesión");
     }
   };
 
-  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     if (registerData.password !== registerData.confirmarPassword) {
@@ -58,25 +59,26 @@ function Login() {
   const estaBloqueado = error === MENSAJE_BLOQUEADO;
 
   return (
-    <div className={estilos.login}>
-      <div className={estilos.animacion}>
-        <div className={estilos.animacionInner}>
-          <BackgroundAnimation />
-        </div>
-      </div>
-      <div className={estilos.loginCol}>
-        <LoginCard>
+    <div className="login-layout">
+      <BackgroundAnimation />
+
+      <div className="login-content">
+        <div className="w-full max-w-sm rounded-2xl border border-border bg-card/80 backdrop-blur-md p-6 sm:p-8 shadow-2xl">
+          <p className="page-label mb-1">Agora</p>
+
           {!isRegistering ? (
-            <form onSubmit={handleLogin} className="space-y-6">
-              <h2 className={estilos.loginCard.titulo}>Iniciar Sesión</h2>
+            <form onSubmit={handleLogin} className="space-y-4 mt-4">
+              <h2 className="text-2xl font-black text-foreground">Iniciar sesión</h2>
+
               <input
                 type="text"
                 placeholder="Usuario"
                 value={loginData.username}
                 onChange={(e) => setLoginData({ ...loginData, username: e.target.value })}
                 required
-                className={estilos.loginCard.input}
+                className={inp}
               />
+
               <div className="relative">
                 <input
                   type={showLoginPassword ? "text" : "password"}
@@ -84,55 +86,57 @@ function Login() {
                   value={loginData.password}
                   onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                   required
-                  className={`${estilos.loginCard.input} pr-10`}
+                  className={`${inp} pr-10`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowLoginPassword(!showLoginPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-900"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  {showLoginPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showLoginPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
+
               <input
                 type="text"
                 placeholder="Token 2FA"
                 value={loginData.token_2fa}
                 onChange={(e) => setLoginData({ ...loginData, token_2fa: e.target.value })}
-                className={estilos.loginCard.input}
+                className={inp}
               />
-              {error && <p className={estilos.loginCard.mensajeError}>{error}</p>}
-              {mensaje && <p className={estilos.loginCard.mensajeExito}>{mensaje}</p>}
+
+              {error && <p className="text-rose-400 text-sm">{error}</p>}
+              {mensaje && <p className="text-emerald-400 text-sm">{mensaje}</p>}
               {estaBloqueado && (
-                <p className="text-xs text-gray-400 text-center">
-                  Tu cuenta ha sido bloqueada por intentos fallidos. Contacta al administrador del sistema para que la reactive.
+                <p className="text-xs text-muted-foreground/60 text-center">
+                  Tu cuenta fue bloqueada por intentos fallidos. Contacta al administrador para reactivarla.
                 </p>
               )}
-              <button type="submit" className={estilos.loginCard.buttonPrimary}>
-                Acceder
-              </button>
+
+              <button type="submit" className={btnPrimary}>Acceder</button>
+
               <button
                 type="button"
                 onClick={() => { setIsRegistering(true); setError(""); setMensaje(""); }}
-                className={estilos.loginCard.buttonSecondary}
+                className={btnSecondary}
               >
-                Registrarme
+                Registrarme con código de invitación
               </button>
-              <div className="text-xs text-gray-400 text-center mt-2 space-y-1">
-                <p>¿El administrador te dio un código de recuperación?</p>
-                <div className="flex justify-center gap-4 mt-1">
+
+              <div className="border-t border-border mt-2 pt-4">
+                <p className="text-xs text-center text-muted-foreground mb-2">¿Tienes un código de recuperación?</p>
+                <div className="flex flex-col items-center gap-1.5">
                   <button
                     type="button"
                     onClick={() => navigate("/reset-password")}
-                    className="text-blue-400 hover:text-blue-300 underline"
+                    className="text-sm text-muted-foreground hover:text-foreground underline transition-colors"
                   >
                     Cambiar contraseña
                   </button>
-                  <span className="text-gray-600">·</span>
                   <button
                     type="button"
                     onClick={() => navigate("/setup-2fa")}
-                    className="text-purple-400 hover:text-purple-300 underline"
+                    className="text-sm text-muted-foreground hover:text-foreground underline transition-colors"
                   >
                     Configurar autenticador
                   </button>
@@ -140,28 +144,31 @@ function Login() {
               </div>
             </form>
           ) : (
-            <form onSubmit={handleRegister} className="space-y-6">
-              <h2 className={estilos.loginCard.titulo}>Registro</h2>
+            <form onSubmit={handleRegister} className="space-y-4 mt-4">
+              <h2 className="text-2xl font-black text-foreground">Registro</h2>
+
               <div>
-                <label className="block text-xs text-gray-300 mb-1">Código de invitación</label>
+                <label className="field-label">Código de invitación</label>
                 <input
                   type="text"
                   placeholder="Código entregado por el administrador"
                   value={registerData.invitationToken}
                   onChange={(e) => setRegisterData({ ...registerData, invitationToken: e.target.value.toUpperCase() })}
                   required
-                  className={estilos.loginCard.input}
                   maxLength={8}
+                  className={inp}
                 />
               </div>
+
               <input
                 type="text"
                 placeholder="Usuario"
                 value={registerData.username}
                 onChange={(e) => setRegisterData({ ...registerData, username: e.target.value })}
                 required
-                className={estilos.loginCard.input}
+                className={inp}
               />
+
               <div className="relative">
                 <input
                   type={showRegisterPassword ? "text" : "password"}
@@ -169,50 +176,40 @@ function Login() {
                   value={registerData.password}
                   onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
                   required
-                  className={`${estilos.loginCard.input} pr-10`}
+                  className={`${inp} pr-10`}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowRegisterPassword(!showRegisterPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-900"
-                >
-                  {showRegisterPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                <button type="button" onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  {showRegisterPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
+
               <div className="relative">
                 <input
-                  type={showRegisterConfirmPassword ? "text" : "password"}
+                  type={showRegisterConfirm ? "text" : "password"}
                   placeholder="Confirmar contraseña"
                   value={registerData.confirmarPassword}
                   onChange={(e) => setRegisterData({ ...registerData, confirmarPassword: e.target.value })}
                   required
-                  className={`${estilos.loginCard.input} pr-10`}
+                  className={`${inp} pr-10`}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowRegisterConfirmPassword(!showRegisterConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-900"
-                >
-                  {showRegisterConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                <button type="button" onClick={() => setShowRegisterConfirm(!showRegisterConfirm)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  {showRegisterConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-              {error && <p className={estilos.loginCard.mensajeError}>{error}</p>}
-              <button type="submit" className={estilos.loginCard.buttonPrimary}>
-                Registrarme
-              </button>
-              <button
-                type="button"
-                onClick={() => { setIsRegistering(false); setError(""); setMensaje(""); }}
-                className={estilos.loginCard.buttonSecondary}
-              >
-                Iniciar Sesión
+
+              {error && <p className="text-rose-400 text-sm">{error}</p>}
+
+              <button type="submit" className={btnPrimary}>Registrarme</button>
+              <button type="button" onClick={() => { setIsRegistering(false); setError(""); }}
+                className={btnSecondary}>
+                Volver al inicio de sesión
               </button>
             </form>
           )}
-        </LoginCard>
+        </div>
       </div>
     </div>
   );
 }
-
-export default Login;

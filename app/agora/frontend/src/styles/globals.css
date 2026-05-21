@@ -1,0 +1,233 @@
+/* ============================================================
+   ÁGORA — Design Tokens
+   Convención: shadcn/ui + extensiones propias
+   Paleta: Dark futurista magenta/cyan
+   Fuente: Poppins
+   ============================================================ */
+
+:root {
+  /* ── Base ─────────────────────────────────────────────────── */
+  --background:          #000117;
+  --foreground:          #ffffff;
+
+  /* ── Superficies ──────────────────────────────────────────── */
+  --card:                rgba(255, 255, 255, 0.07);
+  --card-foreground:     #ffffff;
+
+  --popover:             rgba(255, 255, 255, 0.13);
+  --popover-foreground:  #ffffff;
+
+  /* ── Acción primaria (magenta) ────────────────────────────── */
+  --primary:             #cf0060;
+  --primary-foreground:  #ffffff;
+  --primary-hover:       #e8006b;
+  --primary-glow:        rgba(207, 0, 96, 0.45);
+
+  /* ── Acción secundaria ────────────────────────────────────── */
+  --secondary:           rgba(255, 255, 255, 0.09);
+  --secondary-foreground: rgba(255, 255, 255, 0.80);
+
+  /* ── Texto atenuado y superficies neutras ─────────────────── */
+  --muted:               rgba(255, 255, 255, 0.06);
+  --muted-foreground:    rgba(255, 255, 255, 0.65);
+
+  /* ── Estado hover/activo de elementos interactivos ───────── */
+  --accent:              rgba(207, 0, 96, 0.15);
+  --accent-foreground:   #ffffff;
+
+  /* ── Semánticos de estado ─────────────────────────────────── */
+  --destructive:         #dc2626;
+  --destructive-foreground: #ffffff;
+  --success:             #22c55e;
+  --success-foreground:  #ffffff;
+  --warning:             #f59e0b;
+  --warning-foreground:  #000000;
+
+  /* ── Bordes e inputs ──────────────────────────────────────── */
+  --border:              rgba(255, 255, 255, 0.10);
+  --border-primary:      rgba(207, 0, 96, 0.40);
+  --input:               rgba(255, 255, 255, 0.08);
+  --ring:                #cf0060;
+
+  /* ── Glass (extensión propia) ─────────────────────────────── */
+  --glass-blur-sm:       8px;
+  --glass-blur-md:       12px;
+  --glass-blur-lg:       20px;
+  --glass-bg-sm:         rgba(255, 255, 255, 0.05);
+  --glass-bg-md:         rgba(255, 255, 255, 0.09);
+  --glass-bg-lg:         rgba(255, 255, 255, 0.13);
+  --glass-border:        rgba(255, 255, 255, 0.11);
+
+  /* ── Gradiente de fondo (se aplica una sola vez en el root) ─ */
+  --gradient-bg:
+    radial-gradient(circle at top right,    rgba(255, 163,   0, 0.07) 0%, transparent 55%),
+    radial-gradient(circle at bottom left,  rgba(  0, 255, 240, 0.07) 0%, transparent 55%),
+    radial-gradient(circle at bottom right, rgba( 19, 168, 254, 0.07) 0%, transparent 55%),
+    radial-gradient(circle at top left,     rgba(255,   0, 255, 0.07) 0%, transparent 55%);
+
+  /* ── Tipografía ───────────────────────────────────────────── */
+  --font-sans:      'Poppins', sans-serif;
+  --radius-sm:      0.375rem;
+  --radius-md:      0.5rem;
+  --radius-lg:      0.75rem;
+  --radius-xl:      1rem;
+  --radius-full:    9999px;
+
+  /* ============================================================
+     Aliases de compatibilidad
+     Permiten que el código existente no rompa mientras se migra
+     componente por componente. NO usar en código nuevo.
+     ============================================================ */
+  --fondoPagina:        var(--background);
+  --colorFondoOscuro:   var(--background);
+  --colorFondoClaro:    var(--secondary);
+  --fondoCard:          var(--card);
+  --fondoClient:        var(--muted);
+  --fondoSection:       var(--muted);
+  --azulPrimario:       var(--primary);
+  --azulOscuro:         var(--muted-foreground);
+  --textoClaro:         var(--foreground);
+  --textoOscuro:        var(--foreground);
+  --textoSecundario:    var(--muted-foreground);
+  --textoTimestamp:     var(--muted-foreground);
+  --textoInput:         var(--foreground);
+  --textoOutput:        var(--foreground);
+  --textoTag:           var(--muted-foreground);
+  --fondoInput:         var(--input);
+  --fondoOutput:        var(--muted);
+  --borde:              var(--border);
+}
+
+/* ============================================================
+   Tipografía de componentes — patrones reutilizables
+   Usar estas clases en lugar de repetir grupos de Tailwind.
+   ============================================================ */
+
+/* Etiqueta de sección (sobre el H1): "Contacts", "Agora Dashboard" */
+.page-label {
+  font-size: 0.75rem;       /* text-xs */
+  font-weight: 900;         /* font-black */
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+  color: var(--primary);
+}
+
+/* Título principal de página */
+.page-title {
+  font-size: 2.25rem;       /* text-4xl */
+  line-height: 1.1;
+  font-weight: 900;         /* font-black */
+  letter-spacing: -0.02em;  /* tracking-tight */
+  color: var(--foreground);
+}
+
+/* Subtítulo descriptivo debajo del título */
+.page-subtitle {
+  font-size: 0.875rem;      /* text-sm */
+  color: var(--muted-foreground);
+}
+
+/* Título de card/sección interna */
+.section-title {
+  font-size: 0.75rem;       /* text-xs */
+  font-weight: 700;         /* font-bold */
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--primary);
+}
+
+/* Label de campo de formulario */
+.field-label {
+  display: block;
+  font-size: 0.625rem;      /* text-[10px] */
+  font-weight: 500;         /* font-medium */
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--muted-foreground);
+  margin-bottom: 0.125rem;
+}
+
+/* ============================================================
+   Clases de layout global
+   ============================================================ */
+
+.login-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  justify-items: center;
+  min-height: 100vh;
+  width: 100vw;
+  position: relative;
+  overflow: hidden;
+  background: var(--background);
+}
+
+.background-animation {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: min(420px, 88%);
+  z-index: 1;
+}
+
+.login-content {
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 1rem;
+}
+
+@media (max-width: 768px) {
+  .login-layout {
+    grid-template-columns: 1fr;
+    align-content: start;
+    padding-top: 2rem;
+    gap: 1rem;
+  }
+  .background-animation {
+    width: min(280px, 85vw);
+  }
+}
+
+/* ============================================================
+   Light mode — stub listo, activar con clase .light en <html>
+   ============================================================ */
+.light {
+  --background:          #f8fafc;
+  --foreground:          #0f172a;
+
+  --card:                rgba(0, 0, 0, 0.04);
+  --card-foreground:     #0f172a;
+
+  --popover:             rgba(255, 255, 255, 0.95);
+  --popover-foreground:  #0f172a;
+
+  --primary:             #cf0060;
+  --primary-foreground:  #ffffff;
+  --primary-hover:       #a80050;
+  --primary-glow:        rgba(207, 0, 96, 0.25);
+
+  --secondary:           rgba(0, 0, 0, 0.06);
+  --secondary-foreground: rgba(15, 23, 42, 0.80);
+
+  --muted:               rgba(0, 0, 0, 0.04);
+  --muted-foreground:    rgba(15, 23, 42, 0.50);
+
+  --accent:              rgba(207, 0, 96, 0.08);
+  --accent-foreground:   #0f172a;
+
+  --border:              rgba(0, 0, 0, 0.10);
+  --border-primary:      rgba(207, 0, 96, 0.30);
+  --input:               rgba(0, 0, 0, 0.06);
+  --ring:                #cf0060;
+
+  --glass-bg-sm:         rgba(255, 255, 255, 0.60);
+  --glass-bg-md:         rgba(255, 255, 255, 0.72);
+  --glass-bg-lg:         rgba(255, 255, 255, 0.84);
+  --glass-border:        rgba(0, 0, 0, 0.08);
+
+  --gradient-bg:         none;
+}

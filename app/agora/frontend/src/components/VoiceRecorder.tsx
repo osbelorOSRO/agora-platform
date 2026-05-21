@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import { MicIcon, Trash2, Send, Square } from "lucide-react";
-import { estilos } from "../theme/estilos";
 
 interface VoiceRecorderProps {
   onAudioReady: (archivo: File, url: string) => void;
@@ -26,7 +25,6 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onAudioReady }) => {
     } else if (intervaloRef.current) {
       clearInterval(intervaloRef.current);
     }
-
     return () => {
       if (intervaloRef.current) clearInterval(intervaloRef.current);
     };
@@ -36,19 +34,16 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onAudioReady }) => {
     if (navigator.mediaDevices?.getUserMedia) {
       return navigator.mediaDevices.getUserMedia({ audio: true });
     }
-
     const legacyGetUserMedia =
       (navigator as any).getUserMedia ||
       (navigator as any).webkitGetUserMedia ||
       (navigator as any).mozGetUserMedia ||
       (navigator as any).msGetUserMedia;
-
     if (legacyGetUserMedia) {
       return new Promise((resolve, reject) => {
         legacyGetUserMedia.call(navigator, { audio: true }, resolve, reject);
       });
     }
-
     throw new Error(
       window.isSecureContext
         ? "Tu navegador no soporta grabación de audio."
@@ -60,22 +55,14 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onAudioReady }) => {
     try {
       setErrorMsg(null);
       const micStream = await getUserMediaSafe();
-
-      // Deja que el navegador elija el tipo soportado
       const recorder = new MediaRecorder(micStream);
       const chunks: Blob[] = [];
-
       recorder.ondataavailable = (event) => {
-        if (event.data && event.data.size > 0) {
-          chunks.push(event.data);
-        }
+        if (event.data && event.data.size > 0) chunks.push(event.data);
       };
-
       recorder.onstop = () => {
         const mime = chunks[0]?.type || "audio/webm";
         const blob = new Blob(chunks, { type: mime });
-        console.log("BLOB SIZE", blob.size, "TYPE", blob.type);
-
         const url = URL.createObjectURL(blob);
         setAudioBlob(blob);
         setAudioURL(url);
@@ -83,13 +70,11 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onAudioReady }) => {
         micStream.getTracks().forEach((track) => track.stop());
         setStream(null);
       };
-
-      recorder.start(); // sin timeslice
+      recorder.start();
       setMediaRecorder(recorder);
       setStream(micStream);
       setGrabando(true);
     } catch (err) {
-      console.error("❌ Error al acceder al micrófono:", err);
       const message = err instanceof Error ? err.message : "No se pudo acceder al micrófono.";
       setErrorMsg(message);
       fallbackInputRef.current?.click();
@@ -97,9 +82,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onAudioReady }) => {
   };
 
   const cancelarGrabacion = () => {
-    if (mediaRecorder && mediaRecorder.state === "recording") {
-      mediaRecorder.stop();
-    }
+    if (mediaRecorder && mediaRecorder.state === "recording") mediaRecorder.stop();
     stream?.getTracks().forEach((track) => track.stop());
     setStream(null);
     setAudioBlob(null);
@@ -109,17 +92,8 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onAudioReady }) => {
 
   const confirmarAudio = () => {
     if (!audioBlob || !audioURL) return;
-
-    console.log("CONFIRMAR AUDIO", audioBlob.size, audioBlob.type);
-
-    const archivo = new File(
-      [audioBlob],
-      `nota_voz_${Date.now()}.webm`,
-      { type: audioBlob.type || "audio/webm" }
-    );
-
+    const archivo = new File([audioBlob], `nota_voz_${Date.now()}.webm`, { type: audioBlob.type || "audio/webm" });
     onAudioReady(archivo, audioURL);
-
     setAudioBlob(null);
     setAudioURL(null);
     setErrorMsg(null);
@@ -133,33 +107,31 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onAudioReady }) => {
   };
 
   return (
-    <div className={estilos.voiceRecorder.contenedor}>
+    <div className="flex flex-col items-center text-sm space-y-2">
       {grabando ? (
-        <div className={estilos.voiceRecorder.grabando}>
-          <span className={estilos.voiceRecorder.pulsando}>🎙️ {segundos}s</span>
+        <div className="flex items-center space-x-2 text-rose-400 font-bold">
+          <span className="animate-pulse">🎙️ {segundos}s</span>
           <button
             onClick={() => mediaRecorder?.stop()}
-            className={estilos.voiceRecorder.detener}
+            className="text-foreground bg-rose-600 px-2 py-1 rounded hover:bg-rose-700"
           >
-            <Square className={estilos.voiceRecorder.iconoMini} />
+            <Square className="w-4 h-4" />
           </button>
         </div>
       ) : audioURL ? (
-        <div className={estilos.voiceRecorder.previsualizacion}>
-          <audio src={audioURL} controls className={estilos.voiceRecorder.audio}>
-            {/* el navegador usará el type del blob */}
-          </audio>
-          <button onClick={confirmarAudio} className={estilos.voiceRecorder.btnEnviar}>
-            <Send className={estilos.voiceRecorder.iconoMini} />
+        <div className="flex items-center gap-2">
+          <audio src={audioURL} controls className="w-32" />
+          <button onClick={confirmarAudio} className="text-primary hover:text-primary/70 transition-colors">
+            <Send className="w-4 h-4" />
           </button>
-          <button onClick={cancelarGrabacion} className={estilos.voiceRecorder.btnCancelar}>
-            <Trash2 className={estilos.voiceRecorder.iconoMini} />
+          <button onClick={cancelarGrabacion} className="text-rose-400 hover:text-rose-300 transition-colors">
+            <Trash2 className="w-4 h-4" />
           </button>
         </div>
       ) : (
         <div className="flex flex-col items-center gap-2">
-          <button onClick={iniciarGrabacion} className={estilos.voiceRecorder.btnMic} title="Grabar audio">
-            <MicIcon className={estilos.voiceRecorder.icono} />
+          <button onClick={iniciarGrabacion} className="text-muted-foreground hover:text-primary transition-colors" title="Grabar audio">
+            <MicIcon className="w-5 h-5" />
           </button>
           <input
             ref={fallbackInputRef}
@@ -172,7 +144,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onAudioReady }) => {
               e.currentTarget.value = "";
             }}
           />
-          {errorMsg && <p className="text-xs text-red-600 text-center max-w-[260px]">{errorMsg}</p>}
+          {errorMsg && <p className="text-xs text-rose-400 text-center max-w-[260px]">{errorMsg}</p>}
         </div>
       )}
     </div>

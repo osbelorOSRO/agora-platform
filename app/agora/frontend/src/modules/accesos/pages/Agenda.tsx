@@ -81,6 +81,8 @@ const emptyWhatsappForm: CreateWhatsappContactInput = {
   notes: "",
 };
 
+const fieldInput = "h-11 rounded-md border border-border bg-input px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-primary/40 transition";
+
 export default function Agenda() {
   const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState("");
@@ -101,17 +103,13 @@ export default function Agenda() {
       setPage(1);
       setSearch(searchInput.trim());
     }, 250);
-
     return () => window.clearTimeout(timer);
   }, [searchInput]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [provider]);
+  useEffect(() => { setPage(1); }, [provider]);
 
   useEffect(() => {
     let cancelled = false;
-
     (async () => {
       try {
         setLoading(true);
@@ -131,10 +129,7 @@ export default function Agenda() {
         if (!cancelled) setLoading(false);
       }
     })();
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [search, provider, page, refreshKey]);
 
   const items = data?.items ?? [];
@@ -171,9 +166,7 @@ export default function Agenda() {
       navigate(`/meta-inbox?sessionId=${encodeURIComponent(contact.lastThreadSessionId)}`);
       return;
     }
-
     if (contact.objectType !== "WHATSAPP") return;
-
     setPreparingThreadFor(contact.actorExternalId);
     setError(null);
     try {
@@ -189,60 +182,60 @@ export default function Agenda() {
   return (
     <>
       <div className="space-y-6">
-        <section className="border border-white/10 bg-black/20 p-6 shadow-2xl backdrop-blur-xl">
+        {/* ── Header con stats ── */}
+        <section className="rounded-xl border border-border bg-card p-6 shadow-2xl">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
-              <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#7ce6ff]">
+              <p className="text-xs font-black uppercase tracking-[0.28em] text-primary">
                 Agenda
               </p>
-              <h1 className="mt-3 text-4xl font-black tracking-tight text-white">
+              <h1 className="mt-3 text-4xl font-black tracking-tight text-foreground">
                 Contactos conversacionales
               </h1>
-              <p className="mt-3 max-w-xl text-sm leading-6 text-slate-300">
+              <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
                 Directorio de actores/contactos basado en Meta Inbox y Baileys. La agenda permite encontrar,
                 clasificar y preparar contactos sin borrar registros.
               </p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="border border-white/10 bg-white/5 px-5 py-4">
-                <p className="text-[11px] uppercase tracking-[0.26em] text-slate-400">Contactos</p>
-                <p className="mt-2 text-3xl font-black text-white">{total}</p>
+              <div className="rounded-lg border border-border bg-background/40 px-5 py-4">
+                <p className="text-[10px] font-medium uppercase tracking-[0.26em] text-muted-foreground">Contactos</p>
+                <p className="mt-2 text-3xl font-black text-foreground">{total}</p>
               </div>
-              <div className="border border-white/10 bg-white/5 px-5 py-4">
-                <p className="text-[11px] uppercase tracking-[0.26em] text-slate-400">Canal</p>
-                <p className="mt-2 truncate text-sm font-semibold text-white">{providerLabel(provider)}</p>
+              <div className="rounded-lg border border-border bg-background/40 px-5 py-4">
+                <p className="text-[10px] font-medium uppercase tracking-[0.26em] text-muted-foreground">Canal</p>
+                <p className="mt-2 truncate text-sm font-semibold text-foreground">{providerLabel(provider)}</p>
               </div>
-              <div className="border border-white/10 bg-white/5 px-5 py-4">
-                <p className="text-[11px] uppercase tracking-[0.26em] text-slate-400">Busqueda</p>
-                <p className="mt-2 truncate text-sm font-semibold text-white">{search || "Sin filtro"}</p>
+              <div className="rounded-lg border border-border bg-background/40 px-5 py-4">
+                <p className="text-[10px] font-medium uppercase tracking-[0.26em] text-muted-foreground">Búsqueda</p>
+                <p className="mt-2 truncate text-sm font-semibold text-foreground">{search || "Sin filtro"}</p>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="border border-white/10 bg-[#06161b]/90 p-6 shadow-xl">
+        {/* ── Filtros y grilla ── */}
+        <section className="rounded-xl border border-border bg-card p-6 shadow-xl">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div className="grid w-full gap-3 lg:grid-cols-[minmax(0,1fr)_180px]">
               <div className="relative">
-                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <input
                   type="text"
                   value={searchInput}
                   onChange={(event) => setSearchInput(event.target.value)}
                   placeholder="Buscar nombre, telefono, rut, email o actor id..."
-                  className="h-11 w-full rounded-md border border-white/10 bg-[#102127] pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#6dfe9c]/40"
+                  className="h-11 w-full rounded-md border border-border bg-input pl-11 pr-4 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/50 focus:border-primary/40"
                 />
               </div>
               <select
                 value={provider}
                 onChange={(event) => setProvider(event.target.value as (typeof PROVIDERS)[number])}
-                className="h-11 rounded-md border border-white/10 bg-[#102127] px-3 text-sm text-white outline-none transition focus:border-[#6dfe9c]/40"
+                className="h-11 rounded-md border border-border bg-input px-3 text-sm text-foreground outline-none transition focus:border-primary/40"
               >
                 {PROVIDERS.map((item) => (
-                  <option key={item} value={item}>
-                    {providerLabel(item)}
-                  </option>
+                  <option key={item} value={item}>{providerLabel(item)}</option>
                 ))}
               </select>
             </div>
@@ -250,7 +243,7 @@ export default function Agenda() {
             <button
               type="button"
               onClick={() => setShowCreateWhatsapp(true)}
-              className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-md border border-[#6dfe9c]/20 bg-[#11313a] px-4 text-sm font-semibold text-[#bfffd6] transition hover:border-[#6dfe9c]/40 hover:bg-[#163b45]"
+              className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-4 text-sm font-semibold text-foreground transition hover:border-primary/40 hover:bg-primary/10"
             >
               <Plus size={16} />
               WhatsApp
@@ -259,15 +252,15 @@ export default function Agenda() {
 
           <div className="mt-6">
             {loading ? (
-              <div className="border border-dashed border-white/10 bg-black/10 px-6 py-12 text-center text-sm text-slate-400">
+              <div className="rounded-xl border border-dashed border-border bg-background/20 px-6 py-12 text-center text-sm text-muted-foreground">
                 Cargando agenda...
               </div>
             ) : error ? (
-              <div className="border border-red-500/20 bg-red-500/10 px-6 py-12 text-center text-sm text-red-200">
+              <div className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-6 py-12 text-center text-sm text-rose-300">
                 {error}
               </div>
             ) : items.length === 0 ? (
-              <div className="border border-dashed border-white/10 bg-black/10 px-6 py-12 text-center text-sm text-slate-400">
+              <div className="rounded-xl border border-dashed border-border bg-background/20 px-6 py-12 text-center text-sm text-muted-foreground">
                 No encontramos contactos con ese criterio.
               </div>
             ) : (
@@ -287,7 +280,7 @@ export default function Agenda() {
                   return (
                     <article
                       key={`${contact.objectType}:${contact.actorExternalId}`}
-                      className="border border-white/10 bg-[#0b1c22] p-5 shadow-lg transition hover:border-[#7ce6ff]/20 hover:bg-[#0f2229]"
+                      className="rounded-xl border border-border bg-background/40 p-5 shadow-lg transition hover:border-primary/20 hover:bg-card"
                     >
                       <div className="flex items-start gap-4">
                         <span
@@ -297,27 +290,27 @@ export default function Agenda() {
                           <ContactProviderIcon objectType={contact.objectType} className="h-5 w-5" />
                         </span>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-base font-bold text-white">{title || "Sin nombre"}</p>
-                          <p className="mt-1 truncate text-sm text-slate-400">{compactActorId(contact)}</p>
+                          <p className="truncate text-base font-bold text-foreground">{title || "Sin nombre"}</p>
+                          <p className="mt-1 truncate text-sm text-muted-foreground">{compactActorId(contact)}</p>
                         </div>
                       </div>
 
                       <div className="mt-4 grid gap-2 text-sm">
-                        <div className="flex items-center justify-between gap-3 rounded-md border border-white/5 bg-white/5 px-3 py-2">
-                          <span className="text-slate-400">Lifecycle</span>
-                          <span className="truncate font-semibold text-slate-200">
+                        <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-input px-3 py-2">
+                          <span className="text-muted-foreground">Lifecycle</span>
+                          <span className="truncate font-semibold text-foreground/80">
                             {contact.actorLifecycleState || "SIN_ESTADO"}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between gap-3 rounded-md border border-white/5 bg-white/5 px-3 py-2">
-                          <span className="text-slate-400">Stage</span>
-                          <span className="truncate font-semibold text-[#bfffd6]">
+                        <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-input px-3 py-2">
+                          <span className="text-muted-foreground">Stage</span>
+                          <span className="truncate font-semibold text-primary">
                             {stageLabel(contact.lastThreadStage)}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between gap-3 rounded-md border border-white/5 bg-white/5 px-3 py-2">
-                          <span className="text-slate-400">Actividad</span>
-                          <span className="truncate font-semibold text-slate-200">
+                        <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-input px-3 py-2">
+                          <span className="text-muted-foreground">Actividad</span>
+                          <span className="truncate font-semibold text-foreground/80">
                             {formatRelativeTs(contact.lastMessageAt)}
                           </span>
                         </div>
@@ -328,12 +321,12 @@ export default function Agenda() {
                           type="button"
                           onClick={() => void handleOpenInbox(contact)}
                           disabled={!canOpenInbox || preparing}
-                          className="inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-md border border-[#7ce6ff]/20 bg-[#102831] text-sm font-semibold text-[#bdefff] transition hover:border-[#7ce6ff]/40 disabled:cursor-not-allowed disabled:opacity-45"
+                          className="inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-md border border-primary/20 bg-primary/5 text-sm font-semibold text-foreground/80 transition hover:border-primary/40 hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-45"
                         >
                           <MessageCircle size={15} />
                           {preparing ? "Preparando..." : inboxLabel}
                         </button>
-                        <span className="inline-flex h-9 items-center gap-2 rounded-md border border-white/10 px-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-300">
+                        <span className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                           <ContactRound size={14} />
                           {contact.objectType}
                         </span>
@@ -345,10 +338,10 @@ export default function Agenda() {
             )}
           </div>
 
-          <div className="mt-6 flex flex-col gap-3 border-t border-white/5 pt-5 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-slate-400">
-              Mostrando <span className="font-semibold text-slate-200">{items.length}</span> de{" "}
-              <span className="font-semibold text-slate-200">{total}</span> contactos.
+          <div className="mt-6 flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-muted-foreground">
+              Mostrando <span className="font-semibold text-foreground">{items.length}</span> de{" "}
+              <span className="font-semibold text-foreground">{total}</span> contactos.
             </p>
 
             <div className="flex items-center gap-3">
@@ -356,18 +349,18 @@ export default function Agenda() {
                 type="button"
                 onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                 disabled={page <= 1 || loading}
-                className="rounded-md border border-white/10 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-md border border-border px-4 py-2 text-sm font-semibold text-foreground/80 transition hover:bg-card disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Anterior
               </button>
-              <span className="text-sm text-slate-400">
+              <span className="text-sm text-muted-foreground">
                 Página {page} de {totalPages}
               </span>
               <button
                 type="button"
                 onClick={() => setPage((prev) => prev + 1)}
                 disabled={!data?.hasNext || loading}
-                className="rounded-md border border-white/10 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-md border border-border px-4 py-2 text-sm font-semibold text-foreground/80 transition hover:bg-card disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Siguiente
               </button>
@@ -376,21 +369,22 @@ export default function Agenda() {
         </section>
       </div>
 
-      {showCreateWhatsapp ? (
+      {/* ── Modal nuevo contacto WhatsApp ── */}
+      {showCreateWhatsapp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
           <form
             onSubmit={handleCreateWhatsapp}
-            className="w-full max-w-lg border border-white/10 bg-[#07191f] p-5 shadow-2xl"
+            className="w-full max-w-lg rounded-xl border border-border bg-card p-5 shadow-2xl"
           >
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h2 className="text-lg font-bold text-white">Nuevo contacto WhatsApp</h2>
-                <p className="mt-1 text-sm text-slate-400">Crea una identidad Baileys para mensajeria.</p>
+                <h2 className="text-sm font-black uppercase tracking-[0.3em] text-primary">Nuevo contacto WhatsApp</h2>
+                <p className="mt-1 text-xs text-muted-foreground">Crea una identidad Baileys para mensajería.</p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowCreateWhatsapp(false)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/10 text-slate-300 transition hover:bg-white/5"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-muted-foreground transition hover:bg-card hover:text-foreground"
                 aria-label="Cerrar"
               >
                 <X size={16} />
@@ -401,39 +395,39 @@ export default function Agenda() {
               <input
                 value={whatsappForm.phone}
                 onChange={(event) => setWhatsappForm((prev) => ({ ...prev, phone: event.target.value }))}
-                placeholder="Telefono con codigo pais"
+                placeholder="Teléfono con código país"
                 required
-                className="h-11 rounded-md border border-white/10 bg-[#102127] px-3 text-sm text-white outline-none placeholder:text-slate-500 sm:col-span-2"
+                className={fieldInput + " sm:col-span-2"}
               />
               <input
                 value={whatsappForm.displayName || ""}
                 onChange={(event) => setWhatsappForm((prev) => ({ ...prev, displayName: event.target.value }))}
                 placeholder="Nombre"
-                className="h-11 rounded-md border border-white/10 bg-[#102127] px-3 text-sm text-white outline-none placeholder:text-slate-500 sm:col-span-2"
+                className={fieldInput + " sm:col-span-2"}
               />
               <input
                 value={whatsappForm.rut || ""}
                 onChange={(event) => setWhatsappForm((prev) => ({ ...prev, rut: event.target.value }))}
                 placeholder="RUT"
-                className="h-11 rounded-md border border-white/10 bg-[#102127] px-3 text-sm text-white outline-none placeholder:text-slate-500"
+                className={fieldInput}
               />
               <input
                 value={whatsappForm.city || ""}
                 onChange={(event) => setWhatsappForm((prev) => ({ ...prev, city: event.target.value }))}
                 placeholder="Ciudad"
-                className="h-11 rounded-md border border-white/10 bg-[#102127] px-3 text-sm text-white outline-none placeholder:text-slate-500"
+                className={fieldInput}
               />
               <input
                 value={whatsappForm.email || ""}
                 onChange={(event) => setWhatsappForm((prev) => ({ ...prev, email: event.target.value }))}
                 placeholder="Email"
-                className="h-11 rounded-md border border-white/10 bg-[#102127] px-3 text-sm text-white outline-none placeholder:text-slate-500 sm:col-span-2"
+                className={fieldInput + " sm:col-span-2"}
               />
               <textarea
                 value={whatsappForm.notes || ""}
                 onChange={(event) => setWhatsappForm((prev) => ({ ...prev, notes: event.target.value }))}
                 placeholder="Notas"
-                className="min-h-24 rounded-md border border-white/10 bg-[#102127] px-3 py-3 text-sm text-white outline-none placeholder:text-slate-500 sm:col-span-2"
+                className="min-h-24 rounded-md border border-border bg-input px-3 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 sm:col-span-2 focus:border-primary/40 transition"
               />
             </div>
 
@@ -441,14 +435,14 @@ export default function Agenda() {
               <button
                 type="button"
                 onClick={() => setShowCreateWhatsapp(false)}
-                className="h-10 rounded-md border border-white/10 px-4 text-sm font-semibold text-slate-300 transition hover:bg-white/5"
+                className="h-10 rounded-md border border-border px-4 text-sm font-semibold text-muted-foreground transition hover:bg-card hover:text-foreground"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#08e36f] px-4 text-sm font-bold text-[#04130a] transition hover:bg-[#35f58c] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-bold text-primary-foreground transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Plus size={16} />
                 Crear contacto
@@ -456,7 +450,7 @@ export default function Agenda() {
             </div>
           </form>
         </div>
-      ) : null}
+      )}
     </>
   );
 }

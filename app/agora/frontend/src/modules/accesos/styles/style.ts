@@ -1,5 +1,3 @@
-import theme from "./theme";
-
 const style = {
   // 🔄 Flip card
   flipWrapper: 'relative w-[360px] h-[320px] perspective',
@@ -8,8 +6,8 @@ const style = {
   flipBack: 'absolute w-full h-full backface-hidden rotate-y-180',
 
   // 🧾 Tarjetas y secciones
-  card: `bg-[${theme.colors.white}] rounded-[${theme.radius.xl}] shadow p-6`,
-  subtitle: `text-[${theme.font.size.base}] text-[${theme.colors.gray}] mb-2`,
+  card: 'bg-card rounded-xl shadow p-6',
+  subtitle: 'text-sm text-muted-foreground mb-2',
   title: `
   text-2xl
   font-bold
@@ -33,8 +31,8 @@ const style = {
   `,
 
   // ✅ Botones
-  buttonDanger: `bg-[${theme.colors.danger}] text-[${theme.colors.white}] px-4 py-2 rounded-[${theme.radius.xl}] hover:bg-red-700 transition-colors`,
-  buttonIcon: `p-2 hover:bg-[${theme.colors.gray}] rounded-full`,
+  buttonDanger: 'bg-destructive text-white px-4 py-2 rounded-xl hover:bg-red-700 transition-colors',
+  buttonIcon: 'p-2 hover:bg-card rounded-full',
   buttonPrimary: `
   px-6 py-2
   border-2 border-[#cf0060]

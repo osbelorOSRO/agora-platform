@@ -5,7 +5,6 @@ import { obtenerRoles } from "../services/rolService";
 import type { Usuario, EstadoUsuario } from "../types/usuario";
 import type { Rol } from "../types/rol";
 import { Pencil, Save, Trash2, CirclePlus, KeyRound, Smartphone, Unlock, UserX, RefreshCw, Copy, Check } from "lucide-react";
-import { estilos } from "@/theme/estilos";
 
 const ESTADO_CONFIG: Record<EstadoUsuario, { label: string; color: string }> = {
   activo: { label: "Activo", color: "text-green-400" },
@@ -104,19 +103,22 @@ export default function Usuarios() {
   return (
     <div>
       {modal && (
-        <div className={estilos.formNuevo.overlay}>
-          <div className={`${estilos.formNuevo.card} max-w-sm`}>
-            <h3 className={estilos.formNuevo.titulo}>{modal.titulo}</h3>
-            <p className="text-xs text-gray-500">Comparte este código con el usuario. Expira el {modal.expira}.</p>
-            <div className="flex items-center gap-2 bg-fondoPagina rounded px-3 py-2 mt-2">
-              <span className="font-mono text-lg font-bold tracking-widest text-textoOscuro flex-1">{modal.token}</span>
-              <button onClick={copiarToken} className="text-azulOscuro hover:text-azulPrimario" title="Copiar código">
-                {copiado ? <Check size={18} className="text-green-600" /> : <Copy size={18} />}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-2xl space-y-3">
+            <h3 className="text-xs font-bold uppercase tracking-[0.22em] text-primary">{modal.titulo}</h3>
+            <p className="text-xs text-muted-foreground">Comparte este código con el usuario. Expira el {modal.expira}.</p>
+            <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2">
+              <span className="font-mono text-lg font-bold tracking-widest text-foreground flex-1">{modal.token}</span>
+              <button onClick={copiarToken} className="text-muted-foreground hover:text-primary transition-colors" title="Copiar código">
+                {copiado ? <Check size={18} className="text-emerald-400" /> : <Copy size={18} />}
               </button>
             </div>
-            <p className="text-xs text-orange-600 mt-2">Este código se muestra una sola vez. No se puede recuperar después de cerrar esta ventana.</p>
-            <div className={estilos.formNuevo.botones}>
-              <button onClick={() => { setModal(null); setCopiado(false); }} className={estilos.formNuevo.btnGuardar}>
+            <p className="text-xs text-amber-400">Este código se muestra una sola vez. No se puede recuperar después de cerrar esta ventana.</p>
+            <div className="flex justify-end pt-1">
+              <button
+                onClick={() => { setModal(null); setCopiado(false); }}
+                className="rounded-xl border border-border bg-input px-4 py-1.5 text-sm font-bold text-foreground hover:border-primary/30 hover:text-primary transition"
+              >
                 Cerrar
               </button>
             </div>

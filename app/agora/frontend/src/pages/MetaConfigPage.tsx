@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Eye, EyeOff, Pencil, Save, X } from "lucide-react";
+import { Eye, EyeOff, Instagram, MessageCircle, Network, Pencil, Save, Settings2, X } from "lucide-react";
 import { getMetaConfig, revealMetaField, updateMetaConfig, type MetaConfig } from "@/services/metaConfig.service";
 
 type Tab = "basic" | "messenger" | "instagram" | "graph";
@@ -37,7 +37,6 @@ function ConfigField({
   const [revealing, setRevealing] = useState(false);
 
   const displayValue = value ?? "";
-  const isMasked = sensitive && displayValue === "••••••••";
 
   const handleReveal = async () => {
     if (showValue) {
@@ -81,16 +80,13 @@ function ConfigField({
     }
   };
 
-  const inp = "flex-1 rounded border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#6dfe9c]/50";
-  const lbl = "block text-[11px] font-semibold text-slate-400 mb-1";
-
   return (
-    <div className="py-3 border-b border-white/5 last:border-0">
-      <label className={lbl}>{label}</label>
+    <div className="py-3 border-b border-border/50 last:border-0">
+      <label className="block text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground mb-1">{label}</label>
       {editing ? (
         <div className="flex items-center gap-2 mt-1">
           <input
-            className={inp}
+            className="flex-1 rounded border border-border bg-input px-3 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary/50"
             type={sensitive ? "password" : "text"}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
@@ -100,31 +96,31 @@ function ConfigField({
           <button
             onClick={handleSave}
             disabled={saving || !draft.trim()}
-            className="flex items-center gap-1 rounded bg-[#6dfe9c]/10 border border-[#6dfe9c]/30 px-3 py-1.5 text-[11px] font-bold text-[#6dfe9c] hover:bg-[#6dfe9c]/20 disabled:opacity-40"
+            className="flex items-center gap-1 rounded bg-primary/10 border border-primary/30 px-3 py-1.5 text-[11px] font-bold text-primary hover:bg-primary/20 disabled:opacity-40"
           >
             <Save size={12} /> {saving ? "..." : "Guardar"}
           </button>
-          <button onClick={handleCancel} className="text-slate-500 hover:text-white">
+          <button onClick={handleCancel} className="text-muted-foreground hover:text-foreground">
             <X size={14} />
           </button>
         </div>
       ) : (
         <div className="flex items-center gap-2 mt-1">
-          <div className="flex-1 rounded border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-300 min-h-[30px] break-all">
+          <div className="flex-1 rounded border border-border bg-input px-3 py-1.5 text-xs text-foreground/80 min-h-[30px] break-all">
             {sensitive
               ? showValue
-                ? (revealedValue || <span className="text-slate-600">No configurado</span>)
-                : (displayValue || <span className="text-slate-600">No configurado</span>)
-              : (displayValue || <span className="text-slate-600">No configurado</span>)
+                ? (revealedValue || <span className="text-muted-foreground/50">No configurado</span>)
+                : (displayValue || <span className="text-muted-foreground/50">No configurado</span>)
+              : (displayValue || <span className="text-muted-foreground/50">No configurado</span>)
             }
           </div>
           {sensitive && displayValue && (
-            <button onClick={handleReveal} disabled={revealing} className="text-slate-500 hover:text-slate-300 disabled:opacity-40">
+            <button onClick={handleReveal} disabled={revealing} className="text-muted-foreground hover:text-foreground disabled:opacity-40">
               {revealing ? <span className="text-[10px]">...</span> : showValue ? <EyeOff size={14} /> : <Eye size={14} />}
             </button>
           )}
           {!readOnly && (
-            <button onClick={handleEdit} className="text-slate-500 hover:text-[#6dfe9c]">
+            <button onClick={handleEdit} className="text-muted-foreground hover:text-primary">
               <Pencil size={13} />
             </button>
           )}
@@ -137,19 +133,19 @@ function ConfigField({
 // ─── Tarjeta ─────────────────────────────────────────────────────────────────
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-[#0a1f27] p-5 shadow-lg">
-      <h3 className="text-xs font-bold uppercase tracking-widest text-[#6dfe9c] mb-4">{title}</h3>
+    <div className="rounded-xl border border-border bg-card p-5 shadow-lg">
+      <h3 className="text-xs font-bold uppercase tracking-[0.22em] text-primary mb-4">{title}</h3>
       {children}
     </div>
   );
 }
 
 // ─── Tabs ─────────────────────────────────────────────────────────────────────
-const TABS: { key: Tab; label: string; emoji?: string }[] = [
-  { key: "basic", label: "Basic" },
-  { key: "messenger", label: "Messenger", emoji: "💬" },
-  { key: "instagram", label: "Instagram", emoji: "📸" },
-  { key: "graph", label: "Configuración API Graph" },
+const TABS: { key: Tab; label: string; Icon: React.ComponentType<{ size?: number }> }[] = [
+  { key: "basic",     label: "Basic",         Icon: Settings2 },
+  { key: "messenger", label: "Messenger",     Icon: MessageCircle },
+  { key: "instagram", label: "Instagram",     Icon: Instagram },
+  { key: "graph",     label: "API Graph",     Icon: Network },
 ];
 
 // ─── Página principal ─────────────────────────────────────────────────────────
@@ -186,35 +182,37 @@ export default function MetaConfigPage() {
     />
   );
 
-  if (loading) return <div className="p-8 text-slate-500 text-sm">Cargando...</div>;
-  if (error) return <div className="p-8 text-red-400 text-sm">{error}</div>;
+  if (loading) return <div className="p-8 text-muted-foreground text-sm">Cargando...</div>;
+  if (error) return <div className="p-8 text-rose-400 text-sm">{error}</div>;
 
   return (
-    <div className="p-6 max-w-3xl">
-      <h1 className="text-lg font-black uppercase tracking-widest text-[#6dfe9c] mb-1">
-        Integraciones
-      </h1>
-      <p className="text-xs text-slate-500 mb-6">Meta / Facebook Developer App</p>
+    <div className="space-y-6 max-w-3xl">
+      <header className="rounded-xl border border-border bg-card p-6">
+        <p className="page-label">Integrations</p>
+        <h1 className="page-title mt-3">Configuración Meta</h1>
+        <p className="page-subtitle mt-2">Facebook Developer App — tokens, webhooks y accesos de la plataforma.</p>
+      </header>
 
-      {/* Navbar interno */}
-      <div className="flex gap-1 border-b border-white/10 mb-6">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-all border-b-2 -mb-px ${
-              activeTab === tab.key
-                ? "border-[#6dfe9c] text-[#6dfe9c]"
-                : "border-transparent text-slate-500 hover:text-slate-300"
-            }`}
-          >
-            {tab.emoji && <span className="mr-1">{tab.emoji}</span>}
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <div className="rounded-xl border border-border bg-card">
+        <div className="flex gap-1 border-b border-border px-4">
+          {TABS.map(({ key, label, Icon }) => (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key)}
+              className={`inline-flex items-center gap-2 px-4 py-3 text-xs font-bold uppercase tracking-[0.18em] transition-all border-b-2 -mb-px ${
+                activeTab === key
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Icon size={13} />
+              {label}
+            </button>
+          ))}
+        </div>
 
-      {/* ── Basic ── */}
+        <div className="p-6">
+
       {activeTab === "basic" && (
         <div className="space-y-0">
           <Card title="Configuración básica">
@@ -236,7 +234,6 @@ export default function MetaConfigPage() {
         </div>
       )}
 
-      {/* ── Messenger ── */}
       {activeTab === "messenger" && (
         <div className="space-y-4">
           <Card title="Webhook">
@@ -255,7 +252,6 @@ export default function MetaConfigPage() {
         </div>
       )}
 
-      {/* ── Instagram ── */}
       {activeTab === "instagram" && (
         <div className="space-y-4">
           <Card title="Webhook">
@@ -274,17 +270,19 @@ export default function MetaConfigPage() {
         </div>
       )}
 
-      {/* ── API Graph ── */}
       {activeTab === "graph" && (
         <div className="space-y-4">
           <Card title="Token de acceso de páginas">
-            <p className="text-[11px] text-slate-500 mb-4">
+            <p className="text-[11px] text-muted-foreground mb-4">
               Token de larga duración para operaciones con la Graph API de Facebook. No se usa en el flujo de mensajería.
             </p>
             {field("Admin Access Token", "admin_access_token", { sensitive: true })}
           </Card>
         </div>
       )}
+
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.7.0
+
+### Changed
+- Sistema de estilos del frontend migrado completamente a design tokens CSS (`globals.css` + `tailwind.config.ts`): eliminados `estilos.ts`, `theme.ts`, `theme.css` y `tailwind.config.js`. Todos los componentes usan variables `--primary`, `--background`, `--card`, `--border`, `--foreground`, `--muted-foreground` y utilidades Tailwind estándar.
+- `MetaInboxPage` reescrito sin dependencias del sistema de estilos antiguo: layout inmersivo sin márgenes, compositor de chat fijo al fondo, navegación WhatsApp en móvil (lista de hilos → seleccionar → sólo chat; X para volver).
+- Sidebar (`SidebarCompacto`) responsivo: 56 px con sólo iconos en móvil, 256 px con etiquetas en escritorio.
+- `BaseLayout`: corrección de superposición del header fijo sobre el contenido en escritorio — se reemplazó el shorthand `p-*` por `px-*`/`pb-*` para evitar que la variante `md:` de Tailwind sobreescriba el `pt-[88px]`.
+- Página Welcome responsiva: grid de stats 3 columnas siempre, cards de módulo 2 cols móvil / 5 cols escritorio, gráfica de barras adaptada, tarjeta de permisos sin overflow.
+- Login: layout CSS grid 50/50 (animación centrada en mitad izquierda, tarjeta en mitad derecha), hover del botón primario corregido (ya no vira a gris), links de recuperación legibles con contraste correcto.
+- `ResetPassword` y `Setup2FA`: mismo fix de hover en botón primario.
+
 ## 1.6.2
 
 ### Fixed
