@@ -199,15 +199,15 @@ export default function Agenda() {
             </div>
 
             <div className="grid grid-cols-3 gap-2 md:gap-3 min-w-0">
-              <div className="rounded-lg border border-border bg-background/40 px-3 md:px-5 py-3 md:py-4 min-w-0 overflow-hidden">
+              <div className="rounded-lg border border-border bg-muted px-3 md:px-5 py-3 md:py-4 min-w-0 overflow-hidden">
                 <p className="text-[9px] md:text-[10px] font-medium uppercase tracking-[0.18em] md:tracking-[0.26em] text-muted-foreground truncate">Contactos</p>
                 <p className="mt-1 md:mt-2 text-xl md:text-3xl font-black text-foreground">{total}</p>
               </div>
-              <div className="rounded-lg border border-border bg-background/40 px-3 md:px-5 py-3 md:py-4 min-w-0 overflow-hidden">
+              <div className="rounded-lg border border-border bg-muted px-3 md:px-5 py-3 md:py-4 min-w-0 overflow-hidden">
                 <p className="text-[9px] md:text-[10px] font-medium uppercase tracking-[0.18em] md:tracking-[0.26em] text-muted-foreground truncate">Canal</p>
                 <p className="mt-1 md:mt-2 truncate text-xs md:text-sm font-semibold text-foreground">{providerLabel(provider)}</p>
               </div>
-              <div className="rounded-lg border border-border bg-background/40 px-3 md:px-5 py-3 md:py-4 min-w-0 overflow-hidden">
+              <div className="rounded-lg border border-border bg-muted px-3 md:px-5 py-3 md:py-4 min-w-0 overflow-hidden">
                 <p className="text-[9px] md:text-[10px] font-medium uppercase tracking-[0.18em] md:tracking-[0.26em] text-muted-foreground truncate">Búsqueda</p>
                 <p className="mt-1 md:mt-2 truncate text-xs md:text-sm font-semibold text-foreground">{search || "Sin filtro"}</p>
               </div>
@@ -252,7 +252,7 @@ export default function Agenda() {
 
           <div className="mt-6 isolate">
             {loading ? (
-              <div className="rounded-xl border border-dashed border-border bg-background/20 px-6 py-12 text-center text-sm text-muted-foreground">
+              <div className="rounded-xl border border-dashed border-border bg-background px-6 py-12 text-center text-sm text-muted-foreground">
                 Cargando agenda...
               </div>
             ) : error ? (
@@ -260,7 +260,7 @@ export default function Agenda() {
                 {error}
               </div>
             ) : items.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border bg-background/20 px-6 py-12 text-center text-sm text-muted-foreground">
+              <div className="rounded-xl border border-dashed border-border bg-background px-6 py-12 text-center text-sm text-muted-foreground">
                 No encontramos contactos con ese criterio.
               </div>
             ) : (
@@ -280,7 +280,7 @@ export default function Agenda() {
                   return (
                     <article
                       key={`${contact.objectType}:${contact.actorExternalId}`}
-                      className="rounded-xl border border-border bg-background/40 p-4 md:p-5 shadow-lg transition-colors hover:border-primary/20 hover:bg-card"
+                      className="rounded-xl border border-border bg-muted p-4 md:p-5 shadow-lg transition-colors hover:border-primary/20 hover:bg-card"
                     >
                       <div className="flex items-start gap-4">
                         <span

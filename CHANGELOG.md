@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.6
+
+### Fixed
+- Causa raíz del glitch GPU compositor en Chrome Android — todos los tokens de superficie (`--card`, `--popover`, `--secondary`, `--muted`, `--input`) usaban `rgba()` con alpha, lo que obliga al compositor de Chrome a hacer alpha blending por píxel en cada elemento pintado. Con 24+ tarjetas de contacto + header + inputs simultáneos en viewport, el tile cache del GPU se agotaba → scanlines, ghost frames, stale tiles. Reemplazados por equivalentes sólidos pre-calculados que producen el mismo color visual pero sin alpha runtime: `--card: #121327`, `--popover: #212235`, `--secondary: #17182C`, `--muted: #0F1025`, `--input: #252638`.
+- Agenda móvil: `bg-background/40` y `bg-background/20` (opacity modifiers de Tailwind que generan RGBA independientemente de si el token CSS es sólido) reemplazados por `bg-muted` y `bg-background` en los tres stat cells y las 24 contact cards — elimina la última fuente de alpha blending por elemento en el grid de contactos.
+- Móvil global: `backdrop-filter: blur()` desactivado en las utilidades `.glass-sm/md/lg` en viewports ≤ 768px — el blur de backdrop requiere que el compositor cree una capa separada por cada elemento con la clase, lo que en el header fijo detonaba la cadena compositor. Reemplazado con fondo sólido equivalente.
+
 ## 1.7.5
 
 ### Fixed

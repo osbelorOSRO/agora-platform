@@ -10,11 +10,11 @@
   --background:          #000117;
   --foreground:          #ffffff;
 
-  /* ── Superficies ──────────────────────────────────────────── */
-  --card:                rgba(255, 255, 255, 0.07);
+  /* ── Superficies — sólidos pre-calculados (sin alpha runtime) ─ */
+  --card:                #121327;   /* rgba(255,255,255,0.07) over #000117 */
   --card-foreground:     #ffffff;
 
-  --popover:             rgba(255, 255, 255, 0.13);
+  --popover:             #212235;   /* rgba(255,255,255,0.13) over #000117 */
   --popover-foreground:  #ffffff;
 
   /* ── Acción primaria (magenta) ────────────────────────────── */
@@ -24,11 +24,11 @@
   --primary-glow:        rgba(207, 0, 96, 0.45);
 
   /* ── Acción secundaria ────────────────────────────────────── */
-  --secondary:           rgba(255, 255, 255, 0.09);
+  --secondary:           #17182C;   /* rgba(255,255,255,0.09) over #000117 */
   --secondary-foreground: rgba(255, 255, 255, 0.80);
 
   /* ── Texto atenuado y superficies neutras ─────────────────── */
-  --muted:               rgba(255, 255, 255, 0.06);
+  --muted:               #0F1025;   /* rgba(255,255,255,0.06) over #000117 */
   --muted-foreground:    rgba(255, 255, 255, 0.65);
 
   /* ── Estado hover/activo de elementos interactivos ───────── */
@@ -46,7 +46,7 @@
   /* ── Bordes e inputs ──────────────────────────────────────── */
   --border:              rgba(255, 255, 255, 0.10);
   --border-primary:      rgba(207, 0, 96, 0.40);
-  --input:               rgba(255, 255, 255, 0.08);
+  --input:               #252638;   /* rgba(255,255,255,0.08) over --card */
   --ring:                #cf0060;
 
   /* ── Glass (extensión propia) ─────────────────────────────── */
@@ -112,6 +112,27 @@ a, button {
 @media (max-width: 768px) {
   input, select, textarea {
     font-size: 16px;
+  }
+}
+
+/* En móvil: desactivar backdrop-filter del glass — es la operación GPU más cara
+   en Chrome Android (genera compositor layer por elemento). Se reemplaza con
+   fondo sólido equivalente para eliminar la carga del compositor. */
+@media (max-width: 768px) {
+  .glass-sm {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background-color: #0F1025;
+  }
+  .glass-md {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background-color: #17182C;
+  }
+  .glass-lg {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background-color: #212235;
   }
 }
 
