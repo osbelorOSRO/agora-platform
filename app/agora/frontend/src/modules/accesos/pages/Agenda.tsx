@@ -217,10 +217,10 @@ export default function Agenda() {
 
         {/* ── Filtros y grilla ── */}
         <section className="rounded-xl border border-border bg-card p-4 md:p-6 shadow-xl">
-          <div className="relative z-10 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          <div className="relative z-20 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="grid w-full gap-3 lg:grid-cols-[minmax(0,1fr)_180px]">
               <div className="relative">
-                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Search className="pointer-events-none absolute left-4 top-[14px] h-4 w-4 text-muted-foreground" />
                 <input
                   type="text"
                   value={searchInput}
@@ -243,14 +243,14 @@ export default function Agenda() {
             <button
               type="button"
               onClick={() => setShowCreateWhatsapp(true)}
-              className="inline-flex w-full xl:w-auto h-11 shrink-0 items-center justify-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-4 text-sm font-semibold text-foreground transition-colors hover:border-primary/40 hover:bg-primary/10"
+              className="inline-flex w-full xl:w-auto h-11 shrink-0 items-center justify-center gap-2 rounded-md border border-primary/20 bg-[#1B122A] px-4 text-sm font-semibold text-foreground transition-colors hover:border-primary/40 hover:bg-[#25112D]"
             >
               <Plus size={16} />
               Nuevo contacto WhatsApp
             </button>
           </div>
 
-          <div className="mt-6 isolate">
+          <div className="mt-6">
             {loading ? (
               <div className="rounded-xl border border-dashed border-border bg-background px-6 py-12 text-center text-sm text-muted-foreground">
                 Cargando agenda...
@@ -321,7 +321,7 @@ export default function Agenda() {
                           type="button"
                           onClick={() => void handleOpenInbox(contact)}
                           disabled={!canOpenInbox || preparing}
-                          className="inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-md border border-primary/20 bg-primary/5 text-sm font-semibold text-foreground/80 transition-colors hover:border-primary/40 hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-45"
+                          className="inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-md border border-primary/20 bg-[#1B122A] text-sm font-semibold text-foreground/80 transition-colors hover:border-primary/40 hover:bg-[#25112D] disabled:cursor-not-allowed disabled:opacity-45"
                         >
                           <MessageCircle size={15} />
                           {preparing ? "Preparando..." : inboxLabel}

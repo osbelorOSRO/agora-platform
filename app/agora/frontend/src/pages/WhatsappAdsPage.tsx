@@ -166,7 +166,7 @@ export default function WhatsappAdsPage() {
                 <div className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Título</div>
                 <h2 className="mt-1 text-xl font-black leading-tight text-foreground">{current.title || "Sin título"}</h2>
               </div>
-              <div className="rounded-2xl border border-border bg-background/40 p-3 text-xs">
+              <div className="rounded-2xl border border-border bg-muted p-3 text-xs">
                 <div className="text-muted-foreground">sourceId</div>
                 <div className="mt-1 break-all font-mono text-primary/70">{current.sourceId}</div>
               </div>

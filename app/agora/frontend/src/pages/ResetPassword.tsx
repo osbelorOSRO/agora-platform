@@ -36,7 +36,7 @@ export default function ResetPassword() {
       <BackgroundAnimation />
 
       <div className="login-content">
-        <div className="w-full max-w-sm rounded-2xl border border-border bg-card/80 backdrop-blur-md p-8 shadow-2xl">
+        <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-8 shadow-2xl">
           <p className="page-label mb-1">Agora</p>
 
           {exito ? (

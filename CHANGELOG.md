@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.7
+
+### Fixed
+- Glitch GPU compositor global: eliminados todos los opacity modifiers de Tailwind (`bg-card/X`, `bg-input/X`, `bg-muted/X`, `bg-background/X`, `bg-primary/X`) en todas las páginas — MetaInboxPage (chatHeader, composer, chat bubbles, sticky filter, thread hover), Welcome (module cards deshabilitados, artículos superadmin, permission badges), Login/ResetPassword/Setup2FA (login card), WhatsappAdsPage. Reemplazados por tokens sólidos o hex pre-calculados equivalentes. Estos opacity modifiers generan RGBA en runtime aunque el token CSS sea sólido.
+- Glitch GPU compositor Agenda (causa raíz): eliminado `-translate-y-1/2` del icono Search — cualquier CSS `transform` en elementos dentro de contenido scrolleado puede promover el elemento a capa compositor individual en Chrome Android. Reemplazado por `top-[14px]` (posición absoluta sin transform). Eliminado `isolate` del wrapper del grid de contactos — aunque `isolate` en sí no siempre promueve, su combinación con otros stacking contexts en la página podía hacerlo. El z-order se mantiene elevando el div de filtros a `z-20`.
+- Móvil global: override nuclear de `backdrop-blur-*` de Tailwind en ≤ 768px — cubre todos los usos directos de `backdrop-blur-sm/md/lg/xl` en JSX (MetaInboxPage sticky headers, Login card) sin necesidad de modificar el TSX individualmente.
+
 ## 1.7.6
 
 ### Fixed

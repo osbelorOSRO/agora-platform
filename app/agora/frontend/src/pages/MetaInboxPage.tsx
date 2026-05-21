@@ -214,7 +214,7 @@ const s = {
   mainWithoutContact: "grid grid-cols-[280px_1fr]",
   sidebar: "flex flex-col overflow-y-auto border-r border-border bg-card scrollbar-custom",
   sidebarInfo: "mt-2 text-[11px] text-muted-foreground",
-  threadItem: "border-b border-border px-2 py-2 transition hover:bg-input/60",
+  threadItem: "border-b border-border px-2 py-2 transition hover:bg-input",
   threadItemActive: "bg-input",
   threadRow: "flex items-start gap-1",
   threadMainButton: "min-w-0 flex-1 text-left",
@@ -226,7 +226,7 @@ const s = {
   menuPopup: "absolute right-0 top-8 z-30 min-w-[140px] rounded-md border border-border bg-card shadow-xl",
   menuOption: "block w-full px-3 py-2 text-left text-sm text-foreground hover:bg-input transition-colors",
   chatPanel: "flex min-h-0 flex-1 flex-col overflow-hidden",
-  chatHeader: "border-b border-border bg-card/90 px-4 py-3",
+  chatHeader: "border-b border-border bg-card px-4 py-3",
   chatHeaderRow: "flex items-start justify-between gap-2",
   chatName: "text-base font-bold text-foreground",
   chatChannel: "",
@@ -235,11 +235,11 @@ const s = {
   loadingText: "py-4 text-center text-sm text-muted-foreground",
   bubbleWrapOutgoing: "flex justify-end",
   bubbleWrapIncoming: "flex justify-start",
-  bubbleOutgoing: "max-w-[75%] rounded-2xl rounded-tr-sm border border-primary/30 bg-primary/15 px-3 py-2 text-sm text-foreground",
+  bubbleOutgoing: "max-w-[75%] rounded-2xl rounded-tr-sm border border-primary/30 bg-[#2E1030] px-3 py-2 text-sm text-foreground",
   bubbleIncoming: "max-w-[75%] rounded-2xl rounded-tl-sm border border-border bg-card px-3 py-2 text-sm text-foreground",
   bubbleTsOutgoing: "mt-1 text-right text-[10px] text-muted-foreground",
   bubbleTsIncoming: "mt-1 text-[10px] text-muted-foreground",
-  composer: "flex items-center gap-2 border-t border-border bg-card/90 px-3 py-2",
+  composer: "flex items-center gap-2 border-t border-border bg-card px-3 py-2",
   composerInput: "min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/50",
   composerSend: "flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground hover:border-primary/30 hover:text-primary transition-colors",
   composerIcon: "h-4 w-4",
@@ -864,7 +864,7 @@ const MetaInboxPage: React.FC = () => {
             : "flex flex-col w-full overflow-y-auto bg-card scrollbar-custom"
           : s.sidebar
         }>
-          <div className="sticky top-0 z-20 border-b border-border bg-card/95 p-3 backdrop-blur-md">
+          <div className="sticky top-0 z-20 border-b border-border bg-card p-3">
             <div className="grid grid-cols-3 gap-1">
               {STATUS_VIEWS.map((view) => {
                 const Icon = statusIcon(view);
@@ -877,7 +877,7 @@ const MetaInboxPage: React.FC = () => {
                     className={`flex h-9 items-center justify-center gap-1.5 rounded-md border text-[11px] font-bold transition ${
                       active
                         ? "border-primary bg-primary/15 text-primary"
-                        : "border-border bg-input/60 text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                        : "border-border bg-input text-muted-foreground hover:border-primary/50 hover:text-foreground"
                     }`}
                     title={statusLabel(view)}
                   >
@@ -1173,7 +1173,7 @@ const MetaInboxPage: React.FC = () => {
               </div>
 
               {pendingMedia && (
-                <div className="flex items-center justify-between gap-3 border-t border-border bg-card/70 px-3 py-2">
+                <div className="flex items-center justify-between gap-3 border-t border-border bg-muted px-3 py-2">
                   <div className="min-w-0 text-sm text-foreground">
                     <span className="font-bold">Imagen adjunta</span>
                     <span className="ml-2 text-foreground/70">{pendingMedia.name}</span>
@@ -1246,7 +1246,7 @@ const MetaInboxPage: React.FC = () => {
                 </button>
               </div>
               {showRecorder && (
-                <div className="px-3 pb-3 bg-card/40 backdrop-blur-sm border-t border-border">
+                <div className="px-3 pb-3 bg-background border-t border-border">
                   <VoiceRecorder
                     onAudioReady={(file) => {
                       setShowRecorder(false);
