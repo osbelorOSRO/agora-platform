@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
-import { KeyRound, Users, Activity } from "lucide-react";
+import { KeyRound, Users, Activity, Wrench, LayoutList, PackageOpen, Plug } from "lucide-react";
+import { getTokenData } from "@/utils/getTokenData";
+import { hasPermission } from "@/utils/permissions";
 
-const cards = [
+const adminCards = [
   {
     to: "/accesos/ajustes/usuarios",
     title: "Usuarios",
@@ -22,29 +24,96 @@ const cards = [
   },
 ];
 
+const toolCards = [
+  {
+    to: "/wa-control",
+    title: "Bot",
+    description: "Control del bot de WhatsApp y reglas de automatización.",
+    Icon: Wrench,
+    permission: "vista_bot" as const,
+    superadmin: false,
+  },
+  {
+    to: "/stage-templates",
+    title: "Stages",
+    description: "Plantillas de etapas del ciclo de vida de conversaciones.",
+    Icon: LayoutList,
+    permission: null,
+    superadmin: true,
+  },
+  {
+    to: "/offers",
+    title: "Offers",
+    description: "Gestión de ofertas y planes comerciales.",
+    Icon: PackageOpen,
+    permission: null,
+    superadmin: true,
+  },
+  {
+    to: "/integraciones",
+    title: "Integrations",
+    description: "Conexiones externas y configuración de canales.",
+    Icon: Plug,
+    permission: null,
+    superadmin: true,
+  },
+];
+
 export default function Ajustes() {
+  const user = getTokenData();
+  const permissions = user?.permisos ?? [];
+  const isSuperadmin = user?.rol === "superadmin";
+
+  const visibleTools = toolCards.filter(({ permission, superadmin }) => {
+    if (superadmin) return isSuperadmin;
+    if (permission) return hasPermission(permission, permissions);
+    return false;
+  });
+
   return (
-    <section className="space-y-6 text-white">
+    <section className="space-y-8 text-white">
       <div>
         <h1 className="text-3xl font-bold">Ajustes</h1>
         <p className="mt-2 max-w-2xl text-sm text-white/80">
-          Este módulo concentra la administración de accesos. Solo los perfiles con
-          permiso <code>editar_configuracion</code> pueden operar estas vistas.
+          Administración de accesos, herramientas operativas e integraciones.
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {cards.map(({ to, title, description, Icon }) => (
-          <Link
-            key={to}
-            to={to}
-            className="rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:bg-white/10"
-          >
-            <Icon className="mb-4 h-8 w-8 text-white" />
-            <h2 className="text-xl font-semibold">{title}</h2>
-            <p className="mt-2 text-sm text-white/75">{description}</p>
-          </Link>
-        ))}
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-2">
+          {adminCards.map(({ to, title, description, Icon }) => (
+            <Link
+              key={to}
+              to={to}
+              className="rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:bg-white/10"
+            >
+              <Icon className="mb-4 h-8 w-8 text-white" />
+              <h2 className="text-xl font-semibold">{title}</h2>
+              <p className="mt-2 text-sm text-white/75">{description}</p>
+            </Link>
+          ))}
+        </div>
+
+        {visibleTools.length > 0 && (
+          <>
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-white/40">
+              Herramientas
+            </p>
+            <div className="grid gap-4 md:grid-cols-2">
+              {visibleTools.map(({ to, title, description, Icon }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  className="rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:bg-white/10"
+                >
+                  <Icon className="mb-4 h-8 w-8 text-white" />
+                  <h2 className="text-xl font-semibold">{title}</h2>
+                  <p className="mt-2 text-sm text-white/75">{description}</p>
+                </Link>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </section>
   );

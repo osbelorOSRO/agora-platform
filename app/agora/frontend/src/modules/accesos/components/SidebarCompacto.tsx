@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Home, Settings, FileSpreadsheet, MessagesSquare, LogOut, Wrench, ContactRound, Megaphone, LayoutList, PackageOpen, Plug } from "lucide-react";
+import { Home, Settings, FileSpreadsheet, MessagesSquare, LogOut, ContactRound, Megaphone } from "lucide-react";
 import { getTokenData } from "@/utils/getTokenData";
 import { hasPermission } from "@/utils/permissions";
 
@@ -8,8 +8,6 @@ export default function SidebarCompacto() {
   const navigate = useNavigate();
   const user = getTokenData();
   const permissions = user?.permisos ?? [];
-  const canViewBot = hasPermission("vista_bot", permissions);
-  const isSuperadmin = user?.rol === "superadmin";
 
   const menuItems = [
     { to: "/accesos/welcome", icon: Home, label: "Home" },
@@ -28,10 +26,6 @@ export default function SidebarCompacto() {
     hasPermission("editar_configuracion", permissions)
       ? { to: "/accesos/ajustes", icon: Settings, label: "Settings" }
       : null,
-    canViewBot ? { to: "/wa-control", icon: Wrench, label: "Bot" } : null,
-    isSuperadmin ? { to: "/stage-templates", icon: LayoutList, label: "Stages" } : null,
-    isSuperadmin ? { to: "/offers", icon: PackageOpen, label: "Offers" } : null,
-    isSuperadmin ? { to: "/integraciones", icon: Plug, label: "Integrations" } : null,
   ].filter(Boolean) as Array<{
     to: string;
     icon: React.ComponentType<{ size?: number; className?: string }>;

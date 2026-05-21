@@ -5,7 +5,6 @@ import {
   ContactRound,
   FileSpreadsheet,
   Settings,
-  Wrench,
 } from "lucide-react";
 import { getTokenData } from "@/utils/getTokenData";
 import { hasPermission } from "@/utils/permissions";
@@ -25,11 +24,9 @@ export default function BottomNav() {
     hasPermission("ver_reportes", permissions)
       ? { to: "/accesos/reportes", icon: FileSpreadsheet, label: "Reports" }
       : null,
-    hasPermission("vista_bot", permissions)
-      ? { to: "/wa-control", icon: Wrench, label: "Bot" }
-      : hasPermission("editar_configuracion", permissions)
-        ? { to: "/accesos/ajustes", icon: Settings, label: "Settings" }
-        : null,
+    hasPermission("editar_configuracion", permissions)
+      ? { to: "/accesos/ajustes", icon: Settings, label: "Settings" }
+      : null,
   ]
     .filter(Boolean)
     .slice(0, 5) as Array<{
