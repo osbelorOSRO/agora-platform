@@ -18,6 +18,7 @@ import WaControlPage from "./modules/wa/pages/WaControlPage";
 import StageTemplatesPage from "./pages/StageTemplatesPage";
 import OffersPage from "./pages/OffersPage";
 import MetaConfigPage from "./pages/MetaConfigPage";
+import ProfilePage from "./pages/ProfilePage";
 
 function App() {
   return (
@@ -143,6 +144,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/perfil" element={<ProfilePage />} />
         </Route>
       </Routes>
     </BrowserRouter>

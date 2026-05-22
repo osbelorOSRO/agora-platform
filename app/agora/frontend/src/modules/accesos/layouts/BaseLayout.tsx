@@ -3,8 +3,9 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import style from "../styles/style";
 import SidebarCompacto from "../components/SidebarCompacto";
 import BottomNav from "../components/BottomNav";
-import { Bell, ChevronLeft, LayoutGrid } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { getTokenData } from "@/utils/getTokenData";
+import { ProfilePhotoProvider, useProfilePhoto } from "@/context/ProfilePhotoContext";
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(
@@ -20,10 +21,19 @@ function useIsMobile() {
 }
 
 export default function BaseLayout() {
+  return (
+    <ProfilePhotoProvider>
+      <BaseLayoutInner />
+    </ProfilePhotoProvider>
+  );
+}
+
+function BaseLayoutInner() {
   const location = useLocation();
   const navigate = useNavigate();
   const user = getTokenData();
   const isMobile = useIsMobile();
+  const { photoUrl } = useProfilePhoto();
   const isImmersiveSection = location.pathname.startsWith("/meta-inbox");
 
   const currentSection = (() => {
@@ -85,33 +95,27 @@ export default function BaseLayout() {
         </div>
 
         <div className="flex items-center space-x-5">
-          <button
-            type="button"
-            className="relative text-foreground transition-colors hover:text-primary"
-          >
-            <Bell size={18} />
-            <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-primary" />
-          </button>
-
-          <button
-            type="button"
-            className="hidden md:block text-foreground transition-colors hover:text-primary"
-          >
-            <LayoutGrid size={18} />
-          </button>
-
           <div className="flex items-center gap-2 md:gap-3 border-l border-border pl-3 md:pl-4">
             <div className="hidden md:block text-right">
               <p className="text-xs font-bold uppercase text-foreground">
                 {user?.nombre || user?.username || "Usuario"}
               </p>
-              <p className="text-[10px] uppercase tracking-[0.22em] text-primary/70">
+              <p className="text-[10px] uppercase tracking-[0.22em] text-primary">
                 {user?.rol ?? "sin rol"}
               </p>
             </div>
-            <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-full border border-[#6E3709] glass-sm text-xs font-bold text-foreground">
-              {(user?.nombre?.[0] ?? user?.username?.[0] ?? "U").toUpperCase()}
-            </div>
+            <button
+              type="button"
+              onClick={() => navigate("/perfil")}
+              title="Ver perfil"
+              className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-full border border-[#6E3709] bg-[#1E1108] text-xs font-bold text-primary hover:bg-[#321C0C] transition-colors overflow-hidden"
+            >
+              {photoUrl ? (
+                <img src={photoUrl} alt="perfil" className="h-full w-full object-cover" />
+              ) : (
+                (user?.nombre?.[0] ?? user?.username?.[0] ?? "U").toUpperCase()
+              )}
+            </button>
           </div>
         </div>
       </header>

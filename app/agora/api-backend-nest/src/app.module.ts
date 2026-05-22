@@ -18,6 +18,7 @@ import { MinioModule } from './minio/minio.module';
 import { StageTemplatesModule } from './stage-templates/stage-templates.module';
 import { OffersModule } from './offers/offers.module';
 import { MetaConfigModule } from './meta-config/meta-config.module';
+import { UserProfileModule } from './user-profile/user-profile.module';
 
 @Global()
 @Module({
@@ -42,6 +43,7 @@ import { MetaConfigModule } from './meta-config/meta-config.module';
     StageTemplatesModule,
     OffersModule,
     MetaConfigModule,
+    UserProfileModule,
   ],
   providers: [PrismaService],
   exports: [PrismaService],

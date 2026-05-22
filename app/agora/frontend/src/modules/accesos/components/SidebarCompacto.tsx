@@ -1,11 +1,10 @@
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Home, Settings, FileSpreadsheet, MessagesSquare, LogOut, ContactRound, Megaphone } from "lucide-react";
+import { NavLink, useLocation } from "react-router-dom";
+import { Home, Settings, FileSpreadsheet, MessagesSquare, UserCircle, ContactRound, Megaphone } from "lucide-react";
 import { getTokenData } from "@/utils/getTokenData";
 import { hasPermission } from "@/utils/permissions";
 
 export default function SidebarCompacto() {
   const location = useLocation();
-  const navigate = useNavigate();
   const user = getTokenData();
   const permissions = user?.permisos ?? [];
 
@@ -26,16 +25,12 @@ export default function SidebarCompacto() {
     hasPermission("editar_configuracion", permissions)
       ? { to: "/accesos/ajustes", icon: Settings, label: "Settings" }
       : null,
+    { to: "/perfil", icon: UserCircle, label: "Profile" },
   ].filter(Boolean) as Array<{
     to: string;
     icon: React.ComponentType<{ size?: number; className?: string }>;
     label: string;
   }>;
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login", { replace: true });
-  };
 
   return (
     <aside className="fixed left-0 top-0 z-40 flex h-[100svh] w-14 md:w-64 flex-col border-r border-border bg-background md:shadow-[4px_0_24px_#000000]">
@@ -72,17 +67,6 @@ export default function SidebarCompacto() {
         ))}
       </nav>
 
-      <div className="mt-auto p-2 md:p-6">
-        <button
-          type="button"
-          onClick={handleLogout}
-          title="Sign Out"
-          className="flex w-full items-center justify-center rounded-xl border border-border bg-card px-2 md:px-4 py-3 text-sm font-bold text-muted-foreground transition-all hover:bg-secondary hover:text-foreground"
-        >
-          <LogOut size={18} className="shrink-0 md:mr-2" />
-          <span className="hidden md:inline">Sign Out</span>
-        </button>
-      </div>
     </aside>
   );
 }

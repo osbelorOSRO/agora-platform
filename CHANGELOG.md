@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.10.0
+
+### Added
+- Página de perfil (`/perfil`) accesible a todos los usuarios autenticados: datos personales, permisos de solo lectura, cambio de contraseña y configuración de 2FA.
+- Foto de perfil: upload a MinIO (`agora-media/profile/`), validación 1:1 client-side y por magic bytes en el backend. Endpoint `GET/POST/DELETE /user-profile/photo` en NestJS con `PanelJwtAuthGuard`.
+- Contexto `ProfilePhotoContext` compartido entre header y página de perfil — el avatar del header se actualiza al instante al subir o eliminar foto.
+- Ítem "Profile" en `SidebarCompacto` (desktop) y `BottomNav` (móvil), con logout movido a la página de perfil.
+- Avatar en header desktop es ahora botón que navega a `/perfil`.
+
+### Changed
+- Eliminados botones decorativos sin función (Bell, LayoutGrid) del header.
+- Logout removido del sidebar, centralizado en la página de perfil.
+
+### Fixed
+- `BottomNav` limita ítems de nav a 4 + Profile fijo = 5, evitando que Profile se pierda al tener todos los permisos.
+
 ## 1.9.0
 
 ### Changed

@@ -5,6 +5,7 @@ import {
   ContactRound,
   FileSpreadsheet,
   Settings,
+  UserCircle,
 } from "lucide-react";
 import { getTokenData } from "@/utils/getTokenData";
 import { hasPermission } from "@/utils/permissions";
@@ -13,7 +14,7 @@ export default function BottomNav() {
   const user = getTokenData();
   const permissions = user?.permisos ?? [];
 
-  const items = [
+  const navItems = [
     { to: "/accesos/welcome", icon: Home, label: "Home" },
     hasPermission("gestionar_usuarios", permissions)
       ? { to: "/meta-inbox", icon: MessagesSquare, label: "Threads" }
@@ -29,11 +30,13 @@ export default function BottomNav() {
       : null,
   ]
     .filter(Boolean)
-    .slice(0, 5) as Array<{
+    .slice(0, 4) as Array<{
     to: string;
     icon: React.ComponentType<{ size?: number; className?: string }>;
     label: string;
   }>;
+
+  const items = [...navItems, { to: "/perfil", icon: UserCircle, label: "Profile" }];
 
   return (
     <nav className="shrink-0 flex h-14 items-stretch border-t border-border bg-background">
