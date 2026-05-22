@@ -12,21 +12,6 @@
     
     <script>
       (function() {
-        // En dispositivos touch con DPR nativo = 4, el tile cache GPU desborda
-        // generando glitches de renderizado en scroll. CSS zoom aplicado al
-        // elemento html opera al nivel de rendering CSS — independiente del zoom
-        // configurado en el navegador — y reduce la presión de compositor a ~DPR 3.56.
-        // Threshold 3.9: captura DPR=4 al 100% de zoom del browser (reporta 4.0),
-        // sin activarse cuando el usuario ya bajó el zoom manualmente (reporta ~3.56).
-        try {
-          if (
-            window.devicePixelRatio >= 3.9 &&
-            ('ontouchstart' in window || navigator.maxTouchPoints > 0)
-          ) {
-            document.documentElement.style.zoom = '0.89';
-          }
-        } catch (e) {}
-
         try {
           var theme = localStorage.getItem('theme');
           if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {

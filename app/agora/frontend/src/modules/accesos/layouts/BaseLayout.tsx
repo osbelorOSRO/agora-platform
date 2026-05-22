@@ -39,7 +39,7 @@ export default function BaseLayout() {
     return "Home";
   })();
 
-  // ── Layout móvil — cero position:fixed, máximo 1 capa compositor GPU ──
+  // ── Layout móvil — scroll siempre bounded, cero tiles fuera del viewport ──
   if (isMobile) {
     return (
       <div className="flex flex-col h-[100svh] overflow-hidden bg-background">
@@ -55,23 +55,23 @@ export default function BaseLayout() {
             </button>
           </div>
         )}
-        <main
-          className={`flex-1 min-h-0 bg-background ${
-            isImmersiveSection
-              ? "overflow-hidden flex flex-col"
-              : "overflow-y-auto overscroll-y-contain px-4 pt-4 pb-4"
-          }`}
-        >
-          <Outlet />
+        <main className="flex-1 min-h-0 bg-background overflow-hidden flex flex-col">
+          {isImmersiveSection ? (
+            <Outlet />
+          ) : (
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain px-4 pt-4 pb-4">
+              <Outlet />
+            </div>
+          )}
         </main>
         {!isImmersiveSection && <BottomNav />}
       </div>
     );
   }
 
-  // ── Layout desktop — sin cambios ──
+  // ── Layout desktop — scroll bounded al viewport ──
   return (
-    <div className="bg-background flex min-h-[100svh] w-full max-w-full">
+    <div className="bg-background flex h-[100svh] w-full max-w-full overflow-hidden">
       <SidebarCompacto />
       <header className="fixed left-14 md:left-64 right-0 top-0 z-30 flex h-16 items-center justify-between border-b border-border glass-md px-4 md:px-8">
         <div className="flex items-center space-x-4">
@@ -116,10 +116,10 @@ export default function BaseLayout() {
         </div>
       </header>
       <main
-        className={`flex-1 ml-14 md:ml-64 bg-background ${
+        className={`flex-1 min-h-0 ml-14 md:ml-64 bg-background ${
           isImmersiveSection
-            ? "pt-16 h-[100svh] flex flex-col overflow-hidden"
-            : "pt-[88px] px-4 pb-4 md:px-6 md:pb-6"
+            ? "pt-16 h-full flex flex-col overflow-hidden"
+            : "pt-[88px] overflow-y-auto px-4 pb-4 md:px-6 md:pb-6"
         }`}
       >
         <Outlet />
