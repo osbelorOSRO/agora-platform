@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.8.1
+
+### Fixed
+- Glitch GPU compositor en dispositivos Android con DPR=4 (gama alta): ajuste automático de `initial-scale=0.89` en el viewport meta vía script en `<head>` para dispositivos touch con `devicePixelRatio >= 3.5`. Replica el comportamiento que el usuario obtenía manualmente bajando el zoom del browser al 89%. Aplicado antes del primer layout para evitar reflow visible. El efecto: Chrome procesa 4×0.89≈3.56 píxeles físicos por CSS pixel, eliminando la capa compositor extra responsable del glitch.
+
 ## 1.8.0
 
 ### Fixed
