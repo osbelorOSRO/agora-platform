@@ -378,6 +378,11 @@ const MetaInboxPage: React.FC = () => {
             : payload.occurredAt
               ? String(payload.occurredAt)
               : new Date().toISOString(),
+          firstName: null,
+          lastName: null,
+          rut: null,
+          address: null,
+          region: null,
         };
         return sortThreads([newItem, ...prev]);
       }

@@ -66,20 +66,21 @@ export const NotificacionProvider = ({ children }: { children: React.ReactNode }
   const [notificaciones, setNotificaciones] = useState<Notificacion[]>(() => loadStored());
   const [lastReadAt, setLastReadAt] = useState<number>(() => loadReadCutoff());
 
-const agregar = (nueva: Notificacion | Record<string, any>) => {
+const agregar = (nueva: Notificacion | Record<string, unknown>) => {
+  const raw = nueva as Record<string, unknown>;
   const normalized: Notificacion = {
-    actorExternalId: String(nueva?.actorExternalId ?? "desconocido"),
-    phone: nueva?.phone ? String(nueva.phone) : undefined,
+    actorExternalId: String(raw?.actorExternalId ?? "desconocido"),
+    phone: raw?.phone ? String(raw.phone) : undefined,
     contenido: String(
-      nueva?.contenido ??
-        nueva?.contentText ??
-        nueva?.mensaje ??
+      raw?.contenido ??
+        raw?.contentText ??
+        raw?.mensaje ??
         "Mensaje entrante"
     ),
     fecha: String(
-      nueva?.fecha ??
-        nueva?.fecha_envio ??
-        nueva?.timestamp ??
+      raw?.fecha ??
+        raw?.fecha_envio ??
+        raw?.timestamp ??
         new Date().toISOString()
     ),
   };

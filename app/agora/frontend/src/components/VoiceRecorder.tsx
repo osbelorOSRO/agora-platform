@@ -13,7 +13,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({ onAudioReady }) => {
   const [audioURL, setAudioURL] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [segundos, setSegundos] = useState(0);
-  const intervaloRef = useRef<NodeJS.Timeout | null>(null);
+  const intervaloRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fallbackInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {

@@ -185,14 +185,14 @@ export default function Agenda() {
         {/* ── Header con stats ── */}
         <section className="rounded-xl border border-border bg-card p-4 md:p-6 shadow-2xl">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-2xl">
+            <div className="hidden md:block max-w-2xl">
               <p className="text-xs font-black uppercase tracking-[0.28em] text-primary">
                 Agenda
               </p>
-              <h1 className="mt-2 md:mt-3 text-2xl md:text-4xl font-black tracking-tight text-foreground">
+              <h1 className="mt-3 text-4xl font-black tracking-tight text-foreground">
                 Contactos conversacionales
               </h1>
-              <p className="mt-2 md:mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
+              <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
                 Directorio de actores/contactos basado en Meta Inbox y Baileys. La agenda permite encontrar,
                 clasificar y preparar contactos sin borrar registros.
               </p>
@@ -264,7 +264,7 @@ export default function Agenda() {
                 No encontramos contactos con ese criterio.
               </div>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
+              <div className="grid gap-2 md:gap-4 sm:grid-cols-2 2xl:grid-cols-3">
                 {items.map((contact) => {
                   const title =
                     contact.displayName?.trim() && contact.displayName !== "Nuevo"
@@ -280,56 +280,84 @@ export default function Agenda() {
                   return (
                     <article
                       key={`${contact.objectType}:${contact.actorExternalId}`}
-                      className="rounded-xl border border-border bg-muted p-4 md:p-5 shadow-lg transition-colors hover:border-primary/20 hover:bg-card [content-visibility:auto] [contain-intrinsic-size:0_180px]"
+                      className="rounded-xl border border-border bg-muted shadow-lg transition-colors hover:border-primary/20 hover:bg-card [content-visibility:auto] [contain-intrinsic-size:0_64px] md:[contain-intrinsic-size:0_180px]"
                     >
-                      <div className="flex items-start gap-4">
+                      {/* ── Fila compacta — solo móvil ── */}
+                      <div className="flex items-center gap-3 p-3 md:hidden">
                         <span
-                          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md border ${providerClass(contact.objectType)}`}
+                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border ${providerClass(contact.objectType)}`}
                           title={providerLabel(contact.objectType)}
                         >
-                          <ContactProviderIcon objectType={contact.objectType} className="h-5 w-5" />
+                          <ContactProviderIcon objectType={contact.objectType} className="h-4 w-4" />
                         </span>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-base font-bold text-foreground">{title || "Sin nombre"}</p>
-                          <p className="mt-1 truncate text-sm text-muted-foreground">{compactActorId(contact)}</p>
+                          <p className="truncate text-sm font-bold text-foreground">{title || "Sin nombre"}</p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {contact.actorLifecycleState || "SIN_ESTADO"} · {stageLabel(contact.lastThreadStage)}
+                          </p>
                         </div>
-                      </div>
-
-                      <div className="mt-4 grid gap-2 text-sm">
-                        <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-input px-3 py-2">
-                          <span className="text-muted-foreground">Lifecycle</span>
-                          <span className="truncate font-semibold text-foreground/80">
-                            {contact.actorLifecycleState || "SIN_ESTADO"}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-input px-3 py-2">
-                          <span className="text-muted-foreground">Stage</span>
-                          <span className="truncate font-semibold text-primary">
-                            {stageLabel(contact.lastThreadStage)}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-input px-3 py-2">
-                          <span className="text-muted-foreground">Actividad</span>
-                          <span className="truncate font-semibold text-foreground/80">
-                            {formatRelativeTs(contact.lastMessageAt)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 flex items-center gap-2">
                         <button
                           type="button"
                           onClick={() => void handleOpenInbox(contact)}
                           disabled={!canOpenInbox || preparing}
-                          className="inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-md border border-primary/20 bg-[#1B122A] text-sm font-semibold text-foreground/80 transition-colors hover:border-primary/40 hover:bg-[#25112D] disabled:cursor-not-allowed disabled:opacity-45"
+                          className="shrink-0 inline-flex h-9 items-center justify-center gap-1.5 rounded-md border border-primary/20 bg-[#1B122A] px-3 text-xs font-semibold text-foreground/80 transition-colors hover:border-primary/40 hover:bg-[#25112D] disabled:cursor-not-allowed disabled:opacity-45"
                         >
-                          <MessageCircle size={15} />
-                          {preparing ? "Preparando..." : inboxLabel}
+                          <MessageCircle size={13} />
+                          {preparing ? "..." : inboxLabel}
                         </button>
-                        <span className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                          <ContactRound size={14} />
-                          {contact.objectType}
-                        </span>
+                      </div>
+
+                      {/* ── Tarjeta completa — solo desktop ── */}
+                      <div className="hidden md:block p-4 md:p-5">
+                        <div className="flex items-start gap-4">
+                          <span
+                            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md border ${providerClass(contact.objectType)}`}
+                            title={providerLabel(contact.objectType)}
+                          >
+                            <ContactProviderIcon objectType={contact.objectType} className="h-5 w-5" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-base font-bold text-foreground">{title || "Sin nombre"}</p>
+                            <p className="mt-1 truncate text-sm text-muted-foreground">{compactActorId(contact)}</p>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 grid gap-2 text-sm">
+                          <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-input px-3 py-2">
+                            <span className="text-muted-foreground">Lifecycle</span>
+                            <span className="truncate font-semibold text-foreground/80">
+                              {contact.actorLifecycleState || "SIN_ESTADO"}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-input px-3 py-2">
+                            <span className="text-muted-foreground">Stage</span>
+                            <span className="truncate font-semibold text-primary">
+                              {stageLabel(contact.lastThreadStage)}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-input px-3 py-2">
+                            <span className="text-muted-foreground">Actividad</span>
+                            <span className="truncate font-semibold text-foreground/80">
+                              {formatRelativeTs(contact.lastMessageAt)}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => void handleOpenInbox(contact)}
+                            disabled={!canOpenInbox || preparing}
+                            className="inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-md border border-primary/20 bg-[#1B122A] text-sm font-semibold text-foreground/80 transition-colors hover:border-primary/40 hover:bg-[#25112D] disabled:cursor-not-allowed disabled:opacity-45"
+                          >
+                            <MessageCircle size={15} />
+                            {preparing ? "Preparando..." : inboxLabel}
+                          </button>
+                          <span className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                            <ContactRound size={14} />
+                            {contact.objectType}
+                          </span>
+                        </div>
                       </div>
                     </article>
                   );
