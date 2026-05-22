@@ -10,7 +10,8 @@ const NotificacionContext = createContext<{
   eliminarTodas: () => void;
   markAllRead: () => void;
   unreadCount: number;
-} | null>(null); // <- ⚠️ Esto es mejor que poner funciones vacías
+  lastReadAt: number;
+} | null>(null);
 
 export const useNotificaciones = () => {
   const ctx = useContext(NotificacionContext);
@@ -185,6 +186,7 @@ const agregar = (nueva: Notificacion | Record<string, unknown>) => {
         eliminarTodas,
         markAllRead,
         unreadCount,
+        lastReadAt,
       }}
     >
       {children}

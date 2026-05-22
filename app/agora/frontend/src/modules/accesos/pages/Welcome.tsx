@@ -27,18 +27,19 @@ import { listMetaInboxContacts, listMetaInboxThreads } from "@/services/metaInbo
 
 function WaActivitySection() {
   const navigate = useNavigate();
-  const { notificaciones, eliminar, eliminarTodas, markAllRead } = useNotificaciones();
+  const { notificaciones, eliminar, eliminarTodas, markAllRead, lastReadAt } = useNotificaciones();
 
   const activityFeed = useMemo(() => {
     const appMap = new Map<
       string,
-      { actorExternalId: string; label: string; timestamp: string; latestContent: string; count: number }
+      { actorExternalId: string; label: string; timestamp: string; latestContent: string; totalCount: number; unreadCount: number }
     >();
     notificaciones.forEach((item) => {
       const prev = appMap.get(item.actorExternalId);
       const label = item.phone || item.actorExternalId;
+      const isUnread = +new Date(item.fecha) > lastReadAt;
       if (!prev) {
-        appMap.set(item.actorExternalId, { actorExternalId: item.actorExternalId, label, timestamp: item.fecha, latestContent: item.contenido, count: 1 });
+        appMap.set(item.actorExternalId, { actorExternalId: item.actorExternalId, label, timestamp: item.fecha, latestContent: item.contenido, totalCount: 1, unreadCount: isUnread ? 1 : 0 });
         return;
       }
       const prevTs = +new Date(prev.timestamp);
@@ -48,7 +49,8 @@ function WaActivitySection() {
         label: prev.label || label,
         timestamp: nextTs > prevTs ? item.fecha : prev.timestamp,
         latestContent: nextTs > prevTs ? item.contenido : prev.latestContent,
-        count: prev.count + 1,
+        totalCount: prev.totalCount + 1,
+        unreadCount: prev.unreadCount + (isUnread ? 1 : 0),
       });
     });
 
@@ -56,16 +58,18 @@ function WaActivitySection() {
       .map((item) => ({
         id: `threads-${item.actorExternalId}-${item.timestamp}`,
         source: "THREADS",
-        message: item.count > 1
-          ? `${item.count} mensajes nuevos del actor ${item.label}`
-          : `Nuevo mensaje del actor ${item.label}: ${item.latestContent}`,
+        message: item.unreadCount > 1
+          ? `${item.unreadCount} mensajes nuevos de ${item.label}`
+          : item.unreadCount === 1
+            ? `Nuevo mensaje de ${item.label}: ${item.latestContent}`
+            : `${item.totalCount} mensajes de ${item.label}`,
         timestamp: item.timestamp,
         actorExternalId: item.actorExternalId,
-        appCount: item.count,
+        unreadCount: item.unreadCount,
       }))
       .sort((a, b) => +new Date(b.timestamp) - +new Date(a.timestamp))
       .slice(0, 8);
-  }, [notificaciones]);
+  }, [notificaciones, lastReadAt]);
 
   const relativeActivityTime = (value: string) => {
     const date = new Date(value);
@@ -81,7 +85,14 @@ function WaActivitySection() {
       </div>
 
       <div className="mt-4 flex items-center gap-2">
-        <button type="button" onClick={markAllRead} className="rounded-lg border border-border bg-input px-3 py-1.5 text-xs font-bold text-foreground transition hover:border-[#6E3709] hover:text-primary">Marcar como leídas</button>
+        <button
+          type="button"
+          onClick={markAllRead}
+          disabled={notificaciones.every((n) => +new Date(n.fecha) <= lastReadAt)}
+          className="rounded-lg border border-border bg-input px-3 py-1.5 text-xs font-bold text-foreground transition hover:border-[#6E3709] hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Marcar como leídas
+        </button>
         <button type="button" onClick={eliminarTodas} className="rounded-lg border border-border bg-input px-3 py-1.5 text-xs font-bold text-foreground transition hover:border-[#6E3709] hover:text-primary">Limpiar Threads</button>
       </div>
 
@@ -91,17 +102,22 @@ function WaActivitySection() {
             Aún no hay actividad reciente para mostrar.
           </div>
         ) : (
-          activityFeed.map((item) => (
-            <div key={item.id} className="group relative rounded-xl border border-border bg-input p-4">
+          activityFeed.map((item) => {
+            const isUnread = +new Date(item.timestamp) > lastReadAt;
+            return (
+            <div key={item.id} className={`group relative rounded-xl border bg-input p-4 ${isUnread ? "border-primary/50" : "border-border"}`}>
               <div className="flex items-center justify-between gap-3 text-[11px] uppercase tracking-[0.18em]">
-                <span className="font-bold text-primary">{item.source}</span>
+                <div className="flex items-center gap-2">
+                  {isUnread && <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />}
+                  <span className="font-bold text-primary">{item.source}</span>
+                </div>
                 <span className="text-muted-foreground/60">{relativeActivityTime(item.timestamp)}</span>
               </div>
               <p className="mt-2 text-sm text-foreground">{item.message}</p>
               {item.actorExternalId ? (
                 <div className="absolute right-3 top-3 flex items-center gap-2 rounded-full border border-border bg-card px-2 py-1 opacity-0 transition group-hover:opacity-100">
-                  {item.appCount ? (
-                    <span className="rounded-full bg-[#321C0C] px-2 py-1 text-[10px] font-bold text-primary">{item.appCount}</span>
+                  {item.unreadCount > 0 ? (
+                    <span className="rounded-full bg-[#321C0C] px-2 py-1 text-[10px] font-bold text-primary">{item.unreadCount}</span>
                   ) : null}
                   <button
                     type="button"
@@ -122,7 +138,8 @@ function WaActivitySection() {
                 </div>
               ) : null}
             </div>
-          ))
+            );
+          })
         )}
       </div>
     </section>

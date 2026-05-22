@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.0.0
+
+### Added
+- Notificaciones en tiempo real en Welcome: ruta `POST /notify/globito` en el WebSocket server + método `notificarGlobito` en `WebsocketNotifierService` + llamada desde `MessagesProcessor` en cada mensaje INCOMING. El evento `nuevoMensajeGlobito` llega al `NotificacionContext` y aparece en la tarjeta de Notificaciones del dashboard.
+- Indicador visual de no leídas en la tarjeta de notificaciones: dot naranja y borde `border-primary/50` por ítem no leído. El badge y el texto del mensaje muestran conteo de no leídas por actor (no total). El botón "Marcar como leídas" se deshabilita cuando no hay pendientes.
+- `lastReadAt` expuesto por `NotificacionContext` para cómputo reactivo de no leídas en la vista.
+- Módulo de respuestas rápidas integrado en MetaInbox: botón Zap en la barra del composer abre `RespuestasRapidasView` (panel CRUD completo, conectado al endpoint `/respuestas-rapidas` existente).
+- Autocomplete `/atajo` en el input del chat: al escribir `/` aparece un panel de sugerencias sobre el composer; clic o Tab inserta el texto completo en el draft sin enviarlo.
+- Textarea auto-expandible en el composer de MetaInbox: crece hasta 128px (≈5 líneas) con scroll interno al superar el máximo, se encoge al borrar. Botones del composer alineados al fondo (`items-end`).
+
+### Changed
+- `RespuestasRapidasView` migrado de clases hardcoded (`bg-white`, `bg-blue-600`, `bg-gray-50`) a tokens del sistema de diseño (`bg-card`, `bg-input`, `bg-primary`, `border-border`, `text-foreground`, etc.).
+- Input del composer de MetaInbox (`<input>`) reemplazado por `<textarea>` con `resize-none` y auto-resize por efecto.
+
 ## 1.10.0
 
 ### Added

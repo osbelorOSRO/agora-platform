@@ -134,4 +134,21 @@ export class WebsocketNotifierService {
       this.logger.error(`❌ Error notificando refrescar clientes: ${error.message}`, error.stack);
     }
   }
+
+  async notificarGlobito(payload: {
+    actorExternalId: string;
+    contenido?: string;
+    fecha_envio?: string;
+    phone?: string;
+  }): Promise<void> {
+    try {
+      const apiKey = await this.getApiKey();
+      const url = `${this.baseUrl}/notify/globito`;
+      await firstValueFrom(
+        this.httpService.post(url, payload, { headers: { 'x-api-key': apiKey } }),
+      );
+    } catch (error: any) {
+      this.logger.error(`❌ Error notificando globito: ${error.message}`, error.stack);
+    }
+  }
 }

@@ -170,6 +170,16 @@ app.post('/notify/refrescar-clientes', apiKeyAuthMiddleware, (req, res) => {
   res.status(200).json({ success: true });
 });
 
+app.post('/notify/globito', apiKeyAuthMiddleware, (req, res) => {
+  const { actorExternalId, contenido, fecha_envio, phone } = req.body;
+  if (!actorExternalId) {
+    res.status(400).json({ error: 'actorExternalId es requerido' });
+    return;
+  }
+  io.emit('nuevoMensajeGlobito', { actorExternalId, contenido, fecha_envio, phone });
+  res.status(200).json({ success: true });
+});
+
 httpServer.listen(PORT, () => {
   console.log(`✅ WebSocket escuchando en puerto ${PORT}`);
 });

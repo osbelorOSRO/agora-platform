@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Archive,
@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   Workflow,
   X,
+  Zap,
 } from "lucide-react";
 import useEsMovil from "@/hooks/useEsMovil";
 import {
@@ -47,7 +48,10 @@ import type {
 } from "@/types/metaInbox";
 import ChatAnimation from "@/components/ChatAnimation";
 import VoiceRecorder from "@/components/VoiceRecorder";
+import RespuestasRapidasView from "@/components/RespuestasRapidasView";
 import { normalizeMediaUrl } from "@/utils/mediaUrl";
+import { fetchRespuestas } from "@/services/respuestas-rapidas.service";
+import type { RespuestaRapida } from "@/types/respuestas-rapidas";
 
 type InboxRealtimePayload = Partial<MetaInboxThread> &
   Partial<MetaInboxMessage> & {
@@ -239,8 +243,8 @@ const s = {
   bubbleIncoming: "max-w-[75%] rounded-2xl rounded-tl-sm border border-border bg-card px-3 py-2 text-sm text-foreground",
   bubbleTsOutgoing: "mt-1 text-right text-[10px] text-muted-foreground",
   bubbleTsIncoming: "mt-1 text-[10px] text-muted-foreground",
-  composer: "flex items-center gap-2 border-t border-border bg-card px-3 py-2",
-  composerInput: "min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-[#525252]",
+  composer: "flex items-end gap-2 border-t border-border bg-card px-3 py-2",
+  composerInput: "min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-[#525252] resize-none overflow-hidden leading-5",
   composerSend: "flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground hover:border-[#6E3709] hover:text-primary transition-colors",
   composerIcon: "h-4 w-4",
   contactAside: "flex flex-col gap-2 overflow-y-auto border-l border-border bg-card p-3 scrollbar-custom",
@@ -292,6 +296,10 @@ const MetaInboxPage: React.FC = () => {
     region: "",
   });
   const [showRecorder, setShowRecorder] = useState(false);
+  const [showRespuestasPanel, setShowRespuestasPanel] = useState(false);
+  const [respuestasList, setRespuestasList] = useState<RespuestaRapida[]>([]);
+  const [slashSuggestions, setSlashSuggestions] = useState<RespuestaRapida[]>([]);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const selectedThread = useMemo(
     () => threads.find((item) => item.sessionId === selectedSessionId) || null,
@@ -737,6 +745,39 @@ const MetaInboxPage: React.FC = () => {
     } finally {
       setUpdatingWhatsappBlock(null);
     }
+  };
+
+  // Carga de respuestas rápidas para autocomplete
+  useEffect(() => {
+    fetchRespuestas().then(setRespuestasList).catch(() => {});
+  }, []);
+
+  // Auto-resize textarea estilo WhatsApp
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const next = Math.min(el.scrollHeight, 128);
+    el.style.height = `${next}px`;
+    el.style.overflowY = el.scrollHeight > 128 ? "auto" : "hidden";
+  }, [draft]);
+
+  const handleDraftChange = (value: string) => {
+    setDraft(value);
+    if (value.startsWith("/") && !value.includes(" ")) {
+      const query = value.toLowerCase();
+      setSlashSuggestions(
+        respuestasList.filter((r) => r.atajo.toLowerCase().startsWith(query))
+      );
+    } else {
+      setSlashSuggestions([]);
+    }
+  };
+
+  const applyRespuesta = (texto: string) => {
+    setDraft(texto);
+    setSlashSuggestions([]);
+    setTimeout(() => textareaRef.current?.focus(), 0);
   };
 
   const handleSend = async () => {
@@ -1194,14 +1235,37 @@ const MetaInboxPage: React.FC = () => {
                   </button>
                 </div>
               )}
+              {/* Sugerencias de slash-commands */}
+              {slashSuggestions.length > 0 && (
+                <div className="mx-3 mb-1 rounded-xl border border-border bg-card overflow-hidden">
+                  {slashSuggestions.map((r) => (
+                    <button
+                      key={r.uuid}
+                      type="button"
+                      onMouseDown={(e) => { e.preventDefault(); applyRespuesta(r.texto); }}
+                      className="flex w-full items-start gap-3 px-3 py-2 text-left transition hover:bg-input"
+                    >
+                      <span className="mt-0.5 shrink-0 text-xs font-bold text-primary">{r.atajo}</span>
+                      <span className="min-w-0 truncate text-sm text-muted-foreground">{r.texto}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
               <div className={`${s.composer} ${selectedWhatsappBlocked ? "opacity-60" : ""}`}>
-                <input
+                <textarea
+                  ref={textareaRef}
+                  rows={1}
                   value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
+                  onChange={(e) => handleDraftChange(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
                       handleSend();
+                    }
+                    if (e.key === "Tab" && slashSuggestions.length > 0) {
+                      e.preventDefault();
+                      applyRespuesta(slashSuggestions[0].texto);
                     }
                   }}
                   placeholder={
@@ -1214,6 +1278,15 @@ const MetaInboxPage: React.FC = () => {
                   className={s.composerInput}
                   disabled={selectedWhatsappBlocked}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowRespuestasPanel((prev) => !prev)}
+                  className={`${s.composerSend} ${showRespuestasPanel ? "border-primary/50 text-primary" : ""}`}
+                  aria-label="Respuestas rápidas"
+                  title="Respuestas rápidas"
+                >
+                  <Zap className={s.composerIcon} />
+                </button>
                 <label
                   className={`${s.composerSend} ${selectedWhatsappBlocked ? "pointer-events-none" : ""}`}
                   aria-label="Adjuntar imagen"
@@ -1250,6 +1323,13 @@ const MetaInboxPage: React.FC = () => {
                   <Send className={s.composerIcon} />
                 </button>
               </div>
+
+              {showRespuestasPanel && (
+                <RespuestasRapidasView
+                  onSend={(texto) => { applyRespuesta(texto); setShowRespuestasPanel(false); }}
+                  onClose={() => setShowRespuestasPanel(false)}
+                />
+              )}
               {showRecorder && (
                 <div className="px-3 pb-3 bg-background border-t border-border">
                   <VoiceRecorder

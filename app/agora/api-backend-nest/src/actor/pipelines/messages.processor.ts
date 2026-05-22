@@ -574,6 +574,16 @@ export class MessagesProcessor extends WorkerHost {
       lastDirection: direction,
       lastMessageAt: env.occurredAt,
     });
+
+    if (direction === 'INCOMING') {
+      await this.websocketNotifier.notificarGlobito({
+        actorExternalId: env.actorExternalId,
+        contenido: contentText || undefined,
+        fecha_envio: env.occurredAt,
+        phone: this.extractWhatsappPhone(env.actorExternalId) || undefined,
+      });
+    }
+
     await this.upsertThreadRecord({
       sessionId,
       actorExternalId: env.actorExternalId,
