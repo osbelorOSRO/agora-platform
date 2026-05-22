@@ -21,7 +21,7 @@ const EMPTY_FORM: CreateOfferInput = {
   roaming: null,
 };
 
-const inp = "w-full rounded border border-border bg-input px-2 py-1 text-xs text-foreground focus:outline-none focus:border-primary/50 placeholder:text-muted-foreground/50";
+const inp = "w-full rounded border border-border bg-input px-2 py-1 text-xs text-foreground focus:outline-none focus:border-[#8A4412] placeholder:text-[#525252]";
 const lbl = "block text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground mb-0.5";
 
 function OfferModal({
@@ -42,7 +42,7 @@ function OfferModal({
     setForm((prev) => ({ ...prev, [key]: value }));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#111111]">
       <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-2xl">
         <button onClick={onClose} className="absolute right-4 top-4 text-muted-foreground hover:text-foreground">
           <X size={16} />
@@ -138,7 +138,7 @@ function OfferModal({
           <button
             onClick={() => onSave(form)}
             disabled={saving || !form.codigo}
-            className="flex items-center gap-1.5 rounded bg-primary/10 border border-primary/30 px-4 py-1.5 text-xs font-bold text-primary hover:bg-primary/20 disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded bg-[#1E1108] border border-[#6E3709] px-4 py-1.5 text-xs font-bold text-primary hover:bg-[#321C0C] disabled:opacity-40"
           >
             <Save size={13} />
             {saving ? "Guardando..." : "Guardar"}
@@ -247,7 +247,7 @@ export default function OffersPage() {
         </div>
         <button
           onClick={() => setModal({ isEdit: false })}
-          className="flex shrink-0 items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-4 py-2.5 text-xs font-bold text-primary hover:bg-primary/20 transition"
+          className="flex shrink-0 items-center gap-1.5 rounded-xl border border-[#6E3709] bg-[#1E1108] px-4 py-2.5 text-xs font-bold text-primary hover:bg-[#321C0C] transition"
         >
           <Plus size={14} /> Nueva oferta
         </button>
@@ -337,7 +337,7 @@ export default function OffersPage() {
 
       {lightbox && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#0A0A0A]"
           onClick={() => setLightbox(null)}
         >
           <div
@@ -346,7 +346,7 @@ export default function OffersPage() {
           >
             <button
               onClick={() => setLightbox(null)}
-              className="absolute right-3 top-3 rounded-full bg-black/40 p-1 text-muted-foreground hover:text-foreground"
+              className="absolute right-3 top-3 rounded-full bg-[#404040] p-1 text-muted-foreground hover:text-foreground"
             >
               <X size={16} />
             </button>

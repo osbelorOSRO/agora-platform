@@ -80,14 +80,14 @@ export default function Oficinas() {
                 <>
                   <td>
                     <input
-                      className="w-full bg-transparent border border-white/20 rounded px-2 text-white"
+                      className="w-full bg-transparent border border-[#3D3D3D] rounded px-2 text-white"
                       value={editados[o.id]?.nombre ?? o.nombre}
                       onChange={(e) => manejarCambio(o.id, "nombre", e.target.value)}
                     />
                   </td>
                   <td>
                     <input
-                      className="w-full bg-transparent border border-white/20 rounded px-2 text-white"
+                      className="w-full bg-transparent border border-[#3D3D3D] rounded px-2 text-white"
                       value={editados[o.id]?.region ?? o.region}
                       onChange={(e) => manejarCambio(o.id, "region", e.target.value)}
                     />
@@ -118,14 +118,14 @@ export default function Oficinas() {
               <td className={style.celdaTabla}>—</td>
               <td className={style.celdaTabla}>
                 <input
-                  className="w-full bg-transparent border border-white/20 rounded px-2 text-white"
+                  className="w-full bg-transparent border border-[#3D3D3D] rounded px-2 text-white"
                   placeholder="Nueva oficina"
                   onChange={(e) => manejarCambio(-1, "nombre", e.target.value)}
                 />
               </td>
               <td className={style.celdaTabla}>
                 <input
-                  className="w-full bg-transparent border border-white/20 rounded px-2 text-white"
+                  className="w-full bg-transparent border border-[#3D3D3D] rounded px-2 text-white"
                   placeholder="Región"
                   onChange={(e) => manejarCambio(-1, "region", e.target.value)}
                 />

@@ -81,8 +81,8 @@ function WaActivitySection() {
       </div>
 
       <div className="mt-4 flex items-center gap-2">
-        <button type="button" onClick={markAllRead} className="rounded-lg border border-border bg-input px-3 py-1.5 text-xs font-bold text-foreground transition hover:border-primary/30 hover:text-primary">Marcar como leídas</button>
-        <button type="button" onClick={eliminarTodas} className="rounded-lg border border-border bg-input px-3 py-1.5 text-xs font-bold text-foreground transition hover:border-primary/30 hover:text-primary">Limpiar Threads</button>
+        <button type="button" onClick={markAllRead} className="rounded-lg border border-border bg-input px-3 py-1.5 text-xs font-bold text-foreground transition hover:border-[#6E3709] hover:text-primary">Marcar como leídas</button>
+        <button type="button" onClick={eliminarTodas} className="rounded-lg border border-border bg-input px-3 py-1.5 text-xs font-bold text-foreground transition hover:border-[#6E3709] hover:text-primary">Limpiar Threads</button>
       </div>
 
       <div className="mt-5 space-y-3">
@@ -101,7 +101,7 @@ function WaActivitySection() {
               {item.actorExternalId ? (
                 <div className="absolute right-3 top-3 flex items-center gap-2 rounded-full border border-border bg-card px-2 py-1 opacity-0 transition group-hover:opacity-100">
                   {item.appCount ? (
-                    <span className="rounded-full bg-primary/20 px-2 py-1 text-[10px] font-bold text-primary">{item.appCount}</span>
+                    <span className="rounded-full bg-[#321C0C] px-2 py-1 text-[10px] font-bold text-primary">{item.appCount}</span>
                   ) : null}
                   <button
                     type="button"
@@ -438,7 +438,7 @@ export default function Welcome() {
               <button
                 type="button"
                 onClick={() => navigate(to)}
-                className="mt-3 md:mt-4 inline-flex w-full items-center justify-center gap-1 rounded-xl border border-border bg-input px-2 md:px-4 py-2 text-xs md:text-sm font-bold text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+                className="mt-3 md:mt-4 inline-flex w-full items-center justify-center gap-1 rounded-xl border border-border bg-input px-2 md:px-4 py-2 text-xs md:text-sm font-bold text-foreground transition-colors hover:border-[#6E3709] hover:text-primary"
               >
                 Ir al módulo
               </button>
@@ -448,7 +448,7 @@ export default function Welcome() {
               <button
                 type="button"
                 onClick={onAction}
-                className="mt-4 inline-flex items-center gap-2 rounded-xl border border-border bg-input px-4 py-2 text-sm font-bold text-foreground transition hover:border-primary/30 hover:text-primary"
+                className="mt-4 inline-flex items-center gap-2 rounded-xl border border-border bg-input px-4 py-2 text-sm font-bold text-foreground transition hover:border-[#6E3709] hover:text-primary"
               >
                 {actionLabel}
               </button>
@@ -490,12 +490,12 @@ export default function Welcome() {
                 Icon: Plug,
               },
             ].map(({ title, subtitle, to, Icon }) => (
-              <article key={title} className="rounded-xl border border-primary/20 bg-[#0A011B] p-5 transition hover:border-primary/40">
+              <article key={title} className="rounded-xl border border-[#5C2E08] bg-[#1A1A1A] p-5 transition hover:border-[#7B3B10]">
                 <div className="flex items-start justify-between gap-4">
-                  <div className="rounded-xl bg-[#1E0122] p-3">
+                  <div className="rounded-xl bg-[#222222] p-3">
                     <Icon className="h-6 w-6 text-primary" />
                   </div>
-                  <span className="rounded-full bg-[#280125] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
+                  <span className="rounded-full bg-[#2A2A2A] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
                     Superadmin
                   </span>
                 </div>
@@ -503,7 +503,7 @@ export default function Welcome() {
                 <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>
                 <Link
                   to={to}
-                  className="mt-4 inline-flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-bold text-primary transition hover:bg-primary/20"
+                  className="mt-4 inline-flex items-center gap-2 rounded-xl border border-[#6E3709] bg-[#1E1108] px-4 py-2 text-sm font-bold text-primary transition hover:bg-[#321C0C]"
                 >
                   Ir al módulo
                 </Link>
@@ -550,7 +550,7 @@ export default function Welcome() {
                       <div className="text-xs md:text-sm font-bold text-foreground">{item.total}</div>
                       <div className="flex h-28 md:h-44 w-full items-end rounded-xl bg-muted px-1">
                         <div
-                          className="w-full rounded-t-xl bg-gradient-to-t from-primary via-primary/50 to-primary/20 md:shadow-[0_10px_30px_var(--primary-glow)] transition-[height]"
+                          className="w-full rounded-t-xl bg-primary transition-[height]"
                           style={{ height }}
                           title={`${item.total} eventos`}
                         />

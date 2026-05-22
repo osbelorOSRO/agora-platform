@@ -86,7 +86,7 @@ function ConfigField({
       {editing ? (
         <div className="flex items-center gap-2 mt-1">
           <input
-            className="flex-1 rounded border border-border bg-input px-3 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary/50"
+            className="flex-1 rounded border border-border bg-input px-3 py-1.5 text-xs text-foreground focus:outline-none focus:border-[#8A4412]"
             type={sensitive ? "password" : "text"}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
@@ -96,7 +96,7 @@ function ConfigField({
           <button
             onClick={handleSave}
             disabled={saving || !draft.trim()}
-            className="flex items-center gap-1 rounded bg-primary/10 border border-primary/30 px-3 py-1.5 text-[11px] font-bold text-primary hover:bg-primary/20 disabled:opacity-40"
+            className="flex items-center gap-1 rounded bg-[#1E1108] border border-[#6E3709] px-3 py-1.5 text-[11px] font-bold text-primary hover:bg-[#321C0C] disabled:opacity-40"
           >
             <Save size={12} /> {saving ? "..." : "Guardar"}
           </button>

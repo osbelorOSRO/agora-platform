@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.9.0
+
+### Changed
+- Reemplazados todos los colores semi-transparentes (rgba, Tailwind opacity modifiers como `bg-white/10`, `border-primary/30`, `text-white/70`, etc.) por equivalentes sólidos computados sobre fondo oscuro (#0E0E0E) en todo el frontend — globals.css, style.ts, SidebarCompacto, BaseLayout, SidePanel, y todas las páginas del módulo accesos, wa y meta. Excluidas las páginas de auth (Login, ResetPassword, Setup2FA).
+- Objetivo: eliminar el alpha blending por GPU en cada elemento, reduciendo la presión sobre el tile cache del compositor Chrome Android (DPR=2 móvil, DPR=1.5 tablet) que causaba glitches visuales en casi todas las páginas.
+
 ## 1.8.2
 
 ### Fixed

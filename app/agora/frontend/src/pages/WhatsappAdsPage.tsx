@@ -100,7 +100,7 @@ export default function WhatsappAdsPage() {
           type="button"
           onClick={() => downloadCsv(leads, ads)}
           disabled={leads.length === 0}
-          className="inline-flex items-center justify-center gap-2 rounded-2xl border border-primary/30 bg-primary/10 px-4 py-2.5 md:px-5 md:py-3 text-sm font-black uppercase tracking-[0.18em] text-primary transition hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-50 self-start lg:self-auto shrink-0"
+          className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#6E3709] bg-[#1E1108] px-4 py-2.5 md:px-5 md:py-3 text-sm font-black uppercase tracking-[0.18em] text-primary transition hover:bg-[#321C0C] disabled:cursor-not-allowed disabled:opacity-50 self-start lg:self-auto shrink-0"
         >
           <Download size={16} />
           <span className="hidden sm:inline">Descargar CSV completo</span>
@@ -137,7 +137,7 @@ export default function WhatsappAdsPage() {
           <article className="overflow-hidden rounded-[2rem] border border-border bg-card md:shadow-[0_30px_80px_rgba(0,0,0,0.35)]">
             <div className="border-b border-border p-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-sm font-black text-primary">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#28160A] text-sm font-black text-primary">
                   AD
                 </div>
                 <div>
@@ -208,7 +208,7 @@ export default function WhatsappAdsPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3 md:gap-4">
-              <div className="rounded-2xl border border-primary/20 bg-primary/10 p-3 md:p-5">
+              <div className="rounded-2xl border border-[#5C2E08] bg-[#1E1108] p-3 md:p-5">
                 <div className="flex items-center gap-1.5 text-[10px] md:text-xs font-medium uppercase tracking-[0.14em] md:tracking-[0.18em] text-primary/80">
                   <UsersRound size={13} />
                   Únicos

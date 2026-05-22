@@ -107,7 +107,7 @@ export default function WaControlPage() {
           <div className="flex flex-wrap items-center gap-2 rounded-full border border-border bg-input px-4 py-2 text-sm text-foreground self-start xl:self-auto xl:shrink-0">
             <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${estatus.color}`} />
             <span>{estatus.label}</span>
-            <span className="text-muted-foreground/50">/</span>
+            <span className="text-[#525252]">/</span>
             <span className="text-muted-foreground">{socketDetail}</span>
             {lastSyncAt ? <span className="text-muted-foreground/60">· sync {relativeTime(lastSyncAt)}</span> : null}
           </div>
@@ -159,7 +159,7 @@ export default function WaControlPage() {
             <button
               type="button"
               onClick={refrescarStats}
-              className="inline-flex items-center gap-2 rounded-xl border border-border bg-input px-3 md:px-4 py-2 text-sm font-bold text-foreground transition hover:border-primary/30 hover:text-primary shrink-0"
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-input px-3 md:px-4 py-2 text-sm font-bold text-foreground transition hover:border-[#6E3709] hover:text-primary shrink-0"
             >
               <RefreshCw className="h-4 w-4" />
               <span className="hidden sm:inline">Refrescar</span>
@@ -191,7 +191,7 @@ export default function WaControlPage() {
                   : "Detiene respuestas automáticas sin cerrar WhatsApp."}
               </div>
               {!canManageBot ? (
-                <div className="mt-2 md:mt-3 inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.18em] text-muted-foreground/50">
+                <div className="mt-2 md:mt-3 inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.18em] text-[#525252]">
                   <Lock className="h-3.5 w-3.5" /> Solo lectura
                 </div>
               ) : null}
@@ -207,12 +207,12 @@ export default function WaControlPage() {
                 type="button"
                 onClick={onClick}
                 disabled={!canManageBot}
-                className="rounded-xl border border-border bg-input p-3 md:p-5 text-left transition hover:border-primary/30 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-xl border border-border bg-input p-3 md:p-5 text-left transition hover:border-[#6E3709] hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Icon className="h-5 w-5 md:h-6 md:w-6" />
                 <div className="mt-2 md:mt-4 text-sm md:text-base font-bold text-foreground">{label}</div>
                 {!canManageBot ? (
-                  <div className="mt-2 md:mt-3 inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.18em] text-muted-foreground/50">
+                  <div className="mt-2 md:mt-3 inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.18em] text-[#525252]">
                     <Lock className="h-3.5 w-3.5" /> Solo lectura
                   </div>
                 ) : null}
@@ -233,13 +233,13 @@ export default function WaControlPage() {
                 onChange={(e) => setNumeroBloqueo(e.target.value.replace(/\D/g, ""))}
                 placeholder="Ej: 56912345678"
                 disabled={!canManageBot}
-                className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/40 disabled:opacity-50"
+                className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-foreground placeholder:text-[#525252] focus:outline-none focus:border-[#7B3B10] disabled:opacity-50"
               />
               <button
                 type="button"
                 disabled={!canManageBot || !numeroBloqueo}
                 onClick={() => { bloquear(numeroBloqueo); setNumeroBloqueo(""); }}
-                className="rounded-xl border border-border bg-card px-4 py-2 text-sm font-bold text-foreground transition hover:border-primary/30 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-xl border border-border bg-card px-4 py-2 text-sm font-bold text-foreground transition hover:border-[#6E3709] hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Bloquear
               </button>
@@ -257,7 +257,7 @@ export default function WaControlPage() {
                       type="button"
                       disabled={!canManageBot}
                       onClick={() => desbloquear(numero)}
-                      className="rounded-lg border border-border bg-input px-3 py-1.5 text-xs font-bold transition hover:border-primary/30 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+                      className="rounded-lg border border-border bg-input px-3 py-1.5 text-xs font-bold transition hover:border-[#6E3709] hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Desbloquear
                     </button>
@@ -312,7 +312,7 @@ export default function WaControlPage() {
                       }`}>
                         {log.type}
                       </span>
-                      <span className="text-muted-foreground/50">{relativeTime(log.timestamp)}</span>
+                      <span className="text-[#525252]">{relativeTime(log.timestamp)}</span>
                     </div>
                     <p className="mt-2 text-sm text-foreground">{log.message}</p>
                   </div>

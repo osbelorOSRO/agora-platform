@@ -74,7 +74,7 @@ export default function Ajustes() {
     <section className="space-y-8 text-white">
       <div>
         <h1 className="text-3xl font-bold">Ajustes</h1>
-        <p className="mt-2 max-w-2xl text-sm text-white/80">
+        <p className="mt-2 max-w-2xl text-sm text-[#CCCCCC]">
           Administración de accesos, herramientas operativas e integraciones.
         </p>
       </div>
@@ -85,18 +85,18 @@ export default function Ajustes() {
             <Link
               key={to}
               to={to}
-              className="rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:bg-white/10"
+              className="rounded-2xl border border-[#2D2D2D] bg-[#141414] p-6 transition hover:bg-[#1A1A1A]"
             >
               <Icon className="mb-4 h-8 w-8 text-white" />
               <h2 className="text-xl font-semibold">{title}</h2>
-              <p className="mt-2 text-sm text-white/75">{description}</p>
+              <p className="mt-2 text-sm text-[#BFBFBF]">{description}</p>
             </Link>
           ))}
         </div>
 
         {visibleTools.length > 0 && (
           <>
-            <p className="text-xs font-bold uppercase tracking-[0.25em] text-white/40">
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#666666]">
               Herramientas
             </p>
             <div className="grid gap-4 md:grid-cols-2">
@@ -104,11 +104,11 @@ export default function Ajustes() {
                 <Link
                   key={to}
                   to={to}
-                  className="rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:bg-white/10"
+                  className="rounded-2xl border border-[#2D2D2D] bg-[#141414] p-6 transition hover:bg-[#1A1A1A]"
                 >
                   <Icon className="mb-4 h-8 w-8 text-white" />
                   <h2 className="text-xl font-semibold">{title}</h2>
-                  <p className="mt-2 text-sm text-white/75">{description}</p>
+                  <p className="mt-2 text-sm text-[#BFBFBF]">{description}</p>
                 </Link>
               ))}
             </div>

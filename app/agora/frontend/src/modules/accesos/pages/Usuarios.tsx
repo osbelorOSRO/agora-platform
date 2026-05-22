@@ -10,14 +10,14 @@ const ESTADO_CONFIG: Record<EstadoUsuario, { label: string; color: string }> = {
   activo:               { label: "Activo",              color: "text-emerald-400" },
   preregistrado:        { label: "Pendiente registro",  color: "text-yellow-400"  },
   invitacion_expirada:  { label: "Invitación expirada", color: "text-orange-400"  },
-  sin_invitacion:       { label: "Sin invitación",      color: "text-white/40"    },
+  sin_invitacion:       { label: "Sin invitación",      color: "text-[#666666]"   },
   bloqueado:            { label: "Bloqueado",           color: "text-red-400"     },
   reset_contraseña:     { label: "Reset contraseña",   color: "text-blue-400"    },
   reset_2fa:            { label: "Reset 2FA",           color: "text-purple-400"  },
 };
 
-const INPUT_CLS = "w-full min-w-[80px] bg-transparent border border-white/20 rounded px-2 py-0.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary";
-const SELECT_CLS = "bg-background border border-white/20 rounded px-2 py-0.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary";
+const INPUT_CLS = "w-full min-w-[80px] bg-transparent border border-[#3D3D3D] rounded px-2 py-0.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary";
+const SELECT_CLS = "bg-background border border-[#3D3D3D] rounded px-2 py-0.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary";
 
 interface ModalToken { titulo: string; token: string; expira: string; }
 
@@ -79,7 +79,7 @@ export default function Usuarios() {
   return (
     <section className="space-y-6">
       {modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#111111]">
           <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-2xl space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-[0.22em] text-primary">{modal.titulo}</h3>
             <p className="text-xs text-muted-foreground">Comparte este código con el usuario. Expira el {modal.expira}.</p>
@@ -91,7 +91,7 @@ export default function Usuarios() {
             </div>
             <p className="text-xs text-amber-400">Este código se muestra una sola vez. No se puede recuperar después de cerrar esta ventana.</p>
             <div className="flex justify-end pt-1">
-              <button onClick={() => { setModal(null); setCopiado(false); }} className="rounded-xl border border-border bg-input px-4 py-1.5 text-sm font-bold text-foreground hover:border-primary/30 hover:text-primary transition">
+              <button onClick={() => { setModal(null); setCopiado(false); }} className="rounded-xl border border-border bg-input px-4 py-1.5 text-sm font-bold text-foreground hover:border-[#6E3709] hover:text-primary transition">
                 Cerrar
               </button>
             </div>
@@ -102,22 +102,22 @@ export default function Usuarios() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white">Usuarios</h1>
-          <p className="mt-2 text-sm text-white/60">Gestión de cuentas, roles y acceso al panel.</p>
+          <p className="mt-2 text-sm text-[#999999]">Gestión de cuentas, roles y acceso al panel.</p>
         </div>
         <button
           type="button"
           onClick={handleAgregar}
-          className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/70 transition hover:bg-white/10 hover:text-white"
+          className="flex items-center gap-2 rounded-xl border border-[#2D2D2D] bg-[#141414] px-4 py-2 text-sm font-medium text-[#B3B3B3] transition hover:bg-[#1A1A1A] hover:text-white"
         >
           <CirclePlus size={15} />
           Agregar
         </button>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-white/10 scrollbar-custom">
+      <div className="overflow-x-auto rounded-2xl border border-[#2D2D2D] scrollbar-custom">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-white/10 bg-white/5 text-left text-xs font-semibold uppercase tracking-wider text-white/40">
+            <tr className="border-b border-[#2D2D2D] bg-[#141414] text-left text-xs font-semibold uppercase tracking-wider text-[#666666]">
               <th className="px-4 py-3">ID</th>
               <th className="px-4 py-3">Username</th>
               <th className="px-4 py-3">Nombre</th>
@@ -131,10 +131,10 @@ export default function Usuarios() {
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
+          <tbody className="divide-y divide-[#1B1B1B]">
             {usuarios.map((usuario) => (
-              <tr key={usuario.id} className="transition hover:bg-white/5">
-                <td className="px-4 py-3 text-white/60">{usuario.id || "—"}</td>
+              <tr key={usuario.id} className="transition hover:bg-[#141414]">
+                <td className="px-4 py-3 text-[#999999]">{usuario.id || "—"}</td>
 
                 <td className="px-4 py-3">
                   {editandoId === usuario.id
@@ -145,31 +145,31 @@ export default function Usuarios() {
                 <td className="px-4 py-3">
                   {editandoId === usuario.id
                     ? <input className={INPUT_CLS} value={form.nombre || ""} onChange={(e) => handleChange("nombre", e.target.value)} />
-                    : <span className="text-white/80">{usuario.nombre}</span>}
+                    : <span className="text-[#CCCCCC]">{usuario.nombre}</span>}
                 </td>
 
                 <td className="px-4 py-3">
                   {editandoId === usuario.id
                     ? <input className={INPUT_CLS} value={form.apellido || ""} onChange={(e) => handleChange("apellido", e.target.value)} />
-                    : <span className="text-white/80">{usuario.apellido}</span>}
+                    : <span className="text-[#CCCCCC]">{usuario.apellido}</span>}
                 </td>
 
                 <td className="px-4 py-3">
                   {editandoId === usuario.id
                     ? <input className={INPUT_CLS} value={form.run || ""} onChange={(e) => handleChange("run", e.target.value)} />
-                    : <span className="font-mono text-xs text-white/70">{usuario.run}</span>}
+                    : <span className="font-mono text-xs text-[#B3B3B3]">{usuario.run}</span>}
                 </td>
 
                 <td className="px-4 py-3">
                   {editandoId === usuario.id
                     ? <input className={INPUT_CLS} value={form.telefono || ""} onChange={(e) => handleChange("telefono", e.target.value)} />
-                    : <span className="text-white/70">{usuario.telefono}</span>}
+                    : <span className="text-[#B3B3B3]">{usuario.telefono}</span>}
                 </td>
 
                 <td className="px-4 py-3">
                   {editandoId === usuario.id
                     ? <input className={INPUT_CLS} value={form.email || ""} onChange={(e) => handleChange("email", e.target.value)} />
-                    : <span className="text-white/70">{usuario.email}</span>}
+                    : <span className="text-[#B3B3B3]">{usuario.email}</span>}
                 </td>
 
                 <td className="px-4 py-3">
@@ -179,17 +179,17 @@ export default function Usuarios() {
                       {roles.map((r) => <option key={r.id} value={r.id}>{r.nombre}</option>)}
                     </select>
                   ) : (
-                    <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/70">
+                    <span className="rounded-full bg-[#1A1A1A] px-2 py-0.5 text-xs text-[#B3B3B3]">
                       {usuario.rol?.nombre ?? "—"}
                     </span>
                   )}
                 </td>
 
-                <td className="px-4 py-3 text-xs text-white/60">{usuario.creado_por_username || "—"}</td>
+                <td className="px-4 py-3 text-xs text-[#999999]">{usuario.creado_por_username || "—"}</td>
 
                 <td className="px-4 py-3">
                   {usuario.estado ? (
-                    <span className={`text-xs font-semibold ${ESTADO_CONFIG[usuario.estado]?.color ?? "text-white/40"}`}>
+                    <span className={`text-xs font-semibold ${ESTADO_CONFIG[usuario.estado]?.color ?? "text-[#666666]"}`}>
                       {ESTADO_CONFIG[usuario.estado]?.label ?? usuario.estado}
                     </span>
                   ) : "—"}
@@ -199,11 +199,11 @@ export default function Usuarios() {
                   {editandoId === usuario.id ? (
                     <div className="flex items-center gap-2">
                       <button type="button" onClick={handleGuardar} title="Guardar" className="text-emerald-400 hover:text-emerald-300 transition"><Save size={16} /></button>
-                      <button type="button" onClick={handleCancel}  title="Cancelar" className="text-white/40 hover:text-white/70 transition"><Trash2 size={16} /></button>
+                      <button type="button" onClick={handleCancel}  title="Cancelar" className="text-[#666666] hover:text-[#B3B3B3] transition"><Trash2 size={16} /></button>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <button type="button" onClick={() => handleEdit(usuario)} title="Editar" className="text-white/50 hover:text-white transition"><Pencil size={15} /></button>
+                      <button type="button" onClick={() => handleEdit(usuario)} title="Editar" className="text-[#808080] hover:text-white transition"><Pencil size={15} /></button>
                       {estaPreregistrado(usuario) ? (
                         <>
                           <button type="button" onClick={() => accionRegenerarInvitacion(usuario.id)} title="Regenerar invitación" className="text-yellow-400 hover:text-yellow-300 transition"><RefreshCw size={15} /></button>
@@ -227,7 +227,7 @@ export default function Usuarios() {
         </table>
       </div>
 
-      <p className="text-xs text-white/30">Total: {usuarios.length} usuario{usuarios.length !== 1 ? "s" : ""}</p>
+      <p className="text-xs text-[#4D4D4D]">Total: {usuarios.length} usuario{usuarios.length !== 1 ? "s" : ""}</p>
     </section>
   );
 }

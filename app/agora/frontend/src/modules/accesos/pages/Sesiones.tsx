@@ -66,14 +66,14 @@ export default function Sesiones() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold">Sesiones activas</h1>
-          <p className="mt-2 max-w-2xl text-sm text-white/60">
+          <p className="mt-2 max-w-2xl text-sm text-[#999999]">
             Sesiones con token vigente. Se actualiza cada 30 segundos.
           </p>
         </div>
         <button
           type="button"
           onClick={cargar}
-          className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/70 transition hover:bg-white/10 hover:text-white"
+          className="flex items-center gap-2 rounded-xl border border-[#2D2D2D] bg-[#141414] px-4 py-2 text-sm font-medium text-[#B3B3B3] transition hover:bg-[#1A1A1A] hover:text-white"
         >
           <RefreshCw size={15} />
           Actualizar
@@ -81,20 +81,20 @@ export default function Sesiones() {
       </div>
 
       {error && (
-        <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+        <p className="rounded-xl border border-[#5C1A1A] bg-[#1A0A0A] px-4 py-3 text-sm text-red-400">
           {error}
         </p>
       )}
 
       {cargando ? (
-        <p className="text-sm text-white/40">Cargando...</p>
+        <p className="text-sm text-[#666666]">Cargando...</p>
       ) : sesiones.length === 0 ? (
-        <p className="text-sm text-white/40">No hay sesiones activas.</p>
+        <p className="text-sm text-[#666666]">No hay sesiones activas.</p>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-white/10">
+        <div className="overflow-x-auto rounded-2xl border border-[#2D2D2D]">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-white/10 bg-white/5 text-left text-xs font-semibold uppercase tracking-wider text-white/40">
+              <tr className="border-b border-[#2D2D2D] bg-[#141414] text-left text-xs font-semibold uppercase tracking-wider text-[#666666]">
                 <th className="px-4 py-3">Usuario</th>
                 <th className="px-4 py-3">Rol</th>
                 <th className="px-4 py-3">IP</th>
@@ -104,35 +104,35 @@ export default function Sesiones() {
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-[#1B1B1B]">
               {sesiones.map((s) => (
-                <tr key={s.id} className="transition hover:bg-white/5">
+                <tr key={s.id} className="transition hover:bg-[#141414]">
                   <td className="px-4 py-3">
                     <div className="font-medium text-white">
                       {s.usuario.nombre} {s.usuario.apellido}
                     </div>
-                    <div className="text-xs text-white/40">{s.usuario.username}</div>
+                    <div className="text-xs text-[#666666]">{s.usuario.username}</div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/70">
+                    <span className="rounded-full bg-[#1A1A1A] px-2 py-0.5 text-xs text-[#B3B3B3]">
                       {s.usuario.rol ?? "—"}
                     </span>
                   </td>
-                  <td className="px-4 py-3 font-mono text-xs text-white/70">{s.ip}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-[#B3B3B3]">{s.ip}</td>
                   <td className="px-4 py-3">
-                    <span className="flex items-center gap-1.5 text-white/70">
+                    <span className="flex items-center gap-1.5 text-[#B3B3B3]">
                       <Monitor size={13} />
                       {parsearDispositivo(s.userAgent)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-xs text-white/60">{formatFecha(s.horaLogin)}</td>
-                  <td className="px-4 py-3 text-xs text-white/60">{formatFecha(s.ultimaInteraccion)}</td>
+                  <td className="px-4 py-3 text-xs text-[#999999]">{formatFecha(s.horaLogin)}</td>
+                  <td className="px-4 py-3 text-xs text-[#999999]">{formatFecha(s.ultimaInteraccion)}</td>
                   <td className="px-4 py-3">
                     <button
                       type="button"
                       onClick={() => handleCerrar(s.id)}
                       disabled={cerrando === s.id}
-                      className="flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-red-500/20 disabled:opacity-40"
+                      className="flex items-center gap-1.5 rounded-lg border border-[#5C1A1A] bg-[#1A0A0A] px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-[#2A1010] disabled:opacity-40"
                     >
                       <LogOut size={12} />
                       {cerrando === s.id ? "Cerrando..." : "Cerrar"}
@@ -145,7 +145,7 @@ export default function Sesiones() {
         </div>
       )}
 
-      <p className="text-xs text-white/30">
+      <p className="text-xs text-[#4D4D4D]">
         Total: {sesiones.length} sesión{sesiones.length !== 1 ? "es" : ""} activa{sesiones.length !== 1 ? "s" : ""}
       </p>
     </section>

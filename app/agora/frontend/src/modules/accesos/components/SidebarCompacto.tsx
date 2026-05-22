@@ -38,7 +38,7 @@ export default function SidebarCompacto() {
   };
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-[100svh] w-14 md:w-64 flex-col border-r border-border bg-background md:shadow-[4px_0_24px_rgba(0,0,0,0.45)]">
+    <aside className="fixed left-0 top-0 z-40 flex h-[100svh] w-14 md:w-64 flex-col border-r border-border bg-background md:shadow-[4px_0_24px_#000000]">
       {/* Desktop logo */}
       <div className="hidden md:block p-6">
         <h1 className="text-2xl font-black tracking-tight text-primary">AGORA</h1>
@@ -61,7 +61,7 @@ export default function SidebarCompacto() {
             className={({ isActive }) =>
               `flex items-center justify-center md:justify-start px-0 md:px-6 py-3 md:py-4 transition-all duration-200 ${
                 isActive || location.pathname.startsWith(`${to}/`)
-                  ? "border-l-2 border-primary bg-gradient-to-r from-primary/10 to-transparent text-primary"
+                  ? "border-l-2 border-primary bg-[#1E1108] text-primary"
                   : "text-muted-foreground hover:bg-card hover:text-foreground"
               }`
             }

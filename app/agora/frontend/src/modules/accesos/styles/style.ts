@@ -19,14 +19,11 @@ const style = {
   // 🧑‍💻 Inputs
   input: `
   w-full p-2
-  bg-white/10 backdrop-blur-md
-  border border-white/20
+  bg-[#1A1A1A]
+  border border-[#3D3D3D]
   rounded-full
-  text-white placeholder-white/70
-  shadow-inner
+  text-white placeholder-[#666666]
   focus:outline-none focus:ring-2 focus:ring-[#F97316]
-  hover:shadow-[0_0_8px_2px_#F97316]
-  focus:shadow-[0_0_12px_3px_#F97316]
   transition-all duration-200
   `,
 
@@ -39,7 +36,7 @@ const style = {
   text-white
   rounded-full
   bg-transparent
-  hover:bg-gradient-to-r hover:from-[#F97316] hover:to-[#EA580C]
+  hover:bg-[#F97316]
   hover:shadow-[0_0_12px_4px_#F97316]
   active:shadow-[0_0_16px_6px_#F97316]
   active:scale-[0.95]
@@ -62,9 +59,8 @@ const style = {
 
   // glasscard
   glassCard: `
-  bg-white/10
-  backdrop-blur-md
-  border border-white/20
+  bg-[#1A1A1A]
+  border border-[#2D2D2D]
   shadow-lg
   rounded-3xl
   p-6
@@ -86,17 +82,16 @@ const style = {
   `,
 
   tableHeader: `
-  border border-white/10
+  border border-[#2D2D2D]
   px-2 py-1
   text-white
   text-sm
-  bg-white/10
-  backdrop-blur
+  bg-[#141414]
   font-montserrat
   `,
 
   celdaTabla: `
-  border border-white/10
+  border border-[#2D2D2D]
   px-2 py-1
   text-sm
   align-middle
@@ -105,8 +100,8 @@ const style = {
   `,
 
   filaTabla: `
-  border-b border-white/10
-  hover:bg-white/5
+  border-b border-[#2D2D2D]
+  hover:bg-[#141414]
   transition-colors
   `,
 
@@ -114,7 +109,7 @@ const style = {
   text-center
   align-middle
   px-2 py-1
-  border border-white/10
+  border border-[#2D2D2D]
   [&>div]:flex [&>div]:items-center [&>div]:justify-center [&>div]:gap-2
   `,
 

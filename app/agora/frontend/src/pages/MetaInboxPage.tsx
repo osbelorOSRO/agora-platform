@@ -193,10 +193,10 @@ const AttentionIcon: React.FC<{ mode?: string; className?: string }> = ({ mode, 
 
 const attentionClass = (mode?: string) => {
   const normalized = String(mode || "").toUpperCase();
-  if (normalized === "HUMAN") return "border-sky-300/70 bg-[#182D46] text-sky-300 md:shadow-[0_0_14px_rgba(56,189,248,0.35)]";
-  if (normalized === "SYSTEM") return "border-emerald-300/70 bg-[#173038] text-emerald-300 md:shadow-[0_0_14px_rgba(52,211,153,0.35)]";
-  if (normalized === "PAUSED") return "border-amber-300/70 bg-[#352D27] text-amber-300 md:shadow-[0_0_14px_rgba(251,191,36,0.35)]";
-  return "border-rose-300/70 bg-[#352135] text-rose-300 md:shadow-[0_0_14px_rgba(251,113,133,0.35)]";
+  if (normalized === "HUMAN") return "border-[#7BBFD6] bg-[#182D46] text-sky-300";
+  if (normalized === "SYSTEM") return "border-[#6BC4A0] bg-[#173038] text-emerald-300";
+  if (normalized === "PAUSED") return "border-[#D4A847] bg-[#352D27] text-amber-300";
+  return "border-[#E87D95] bg-[#352135] text-rose-300";
 };
 
 const channelClass = (objectType?: string) => {
@@ -235,20 +235,20 @@ const s = {
   loadingText: "py-4 text-center text-sm text-muted-foreground",
   bubbleWrapOutgoing: "flex justify-end",
   bubbleWrapIncoming: "flex justify-start",
-  bubbleOutgoing: "max-w-[75%] rounded-2xl rounded-tr-sm border border-primary/30 bg-[#2E1030] px-3 py-2 text-sm text-foreground",
+  bubbleOutgoing: "max-w-[75%] rounded-2xl rounded-tr-sm border border-[#6E3709] bg-[#2E1030] px-3 py-2 text-sm text-foreground",
   bubbleIncoming: "max-w-[75%] rounded-2xl rounded-tl-sm border border-border bg-card px-3 py-2 text-sm text-foreground",
   bubbleTsOutgoing: "mt-1 text-right text-[10px] text-muted-foreground",
   bubbleTsIncoming: "mt-1 text-[10px] text-muted-foreground",
   composer: "flex items-center gap-2 border-t border-border bg-card px-3 py-2",
-  composerInput: "min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/50",
-  composerSend: "flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground hover:border-primary/30 hover:text-primary transition-colors",
+  composerInput: "min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-[#525252]",
+  composerSend: "flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground hover:border-[#6E3709] hover:text-primary transition-colors",
   composerIcon: "h-4 w-4",
   contactAside: "flex flex-col gap-2 overflow-y-auto border-l border-border bg-card p-3 scrollbar-custom",
   contactHead: "flex items-center justify-between pb-2 border-b border-border",
   contactTitle: "text-xs font-bold uppercase tracking-[0.22em] text-primary",
-  contactInput: "w-full rounded-md border border-border bg-input px-2 py-1.5 text-sm text-foreground outline-none focus:border-primary/60 transition disabled:opacity-60",
-  contactTextarea: "w-full rounded-md border border-border bg-input px-2 py-1.5 text-sm text-foreground outline-none focus:border-primary/60 transition disabled:opacity-60 min-h-[72px] resize-none",
-  contactSave: "flex items-center justify-center gap-2 w-full rounded-md border border-primary/50 bg-primary/10 px-3 py-2 text-sm font-bold text-primary hover:bg-primary/20 transition disabled:cursor-not-allowed disabled:opacity-60",
+  contactInput: "w-full rounded-md border border-border bg-input px-2 py-1.5 text-sm text-foreground outline-none focus:border-[#994D15] transition disabled:opacity-60",
+  contactTextarea: "w-full rounded-md border border-border bg-input px-2 py-1.5 text-sm text-foreground outline-none focus:border-[#994D15] transition disabled:opacity-60 min-h-[72px] resize-none",
+  contactSave: "flex items-center justify-center gap-2 w-full rounded-md border border-[#8A4412] bg-[#1E1108] px-3 py-2 text-sm font-bold text-primary hover:bg-[#321C0C] transition disabled:cursor-not-allowed disabled:opacity-60",
 };
 
 const MetaInboxPage: React.FC = () => {
@@ -881,8 +881,8 @@ const MetaInboxPage: React.FC = () => {
                     onClick={() => setStatusView(view)}
                     className={`flex h-9 items-center justify-center gap-1.5 rounded-md border text-[11px] font-bold transition ${
                       active
-                        ? "border-primary bg-primary/15 text-primary"
-                        : "border-border bg-input text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                        ? "border-primary bg-[#28160A] text-primary"
+                        : "border-border bg-input text-muted-foreground hover:border-[#8A4412] hover:text-foreground"
                     }`}
                     title={statusLabel(view)}
                   >
@@ -899,7 +899,7 @@ const MetaInboxPage: React.FC = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Buscar actor, mensaje, etapa..."
-                className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/70"
+                className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-[#525252]"
               />
             </div>
 
@@ -990,7 +990,7 @@ const MetaInboxPage: React.FC = () => {
                             <AttentionIcon mode={attentionMode} className="h-3.5 w-3.5" />
                           </span>
                           <span
-                            className="min-w-0 truncate rounded-md border border-primary/40 bg-primary/10 px-1.5 py-1 text-[10px] font-bold text-primary"
+                            className="min-w-0 truncate rounded-md border border-[#7B3B10] bg-[#1E1108] px-1.5 py-1 text-[10px] font-bold text-primary"
                             title={thread.threadStage || ""}
                           >
                             {stage}
@@ -1096,7 +1096,7 @@ const MetaInboxPage: React.FC = () => {
                       >
                         <AttentionIcon mode={selectedThread.attentionMode} className="h-4 w-4" />
                       </span>
-                      <span className="inline-flex h-8 items-center rounded-md border border-primary/40 bg-primary/10 px-2.5 text-xs font-bold text-primary">
+                      <span className="inline-flex h-8 items-center rounded-md border border-[#7B3B10] bg-[#1E1108] px-2.5 text-xs font-bold text-primary">
                         {stageLabel(selectedThread.threadStage)}
                       </span>
                       {selectedWhatsappBlocked && (

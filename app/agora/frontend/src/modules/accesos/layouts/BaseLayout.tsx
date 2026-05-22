@@ -109,7 +109,7 @@ export default function BaseLayout() {
                 {user?.rol ?? "sin rol"}
               </p>
             </div>
-            <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-full border border-primary/30 glass-sm text-xs font-bold text-foreground">
+            <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-full border border-[#6E3709] glass-sm text-xs font-bold text-foreground">
               {(user?.nombre?.[0] ?? user?.username?.[0] ?? "U").toUpperCase()}
             </div>
           </div>
