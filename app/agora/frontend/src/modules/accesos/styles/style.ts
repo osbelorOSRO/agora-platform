@@ -24,9 +24,9 @@ const style = {
   rounded-full
   text-white placeholder-white/70
   shadow-inner
-  focus:outline-none focus:ring-2 focus:ring-[#cf0060]
-  hover:shadow-[0_0_8px_2px_#cf0060]
-  focus:shadow-[0_0_12px_3px_#cf0060]
+  focus:outline-none focus:ring-2 focus:ring-[#F97316]
+  hover:shadow-[0_0_8px_2px_#F97316]
+  focus:shadow-[0_0_12px_3px_#F97316]
   transition-all duration-200
   `,
 
@@ -35,13 +35,13 @@ const style = {
   buttonIcon: 'p-2 hover:bg-card rounded-full',
   buttonPrimary: `
   px-6 py-2
-  border-2 border-[#cf0060]
+  border-2 border-[#F97316]
   text-white
   rounded-full
   bg-transparent
-  hover:bg-gradient-to-r hover:from-[#cf0060] hover:to-[#ff00ff]
-  hover:shadow-[0_0_12px_4px_#cf0060]
-  active:shadow-[0_0_16px_6px_#cf0060]
+  hover:bg-gradient-to-r hover:from-[#F97316] hover:to-[#EA580C]
+  hover:shadow-[0_0_12px_4px_#F97316]
+  active:shadow-[0_0_16px_6px_#F97316]
   active:scale-[0.95]
   focus:outline-none
   transition-all duration-200 ease-in-out
@@ -56,7 +56,7 @@ const style = {
   text-white
   text-center
   mt-4
-  hover:text-[#cf0060]
+  hover:text-[#F97316]
   transition-colors duration-200
   `,
 
@@ -119,7 +119,7 @@ const style = {
   `,
 
   checkboxPermiso: `
-  accent-[#cf0060]
+  accent-[#F97316]
   w-4 h-4
   align-middle
   focus:ring-0

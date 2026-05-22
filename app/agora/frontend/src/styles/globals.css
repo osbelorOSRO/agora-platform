@@ -1,38 +1,38 @@
 /* ============================================================
    ÁGORA — Design Tokens
    Convención: shadcn/ui + extensiones propias
-   Paleta: Dark futurista magenta/cyan
+   Paleta: Dark futurista naranja/cyan
    Fuente: Poppins
    ============================================================ */
 
 :root {
   /* ── Base ─────────────────────────────────────────────────── */
-  --background:          #000117;
+  --background:          #0E0E0E;
   --foreground:          #ffffff;
 
-  /* ── Superficies — sólidos pre-calculados (sin alpha runtime) ─ */
-  --card:                #121327;   /* rgba(255,255,255,0.07) over #000117 */
+  /* ── Superficies — grafito neutro ────────────────────────── */
+  --card:                #1A1A1A;
   --card-foreground:     #ffffff;
 
-  --popover:             #212235;   /* rgba(255,255,255,0.13) over #000117 */
+  --popover:             #252525;
   --popover-foreground:  #ffffff;
 
-  /* ── Acción primaria (magenta) ────────────────────────────── */
-  --primary:             #cf0060;
+  /* ── Acción primaria (naranja) ────────────────────────────── */
+  --primary:             #F97316;
   --primary-foreground:  #ffffff;
-  --primary-hover:       #e8006b;
-  --primary-glow:        rgba(207, 0, 96, 0.45);
+  --primary-hover:       #EA580C;
+  --primary-glow:        rgba(249, 115, 22, 0.45);
 
   /* ── Acción secundaria ────────────────────────────────────── */
-  --secondary:           #17182C;   /* rgba(255,255,255,0.09) over #000117 */
+  --secondary:           #1E1E1E;
   --secondary-foreground: rgba(255, 255, 255, 0.80);
 
   /* ── Texto atenuado y superficies neutras ─────────────────── */
-  --muted:               #0F1025;   /* rgba(255,255,255,0.06) over #000117 */
+  --muted:               #141414;
   --muted-foreground:    rgba(255, 255, 255, 0.65);
 
   /* ── Estado hover/activo de elementos interactivos ───────── */
-  --accent:              rgba(207, 0, 96, 0.15);
+  --accent:              rgba(249, 115, 22, 0.15);
   --accent-foreground:   #ffffff;
 
   /* ── Semánticos de estado ─────────────────────────────────── */
@@ -45,9 +45,9 @@
 
   /* ── Bordes e inputs ──────────────────────────────────────── */
   --border:              rgba(255, 255, 255, 0.10);
-  --border-primary:      rgba(207, 0, 96, 0.40);
-  --input:               #252638;   /* rgba(255,255,255,0.08) over --card */
-  --ring:                #cf0060;
+  --border-primary:      rgba(249, 115, 22, 0.40);
+  --input:               #2C2C2C;
+  --ring:                #F97316;
 
   /* ── Glass (extensión propia) ─────────────────────────────── */
   --glass-blur-sm:       8px;
@@ -60,10 +60,10 @@
 
   /* ── Gradiente de fondo (se aplica una sola vez en el root) ─ */
   --gradient-bg:
-    radial-gradient(circle at top right,    rgba(255, 163,   0, 0.07) 0%, transparent 55%),
-    radial-gradient(circle at bottom left,  rgba(  0, 255, 240, 0.07) 0%, transparent 55%),
-    radial-gradient(circle at bottom right, rgba( 19, 168, 254, 0.07) 0%, transparent 55%),
-    radial-gradient(circle at top left,     rgba(255,   0, 255, 0.07) 0%, transparent 55%);
+    radial-gradient(circle at top right,    rgba(249, 115,  22, 0.08) 0%, transparent 55%),
+    radial-gradient(circle at bottom left,  rgba(  0, 255, 240, 0.05) 0%, transparent 55%),
+    radial-gradient(circle at bottom right, rgba( 19, 168, 254, 0.05) 0%, transparent 55%),
+    radial-gradient(circle at top left,     rgba(249, 115,  22, 0.04) 0%, transparent 55%);
 
   /* ── Tipografía ───────────────────────────────────────────── */
   --font-sans:      'Poppins', sans-serif;
@@ -139,17 +139,17 @@ a, button {
   .glass-sm {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    background-color: #0F1025;
+    background-color: #141414;
   }
   .glass-md {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    background-color: #17182C;
+    background-color: #1E1E1E;
   }
   .glass-lg {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    background-color: #212235;
+    background-color: #252525;
   }
   /* Tailwind backdrop-blur-* directo en JSX */
   .backdrop-blur-sm,
@@ -262,33 +262,33 @@ a, button {
    Light mode — stub listo, activar con clase .light en <html>
    ============================================================ */
 .light {
-  --background:          #f8fafc;
-  --foreground:          #0f172a;
+  --background:          #F8FAFC;   /* color-surface */
+  --foreground:          #0F172A;   /* color-text-primary */
 
-  --card:                rgba(0, 0, 0, 0.04);
-  --card-foreground:     #0f172a;
+  --card:                #ffffff;   /* color-surface-container */
+  --card-foreground:     #0F172A;
 
-  --popover:             rgba(255, 255, 255, 0.95);
-  --popover-foreground:  #0f172a;
+  --popover:             #ffffff;
+  --popover-foreground:  #0F172A;
 
-  --primary:             #cf0060;
+  --primary:             #F97316;   /* color-primary */
   --primary-foreground:  #ffffff;
-  --primary-hover:       #a80050;
-  --primary-glow:        rgba(207, 0, 96, 0.25);
+  --primary-hover:       #EA580C;   /* color-primary-variant */
+  --primary-glow:        rgba(249, 115, 22, 0.25);
 
   --secondary:           rgba(0, 0, 0, 0.06);
   --secondary-foreground: rgba(15, 23, 42, 0.80);
 
-  --muted:               rgba(0, 0, 0, 0.04);
-  --muted-foreground:    rgba(15, 23, 42, 0.50);
+  --muted:               #F1F5F9;   /* Slate-100 — superficie sutil */
+  --muted-foreground:    #64748B;   /* color-text-secondary */
 
-  --accent:              rgba(207, 0, 96, 0.08);
-  --accent-foreground:   #0f172a;
+  --accent:              rgba(249, 115, 22, 0.08);
+  --accent-foreground:   #0F172A;
 
-  --border:              rgba(0, 0, 0, 0.10);
-  --border-primary:      rgba(207, 0, 96, 0.30);
-  --input:               rgba(0, 0, 0, 0.06);
-  --ring:                #cf0060;
+  --border:              #E2E8F0;   /* color-surface-dim */
+  --border-primary:      rgba(249, 115, 22, 0.30);
+  --input:               rgba(0, 0, 0, 0.05);
+  --ring:                #F97316;
 
   --glass-bg-sm:         rgba(255, 255, 255, 0.60);
   --glass-bg-md:         rgba(255, 255, 255, 0.72);
