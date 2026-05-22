@@ -58,6 +58,9 @@
   --glass-bg-lg:         #252525;
   --glass-border:        #222222;
 
+  /* ── Chat bubbles ────────────────────────────────────────── */
+  --bubble-outgoing:     #1E1108;
+
   /* ── Gradiente de fondo — sin usar, se mantiene como stub ── */
   --gradient-bg:         var(--background);
 
@@ -277,4 +280,5 @@ a, button {
   --glass-border:        #DEDEDE;
 
   --gradient-bg:         none;
+  --bubble-outgoing:     #FEF3EC;
 }

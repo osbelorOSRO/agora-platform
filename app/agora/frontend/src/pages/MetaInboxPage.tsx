@@ -235,7 +235,7 @@ const s = {
   loadingText: "py-4 text-center text-sm text-muted-foreground",
   bubbleWrapOutgoing: "flex justify-end",
   bubbleWrapIncoming: "flex justify-start",
-  bubbleOutgoing: "max-w-[75%] rounded-2xl rounded-tr-sm border border-[#6E3709] bg-[#2E1030] px-3 py-2 text-sm text-foreground",
+  bubbleOutgoing: "max-w-[75%] rounded-2xl rounded-tr-sm border border-[#6E3709] bg-[var(--bubble-outgoing)] px-3 py-2 text-sm text-foreground",
   bubbleIncoming: "max-w-[75%] rounded-2xl rounded-tl-sm border border-border bg-card px-3 py-2 text-sm text-foreground",
   bubbleTsOutgoing: "mt-1 text-right text-[10px] text-muted-foreground",
   bubbleTsIncoming: "mt-1 text-[10px] text-muted-foreground",
