@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.8.2
+
+### Fixed
+- Glitch GPU compositor DPR=4 (corrección del fix v1.8.1): reemplazado `initial-scale=0.89` en viewport meta (inefectivo cuando el browser tiene zoom configurado al 100% — el setting del navegador sobreescribe `initial-scale`) por `document.documentElement.style.zoom = '0.89'` aplicado en `<head>`. CSS `zoom` opera al nivel de rendering CSS, independiente del zoom del navegador. Threshold ajustado a `devicePixelRatio >= 3.9` para capturar DPR=4 nativo al 100% sin activarse cuando el usuario ya bajó el zoom manualmente (~DPR 3.56 en ese caso).
+
 ## 1.8.1
 
 ### Fixed

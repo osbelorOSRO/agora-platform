@@ -12,19 +12,18 @@
     
     <script>
       (function() {
-        // En dispositivos touch con DPR >= 3.5 (típicamente DPR=4 en Android gama alta),
-        // el browser genera compositor layers extras que producen glitch de renderizado.
-        // Reducir initial-scale a 0.89 replica el fix manual de bajar zoom al 89%,
-        // aplicado antes del primer layout para evitar reflow visible.
+        // En dispositivos touch con DPR nativo = 4, el tile cache GPU desborda
+        // generando glitches de renderizado en scroll. CSS zoom aplicado al
+        // elemento html opera al nivel de rendering CSS — independiente del zoom
+        // configurado en el navegador — y reduce la presión de compositor a ~DPR 3.56.
+        // Threshold 3.9: captura DPR=4 al 100% de zoom del browser (reporta 4.0),
+        // sin activarse cuando el usuario ya bajó el zoom manualmente (reporta ~3.56).
         try {
           if (
-            window.devicePixelRatio >= 3.5 &&
+            window.devicePixelRatio >= 3.9 &&
             ('ontouchstart' in window || navigator.maxTouchPoints > 0)
           ) {
-            var vp = document.querySelector('meta[name="viewport"]');
-            if (vp) {
-              vp.setAttribute('content', 'width=device-width, initial-scale=0.89');
-            }
+            document.documentElement.style.zoom = '0.89';
           }
         } catch (e) {}
 
