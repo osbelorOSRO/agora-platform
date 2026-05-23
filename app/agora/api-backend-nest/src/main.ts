@@ -19,6 +19,10 @@ import {
   limitadorWebhookMetaPost,
   limitadorWebhookMetaGet,
   limitadorLegal,
+  limitadorLogin,
+  limitadorRecuperacion,
+  limitadorRegistro,
+  limitadorSesionesAdmin,
 } from './shared/rate-limiter';
 
 
@@ -68,6 +72,12 @@ async function bootstrap() {
       : limitadorWebhookMetaGet(req, res, next),
   );
   app.use('/legal', limitadorLegal);
+  app.use('/api/auth/login', limitadorLogin);
+  app.use('/api/auth/registrar-usuario', limitadorRegistro);
+  app.use('/api/auth/reset-password', limitadorRecuperacion);
+  app.use('/api/auth/setup-2fa', limitadorRecuperacion);
+  app.use('/api/auth/sesiones-activas-admin', limitadorSesionesAdmin);
+  app.use('/api/auth/sesiones', limitadorSesionesAdmin);
 
   await app.listen(port);
 }

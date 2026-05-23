@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.1.0
+
+### Added
+- Módulo `AccesosModule` en NestJS: migración completa de todos los endpoints de `abackend` (Express, puerto 4002) al servicio `backend` (NestJS, puerto 4001). Incluye auth, sesiones, usuarios, roles, permisos, service tokens y reportes (CSV/JSON).
+- Rate limiting en endpoints de auth: login (10 req/15min), registro y reset-password (5 req/h), sesiones admin (30 req/min).
+- Nuevas columnas en tabla `usuarios`: `invitation_token`, `reset_token`, `mfa_bypass_token`, `mfa_new_secret`, `login_attempts`, `bloqueado`, `cancelado`, `protegido`, `photo_url` y timestamps asociados.
+- `VaultService` exportado desde `AuthModule` para uso por `ServiceTokenService`.
+
+### Changed
+- Servicio Docker renombrado de `api_backend_nest` a `backend` en `docker-compose.yml`.
+- Frontend apunta a `API_PUBLIC_URL` para auth (`VITE_AUTH_API_URL`, `VITE_API_URL_ACCESOS`) — ya no depende de `abackend`.
+- `FRONTEND_CSP_CONNECT_SRC` eliminó el dominio de `abackend` del default.
+- Guards `RequirePermissionGuard` y `RequireRolesGuard` migrados a `reflector.getAllAndOverride` para soportar decoradores a nivel de clase.
+
+### Removed
+- Página `Oficinas`, `oficinaService` y tipo `oficina` del frontend — eran código muerto sin ruta ni consumo activo.
+
 ## 2.0.0
 
 ### Added

@@ -4,10 +4,24 @@ import jwt from 'jsonwebtoken';
 
 @Injectable()
 export class AuthService {
+  private privateKey: string | undefined;
   private publicKey: string | undefined;
   private publicKeyBot: string | undefined;
 
   constructor(private readonly vaultService: VaultService) {}
+
+  private async getPrivateKey(): Promise<string> {
+    if (!this.privateKey) {
+      const path = process.env.VAULT_JWT_PRIVATE_KEY_PATH || 'accesos/keys/private';
+      this.privateKey = await this.vaultService.getSecretKey(path);
+    }
+    return this.privateKey;
+  }
+
+  async firmarToken(payload: object, expiresIn: string | number = '12h'): Promise<string> {
+    const key = await this.getPrivateKey();
+    return jwt.sign(payload, key, { algorithm: 'RS256', expiresIn } as any);
+  }
 
   private async getPublicKey(): Promise<string> {
     if (!this.publicKey) {

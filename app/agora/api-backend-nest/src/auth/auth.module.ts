@@ -8,6 +8,6 @@ import { SuperadminJwtGuard } from './superadmin-jwt.guard';
 @Module({
   controllers: [],
   providers: [AuthService, VaultService, JwtAuthGuard, PanelJwtAuthGuard, SuperadminJwtGuard],
-  exports: [AuthService, PanelJwtAuthGuard, SuperadminJwtGuard],
+  exports: [AuthService, VaultService, PanelJwtAuthGuard, SuperadminJwtGuard],
 })
 export class AuthModule {}

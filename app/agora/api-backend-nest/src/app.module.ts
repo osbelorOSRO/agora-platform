@@ -19,6 +19,7 @@ import { StageTemplatesModule } from './stage-templates/stage-templates.module';
 import { OffersModule } from './offers/offers.module';
 import { MetaConfigModule } from './meta-config/meta-config.module';
 import { UserProfileModule } from './user-profile/user-profile.module';
+import { AccesosModule } from './accesos/accesos.module';
 
 @Global()
 @Module({
@@ -27,6 +28,7 @@ import { UserProfileModule } from './user-profile/user-profile.module';
       isGlobal: true,
     }),
     HealthModule,
+    AccesosModule,
     AuthModule,
     MediaModule,
     BaileysModule,

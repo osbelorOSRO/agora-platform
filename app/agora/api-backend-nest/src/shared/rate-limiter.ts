@@ -181,3 +181,44 @@ export const limitadorLegal = rateLimit({
   skip: () => !redisClient,
 });
 
+// Accesos auth
+export const limitadorLogin = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  store: crearStore('login'),
+  handler: (_req, res) => respuestaLimite(res),
+  skip: () => !redisClient,
+});
+
+export const limitadorRecuperacion = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  store: crearStore('recuperacion'),
+  handler: (_req, res) => respuestaLimite(res),
+  skip: () => !redisClient,
+});
+
+export const limitadorRegistro = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  store: crearStore('registro'),
+  handler: (_req, res) => respuestaLimite(res),
+  skip: () => !redisClient,
+});
+
+export const limitadorSesionesAdmin = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  store: crearStore('sesiones:admin'),
+  handler: (_req, res) => respuestaLimite(res),
+  skip: () => !redisClient,
+});
+

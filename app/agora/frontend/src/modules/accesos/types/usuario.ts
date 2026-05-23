@@ -13,6 +13,5 @@ export interface Usuario {
   creado_por_username: string | null;
   actualizado_por_username: string | null;
   rol: { id: number; nombre: string } | null;
-  oficina: { id: number; nombre: string; region: string } | null;
   estado: EstadoUsuario;
 }

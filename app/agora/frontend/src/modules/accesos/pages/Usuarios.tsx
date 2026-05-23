@@ -47,7 +47,7 @@ export default function Usuarios() {
       const res = await preregistrarUsuario(form.username, form.rol.id);
       setModal({ titulo: "Código de invitación", token: res.invitationToken, expira: new Date(res.expiresAt).toLocaleString() });
     } else if (typeof editandoId === "number") {
-      await actualizarUsuario(editandoId, { nombre: form.nombre, apellido: form.apellido, run: form.run, telefono: form.telefono, email: form.email, rol: form.rol, oficina: form.oficina });
+      await actualizarUsuario(editandoId, { nombre: form.nombre, apellido: form.apellido, run: form.run, telefono: form.telefono, email: form.email, rol: form.rol });
     }
     await cargar();
     setEditandoId(null);
@@ -55,7 +55,7 @@ export default function Usuarios() {
   };
 
   const handleAgregar = () => {
-    const nuevo: Usuario = { id: 0, username: "", nombre: "", apellido: "", run: "", telefono: "", email: "", creado_en: "", actualizado_en: "", creado_por_username: "", actualizado_por_username: "", rol: null, oficina: null, estado: "sin_invitacion" };
+    const nuevo: Usuario = { id: 0, username: "", nombre: "", apellido: "", run: "", telefono: "", email: "", creado_en: "", actualizado_en: "", creado_por_username: "", actualizado_por_username: "", rol: null, estado: "sin_invitacion" };
     setUsuarios([...usuarios, nuevo]);
     setEditandoId(0);
     setForm(nuevo);
