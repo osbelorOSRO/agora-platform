@@ -61,6 +61,8 @@ mongo/mongo-init/
 # Local
 n8n_v2_blueprint/
 ops/docs/DOC-PLAN-MITIGACION-SUPERFICIES-ATAQUE.md
+ops/docs/DOC-VAULT-POLICY-NEST-REFACTOR.md
+ops/scripts/restore-dropped-columns.sql
 ops/private/
 
 # Claude Code / agentes AI (configuración local, no versionar)
