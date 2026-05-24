@@ -17,7 +17,7 @@ type ContactDirectoryRow = {
   notes: string | null;
   city: string | null;
   region: string | null;
-  metadata: any;
+  metadata: unknown;
   actorScore: string | null;
   actorLifecycleState: string | null;
   actorLifecycleUpdatedAt: Date | null;

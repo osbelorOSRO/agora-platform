@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma/prisma.service';
 import { ActorScoringService } from '../scoring/actor-scoring.service';
 import { Q_ACTOR_TRANSITIONS } from '../../queues/queues.constants';
@@ -25,7 +26,7 @@ export class MsgDelegationCompletionService {
     return { value };
   }
 
-  private async resolveDeltaForSignal(tx: PrismaService, signalType: string): Promise<string> {
+  private async resolveDeltaForSignal(tx: Prisma.TransactionClient, signalType: string): Promise<string> {
     try {
       const rows = await tx.$queryRaw<Array<{ delta: unknown }>>`
         select delta
@@ -69,7 +70,7 @@ export class MsgDelegationCompletionService {
     actorExternalId: string;
     hasSignal?: boolean;
     signalType?: string;
-    metadata?: any;
+    metadata?: Record<string, unknown>;
   }) {
     const alreadyDone = await this.state.isDone(input.externalEventId);
     if (alreadyDone) {
@@ -103,12 +104,12 @@ export class MsgDelegationCompletionService {
     }
 
     const shouldEnqueueTransition = await this.prisma.$transaction(async (tx) => {
-      const { isTerminal } = await this.scoring.getLifecycleState(tx as any, input.actorExternalId);
+      const { isTerminal } = await this.scoring.getLifecycleState(tx, input.actorExternalId);
       if (isTerminal) return false;
 
-      const resolvedDelta = await this.resolveDeltaForSignal(tx as any, input.signalType!);
+      const resolvedDelta = await this.resolveDeltaForSignal(tx, input.signalType!);
 
-      await this.scoring.applyDeltaIfNew(tx as any, {
+      await this.scoring.applyDeltaIfNew(tx, {
         actorExternalId: input.actorExternalId,
         externalEventId: input.externalEventId,
         delta: resolvedDelta,
@@ -148,7 +149,7 @@ export class MsgDelegationCompletionService {
     externalEventId: string;
     actorExternalId: string;
     reason: string;
-    metadata?: any;
+    metadata?: Record<string, unknown>;
   }) {
     const metadata = this.normalizeMetadata(input.metadata);
 
@@ -182,7 +183,7 @@ export class MsgDelegationCompletionService {
     externalEventId: string;
     actorExternalId: string;
     reason?: string;
-    metadata?: any;
+    metadata?: Record<string, unknown>;
   }) {
     const metadata = this.normalizeMetadata(input.metadata);
 

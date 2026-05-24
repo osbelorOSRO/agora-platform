@@ -46,11 +46,11 @@ export class ChangesProcessor extends WorkerHost {
       this.logger.log(`FLOW[CHANGE] event_history ok externalEventId=${env.externalEventId}`);
 
       // 2) bootstrap
-      await this.bootstrap.ensureActorExists(tx as any, env.actorExternalId);
+      await this.bootstrap.ensureActorExists(tx, env.actorExternalId);
       this.logger.log(`FLOW[CHANGE] bootstrap ok actorExternalId=${env.actorExternalId}`);
 
       // 3) terminal gate
-      const { isTerminal } = await this.scoring.getLifecycleState(tx as any, env.actorExternalId);
+      const { isTerminal } = await this.scoring.getLifecycleState(tx, env.actorExternalId);
       if (isTerminal) {
         this.logger.log(`FLOW[CHANGE] terminal gate stop actorExternalId=${env.actorExternalId}`);
         return;
@@ -60,7 +60,7 @@ export class ChangesProcessor extends WorkerHost {
       const delta = this.computeDeterministicDelta(env);
 
       // 5) history_score + actor_score (solo si NO terminal)
-      await this.scoring.applyDeltaIfNew(tx as any, {
+      await this.scoring.applyDeltaIfNew(tx, {
         actorExternalId: env.actorExternalId,
         externalEventId: env.externalEventId,
         delta,

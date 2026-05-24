@@ -49,7 +49,7 @@ export class ActorTransitionsProcessor extends WorkerHost {
 
       const score = Number(scoreRow?.score ?? 0);
 
-      const nextState = await this.transitionRules.resolveNextState(tx as any, score, currentState);
+      const nextState = await this.transitionRules.resolveNextState(tx, score, currentState);
 
       if (!nextState) {
         this.logger.log(`FLOW[TRANSITION] no transition actorExternalId=${actorExternalId}`);

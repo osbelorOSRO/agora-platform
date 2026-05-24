@@ -23,7 +23,7 @@ export class SuperadminJwtGuard implements CanActivate {
       throw new ForbiddenException('Acceso restringido a superadmin');
     }
 
-    (request as any).userPayload = payload;
+    request.userPayload = payload;
     return true;
   }
 }

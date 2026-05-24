@@ -13,7 +13,7 @@ export class SessionsController {
 
   @Get('me')
   me(@Req() req: Request) {
-    return this.service.me((req as any).userPayload.id);
+    return this.service.me(req.userPayload!.id);
   }
 
   @Post('registrar-sesion')
@@ -21,18 +21,18 @@ export class SessionsController {
   registrarSesion(@Req() req: Request) {
     const ip = req.ip ?? '0.0.0.0';
     const userAgent = req.headers['user-agent'] ?? 'desconocido';
-    return this.service.registrarSesion((req as any).userPayload.id, ip, userAgent);
+    return this.service.registrarSesion(req.userPayload!.id, ip, userAgent);
   }
 
   @Get('sesiones-activas')
   sesionesActivas(@Req() req: Request) {
-    return this.service.sesionesActivas((req as any).userPayload.id);
+    return this.service.sesionesActivas(req.userPayload!.id);
   }
 
   @Delete('logout')
   @HttpCode(200)
   logout(@Req() req: Request) {
-    return this.service.logout((req as any).userPayload.id);
+    return this.service.logout(req.userPayload!.id);
   }
 
   @Get('sesiones-activas-admin')

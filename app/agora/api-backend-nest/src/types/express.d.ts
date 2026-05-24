@@ -4,5 +4,7 @@ import { UsuarioJWT } from '../../auth/interfaces/usuario.interface';
 declare module 'express' {
   export interface Request {
     user?: UsuarioJWT;
+    userPayload?: UsuarioJWT;
+    botPayload?: UsuarioJWT;
   }
 }

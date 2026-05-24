@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma/prisma.service';
 import { ActorLifecycleState, ScoreOperator } from '../actor.types';
 
@@ -16,7 +17,7 @@ export class TransitionRulesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async resolveNextState(
-    tx: PrismaService,
+    tx: Prisma.TransactionClient,
     score: number,
     currentState: ActorLifecycleState,
   ): Promise<ActorLifecycleState | null> {

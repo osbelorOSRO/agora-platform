@@ -27,5 +27,5 @@ export class MsgDelegationFailedDto {
     }
   })
   @IsObject()
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }

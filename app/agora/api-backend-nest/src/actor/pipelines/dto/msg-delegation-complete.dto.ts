@@ -31,5 +31,5 @@ export class MsgDelegationCompleteDto {
     }
   })
   @IsObject()
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }

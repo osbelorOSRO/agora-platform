@@ -18,7 +18,7 @@ export class PanelJwtAuthGuard implements CanActivate {
     }
 
     const payload = await this.authService.verificarToken(token, 'panel');
-    (request as any).userPayload = payload;
+    request.userPayload = payload;
 
     return true;
   }

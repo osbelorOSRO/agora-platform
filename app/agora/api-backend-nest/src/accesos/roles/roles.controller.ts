@@ -5,6 +5,7 @@ import { RolesService } from './roles.service';
 import { PanelJwtAuthGuard } from '../../auth/panel-jwt-auth.guard';
 import { RequirePermissionGuard } from '../guards/require-permission.guard';
 import { RequirePermission } from '../decorators/permission.decorator';
+import { CreateRolDto } from './dto/create-rol.dto';
 
 @Controller('api/roles')
 @UseGuards(PanelJwtAuthGuard, RequirePermissionGuard)
@@ -24,12 +25,12 @@ export class RolesController {
 
   @Post()
   @HttpCode(201)
-  crearRol(@Body() body: any, @Req() req: Request) {
-    return this.service.crearRol(body.nombre, body.permisos, (req as any).userPayload?.id);
+  crearRol(@Body() body: CreateRolDto, @Req() req: Request) {
+    return this.service.crearRol(body.nombre, body.permisos, req.userPayload?.id);
   }
 
   @Put(':id')
-  actualizarRol(@Param('id', ParseIntPipe) id: number, @Body() body: any, @Req() req: Request) {
-    return this.service.actualizarRol(id, body.nombre, body.permisos, (req as any).userPayload?.id);
+  actualizarRol(@Param('id', ParseIntPipe) id: number, @Body() body: CreateRolDto, @Req() req: Request) {
+    return this.service.actualizarRol(id, body.nombre, body.permisos, req.userPayload?.id);
   }
 }

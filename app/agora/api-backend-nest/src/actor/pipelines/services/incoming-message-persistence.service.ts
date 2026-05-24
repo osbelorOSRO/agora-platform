@@ -477,7 +477,7 @@ export class IncomingMessagePersistenceService {
     thumbnailUrl: string | null;
     originalImageUrl: string | null;
     firstMessageText: string | null;
-    metadata: any;
+    metadata: Record<string, unknown> | undefined;
   }): Promise<void> {
     await this.prisma.$executeRawUnsafe(
       `INSERT INTO wa_ad_leads (

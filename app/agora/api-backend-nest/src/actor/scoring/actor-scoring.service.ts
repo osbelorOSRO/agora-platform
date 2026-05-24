@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma/prisma.service';
 
 type TerminalCheck = {
@@ -10,7 +11,7 @@ type TerminalCheck = {
 export class ActorScoringService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getLifecycleState(tx: PrismaService, actorExternalId: string): Promise<TerminalCheck> {
+  async getLifecycleState(tx: Prisma.TransactionClient, actorExternalId: string): Promise<TerminalCheck> {
     const last = await tx.actor_lifecycle.findFirst({
       where: { actor_external_id: actorExternalId },
       orderBy: { occurred_at: 'desc' },
@@ -27,12 +28,12 @@ export class ActorScoringService {
    * Inserta delta idempotente (por external_event_id).
    * Solo debe llamarse si NO terminal.
    */
-  async applyDeltaIfNew(tx: PrismaService, input: {
+  async applyDeltaIfNew(tx: Prisma.TransactionClient, input: {
     actorExternalId: string;
     externalEventId: string;
     delta: string; // Decimal as string
     signalType: string;
-    metadata?: any;
+    metadata?: Record<string, unknown>;
   }) {
     const inserted = await tx.actor_history_score
       .create({
@@ -41,7 +42,7 @@ export class ActorScoringService {
           external_event_id: input.externalEventId,
           score_delta: input.delta,
           signal_type: input.signalType,
-          metadata: input.metadata ?? undefined,
+          metadata: input.metadata as Prisma.InputJsonObject | undefined,
         },
         select: { id: true },
       })

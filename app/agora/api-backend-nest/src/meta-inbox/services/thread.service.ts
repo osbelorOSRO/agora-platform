@@ -12,7 +12,7 @@ export type ThreadRow = {
   threadStatus: string;
   attentionMode: string;
   threadStage: string;
-  metadata: any;
+  metadata: unknown;
   displayName: string;
   firstName: string | null;
   lastName: string | null;
@@ -473,7 +473,7 @@ export class ThreadService {
       threadStatus: reopened.threadStatus,
       attentionMode: reopened.attentionMode,
       threadStage: reopened.threadStage,
-      stageControl: reopened.metadata?.stage_control ?? null,
+      stageControl: ((reopened.metadata as Record<string, unknown> | null)?.stage_control as Record<string, unknown> | null) ?? null,
       lastMessageText: reopened.lastMessageText,
       lastDirection: reopened.lastDirection,
       lastMessageAt: reopened.lastMessageAt ? new Date(reopened.lastMessageAt) : null,

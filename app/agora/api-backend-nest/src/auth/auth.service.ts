@@ -1,6 +1,6 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { VaultService } from './vault.service';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 
 @Injectable()
 export class AuthService {
@@ -21,7 +21,7 @@ export class AuthService {
 
   async firmarToken(payload: object, expiresIn: string | number = '12h'): Promise<string> {
     const key = await this.getPrivateKey();
-    return jwt.sign(payload, key, { algorithm: 'RS256', expiresIn } as any);
+    return jwt.sign(payload, key, { algorithm: 'RS256', expiresIn } as SignOptions);
   }
 
   private async getPublicKey(): Promise<string> {

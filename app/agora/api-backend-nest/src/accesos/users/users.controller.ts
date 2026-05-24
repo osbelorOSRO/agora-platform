@@ -5,6 +5,8 @@ import { UsersService } from './users.service';
 import { PanelJwtAuthGuard } from '../../auth/panel-jwt-auth.guard';
 import { RequirePermissionGuard } from '../guards/require-permission.guard';
 import { RequirePermission } from '../decorators/permission.decorator';
+import { PreregistrarUsuarioDto } from './dto/preregistrar-usuario.dto';
+import { ActualizarUsuarioDto } from './dto/actualizar-usuario.dto';
 
 @Controller('api/auth')
 @UseGuards(PanelJwtAuthGuard, RequirePermissionGuard)
@@ -14,8 +16,8 @@ export class UsersController {
 
   @Post('preregistrar-usuario')
   @HttpCode(201)
-  preregistrarUsuario(@Body() body: any, @Req() req: Request) {
-    return this.service.preregistrarUsuario(body.username, body.rolId, (req as any).userPayload?.id ?? null);
+  preregistrarUsuario(@Body() body: PreregistrarUsuarioDto, @Req() req: Request) {
+    return this.service.preregistrarUsuario(body.username, body.rolId, req.userPayload?.id ?? null);
   }
 
   @Get('usuarios')
@@ -24,37 +26,37 @@ export class UsersController {
   }
 
   @Patch('usuarios/:id')
-  actualizarUsuario(@Param('id', ParseIntPipe) id: number, @Body() body: any) {
+  actualizarUsuario(@Param('id', ParseIntPipe) id: number, @Body() body: ActualizarUsuarioDto) {
     return this.service.actualizarUsuario(id, body);
   }
 
   @Post('usuarios/:id/reset-password')
   @HttpCode(200)
   adminResetPassword(@Param('id', ParseIntPipe) id: number, @Req() req: Request) {
-    return this.service.adminResetPassword(id, (req as any).userPayload?.id);
+    return this.service.adminResetPassword(id, req.userPayload?.id);
   }
 
   @Post('usuarios/:id/reset-2fa')
   @HttpCode(200)
   reset2FA(@Param('id', ParseIntPipe) id: number, @Req() req: Request) {
-    return this.service.reset2FA(id, (req as any).userPayload?.id);
+    return this.service.reset2FA(id, req.userPayload?.id);
   }
 
   @Post('usuarios/:id/desbloquear')
   @HttpCode(200)
   desbloquear(@Param('id', ParseIntPipe) id: number, @Req() req: Request) {
-    return this.service.desbloquear(id, (req as any).userPayload?.id);
+    return this.service.desbloquear(id, req.userPayload?.id);
   }
 
   @Post('usuarios/:id/regenerar-invitacion')
   @HttpCode(200)
   regenerarInvitacion(@Param('id', ParseIntPipe) id: number, @Req() req: Request) {
-    return this.service.regenerarInvitacion(id, (req as any).userPayload?.id);
+    return this.service.regenerarInvitacion(id, req.userPayload?.id);
   }
 
   @Delete('usuarios/:id/preregistro')
   @HttpCode(200)
   cancelarPreregistro(@Param('id', ParseIntPipe) id: number, @Req() req: Request) {
-    return this.service.cancelarPreregistro(id, (req as any).userPayload?.id);
+    return this.service.cancelarPreregistro(id, req.userPayload?.id);
   }
 }

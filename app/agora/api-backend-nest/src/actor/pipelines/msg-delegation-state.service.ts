@@ -7,7 +7,7 @@ type PendingState = {
   status: 'PENDING' | 'ACKED' | 'COMPLETED' | 'FAILED';
   createdAt: string;
   updatedAt: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 };
 
 @Injectable()
@@ -35,7 +35,7 @@ export class MsgDelegationStateService {
   async setPending(input: {
     externalEventId: string;
     actorExternalId: string;
-    metadata?: any;
+    metadata?: Record<string, unknown>;
   }) {
     const now = new Date().toISOString();
     const value: PendingState = {
@@ -53,7 +53,7 @@ export class MsgDelegationStateService {
   async setAcked(input: {
     externalEventId: string;
     actorExternalId: string;
-    metadata?: any;
+    metadata?: Record<string, unknown>;
   }) {
     const key = this.pendingKey(input.externalEventId);
     const now = new Date().toISOString();

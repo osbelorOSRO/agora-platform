@@ -53,7 +53,7 @@ export class MessagesProcessor extends WorkerHost {
         })
       this.logger.log(`FLOW[MESSAGE] event_history ok externalEventId=${env.externalEventId}`);
 
-      await this.bootstrap.ensureActorExists(tx as any, env.actorExternalId);
+      await this.bootstrap.ensureActorExists(tx, env.actorExternalId);
       this.logger.log(`FLOW[MESSAGE] bootstrap ok actorExternalId=${env.actorExternalId}`);
     });
 
@@ -86,7 +86,7 @@ export class MessagesProcessor extends WorkerHost {
 
     await this.prisma.$transaction(async (tx) => {
       const delegationControl = await this.delegationGate.getDelegationControlState(
-        tx as any,
+        tx,
         env.actorExternalId,
         String(env.objectType || 'PAGE'),
       );
@@ -97,14 +97,14 @@ export class MessagesProcessor extends WorkerHost {
           `threadStatus=${delegationControl.threadStatus || 'null'} attentionMode=${delegationControl.attentionMode || 'null'}`,
         );
         if (delegationControl.reason === 'awaiting_first_incoming_delegate' && delegationControl.sessionId) {
-          await this.delegationGate.clearAwaitingFirstIncomingDelegate(tx as any, delegationControl.sessionId);
+          await this.delegationGate.clearAwaitingFirstIncomingDelegate(tx, delegationControl.sessionId);
         }
         return;
       }
 
       if (delegationControl?.sessionId && (delegationControl.attentionMode ?? 'N8N') === 'N8N') {
         const threadDelegationPayload = await this.delegationGate.buildThreadDelegationPayload(
-          tx as any,
+          tx,
           env,
           delegationControl,
         );
@@ -124,7 +124,7 @@ export class MessagesProcessor extends WorkerHost {
         );
       }
 
-      const state = await this.delegationGate.getLatestLifecycleState(tx as any, env.actorExternalId);
+      const state = await this.delegationGate.getLatestLifecycleState(tx, env.actorExternalId);
 
       if (state === 'QUALIFIED') {
         this.logger.log(`FLOW[MESSAGE] inbox branch actor=${env.actorExternalId} state=QUALIFIED`);
@@ -136,7 +136,7 @@ export class MessagesProcessor extends WorkerHost {
         return;
       }
 
-      const { isTerminal } = await this.scoring.getLifecycleState(tx as any, env.actorExternalId);
+      const { isTerminal } = await this.scoring.getLifecycleState(tx, env.actorExternalId);
 
       if (isTerminal) {
         this.logger.log(`FLOW[MESSAGE] terminal gate stop actorExternalId=${env.actorExternalId}`);

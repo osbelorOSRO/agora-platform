@@ -117,14 +117,14 @@ export class MsgDelegationFinalizer implements OnModuleInit, OnModuleDestroy {
     externalEventId: string;
     delta: string;
     signalType: string;
-    metadata?: any;
+    metadata?: Record<string, unknown>;
   }) {
     // Todo en tx: history_score + actor_score (si NO terminal)
     const shouldEnqueueTransition = await this.prisma.$transaction(async (tx) => {
-      const { isTerminal } = await this.scoring.getLifecycleState(tx as any, input.actorExternalId);
+      const { isTerminal } = await this.scoring.getLifecycleState(tx, input.actorExternalId);
       if (isTerminal) return false;
 
-      await this.scoring.applyDeltaIfNew(tx as any, {
+      await this.scoring.applyDeltaIfNew(tx, {
         actorExternalId: input.actorExternalId,
         externalEventId: input.externalEventId,
         delta: input.delta,
