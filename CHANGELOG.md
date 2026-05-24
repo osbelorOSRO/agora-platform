@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.3.0
+
+### Changed
+- `api-backend-nest`: eliminados todos los `as any` y `: any` accionables en lógica de negocio — `tx` tipado como `Prisma.TransactionClient`, `req.userPayload/botPayload` con module augmentation de `express.d.ts`, `metadata` como `Record<string, unknown>`, `body` de webhooks Meta con interfaz `MetaWebhookPayload`, `res/req` en rate-limiter con tipos Express, JWT con `SignOptions`.
+- `api-backend-nest`: `eslint-disable @typescript-eslint/no-explicit-any` en los `any` justificados (BullMQ job data, node-vault, payloads externos).
+- `api-backend-nest`: 3 DTOs nuevos con `class-validator` — `CreateRolDto`, `PreregistrarUsuarioDto`, `ActualizarUsuarioDto`.
+- `api-backend-nest`: `users.service.ts` — `omit: { token_2fa, mfa_new_secret }` en `findMany` y `omit` completo en `update` para evitar fuga accidental de campos sensibles.
+- `api-backend-nest`: 10+ raw queries reemplazadas por Prisma model API donde no había justificación (`findFirst`, `findUnique`, `upsert`, `update`) — `delegation-gate.service`, `thread.service`, `incoming-message-persistence.service`.
+- `api-backend-nest`: raw queries justificadas documentadas con comentario `// raw:` (LATERAL JOIN, `jsonb_set`, `RETURNING`, DDL).
+- `delegation-gate.service.spec.ts`: mocks actualizados para reflejar API Prisma (en lugar de `$queryRawUnsafe`).
+
 ## 2.2.0
 
 ### Added
