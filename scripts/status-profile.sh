@@ -29,7 +29,6 @@ fi
 
 project_for_file() {
   case "$1" in
-    "app/accesos/docker-compose.yml") echo "stack_accesos" ;;
     "app/agora/docker-compose.yml") echo "stack_agora" ;;
     
     "n8n/docker-compose.yml") echo "stack_n8n" ;;
@@ -54,7 +53,6 @@ echo "Perfil: $PROFILE"
 echo "HOST_BIND_IP=${HOST_BIND_IP:-unset} APP_ENV=${APP_ENV:-unset} TARGET_HOST=${TARGET_HOST:-unset}"
 echo ""
 
-print_compose_ps "app/accesos/docker-compose.yml"
 print_compose_ps "app/agora/docker-compose.yml"
 print_compose_ps "app/wa-backend/docker-compose.yml"
 print_compose_ps "n8n/docker-compose.yml"

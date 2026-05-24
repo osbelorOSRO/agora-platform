@@ -28,7 +28,6 @@ set +a
 
 project_for_file() {
   case "$1" in
-    "app/accesos/docker-compose.yml") echo "stack_accesos" ;;
     "app/agora/docker-compose.yml") echo "stack_agora" ;;
     "n8n/docker-compose.yml") echo "stack_n8n" ;;
     "redis/docker-compose.yml") echo "stack_redis" ;;
@@ -54,7 +53,6 @@ fi
 
 compose_up "n8n/whisper/docker-compose.yml"
 compose_up "n8n/tesseract/docker-compose.yml"
-compose_up "app/accesos/docker-compose.yml"
 compose_up "app/agora/docker-compose.yml"
 compose_up "app/wa-backend/docker-compose.yml"
 N8N_ENV_FILE="$ROOT_DIR/n8n/env/${PROFILE}.secrets.env"

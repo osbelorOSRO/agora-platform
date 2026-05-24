@@ -29,7 +29,6 @@ fi
 
 project_for_file() {
   case "$1" in
-    "app/accesos/docker-compose.yml") echo "stack_accesos" ;;
     "app/agora/docker-compose.yml") echo "stack_agora" ;;
     
     "n8n/docker-compose.yml") echo "stack_n8n" ;;
@@ -53,7 +52,6 @@ compose_down() {
 compose_down "n8n/docker-compose.yml"
 compose_down "app/wa-backend/docker-compose.yml"
 compose_down "app/agora/docker-compose.yml"
-compose_down "app/accesos/docker-compose.yml"
 
 echo ""
 echo "Perfil detenido: $PROFILE"

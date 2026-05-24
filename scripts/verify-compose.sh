@@ -29,7 +29,6 @@ fi
 
 project_for_file() {
   case "$1" in
-    "app/accesos/docker-compose.yml") echo "stack_accesos" ;;
     "app/agora/docker-compose.yml") echo "stack_agora" ;;
     
     "n8n/docker-compose.yml") echo "stack_n8n" ;;
@@ -50,7 +49,6 @@ validate_compose() {
   docker compose -p "$project" -f "$ROOT_DIR/$file" config >/dev/null
 }
 
-validate_compose "app/accesos/docker-compose.yml"
 validate_compose "app/agora/docker-compose.yml"
 validate_compose "app/wa-backend/docker-compose.yml"
 validate_compose "n8n/docker-compose.yml"

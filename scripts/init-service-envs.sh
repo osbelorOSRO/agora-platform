@@ -6,7 +6,6 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 services=(
   "app/agora/api-backend-nest"
   "app/agora/websocket"
-  "app/accesos/abackend"
   "app/wa-backend"
 )
 

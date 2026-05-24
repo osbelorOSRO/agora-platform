@@ -8,9 +8,8 @@ if [[ -z "$PROFILE" ]]; then
 fi
 
 containers=(
-  api_backend_nest
+  backend
   panel_websocket
-  abackend
   wa_backend
   n8n
   redis-server
