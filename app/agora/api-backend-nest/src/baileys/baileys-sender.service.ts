@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import axios from 'axios';
 
 type BaileysMessageType = 'text' | 'image' | 'audio' | 'document' | 'video';
@@ -15,7 +15,7 @@ export class BaileysSenderService {
 
   private resolveDestino(clienteId: string): string {
     const value = String(clienteId || '').trim();
-    if (!value) throw new Error('Falta destino WhatsApp.');
+    if (!value) throw new BadRequestException('Falta destino WhatsApp.');
     if (value.includes('@')) return value;
     return `${value}@s.whatsapp.net`;
   }
@@ -46,17 +46,17 @@ export class BaileysSenderService {
 
     switch (tipo) {
       case 'text':
-        if (!contenido) throw new Error('Falta contenido para mensaje de texto.');
+        if (!contenido) throw new BadRequestException('Falta contenido para mensaje de texto.');
         payload.contenido = { text: contenido };
         break;
 
       case 'image':
-        if (!urlArchivo) throw new Error('Falta URL de imagen.');
+        if (!urlArchivo) throw new BadRequestException('Falta URL de imagen.');
         payload.contenido = { image: { url: urlArchivo }, caption: contenido || '' };
         break;
 
       case 'audio':
-        if (!urlArchivo) throw new Error('Falta URL de audio.');
+        if (!urlArchivo) throw new BadRequestException('Falta URL de audio.');
         payload.contenido = {
           audio: { url: urlArchivo },
           mimetype: 'audio/ogg; codecs=opus',
@@ -65,7 +65,7 @@ export class BaileysSenderService {
         break;
 
       case 'document':
-        if (!urlArchivo) throw new Error('Falta URL de documento.');
+        if (!urlArchivo) throw new BadRequestException('Falta URL de documento.');
         payload.contenido = {
           document: { url: urlArchivo },
           mimetype: options?.mimeType || 'application/pdf',
@@ -75,12 +75,12 @@ export class BaileysSenderService {
         break;
 
       case 'video':
-        if (!urlArchivo) throw new Error('Falta URL de video.');
+        if (!urlArchivo) throw new BadRequestException('Falta URL de video.');
         payload.contenido = { video: { url: urlArchivo }, caption: contenido || '' };
         break;
 
       default:
-        throw new Error(`Tipo de mensaje no soportado: ${tipo}`);
+        throw new BadRequestException(`Tipo de mensaje no soportado: ${tipo}`);
     }
 
     const gatewayUrl = this.getGatewayUrl();
@@ -92,7 +92,7 @@ export class BaileysSenderService {
       };
       const internalToken = process.env.BAILEYS_INTERNAL_TOKEN;
       if (!internalToken) {
-        throw new Error('Missing required env BAILEYS_INTERNAL_TOKEN');
+        throw new InternalServerErrorException('Missing required env BAILEYS_INTERNAL_TOKEN');
       }
       headers['x-internal-token'] = internalToken;
 
@@ -130,7 +130,7 @@ export class BaileysSenderService {
     try {
       const internalToken = process.env.BAILEYS_INTERNAL_TOKEN;
       if (!internalToken) {
-        throw new Error('Missing required env BAILEYS_INTERNAL_TOKEN');
+        throw new InternalServerErrorException('Missing required env BAILEYS_INTERNAL_TOKEN');
       }
 
       const response = await axios.post(endpoint, input, {

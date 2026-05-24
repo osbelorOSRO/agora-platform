@@ -3,16 +3,21 @@ import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma/prisma.service';
 import { Q_ACTOR_TRANSITIONS } from '../../queues/queues.constants';
+import { TransitionRulesService } from './transition-rules.service';
+import { ActorLifecycleState } from '../actor.types';
 
 @Processor(Q_ACTOR_TRANSITIONS, { concurrency: 1 })
 export class ActorTransitionsProcessor extends WorkerHost {
   private readonly logger = new Logger(ActorTransitionsProcessor.name);
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly transitionRules: TransitionRulesService,
+  ) {
     super();
   }
 
-  async process(job: Job<any>) {
+  async process(job: Job<any>): Promise<void> {
     const { actorExternalId, triggerExternalEventId } = job.data;
     this.logger.log(
       `FLOW[TRANSITION] start actorExternalId=${actorExternalId}, triggerExternalEventId=${triggerExternalEventId || 'n/a'}`,
@@ -30,8 +35,9 @@ export class ActorTransitionsProcessor extends WorkerHost {
         return;
       }
 
-      // terminal => no hace nada
-      if (last.state === 'QUALIFIED' || last.state === 'BLOCKED') {
+      const currentState = last.state as ActorLifecycleState;
+
+      if (currentState === ActorLifecycleState.QUALIFIED || currentState === ActorLifecycleState.BLOCKED) {
         this.logger.log(`FLOW[TRANSITION] already terminal actorExternalId=${actorExternalId}`);
         return;
       }
@@ -41,25 +47,16 @@ export class ActorTransitionsProcessor extends WorkerHost {
         select: { score: true },
       });
 
-      const score: any = scoreRow?.score ?? 0;
+      const score = Number(scoreRow?.score ?? 0);
 
-      // OJO: aquí va tu tabla de reglas.
-      // Por ahora: ejemplo mínimo coherente:
-      let nextState: 'NEW' | 'CHURNED' | 'QUALIFIED' | 'BLOCKED' | null = null;
-
-      // score < 0 => BLOCKED
-      if (score < 0) nextState = 'BLOCKED';
-      // score >= 60 => QUALIFIED
-      else if (score >= 60) nextState = 'QUALIFIED';
-      // 0..60 y estaba NEW => CHURNED (si tu regla lo define)
-      else if (last.state === 'NEW') nextState = 'CHURNED';
+      const nextState = await this.transitionRules.resolveNextState(tx as any, score, currentState);
 
       if (!nextState) {
         this.logger.log(`FLOW[TRANSITION] no transition actorExternalId=${actorExternalId}`);
         return;
       }
-      if (nextState === last.state) {
-        this.logger.log(`FLOW[TRANSITION] unchanged state=${last.state} actorExternalId=${actorExternalId}`);
+      if (nextState === currentState) {
+        this.logger.log(`FLOW[TRANSITION] unchanged state=${currentState} actorExternalId=${actorExternalId}`);
         return;
       }
 
@@ -70,7 +67,7 @@ export class ActorTransitionsProcessor extends WorkerHost {
         },
       });
       this.logger.log(
-        `FLOW[TRANSITION] transitioned actorExternalId=${actorExternalId}, from=${last.state}, to=${nextState}`,
+        `FLOW[TRANSITION] transitioned actorExternalId=${actorExternalId}, from=${currentState}, to=${nextState}`,
       );
     });
   }

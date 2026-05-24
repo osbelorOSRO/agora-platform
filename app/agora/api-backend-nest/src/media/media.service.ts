@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import fs from 'fs';
 import path from 'path';
 import util from 'util';
@@ -59,7 +59,7 @@ export class MediaService {
       ]);
 
       if (!fs.existsSync(rutaOgg)) {
-        throw new Error('Error convirtiendo audio a formato WhatsApp');
+        throw new InternalServerErrorException('Error convirtiendo audio a formato WhatsApp');
       }
     } catch (error) {
       removeFileQuietly(rutaOriginal);

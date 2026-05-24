@@ -38,10 +38,10 @@ function respuestaLimite(res: any) {
   res.status(429).json({ error: 'Demasiadas solicitudes. Intenta más tarde.' });
 }
 
-// POST /media/guardar — llamado por wa-backend al recibir media entrante
+// POST /media/guardar — circuit breaker para wa-backend (IP única Docker)
 export const limitadorMediaGuardar = rateLimit({
   windowMs: 60 * 1000,
-  max: 60,
+  max: 150,
   standardHeaders: true,
   legacyHeaders: false,
   store: crearStore('media:guardar'),
@@ -71,10 +71,10 @@ export const limitadorMediaSend = rateLimit({
   skip: () => !redisClient,
 });
 
-// POST /internal/baileys/events — wa-backend envía evento por cada mensaje WA
+// POST /internal/baileys/events — circuit breaker para wa-backend (IP única Docker)
 export const limitadorBaileysEvents = rateLimit({
   windowMs: 60 * 1000,
-  max: 120,
+  max: 300,
   standardHeaders: true,
   legacyHeaders: false,
   store: crearStore('baileys:events'),
@@ -181,7 +181,7 @@ export const limitadorLegal = rateLimit({
   skip: () => !redisClient,
 });
 
-// Accesos auth
+// Accesos auth — fail-closed: si Redis cae, bloquear en lugar de dejar pasar
 export const limitadorLogin = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
@@ -189,6 +189,7 @@ export const limitadorLogin = rateLimit({
   legacyHeaders: false,
   store: crearStore('login'),
   handler: (_req, res) => respuestaLimite(res),
+  passOnStoreError: false,
   skip: () => !redisClient,
 });
 
@@ -199,6 +200,7 @@ export const limitadorRecuperacion = rateLimit({
   legacyHeaders: false,
   store: crearStore('recuperacion'),
   handler: (_req, res) => respuestaLimite(res),
+  passOnStoreError: false,
   skip: () => !redisClient,
 });
 
@@ -209,6 +211,7 @@ export const limitadorRegistro = rateLimit({
   legacyHeaders: false,
   store: crearStore('registro'),
   handler: (_req, res) => respuestaLimite(res),
+  passOnStoreError: false,
   skip: () => !redisClient,
 });
 
@@ -218,6 +221,28 @@ export const limitadorSesionesAdmin = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: crearStore('sesiones:admin'),
+  handler: (_req, res) => respuestaLimite(res),
+  skip: () => !redisClient,
+});
+
+// /settings/* — configuración admin (panel humano con permiso editar_configuracion)
+export const limitadorSettings = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  store: crearStore('settings'),
+  handler: (_req, res) => respuestaLimite(res),
+  skip: () => !redisClient,
+});
+
+// GET / — ruta raíz pública
+export const limitadorRaiz = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  store: crearStore('raiz'),
   handler: (_req, res) => respuestaLimite(res),
   skip: () => !redisClient,
 });

@@ -4,11 +4,11 @@ import type { Request } from 'express';
 import { RolesService } from './roles.service';
 import { PanelJwtAuthGuard } from '../../auth/panel-jwt-auth.guard';
 import { RequirePermissionGuard } from '../guards/require-permission.guard';
-import { RequierePermiso } from '../decorators/permiso.decorator';
+import { RequirePermission } from '../decorators/permission.decorator';
 
 @Controller('api/roles')
 @UseGuards(PanelJwtAuthGuard, RequirePermissionGuard)
-@RequierePermiso('editar_configuracion')
+@RequirePermission('editar_configuracion')
 export class RolesController {
   constructor(private readonly service: RolesService) {}
 

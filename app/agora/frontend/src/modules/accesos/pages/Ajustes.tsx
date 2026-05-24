@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { KeyRound, Users, Activity, Wrench, LayoutList, PackageOpen, Plug } from "lucide-react";
+import { KeyRound, Users, Activity, Wrench, LayoutList, PackageOpen, Plug, GitMerge, Zap } from "lucide-react";
 import { getTokenData } from "@/utils/getTokenData";
 import { hasPermission } from "@/utils/permissions";
 
@@ -21,6 +21,21 @@ const adminCards = [
     title: "Sesiones activas",
     description: "Control en vivo de sesiones abiertas. Permite cerrar sesiones individualmente.",
     Icon: Activity,
+  },
+];
+
+const scoringCards = [
+  {
+    to: "/accesos/ajustes/transicion",
+    title: "Reglas de transición",
+    description: "Umbrales de score que determinan el estado del actor (QUALIFIED, CHURNED, etc.).",
+    Icon: GitMerge,
+  },
+  {
+    to: "/accesos/ajustes/senales",
+    title: "Señales de puntuación",
+    description: "Deltas de score por tipo de señal detectada en conversaciones.",
+    Icon: Zap,
   },
 ];
 
@@ -93,6 +108,25 @@ export default function Ajustes() {
             </Link>
           ))}
         </div>
+
+        <>
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#666666]">
+            Scoring & Ciclo de vida
+          </p>
+          <div className="grid gap-4 md:grid-cols-2">
+            {scoringCards.map(({ to, title, description, Icon }) => (
+              <Link
+                key={to}
+                to={to}
+                className="rounded-2xl border border-[#2D2D2D] bg-[#141414] p-6 transition hover:bg-[#1A1A1A]"
+              >
+                <Icon className="mb-4 h-8 w-8 text-white" />
+                <h2 className="text-xl font-semibold">{title}</h2>
+                <p className="mt-2 text-sm text-[#BFBFBF]">{description}</p>
+              </Link>
+            ))}
+          </div>
+        </>
 
         {visibleTools.length > 0 && (
           <>

@@ -876,6 +876,20 @@ model n8n_message_sessions {
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model lifecycle_transition_rules {
+  id                     String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  target_state           actor_state
+  score_operator         score_operator?
+  score_threshold        Decimal?        @db.Decimal(10, 2)
+  required_current_state actor_state?
+  priority               Int
+  is_active              Boolean         @default(true)
+  description            String?
+  created_at             DateTime        @default(now()) @db.Timestamptz(6)
+
+  @@index([is_active, priority], map: "idx_lifecycle_transition_rules_active_priority")
+}
+
 model signal_scoring_rules {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   signal_type String   @unique @db.VarChar(100)
@@ -1036,6 +1050,14 @@ enum actor_state {
   CHURNED
   QUALIFIED
   BLOCKED
+}
+
+enum score_operator {
+  lt
+  lte
+  gt
+  gte
+  eq
 }
 
 enum meta_object_type {

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { PrismaService } from '../../database/prisma/prisma.service';
@@ -99,7 +99,7 @@ export class MsgDelegationCompletionService {
     }
 
     if (!input.signalType) {
-      throw new Error(`signalType is required when hasSignal=true externalEventId=${input.externalEventId}`);
+      throw new BadRequestException(`signalType is required when hasSignal=true externalEventId=${input.externalEventId}`);
     }
 
     const shouldEnqueueTransition = await this.prisma.$transaction(async (tx) => {
@@ -112,7 +112,7 @@ export class MsgDelegationCompletionService {
         actorExternalId: input.actorExternalId,
         externalEventId: input.externalEventId,
         delta: resolvedDelta,
-        signalType: input.signalType,
+        signalType: input.signalType!,
         metadata: {
           ...(metadata ?? { source: 'n8n.callback' }),
           resolvedDelta,

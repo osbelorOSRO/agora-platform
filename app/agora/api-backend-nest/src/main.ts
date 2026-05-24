@@ -23,6 +23,8 @@ import {
   limitadorRecuperacion,
   limitadorRegistro,
   limitadorSesionesAdmin,
+  limitadorSettings,
+  limitadorRaiz,
 } from './shared/rate-limiter';
 
 
@@ -78,6 +80,8 @@ async function bootstrap() {
   app.use('/api/auth/setup-2fa', limitadorRecuperacion);
   app.use('/api/auth/sesiones-activas-admin', limitadorSesionesAdmin);
   app.use('/api/auth/sesiones', limitadorSesionesAdmin);
+  app.use('/settings', limitadorSettings);
+  app.use('/', limitadorRaiz);
 
   await app.listen(port);
 }

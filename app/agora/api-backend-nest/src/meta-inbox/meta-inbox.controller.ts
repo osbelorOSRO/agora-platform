@@ -36,6 +36,10 @@ import { SendThreadMessageDto } from './dto/send-thread-message.dto';
 import { WhatsappIdentityResolveDto } from './dto/whatsapp-identity-resolve.dto';
 import { WhatsappBlockStatusDto } from './dto/whatsapp-block-status.dto';
 import { SendMediaDto } from './dto/send-media.dto';
+import { ListThreadsQueryDto } from './dto/list-threads-query.dto';
+import { ListContactsQueryDto } from './dto/list-contacts-query.dto';
+import { ListAdLeadStatsQueryDto } from './dto/list-ad-lead-stats-query.dto';
+import { ListMessagesQueryDto } from './dto/list-messages-query.dto';
 import { PanelJwtAuthGuard } from '../auth/panel-jwt-auth.guard';
 
 @Controller('meta-inbox')
@@ -55,32 +59,14 @@ export class MetaInboxController {
 
   @Get('threads')
   @UseGuards(PanelJwtAuthGuard)
-  async listThreads(
-    @Query('limit') limit?: string,
-    @Query('offset') offset?: string,
-    @Query('includeClosed') includeClosed?: string,
-  ) {
-    return this.metaInbox.listThreads({
-      limit: this.parseLimit(limit, 100, 200),
-      offset: this.parseOffset(offset),
-      includeClosed: includeClosed === 'true',
-    });
+  async listThreads(@Query() query: ListThreadsQueryDto) {
+    return this.metaInbox.listThreads(query);
   }
 
   @Get('contacts')
   @UseGuards(PanelJwtAuthGuard)
-  async listContacts(
-    @Query('search') search?: string,
-    @Query('objectType') objectType?: string,
-    @Query('limit') limit?: string,
-    @Query('offset') offset?: string,
-  ) {
-    return this.metaInbox.listContacts({
-      search,
-      objectType,
-      limit: this.parseLimit(limit, 50, 200),
-      offset: this.parseOffset(offset),
-    });
+  async listContacts(@Query() query: ListContactsQueryDto) {
+    return this.metaInbox.listContacts(query);
   }
 
   @Post('contacts/whatsapp')
@@ -109,23 +95,17 @@ export class MetaInboxController {
 
   @Get('whatsapp/ad-leads/stats')
   @UseGuards(PanelJwtAuthGuard)
-  async listWhatsappAdLeadStats(
-    @Query('sourceId') sourceId?: string,
-    @Query('limit') limit?: string,
-  ) {
-    return this.metaInbox.listWhatsappAdLeadStats({
-      sourceId,
-      limit: this.parseLimit(limit, 100, 1000),
-    });
+  async listWhatsappAdLeadStats(@Query() query: ListAdLeadStatsQueryDto) {
+    return this.metaInbox.listWhatsappAdLeadStats(query);
   }
 
   @Get('threads/:sessionId/messages')
   @UseGuards(PanelJwtAuthGuard)
   async listMessages(
     @Param('sessionId') sessionId: string,
-    @Query('includeSystem') includeSystem?: string,
+    @Query() query: ListMessagesQueryDto,
   ) {
-    return this.metaInbox.listMessages(sessionId, includeSystem === 'true');
+    return this.metaInbox.listMessages(sessionId, query.includeSystem);
   }
 
   @Get('stage-templates/:stageActual')
@@ -307,15 +287,4 @@ export class MetaInboxController {
     }
   }
 
-  private parseLimit(raw: string | undefined, fallback: number, max: number): number {
-    const parsed = raw ? Number(raw) : fallback;
-    if (!Number.isFinite(parsed) || parsed < 1) return fallback;
-    return Math.min(Math.floor(parsed), max);
-  }
-
-  private parseOffset(raw: string | undefined): number {
-    const parsed = raw ? Number(raw) : 0;
-    if (!Number.isFinite(parsed) || parsed < 0) return 0;
-    return Math.floor(parsed);
-  }
 }

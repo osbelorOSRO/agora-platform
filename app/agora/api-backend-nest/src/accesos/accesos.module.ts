@@ -1,29 +1,28 @@
 import { Module, OnModuleInit } from '@nestjs/common';
-import { AccesosAuthModule } from './accesos-auth/accesos-auth.module';
-import { SesionesModule } from './sesiones/sesiones.module';
-import { UsuariosModule } from './usuarios/usuarios.module';
+import { AccessAuthModule } from './access-auth/access-auth.module';
+import { SessionsModule } from './sessions/sessions.module';
+import { SessionsService } from './sessions/sessions.service';
+import { UsersModule } from './users/users.module';
 import { RolesModule } from './roles/roles.module';
-import { PermisosModule } from './permisos/permisos.module';
+import { PermissionsModule } from './permissions/permissions.module';
 import { ServiceTokenModule } from './service-token/service-token.module';
-import { ReportesModule } from './reportes/reportes.module';
-import { AccesosAuthService } from './accesos-auth/accesos-auth.service';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
-    AccesosAuthModule,
-    SesionesModule,
-    UsuariosModule,
+    AccessAuthModule,
+    SessionsModule,
+    UsersModule,
     RolesModule,
-    PermisosModule,
+    PermissionsModule,
     ServiceTokenModule,
-    ReportesModule,
+    ReportsModule,
   ],
 })
-export class AccesosModule implements OnModuleInit {
-  constructor(private readonly accesosAuthService: AccesosAuthService) {}
+export class AccessModule implements OnModuleInit {
+  constructor(private readonly sessionsService: SessionsService) {}
 
   onModuleInit() {
-    // Clean up expired sessions every hour
-    setInterval(() => this.accesosAuthService.limpiarSesionesExpiradas(), 60 * 60 * 1000);
+    setInterval(() => this.sessionsService.limpiarSesionesExpiradas(), 60 * 60 * 1000);
   }
 }

@@ -1,6 +1,13 @@
 import { Module } from '@nestjs/common';
 import { MetaInboxController } from './meta-inbox.controller';
 import { MetaInboxService } from './meta-inbox.service';
+import { MetaInboxSchemaService } from './services/meta-inbox-schema.service';
+import { ThreadService } from './services/thread.service';
+import { ContactService } from './services/contact.service';
+import { MessageSendService } from './services/message-send.service';
+import { OfferContextService } from './services/offer-context.service';
+import { WhatsappIdentityService } from './services/whatsapp-identity.service';
+import { ThreadEventService } from './services/thread-event.service';
 import { PrismaService } from '../database/prisma/prisma.service';
 import { WebsocketNotifierModule } from '../websocket-notifier/websocket-notifier.module';
 import { BaileysModule } from '../baileys/baileys.module';
@@ -10,7 +17,17 @@ import { MinioModule } from '../minio/minio.module';
 @Module({
   imports: [WebsocketNotifierModule, BaileysModule, AuthModule, MinioModule],
   controllers: [MetaInboxController],
-  providers: [MetaInboxService, PrismaService],
-  exports: [MetaInboxService],
+  providers: [
+    PrismaService,
+    MetaInboxSchemaService,
+    ThreadEventService,
+    WhatsappIdentityService,
+    OfferContextService,
+    ThreadService,
+    ContactService,
+    MessageSendService,
+    MetaInboxService,
+  ],
+  exports: [MetaInboxService, ThreadEventService],
 })
 export class MetaInboxModule {}

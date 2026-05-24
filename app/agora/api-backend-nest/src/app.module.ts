@@ -1,6 +1,7 @@
 import { Module, Global } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaService } from './database/prisma/prisma.service';
+import { CoreModule } from './core/core.module';
 import { HealthModule } from './health/health.module';
 import { AuthModule } from './auth/auth.module';
 import { MediaModule } from './media/media.module';
@@ -19,7 +20,8 @@ import { StageTemplatesModule } from './stage-templates/stage-templates.module';
 import { OffersModule } from './offers/offers.module';
 import { MetaConfigModule } from './meta-config/meta-config.module';
 import { UserProfileModule } from './user-profile/user-profile.module';
-import { AccesosModule } from './accesos/accesos.module';
+import { AccessModule } from './accesos/accesos.module';
+import { SettingsModule } from './settings/settings.module';
 
 @Global()
 @Module({
@@ -27,8 +29,10 @@ import { AccesosModule } from './accesos/accesos.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    CoreModule,
     HealthModule,
-    AccesosModule,
+    AccessModule,
+    SettingsModule,
     AuthModule,
     MediaModule,
     BaileysModule,

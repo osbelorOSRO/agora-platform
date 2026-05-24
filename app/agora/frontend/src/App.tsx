@@ -15,6 +15,8 @@ import Ajustes from "./modules/accesos/pages/Ajustes";
 import Sesiones from "./modules/accesos/pages/Sesiones";
 import Reportes from "./modules/accesos/pages/Reportes";
 import WaControlPage from "./modules/wa/pages/WaControlPage";
+import TransitionRules from "./modules/accesos/pages/TransitionRules";
+import SignalScoringRules from "./modules/accesos/pages/SignalScoringRules";
 import StageTemplatesPage from "./pages/StageTemplatesPage";
 import OffersPage from "./pages/OffersPage";
 import MetaConfigPage from "./pages/MetaConfigPage";
@@ -109,6 +111,22 @@ function App() {
             element={
               <ProtectedRoute requiredPermissions={["editar_configuracion"]}>
                 <Sesiones />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/accesos/ajustes/transicion"
+            element={
+              <ProtectedRoute requiredPermissions={["editar_configuracion"]}>
+                <TransitionRules />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/accesos/ajustes/senales"
+            element={
+              <ProtectedRoute requiredPermissions={["editar_configuracion"]}>
+                <SignalScoringRules />
               </ProtectedRoute>
             }
           />

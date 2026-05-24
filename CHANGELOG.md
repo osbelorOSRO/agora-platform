@@ -1,5 +1,28 @@
 # Changelog
 
+## 2.2.0
+
+### Added
+- Tabla `lifecycle_transition_rules` y enum `score_operator` en Prisma: reglas de transición de estado del actor extraídas del código hardcodeado a DB configurable.
+- `TransitionRulesService` en `actor/transitions/`: resuelve el estado destino consultando las reglas activas por prioridad.
+- Módulo `settings/` con endpoints `GET/PATCH /settings/transition-rules` y `GET/PATCH /settings/signal-scoring-rules`, protegidos con permiso `editar_configuracion`.
+- Dos nuevas páginas en el frontend de Ajustes: `TransitionRules` y `SignalScoringRules` con tablas editables inline.
+- Tarjetas "Reglas de transición" y "Señales de puntuación" en la sección Scoring & Ciclo de vida de Ajustes.
+- Rate limiters `limitadorSettings` (30 req/min) y `limitadorRaiz` (60 req/min) en `rate-limiter.ts`.
+- DTOs con `class-validator` para los 5 endpoints de `access-auth`: `LoginDto`, `RegisterUserDto`, `ResetPasswordDto`, `Setup2FAInitDto`, `Setup2FAConfirmDto`.
+- 4 DTOs de query params para `meta-inbox.controller.ts`: `ListThreadsQueryDto`, `ListContactsQueryDto`, `ListAdLeadStatsQueryDto`, `ListMessagesQueryDto`.
+- Enums `ActorLifecycleState` y `ScoreOperator` en `actor/actor.types.ts`.
+
+### Changed
+- Módulo `accesos/`: todos los subdirectorios y clases renombrados a inglés técnico (`sesiones→sessions`, `usuarios→users`, `permisos→permissions`, `reportes→reports`, `accesos-auth→access-auth`, `RequierePermiso→RequirePermission`).
+- `limpiarSesionesExpiradas()` movido de `AccessAuthService` a `SessionsService`; `AccesosModule→AccessModule` lo llama vía `SessionsService`.
+- `actor-transitions.processor.ts`: lógica hardcodeada de transición reemplazada por llamada a `TransitionRulesService`.
+- Rate limiters de auth (`login`, `registro`, `recuperacion`) configurados con `passOnStoreError: false` (fail-closed).
+- `limitadorMediaGuardar` subido a 150 req/min y `limitadorBaileysEvents` a 300 req/min para tráfico interno Docker.
+- Excepciones `throw new Error()` en servicios HTTP reemplazadas por `NotFoundException`, `BadRequestException`, `UnprocessableEntityException`, `InternalServerErrorException`.
+- Validaciones manuales de tipo/longitud en `AccessAuthService` eliminadas (cubiertas por DTOs + `ValidationPipe` global).
+- `meta-inbox.controller.ts`: métodos `parseLimit()`/`parseOffset()` eliminados, reemplazados por DTOs tipados.
+
 ## 2.1.0
 
 ### Added
