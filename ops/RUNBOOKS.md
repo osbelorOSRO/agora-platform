@@ -31,7 +31,6 @@
    - `n8n/env/<perfil>.secrets.env`
    - `app/agora/api-backend-nest/.env`
    - `app/agora/websocket/.env`
-   - `app/accesos/abackend/.env`
    - `app/wa-backend/.env`
 4. Validar env y compose:
    ```bash
@@ -85,9 +84,8 @@ Vault es el gestor centralizado de secretos del stack. Los servicios que lo cons
 
 | Servicio | Para qué |
 |---|---|
-| `api-backend-nest` | Claves de JWT, tokens internos, API keys de integraciones |
-| `websocket` | Token compartido con `api-backend-nest` (`API_KEY_WS`) |
-| `abackend` | Claves de firma JWT, claves RSA públicas/privadas |
+| `backend` | Claves de JWT, firma RSA, tokens internos, API keys de integraciones |
+| `websocket` | Token compartido con `backend` (`API_KEY_WS`) |
 | `n8n` | Credenciales de automatizaciones y accesos a servicios externos |
 
 ### Qué debe configurar el desarrollador en un host nuevo
@@ -110,4 +108,4 @@ Cada servicio resuelve `VAULT_ADDR` desde su propio `.env` (no versionado). Si e
 
 - Mapa completo de secretos por servicio y path: `ops/docs/DOC-SECRETS-MAP-VAULT.md`
 - AppRoles, policies y bootstrap de n8n: `ops/docs/DOC-N8N-VAULT-APPROLE.md`
-- Gestión del secreto compartido entre servicios: `README-OPERACION.md` → sección "Vault compartido entre api_backend_nest y websocket"
+- Gestión del secreto compartido entre servicios: `README-OPERACION.md` → sección "Vault compartido entre backend y websocket"

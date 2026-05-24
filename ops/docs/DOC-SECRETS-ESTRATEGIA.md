@@ -16,7 +16,7 @@ Los scripts (`up/down/status/verify-compose`) priorizan `*.secrets.env`.
 ## Estado por servicio
 - `vault`, `postgres`, `redis`: operan fuera del repo (compose propio en el host).
 - `n8n`, `whisper`, `tesseract`: template en repo (`n8n/`), estado y secretos fuera.
-- Servicios core (`api-backend-nest`, `websocket`, `abackend`, `wa-backend`, `frontend`): `.env` local por servicio (no versionado).
+- Servicios core (`backend`, `websocket`, `wa-backend`, `frontend`): `.env` local por servicio (no versionado).
 
 ## Plan para N8N + Vault (pragmatico)
 1. Mantener `n8n/env/*.secrets.env` como mecanismo actual estable.

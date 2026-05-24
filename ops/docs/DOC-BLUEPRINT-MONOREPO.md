@@ -14,8 +14,6 @@ agora-platform/
       frontend/          # React (Nginx)
       api-backend-nest/  # API REST principal (NestJS)
       websocket/         # WebSocket panel humano (Socket.IO)
-    accesos/
-      abackend/          # Autenticación y accesos (Express)
     wa-backend/          # Bridge WhatsApp/Baileys (Express)
     env/                 # Templates de configuración por perfil (app)
 
@@ -37,9 +35,8 @@ agora-platform/
 | Contenedor | Stack | Descripción |
 |---|---|---|
 | `panel_frontend` | app/agora | Frontend React |
-| `api_backend_nest` | app/agora | API REST principal |
+| `backend` | app/agora | API REST principal + AccesosModule (NestJS) |
 | `panel_websocket` | app/agora | WebSocket panel humano |
-| `abackend` | app/accesos | Autenticación y accesos |
 | `wa-backend` | app/wa-backend | Bridge WhatsApp/Baileys |
 
 ## 4. Servicios de Soporte (fuera del repo)

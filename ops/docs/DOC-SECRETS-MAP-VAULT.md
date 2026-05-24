@@ -11,7 +11,6 @@
 - Base por servicio:
   - `secret/data/agora/api-backend-nest`
   - `secret/data/agora/websocket`
-  - `secret/data/accesos/abackend`
   - `secret/data/wa-backend`
   - `secret/data/n8n/<perfil>` (bootstrap)
 
@@ -21,14 +20,7 @@ Opcional por entorno:
 
 ## Mapa de secretos a migrar
 
-### 1) accesos/abackend
-Path sugerido:
-- `secret/data/accesos/abackend`
-
-Keys:
-- `DATABASE_URL`
-
-### 2) agora/api-backend-nest
+### 1) agora/api-backend-nest
 Path sugerido:
 - `secret/data/agora/api-backend-nest`
 
