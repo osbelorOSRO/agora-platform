@@ -46,7 +46,10 @@ export class ActorScoringService {
         select: { id: true },
       })
       .then(() => true)
-      .catch(() => false);
+      .catch((e: Error & { code?: string }) => {
+        if (e?.code !== 'P2002') throw e;
+        return false; // unique ya existe → delta ya aplicado
+      });
 
     if (!inserted) return { inserted: false };
 

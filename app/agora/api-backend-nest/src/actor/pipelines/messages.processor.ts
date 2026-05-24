@@ -51,7 +51,6 @@ export class MessagesProcessor extends WorkerHost {
           payload: env.payload,
           occurredAt: new Date(env.occurredAt),
         })
-        .catch(() => {});
       this.logger.log(`FLOW[MESSAGE] event_history ok externalEventId=${env.externalEventId}`);
 
       await this.bootstrap.ensureActorExists(tx as any, env.actorExternalId);

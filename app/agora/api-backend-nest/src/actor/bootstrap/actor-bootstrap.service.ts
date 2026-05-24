@@ -47,7 +47,8 @@ export class ActorBootstrapService {
           metadata: { reason: 'actor_birth' },
         },
       })
-      .catch(() => {
+      .catch((e: Error & { code?: string }) => {
+        if (e?.code !== 'P2002') throw e;
         // unique ya existe → ok
       });
 

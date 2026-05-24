@@ -43,9 +43,6 @@ export class ChangesProcessor extends WorkerHost {
           payload: env.payload,
           occurredAt: new Date(env.occurredAt),
         })
-        .catch(() => {
-          // idempotencia por external_event_id (unique)
-        });
       this.logger.log(`FLOW[CHANGE] event_history ok externalEventId=${env.externalEventId}`);
 
       // 2) bootstrap
