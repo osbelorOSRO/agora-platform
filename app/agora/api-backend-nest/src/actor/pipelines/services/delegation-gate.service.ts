@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { MessageNormalizerService } from './message-normalizer.service';
 
 export type LifecycleState = 'NEW' | 'CHURNED' | 'QUALIFIED' | 'BLOCKED' | null;
@@ -61,54 +62,31 @@ export class DelegationGateService {
     return eventKind === 'message' && direction === 'INCOMING';
   }
 
-  async getLatestLifecycleState(tx: { $queryRawUnsafe: (...args: unknown[]) => Promise<unknown> }, actorExternalId: string): Promise<LifecycleState> {
-    const rows = (await tx.$queryRawUnsafe(
-      `
-      SELECT state
-      FROM actor_lifecycle
-      WHERE actor_external_id = $1
-      ORDER BY occurred_at DESC
-      LIMIT 1
-    `,
-      actorExternalId,
-    )) as Array<{ state: LifecycleState }>;
-    return rows[0]?.state ?? null;
+  async getLatestLifecycleState(tx: Prisma.TransactionClient, actorExternalId: string): Promise<LifecycleState> {
+    const row = await tx.actor_lifecycle.findFirst({
+      where: { actor_external_id: actorExternalId },
+      orderBy: { occurred_at: 'desc' },
+      select: { state: true },
+    });
+    return (row?.state as LifecycleState) ?? null;
   }
 
   async getDelegationControlState(
-    tx: { $queryRawUnsafe: (...args: unknown[]) => Promise<unknown> },
+    tx: Prisma.TransactionClient,
     actorExternalId: string,
     objectType: string,
   ): Promise<DelegationControlState> {
-    const rows = (await tx.$queryRawUnsafe(
-      `
-      SELECT
-        session_id AS "sessionId",
-        thread_status AS "threadStatus",
-        attention_mode AS "attentionMode",
-        thread_stage AS "threadStage",
-        awaiting_first_incoming_delegate AS "awaitingFirstIncomingDelegate"
-      FROM threads
-      WHERE actor_external_id = $1
-        AND object_type = $2
-      ORDER BY updated_at DESC
-      LIMIT 1
-    `,
-      actorExternalId,
-      objectType,
-    )) as Array<{
-      sessionId: string | null;
-      threadStatus: string | null;
-      attentionMode: string | null;
-      threadStage: string | null;
-      awaitingFirstIncomingDelegate: boolean | null;
-    }>;
+    const row = await tx.threads.findFirst({
+      where: { actor_external_id: actorExternalId, object_type: objectType },
+      orderBy: { updated_at: 'desc' },
+      select: { session_id: true, thread_status: true, attention_mode: true, thread_stage: true, awaiting_first_incoming_delegate: true },
+    });
 
-    const sessionId = rows[0]?.sessionId ?? null;
-    const threadStatus = rows[0]?.threadStatus ?? null;
-    const attentionMode = rows[0]?.attentionMode ?? null;
-    const threadStage = rows[0]?.threadStage ?? null;
-    const awaitingFirstIncomingDelegate = rows[0]?.awaitingFirstIncomingDelegate === true;
+    const sessionId = row?.session_id ?? null;
+    const threadStatus = row?.thread_status ?? null;
+    const attentionMode = row?.attention_mode ?? null;
+    const threadStage = row?.thread_stage ?? null;
+    const awaitingFirstIncomingDelegate = row?.awaiting_first_incoming_delegate === true;
 
     if (awaitingFirstIncomingDelegate) {
       return { blocked: true, reason: 'awaiting_first_incoming_delegate', sessionId, threadStatus, attentionMode, threadStage, awaitingFirstIncomingDelegate };
@@ -126,22 +104,17 @@ export class DelegationGateService {
   }
 
   async clearAwaitingFirstIncomingDelegate(
-    tx: { $executeRawUnsafe: (...args: unknown[]) => Promise<unknown> },
+    tx: Prisma.TransactionClient,
     sessionId: string,
   ): Promise<void> {
-    await tx.$executeRawUnsafe(
-      `
-      UPDATE threads
-      SET awaiting_first_incoming_delegate = false,
-          updated_at = now()
-      WHERE session_id = $1
-    `,
-      sessionId,
-    );
+    await tx.threads.update({
+      where: { session_id: sessionId },
+      data: { awaiting_first_incoming_delegate: false, updated_at: new Date() },
+    });
   }
 
   async buildThreadDelegationPayload(
-    tx: { $queryRawUnsafe: (...args: unknown[]) => Promise<unknown> },
+    tx: Prisma.TransactionClient,
     env: Record<string, unknown>,
     delegationControl: {
       sessionId: string | null;
@@ -162,6 +135,7 @@ export class DelegationGateService {
     const structuredPayload = this.normalizer.resolveStructuredPayload(payload, eventKind);
     const sessionId = String(delegationControl.sessionId || '');
 
+    // raw: LATERAL JOIN para actor_lifecycle más reciente + actor_score en un solo query
     const threadRows = (await tx.$queryRawUnsafe(
       `
       SELECT

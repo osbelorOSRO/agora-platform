@@ -17,6 +17,7 @@ export class IncomingMessagePersistenceService {
     private readonly normalizer: MessageNormalizerService,
   ) {}
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async persistMessageSession(env: any): Promise<{ inserted: boolean; primedFirstDelegate: boolean }> {
     const payload = env?.payload || {};
     const eventKind = String(env?.eventType || '').replace(/^messaging\./, '') || 'unknown';
@@ -63,6 +64,7 @@ export class IncomingMessagePersistenceService {
       await this.upsertWhatsappContactFromIncoming(env, contentJson);
     }
 
+    // raw: ON CONFLICT DO NOTHING + RETURNING — Prisma create no soporta RETURNING con skip de duplicados
     const insertedRows = await this.prisma.$queryRawUnsafe<Array<{ externalEventId: string }>>(
       `INSERT INTO thread_messages (
         session_id, external_event_id, message_external_id, actor_external_id,
@@ -183,6 +185,7 @@ export class IncomingMessagePersistenceService {
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async handlePageEcho(env: any): Promise<void> {
     const payload = env?.payload || {};
     const recipientId = String(payload?.recipientId || payload?.recipient?.id || '').trim();
@@ -193,17 +196,13 @@ export class IncomingMessagePersistenceService {
       return;
     }
 
-    const threadRows = await this.prisma.$queryRawUnsafe<Array<{ sessionId: string }>>(
-      `SELECT session_id AS "sessionId"
-       FROM threads
-       WHERE actor_external_id = $1 AND object_type = $2
-       ORDER BY updated_at DESC, last_message_at DESC NULLS LAST
-       LIMIT 1`,
-      recipientId,
-      objectType,
-    );
+    const threadRow = await this.prisma.threads.findFirst({
+      where: { actor_external_id: recipientId, object_type: objectType },
+      orderBy: [{ updated_at: 'desc' }, { last_message_at: { sort: 'desc', nulls: 'last' } }],
+      select: { session_id: true },
+    });
 
-    const sessionId = threadRows[0]?.sessionId;
+    const sessionId = threadRow?.session_id;
     if (!sessionId) {
       this.logger.log(`FLOW[MESSAGE] page_echo skip no_thread recipient=${recipientId} externalEventId=${env.externalEventId}`);
       return;
@@ -323,7 +322,7 @@ export class IncomingMessagePersistenceService {
     lastMessageText: string | null;
     lastDirection: 'INCOMING' | 'OUTGOING' | 'SYSTEM';
     lastMessageAt: Date;
-    legacyMetadata?: any;
+    legacyMetadata?: Record<string, unknown>;
   }): Promise<void> {
     await this.prisma.$executeRawUnsafe(
       `INSERT INTO threads (
@@ -386,6 +385,7 @@ export class IncomingMessagePersistenceService {
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private async upsertWhatsappContactFromIncoming(env: any, payload: any): Promise<void> {
     const identity = this.normalizer.normalizeWhatsappIdentity(env, payload);
     const adContext = this.normalizer.normalizeExternalAdContext(payload);
@@ -517,6 +517,7 @@ export class IncomingMessagePersistenceService {
   }
 
   private async resolveSessionIdForIncomingMessage(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     env: any,
     direction: 'INCOMING' | 'OUTGOING' | 'SYSTEM',
   ): Promise<{ sessionId: string; primeFirstIncomingDelegate: boolean }> {
@@ -525,38 +526,25 @@ export class IncomingMessagePersistenceService {
     const actorExternalId = String(env.actorExternalId);
     const baseSessionId = `${provider}:${objectType}:${actorExternalId}`;
 
-    const latestThreadRows = await this.prisma.$queryRawUnsafe<Array<{
-      sessionId: string;
-      threadStatus: string | null;
-    }>>(
-      `SELECT session_id AS "sessionId", thread_status AS "threadStatus"
-       FROM threads
-       WHERE actor_external_id = $1 AND object_type = $2
-       ORDER BY updated_at DESC, last_message_at DESC NULLS LAST
-       LIMIT 1`,
-      actorExternalId,
-      objectType,
-    );
+    const latestThread = await this.prisma.threads.findFirst({
+      where: { actor_external_id: actorExternalId, object_type: objectType },
+      orderBy: [{ updated_at: 'desc' }, { last_message_at: { sort: 'desc', nulls: 'last' } }],
+      select: { session_id: true, thread_status: true },
+    });
 
-    const latestThread = latestThreadRows[0];
+    if (!latestThread?.session_id) {
+      const existingMessage = await this.prisma.thread_messages.findFirst({
+        where: { actor_external_id: actorExternalId, object_type: objectType },
+        orderBy: { occurred_at: 'desc' },
+        select: { session_id: true },
+      });
 
-    if (!latestThread?.sessionId) {
-      const existingSession = await this.prisma.$queryRawUnsafe<Array<{ session_id: string }>>(
-        `SELECT session_id
-         FROM thread_messages
-         WHERE actor_external_id = $1 AND object_type = $2
-         ORDER BY occurred_at DESC
-         LIMIT 1`,
-        actorExternalId,
-        objectType,
-      );
-
-      const resolvedSessionId = existingSession[0]?.session_id || baseSessionId;
-      const isNewActorThread = direction === 'INCOMING' && !existingSession[0]?.session_id;
+      const resolvedSessionId = existingMessage?.session_id || baseSessionId;
+      const isNewActorThread = direction === 'INCOMING' && !existingMessage?.session_id;
       return { sessionId: resolvedSessionId, primeFirstIncomingDelegate: isNewActorThread };
     }
 
-    if (direction === 'INCOMING' && String(latestThread.threadStatus || '') === 'CLOSED') {
+    if (direction === 'INCOMING' && String(latestThread.thread_status || '') === 'CLOSED') {
       const suffix = `${new Date(env.occurredAt).getTime()}_${String(env.externalEventId || '')
         .replace(/[^a-zA-Z0-9_-]/g, '')
         .slice(-12) || Math.random().toString(16).slice(2, 10)}`;
@@ -566,18 +554,19 @@ export class IncomingMessagePersistenceService {
       };
     }
 
-    return { sessionId: latestThread.sessionId, primeFirstIncomingDelegate: false };
+    return { sessionId: latestThread.session_id, primeFirstIncomingDelegate: false };
   }
 
   private async primeFirstIncomingDelegate(
     sessionId: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     env: any,
     _sourceChannel: string | null,
   ): Promise<void> {
-    await this.prisma.$executeRawUnsafe(
-      `UPDATE threads SET awaiting_first_incoming_delegate = true, updated_at = now() WHERE session_id = $1`,
-      sessionId,
-    );
+    await this.prisma.threads.update({
+      where: { session_id: sessionId },
+      data: { awaiting_first_incoming_delegate: true, updated_at: new Date() },
+    });
 
     const decision = this.conversationBootstrap.decideForFirstIncoming({
       provider: String(env?.provider || 'META'),

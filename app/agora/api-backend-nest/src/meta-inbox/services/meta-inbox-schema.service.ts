@@ -5,6 +5,7 @@ import { PrismaService } from '../../database/prisma/prisma.service';
 export class MetaInboxSchemaService {
   constructor(private readonly prisma: PrismaService) {}
 
+  // raw: DDL e idempotent migrations — la API de modelos Prisma no soporta CREATE/ALTER/CREATE INDEX
   async ensureSchema(): Promise<void> {
     await this.prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS threads (

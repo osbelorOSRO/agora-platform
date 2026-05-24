@@ -91,6 +91,7 @@ export class ThreadService {
     const offset = Math.max(input.offset ?? 0, 0);
     const includeClosed = input.includeClosed === true;
 
+    // raw: LATERAL JOIN para latest actor_lifecycle + JSONB operator para filtro openedFromAgenda
     return this.prisma.$queryRawUnsafe<ThreadRow[]>(`
       SELECT
         t.id AS "threadId",
@@ -155,29 +156,26 @@ export class ThreadService {
       );
     }
 
-    const contactRows = await this.prisma.$queryRawUnsafe<Array<{ actorExternalId: string }>>(
-      `SELECT actor_external_id AS "actorExternalId"
-       FROM meta_inbox_contacts
-       WHERE actor_external_id = $1 AND object_type = 'WHATSAPP'
-       LIMIT 1`,
-      normalizedActor,
-    );
-    if (!contactRows[0]) {
+    const contact = await this.prisma.meta_inbox_contacts.findUnique({
+      where: { actor_external_id_object_type: { actor_external_id: normalizedActor, object_type: 'WHATSAPP' } },
+      select: { actor_external_id: true },
+    });
+    if (!contact) {
       throw new BadRequestException('whatsapp_contact_not_found');
     }
 
-    const openRows = await this.prisma.$queryRawUnsafe<Array<{ sessionId: string }>>(
-      `SELECT session_id AS "sessionId"
-       FROM threads
-       WHERE actor_external_id = $1
-         AND object_type = 'WHATSAPP'
-         AND thread_status IN ('OPEN', 'PAUSED', 'ARCHIVED')
-       ORDER BY updated_at DESC, last_message_at DESC NULLS LAST
-       LIMIT 1`,
-      normalizedActor,
-    );
+    const openThread = await this.prisma.threads.findFirst({
+      where: {
+        actor_external_id: normalizedActor,
+        object_type: 'WHATSAPP',
+        thread_status: { in: ['OPEN', 'PAUSED', 'ARCHIVED'] },
+      },
+      orderBy: [{ updated_at: 'desc' }, { last_message_at: { sort: 'desc', nulls: 'last' } }],
+      select: { session_id: true },
+    });
 
-    if (openRows[0]?.sessionId) {
+    if (openThread?.session_id) {
+      // raw: JSONB || merge para agregar 'resumedFromAgenda' + CASE condicional en archived_at
       await this.prisma.$executeRawUnsafe(
         `UPDATE threads
          SET
@@ -186,39 +184,37 @@ export class ThreadService {
            metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('resumedFromAgenda', true),
            updated_at = now()
          WHERE session_id = $1`,
-        openRows[0].sessionId,
+        openThread.session_id,
       );
-      const existing = await this.getThreadRow(openRows[0].sessionId);
+      const existing = await this.getThreadRow(openThread.session_id);
       if (existing) return existing;
     }
 
     const baseSessionId = `BAILEYS:WHATSAPP:${normalizedActor}`;
-    const latestRows = await this.prisma.$queryRawUnsafe<Array<{ sessionId: string; threadStatus: string }>>(
-      `SELECT session_id AS "sessionId", thread_status AS "threadStatus"
-       FROM threads
-       WHERE actor_external_id = $1 AND object_type = 'WHATSAPP'
-       ORDER BY updated_at DESC, last_message_at DESC NULLS LAST
-       LIMIT 1`,
-      normalizedActor,
-    );
-    const latest = latestRows[0];
-    const sessionId = latest?.sessionId
+    const latestThread = await this.prisma.threads.findFirst({
+      where: { actor_external_id: normalizedActor, object_type: 'WHATSAPP' },
+      orderBy: [{ updated_at: 'desc' }, { last_message_at: { sort: 'desc', nulls: 'last' } }],
+      select: { session_id: true },
+    });
+    const sessionId = latestThread?.session_id
       ? `${baseSessionId}:${Date.now()}_${Math.random().toString(16).slice(2, 8)}`.slice(0, 255)
       : baseSessionId;
 
-    await this.prisma.$executeRawUnsafe(
-      `INSERT INTO threads (
-        session_id, actor_external_id, object_type, source_channel,
-        thread_status, attention_mode, thread_stage, metadata, updated_at
-      ) VALUES (
-        $1, $2, 'WHATSAPP', 'baileys_whatsapp', 'OPEN', 'HUMAN', 'inicio',
-        jsonb_build_object('openedFromAgenda', true, 'openedManually', true),
-        now()
-      )
-      ON CONFLICT (session_id) DO NOTHING`,
-      sessionId,
-      normalizedActor,
-    );
+    await this.prisma.threads.upsert({
+      where: { session_id: sessionId },
+      create: {
+        session_id: sessionId,
+        actor_external_id: normalizedActor,
+        object_type: 'WHATSAPP',
+        source_channel: 'baileys_whatsapp',
+        thread_status: 'OPEN',
+        attention_mode: 'HUMAN',
+        thread_stage: 'inicio',
+        metadata: { openedFromAgenda: true, openedManually: true },
+        updated_at: new Date(),
+      },
+      update: {},
+    });
 
     const created = await this.getThreadRow(sessionId);
     if (!created) throw new InternalServerErrorException(`whatsapp_thread_prepare_failed:${sessionId}`);
@@ -323,6 +319,7 @@ export class ThreadService {
     const thread = await this.getThreadSnapshot(sessionId);
     if (!thread) throw new NotFoundException(`session_not_found:${sessionId}`);
 
+    // raw: jsonb_set para merge parcial de stage_control + CASE para paused_at/archived_at/closed_at condicionales
     await this.prisma.$executeRawUnsafe(
       `UPDATE threads
        SET
@@ -520,6 +517,7 @@ export class ThreadService {
   }
 
   async getThreadRow(sessionId: string): Promise<ThreadRow | null> {
+    // raw: multi-table JOIN con LATERAL para actor_lifecycle + actor_score en un query
     const rows = await this.prisma.$queryRawUnsafe<ThreadRow[]>(
       `SELECT
         t.id AS "threadId",

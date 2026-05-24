@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { Prisma } from '@prisma/client';
 import { DelegationGateService } from './delegation-gate.service';
 import { MessageNormalizerService } from './message-normalizer.service';
 
@@ -72,7 +73,6 @@ describe('DelegationGateService', () => {
     });
 
     it('defaults to META when provider is undefined (returns true for incoming message)', () => {
-      // undefined || 'META' → treats as META provider, which is delegable
       expect(service.isDelegableIncomingEvent(undefined, 'message', 'INCOMING')).toBe(true);
     });
   });
@@ -81,19 +81,25 @@ describe('DelegationGateService', () => {
 
   describe('getLatestLifecycleState', () => {
     it('returns state from query result', async () => {
-      const tx = { $queryRawUnsafe: jest.fn().mockResolvedValue([{ state: 'QUALIFIED' }]) };
+      const tx = {
+        actor_lifecycle: { findFirst: jest.fn().mockResolvedValue({ state: 'QUALIFIED' }) },
+      } as unknown as Prisma.TransactionClient;
       const result = await service.getLatestLifecycleState(tx, 'actor1');
       expect(result).toBe('QUALIFIED');
     });
 
     it('returns BLOCKED state correctly', async () => {
-      const tx = { $queryRawUnsafe: jest.fn().mockResolvedValue([{ state: 'BLOCKED' }]) };
+      const tx = {
+        actor_lifecycle: { findFirst: jest.fn().mockResolvedValue({ state: 'BLOCKED' }) },
+      } as unknown as Prisma.TransactionClient;
       const result = await service.getLatestLifecycleState(tx, 'actor1');
       expect(result).toBe('BLOCKED');
     });
 
     it('returns null when actor has no lifecycle rows', async () => {
-      const tx = { $queryRawUnsafe: jest.fn().mockResolvedValue([]) };
+      const tx = {
+        actor_lifecycle: { findFirst: jest.fn().mockResolvedValue(null) },
+      } as unknown as Prisma.TransactionClient;
       const result = await service.getLatestLifecycleState(tx, 'actor1');
       expect(result).toBeNull();
     });
@@ -102,72 +108,72 @@ describe('DelegationGateService', () => {
   // --- getDelegationControlState ---
 
   describe('getDelegationControlState', () => {
-    const makeTx = (rows: unknown[]) => ({
-      $queryRawUnsafe: jest.fn().mockResolvedValue(rows),
-    });
+    const makeTx = (row: Record<string, unknown> | null) => ({
+      threads: { findFirst: jest.fn().mockResolvedValue(row) },
+    } as unknown as Prisma.TransactionClient);
 
     it('returns blocked=false when thread is OPEN with N8N attention mode', async () => {
-      const tx = makeTx([{
-        sessionId: 'sess1', threadStatus: 'OPEN', attentionMode: 'N8N',
-        threadStage: 'inicio', awaitingFirstIncomingDelegate: false,
-      }]);
+      const tx = makeTx({
+        session_id: 'sess1', thread_status: 'OPEN', attention_mode: 'N8N',
+        thread_stage: 'inicio', awaiting_first_incoming_delegate: false,
+      });
       const result = await service.getDelegationControlState(tx, 'actor1', 'PAGE');
       expect(result.blocked).toBe(false);
       expect(result.sessionId).toBe('sess1');
     });
 
     it('blocks when threadStatus is PAUSED', async () => {
-      const tx = makeTx([{
-        sessionId: 'sess1', threadStatus: 'PAUSED', attentionMode: 'N8N',
-        threadStage: 'inicio', awaitingFirstIncomingDelegate: false,
-      }]);
+      const tx = makeTx({
+        session_id: 'sess1', thread_status: 'PAUSED', attention_mode: 'N8N',
+        thread_stage: 'inicio', awaiting_first_incoming_delegate: false,
+      });
       const result = await service.getDelegationControlState(tx, 'actor1', 'PAGE');
       expect(result.blocked).toBe(true);
       expect(result.reason).toBe('thread_status_paused');
     });
 
     it('blocks when threadStatus is CLOSED', async () => {
-      const tx = makeTx([{
-        sessionId: 'sess1', threadStatus: 'CLOSED', attentionMode: 'N8N',
-        threadStage: 'fin', awaitingFirstIncomingDelegate: false,
-      }]);
+      const tx = makeTx({
+        session_id: 'sess1', thread_status: 'CLOSED', attention_mode: 'N8N',
+        thread_stage: 'fin', awaiting_first_incoming_delegate: false,
+      });
       const result = await service.getDelegationControlState(tx, 'actor1', 'PAGE');
       expect(result.blocked).toBe(true);
       expect(result.reason).toBe('thread_status_closed');
     });
 
     it('blocks when attentionMode is HUMAN', async () => {
-      const tx = makeTx([{
-        sessionId: 'sess1', threadStatus: 'OPEN', attentionMode: 'HUMAN',
-        threadStage: 'delegado_humano', awaitingFirstIncomingDelegate: false,
-      }]);
+      const tx = makeTx({
+        session_id: 'sess1', thread_status: 'OPEN', attention_mode: 'HUMAN',
+        thread_stage: 'delegado_humano', awaiting_first_incoming_delegate: false,
+      });
       const result = await service.getDelegationControlState(tx, 'actor1', 'PAGE');
       expect(result.blocked).toBe(true);
       expect(result.reason).toBe('attention_mode_human');
     });
 
     it('blocks when attentionMode is SYSTEM', async () => {
-      const tx = makeTx([{
-        sessionId: 'sess1', threadStatus: 'OPEN', attentionMode: 'SYSTEM',
-        threadStage: 'inicio', awaitingFirstIncomingDelegate: false,
-      }]);
+      const tx = makeTx({
+        session_id: 'sess1', thread_status: 'OPEN', attention_mode: 'SYSTEM',
+        thread_stage: 'inicio', awaiting_first_incoming_delegate: false,
+      });
       const result = await service.getDelegationControlState(tx, 'actor1', 'PAGE');
       expect(result.blocked).toBe(true);
       expect(result.reason).toBe('attention_mode_system');
     });
 
     it('blocks when awaitingFirstIncomingDelegate is true (takes priority)', async () => {
-      const tx = makeTx([{
-        sessionId: 'sess1', threadStatus: 'OPEN', attentionMode: 'N8N',
-        threadStage: 'inicio', awaitingFirstIncomingDelegate: true,
-      }]);
+      const tx = makeTx({
+        session_id: 'sess1', thread_status: 'OPEN', attention_mode: 'N8N',
+        thread_stage: 'inicio', awaiting_first_incoming_delegate: true,
+      });
       const result = await service.getDelegationControlState(tx, 'actor1', 'PAGE');
       expect(result.blocked).toBe(true);
       expect(result.reason).toBe('awaiting_first_incoming_delegate');
     });
 
     it('returns blocked=false and null sessionId when no thread exists', async () => {
-      const tx = makeTx([]);
+      const tx = makeTx(null);
       const result = await service.getDelegationControlState(tx, 'actor1', 'PAGE');
       expect(result.blocked).toBe(false);
       expect(result.sessionId).toBeNull();
@@ -175,10 +181,10 @@ describe('DelegationGateService', () => {
     });
 
     it('preserves threadStage in the result', async () => {
-      const tx = makeTx([{
-        sessionId: 'sess1', threadStatus: 'OPEN', attentionMode: 'N8N',
-        threadStage: 'oferta_alta', awaitingFirstIncomingDelegate: false,
-      }]);
+      const tx = makeTx({
+        session_id: 'sess1', thread_status: 'OPEN', attention_mode: 'N8N',
+        thread_stage: 'oferta_alta', awaiting_first_incoming_delegate: false,
+      });
       const result = await service.getDelegationControlState(tx, 'actor1', 'WHATSAPP');
       expect(result.threadStage).toBe('oferta_alta');
     });
@@ -187,11 +193,17 @@ describe('DelegationGateService', () => {
   // --- clearAwaitingFirstIncomingDelegate ---
 
   describe('clearAwaitingFirstIncomingDelegate', () => {
-    it('calls $executeRawUnsafe with the correct sessionId', async () => {
-      const tx = { $executeRawUnsafe: jest.fn().mockResolvedValue(undefined) };
+    it('calls threads.update with the correct sessionId', async () => {
+      const updateMock = jest.fn().mockResolvedValue(undefined);
+      const tx = {
+        threads: { update: updateMock },
+      } as unknown as Prisma.TransactionClient;
       await service.clearAwaitingFirstIncomingDelegate(tx, 'sess-abc');
-      expect(tx.$executeRawUnsafe).toHaveBeenCalledTimes(1);
-      expect(tx.$executeRawUnsafe).toHaveBeenCalledWith(expect.any(String), 'sess-abc');
+      expect(updateMock).toHaveBeenCalledTimes(1);
+      expect(updateMock).toHaveBeenCalledWith({
+        where: { session_id: 'sess-abc' },
+        data: expect.objectContaining({ awaiting_first_incoming_delegate: false }),
+      });
     });
   });
 
@@ -206,7 +218,9 @@ describe('DelegationGateService', () => {
         displayName: 'Test', phone: null, email: null, notes: null, city: null,
         actorScore: null, actorLifecycleState: null, actorLifecycleUpdatedAt: null,
       };
-      const tx = { $queryRawUnsafe: jest.fn().mockResolvedValue([threadRow]) };
+      const tx = {
+        $queryRawUnsafe: jest.fn().mockResolvedValue([threadRow]),
+      } as unknown as Prisma.TransactionClient;
       const env = {
         externalEventId: 'evt1',
         actorExternalId: 'actor1',
@@ -229,7 +243,9 @@ describe('DelegationGateService', () => {
     });
 
     it('returns null thread when no thread row found', async () => {
-      const tx = { $queryRawUnsafe: jest.fn().mockResolvedValue([]) };
+      const tx = {
+        $queryRawUnsafe: jest.fn().mockResolvedValue([]),
+      } as unknown as Prisma.TransactionClient;
       const env = {
         externalEventId: 'evt2', actorExternalId: 'actor2',
         occurredAt: new Date().toISOString(), provider: 'META', objectType: 'PAGE',
