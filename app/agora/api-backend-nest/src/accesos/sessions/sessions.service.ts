@@ -1,10 +1,12 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma/prisma.service';
 
 const JWT_TTL_MS = 12 * 60 * 60 * 1000;
 
 @Injectable()
 export class SessionsService {
+  private readonly logger = new Logger(SessionsService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async me(userId: number) {
@@ -97,13 +99,13 @@ export class SessionsService {
       where: { activo: true, horaLogin: { lt: corte } },
       data: { activo: false },
     });
-    if (count > 0) console.log(`🧹 Sesiones expiradas cerradas: ${count}`);
+    if (count > 0) this.logger.log(`Sesiones expiradas cerradas: ${count}`);
   }
 
   private async actualizarUltimaInteraccion(userId: number) {
     await this.prisma.sesion.updateMany({
       where: { usuarioId: userId, activo: true },
       data: { ultimaInteraccion: new Date() },
-    }).catch((e) => console.error('⚠️ Error al actualizar última interacción:', e));
+    }).catch((e: Error) => this.logger.error(`Error al actualizar última interacción: ${e.message}`));
   }
 }

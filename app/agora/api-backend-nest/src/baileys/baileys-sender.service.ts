@@ -1,10 +1,11 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import axios from 'axios';
 
 type BaileysMessageType = 'text' | 'image' | 'audio' | 'document' | 'video';
 
 @Injectable()
 export class BaileysSenderService {
+  private readonly logger = new Logger(BaileysSenderService.name);
   private getGatewayUrl(): string {
     const url = process.env.BOT_BASE_URL;
     if (!url) {
@@ -96,23 +97,17 @@ export class BaileysSenderService {
       }
       headers['x-internal-token'] = internalToken;
 
-      console.log(`📤 Enviando mensaje a Gateway: ${endpoint}`);
-      console.log(`📦 Payload: destino=${waId}, tipo=${tipo}, tipoId=${tipoId}`);
+      this.logger.debug(`Enviando mensaje a Gateway: ${endpoint} destino=${waId} tipo=${tipo} tipoId=${tipoId}`);
 
       const response = await axios.post(endpoint, payload, {
         headers,
         timeout: 10000
       });
 
-      console.log(`✅ Mensaje enviado vía Gateway a ${clienteId} (${tipo})`);
+      this.logger.log(`Mensaje enviado vía Gateway a ${clienteId} (${tipo})`);
       return response.data;
     } catch (error: any) {
-      console.error(`❌ Error al enviar mensaje vía Gateway:`, {
-        endpoint,
-        error: error.message,
-        status: error.response?.status,
-        data: error.response?.data
-      });
+      this.logger.error(`Error al enviar mensaje vía Gateway: ${error.message}`, { endpoint, status: error.response?.status });
       throw new InternalServerErrorException('No se pudo enviar el mensaje');
     }
   }
@@ -143,13 +138,7 @@ export class BaileysSenderService {
 
       return response.data;
     } catch (error: any) {
-      console.error(`❌ Error al actualizar bloqueo vía Gateway:`, {
-        endpoint,
-        action: input.action,
-        status: error.response?.status,
-        data: error.response?.data,
-        error: error.message,
-      });
+      this.logger.error(`Error al actualizar bloqueo vía Gateway: ${error.message}`, { endpoint, action: input.action, status: error.response?.status });
       throw new InternalServerErrorException('No se pudo actualizar el estado de bloqueo');
     }
   }

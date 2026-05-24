@@ -1,6 +1,9 @@
 import { execFile } from 'child_process';
 import fs from 'fs';
 import util from 'util';
+import { Logger } from '@nestjs/common';
+
+const logger = new Logger('ConvertidorAudio');
 
 const execFilePromise = util.promisify(execFile);
 
@@ -23,17 +26,17 @@ export async function convertirWebmAOgg(rutaOriginal: string): Promise<string | 
       rutaOgg,
       '-y',
     ]);
-    console.log('🎙️ Conversión completa:\n', stdout, stderr);
+    logger.debug(`Conversión completa${stderr ? ` stderr: ${stderr}` : ''}`);
 
     if (fs.existsSync(rutaOgg)) {
       fs.unlinkSync(rutaOriginal);
       return rutaOgg;
     } else {
-      console.error('❌ Conversión fallida. No se generó archivo .ogg');
+      logger.error('Conversión fallida: no se generó archivo .ogg');
       return null;
     }
   } catch (error: any) {
-    console.error('❌ Error FFMPEG:', error.message);
+    logger.error(`Error FFMPEG: ${error.message}`);
     return null;
   }
 }

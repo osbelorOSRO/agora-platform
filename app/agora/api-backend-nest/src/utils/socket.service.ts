@@ -1,6 +1,8 @@
+import { Logger } from '@nestjs/common';
 import { io, Socket } from 'socket.io-client';
 
 class SocketService {
+  private readonly logger = new Logger(SocketService.name);
   private socket: Socket;
 
   constructor() {
@@ -15,11 +17,11 @@ class SocketService {
     });
 
     this.socket.on('connect', () => {
-      console.log('[WS] ✅ Conectado al WebSocket del panel');
+      this.logger.log('Conectado al WebSocket del panel');
     });
 
     this.socket.on('connect_error', (err) => {
-      console.error('[WS] ❌ Error de conexión al WebSocket:', err.message);
+      this.logger.error(`Error de conexión al WebSocket: ${err.message}`);
     });
   }
 

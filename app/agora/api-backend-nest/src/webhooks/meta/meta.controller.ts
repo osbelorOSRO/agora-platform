@@ -52,11 +52,11 @@ export class MetaController {
       query['hub.mode'] === 'subscribe' &&
       VERIFY_TOKENS.includes(query['hub.verify_token'])
     ) {
-      console.log('✅ META WEBHOOK VERIFIED');
+      this.logger.log('Meta webhook verificado');
       return res.status(200).send(query['hub.challenge']);
     }
 
-    console.log('❌ META WEBHOOK VERIFY FAILED');
+    this.logger.warn('Meta webhook verify fallido');
     return res.sendStatus(403);
   }
 
@@ -73,9 +73,7 @@ export class MetaController {
   ) {
     await this.assertMetaSignature(signature, req.rawBody);
 
-    console.log('📩 POST webhook recibido desde Meta');
-    console.log('Objeto:', body?.object);
-    console.log('Entradas:', Array.isArray(body?.entry) ? body.entry.length : 0);
+    this.logger.debug(`Webhook Meta recibido: object=${body?.object} entries=${Array.isArray(body?.entry) ? body.entry.length : 0}`);
 
     void this.metaService.handleEvent(body).catch((error) => {
       this.logger.error('Error procesando evento Meta', error?.stack || error);

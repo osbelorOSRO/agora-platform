@@ -1,6 +1,9 @@
 import rateLimit from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
 import { Redis } from 'ioredis';
+import { Logger } from '@nestjs/common';
+
+const logger = new Logger('RateLimiter');
 
 function crearRedisClient(): Redis | null {
   const host = process.env.REDIS_HOST;
@@ -15,8 +18,8 @@ function crearRedisClient(): Redis | null {
       password: password || undefined,
       maxRetriesPerRequest: null,
     });
-    client.on('connect', () => console.log('✅ Rate limiter media conectado a Redis'));
-    client.on('error', (err: Error) => console.error('⚠️ Rate limiter media Redis error:', err.message));
+    client.on('connect', () => logger.log('Rate limiter conectado a Redis'));
+    client.on('error', (err: Error) => logger.error(`Rate limiter Redis error: ${err.message}`));
     return client;
   } catch {
     return null;

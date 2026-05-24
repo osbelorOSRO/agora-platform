@@ -1,9 +1,10 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { VaultService } from './vault.service';
 import jwt from 'jsonwebtoken';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private privateKey: string | undefined;
   private publicKey: string | undefined;
   private publicKeyBot: string | undefined;
@@ -44,7 +45,7 @@ export class AuthService {
       const key = origen === 'bot' ? await this.getPublicKeyBot() : await this.getPublicKey();
       return jwt.verify(token, key, { algorithms: ['RS256'] });
     } catch (err: any) {
-      console.error('❌ Error al verificar token:', err.message);
+      this.logger.warn(`Token inválido: ${err.message}`);
       throw new UnauthorizedException('Token inválido o expirado');
     }
   }

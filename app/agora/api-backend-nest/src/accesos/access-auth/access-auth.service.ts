@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
 import speakeasy from 'speakeasy';
 import { PrismaService } from '../../database/prisma/prisma.service';
@@ -10,6 +10,8 @@ const MAX_INVITATION_ATTEMPTS = 5;
 
 @Injectable()
 export class AccessAuthService {
+  private readonly logger = new Logger(AccessAuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly authService: AuthService,
@@ -63,7 +65,7 @@ export class AccessAuthService {
 
     await this.prisma.sesion.create({
       data: { usuarioId: usuario.id, ip, userAgent, horaLogin: new Date(), ultimaInteraccion: new Date(), activo: true },
-    }).catch((e) => console.error('Error registrando sesión:', e));
+    }).catch((e: Error) => this.logger.error(`Error registrando sesión: ${e.message}`));
 
     return {
       token: tokenJwt,

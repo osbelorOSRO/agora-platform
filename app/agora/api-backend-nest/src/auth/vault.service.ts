@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import Vault from 'node-vault';
 
 @Injectable()
 export class VaultService {
+  private readonly logger = new Logger(VaultService.name);
   private endpoint: string;
   private vault: any;
   private tokenExpiresAt: number = 0;
@@ -23,7 +24,7 @@ export class VaultService {
       endpoint: this.endpoint,
     });
 
-    console.log('🔐 Autenticando api_backend_nest con AppRole...');
+    this.logger.log('Autenticando con Vault AppRole...');
     const response = await tempVault.approleLogin({
       role_id: roleId,
       secret_id: secretId,
@@ -34,7 +35,7 @@ export class VaultService {
     }
 
     this.tokenExpiresAt = Date.now() + (response.auth.lease_duration * 1000);
-    console.log('✅ Autenticación exitosa con Vault');
+    this.logger.log('Autenticación exitosa con Vault');
     
     return response.auth.client_token;
   }
@@ -60,7 +61,7 @@ export class VaultService {
         token: token,
       });
 
-      console.log(`📦 Leyendo clave de Vault: secret/data/${path}`);
+      this.logger.debug(`Leyendo secreto de Vault: ${path}`);
       const secret = await this.vault.read(`secret/data/${path}`);
 
       if (!secret || !secret.data || !secret.data.data || !secret.data.data[field]) {
@@ -69,7 +70,7 @@ export class VaultService {
 
       return secret.data.data[field];
     } catch (error) {
-      console.error(`❌ Error obteniendo secreto de Vault en ${path}.${field}:`, error);
+      this.logger.error(`Error obteniendo secreto de Vault: ${path}.${field}`);
       throw error;
     }
   }
