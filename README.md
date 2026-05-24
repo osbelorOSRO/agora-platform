@@ -4,7 +4,7 @@ Monorepo operativo para una plataforma modular de atencion, automatizacion y con
 
 ## Vista del panel
 
-![WA Control dashboard](docs/assets/wa-control.png)
+![WA Control dashboard](docs/assets/wa-control.png?v=2)
 
 ## Version
 - Actual: `v2.1.0`
