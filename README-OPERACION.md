@@ -41,7 +41,7 @@ cp n8n/env/dev.local1.env n8n/env/dev.local1.secrets.env
 # luego editar *.secrets.env con valores reales
 ```
 
-Si faltan `.env` no versionados de servicios (api/websocket/abackend/wa-backend):
+Si faltan `.env` no versionados de servicios (backend/websocket/wa-backend):
 ```bash
 ./scripts/init-service-envs.sh
 ```
@@ -64,7 +64,7 @@ docker network create npm_network
 ## N8N con Vault (sin token root)
 Script:
 - `ops/scripts/n8n-vault-bootstrap.sh <perfil>`
-- `scripts/reload-core-with-vault.sh <perfil>` (recomendado para recarga de `api_backend_nest`, `websocket`, `n8n`)
+- `scripts/reload-core-with-vault.sh <perfil>` (recomendado para recarga de `backend`, `websocket`, `n8n`)
 
 Uso:
 ```bash
@@ -79,7 +79,7 @@ export VAULT_SECRET_ID=<secret_id>
 Documentacion de policy/role:
 - `ops/docs/DOC-N8N-VAULT-APPROLE.md`
 
-## Vault compartido entre `api_backend_nest` y `websocket`
+## Vault compartido entre `backend` y `websocket`
 `API_KEY_WS` es una clave de comunicacion interna. Debe existir con el mismo valor en ambos paths de Vault.
 
 Paths esperados en `prod.vps1`:

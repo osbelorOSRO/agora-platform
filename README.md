@@ -16,8 +16,8 @@ La evolución de cambios se documenta en `CHANGELOG.md`.
 
 ```
 app/
-  agora/            # frontend React, api-backend-nest (NestJS), websocket (Socket.IO)
-  accesos/          # abackend: autenticacion, usuarios, roles, permisos
+  agora/            # frontend React, backend (NestJS + AccesosModule), websocket (Socket.IO)
+  accesos/          # código legado de abackend (dado de baja — módulo migrado a backend)
   wa-backend/       # bridge WhatsApp/Baileys
   env/              # templates de configuracion por perfil
 
