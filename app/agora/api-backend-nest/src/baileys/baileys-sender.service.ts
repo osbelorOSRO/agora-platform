@@ -36,9 +36,11 @@ export class BaileysSenderService {
       fileName?: string;
       mimeType?: string;
     },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): Promise<any> {
     const waId = this.resolveDestino(clienteId);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const payload: any = {
       destino: waId,
       tipo,

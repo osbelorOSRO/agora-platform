@@ -5,7 +5,8 @@ import Vault from 'node-vault';
 export class VaultService {
   private readonly logger = new Logger(VaultService.name);
   private endpoint: string;
-  private vault: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private vault: any; // node-vault no tiene tipos completos publicados
   private tokenExpiresAt: number = 0;
 
   constructor() {

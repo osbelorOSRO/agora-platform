@@ -59,8 +59,8 @@ export class ActorScoringService {
       where: { actor_external_id: input.actorExternalId },
       create: { actor_external_id: input.actorExternalId, score: input.delta },
       update: {
-        // Prisma Decimal increment (string suele funcionar en PG)
-        score: { increment: input.delta as any },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        score: { increment: input.delta as any }, // Prisma Decimal acepta string en PG pero el tipo no lo refleja
       },
     });
 

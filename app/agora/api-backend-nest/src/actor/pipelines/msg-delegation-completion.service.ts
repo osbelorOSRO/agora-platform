@@ -11,13 +11,13 @@ import { MsgDelegationStateService } from './msg-delegation-state.service';
 export class MsgDelegationCompletionService {
   private readonly logger = new Logger(MsgDelegationCompletionService.name);
 
-  private normalizeMetadata(value: any): Record<string, any> | undefined {
+  private normalizeMetadata(value: unknown): Record<string, unknown> | undefined {
     if (value === undefined || value === null) return undefined;
-    if (typeof value === 'object' && !Array.isArray(value)) return value;
+    if (typeof value === 'object' && !Array.isArray(value)) return value as Record<string, unknown>;
     if (typeof value === 'string') {
       try {
-        const parsed = JSON.parse(value);
-        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed;
+        const parsed = JSON.parse(value) as unknown;
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed as Record<string, unknown>;
       } catch {
         // ignore parse errors
       }

@@ -88,6 +88,7 @@ export class UsersService {
   async obtenerUsuarios() {
     const usuarios = await this.prisma.usuarios.findMany({
       where: { cancelado: false },
+      omit: { token_2fa: true, mfa_new_secret: true },
       include: {
         rol_usuarios_rol_idTorol: true,
         usuarios_usuarios_creado_por_idTousuarios: { select: { username: true } },
@@ -143,6 +144,7 @@ export class UsersService {
     const u = await this.prisma.usuarios.update({
       where: { id },
       data: datosActualizados,
+      omit: { password: true, token_2fa: true, reset_token: true, invitation_token: true, mfa_bypass_token: true, mfa_new_secret: true },
       include: {
         rol_usuarios_rol_idTorol: true,
         usuarios_usuarios_creado_por_idTousuarios: { select: { username: true } },

@@ -19,6 +19,7 @@ import { createHmac, timingSafeEqual } from 'crypto';
 import { MetaService } from './meta.service';
 import { getRuntimeSecret } from '../../shared/runtime-secrets';
 import { VerifyMetaWebhookQueryDto } from './dto/verify-meta-webhook-query.dto';
+import { MetaWebhookPayload } from './dto/meta-webhook-payload.interface';
 
 @Controller('webhooks/meta')
 export class MetaController {
@@ -67,7 +68,7 @@ export class MetaController {
    */
   @Post()
   async receive(
-    @Body() body: any,
+    @Body() body: MetaWebhookPayload,
     @Headers('x-hub-signature-256') signature: string | undefined,
     @Req() req: RawBodyRequest<Request>,
   ) {

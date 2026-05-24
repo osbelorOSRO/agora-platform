@@ -93,6 +93,7 @@ export class ChangesProcessor extends WorkerHost {
     this.logger.log(`FLOW[CHANGE] transition enqueued externalEventId=${env.externalEventId}`);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private computeDeterministicDelta(env: any): string {
     // placeholder coherente: por defecto 0
     // aquí tú mapeas eventType->delta determinista

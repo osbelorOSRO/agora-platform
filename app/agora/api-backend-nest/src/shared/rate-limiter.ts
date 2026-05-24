@@ -2,6 +2,7 @@ import rateLimit from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
 import { Redis } from 'ioredis';
 import { Logger } from '@nestjs/common';
+import { Response } from 'express';
 
 const logger = new Logger('RateLimiter');
 
@@ -37,7 +38,7 @@ function crearStore(prefijo: string) {
   });
 }
 
-function respuestaLimite(res: any) {
+function respuestaLimite(res: Response) {
   res.status(429).json({ error: 'Demasiadas solicitudes. Intenta más tarde.' });
 }
 

@@ -58,7 +58,9 @@ export class MsgDelegationFinalizer implements OnModuleInit, OnModuleDestroy {
     const job = await this.delegationQueue.getJob(jobId);
     if (!job) return;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rv: any = job.returnvalue || {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: any = job.data;
     const actorExternalId = data.actorExternalId;
     const externalEventId = data.externalEventId;
@@ -99,6 +101,7 @@ export class MsgDelegationFinalizer implements OnModuleInit, OnModuleDestroy {
     const job = await this.delegationQueue.getJob(jobId);
     if (!job) return;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: any = job.data;
     const actorExternalId = data.actorExternalId;
     const externalEventId = data.externalEventId;

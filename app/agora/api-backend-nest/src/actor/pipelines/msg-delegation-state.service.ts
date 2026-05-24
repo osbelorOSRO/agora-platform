@@ -88,7 +88,7 @@ export class MsgDelegationStateService {
     await this.cache.set(key, value, this.pendingTtl());
   }
 
-  async markCompleted(input: { externalEventId: string; actorExternalId: string; metadata?: any }) {
+  async markCompleted(input: { externalEventId: string; actorExternalId: string; metadata?: Record<string, unknown> }) {
     await this.cache.set(
       this.doneKey(input.externalEventId),
       {

@@ -5,6 +5,11 @@ import {
   Q_META_MESSAGES,
   Q_META_CHANGES,
 } from '../../queues/queues.constants';
+import {
+  MetaWebhookPayload,
+  MetaMessagingEvent,
+  MetaChangeEvent,
+} from './dto/meta-webhook-payload.interface';
 
 @Injectable()
 export class MetaService {
@@ -18,7 +23,7 @@ export class MetaService {
     private readonly changesQueue: Queue,
   ) {}
 
-  async handleEvent(body: any) {
+  async handleEvent(body: MetaWebhookPayload) {
     this.logger.log('Evento recibido desde Meta');
 
     if (!body?.entry) {
@@ -56,7 +61,7 @@ export class MetaService {
    * MESSAGING EVENTS
    * ==================================
    */
-  private async processMessagingEvent(event: any, objectType: 'PAGE' | 'INSTAGRAM') {
+  private async processMessagingEvent(event: MetaMessagingEvent, objectType: 'PAGE' | 'INSTAGRAM') {
     const senderId = event?.sender?.id || 'unknown';
     const recipientId = event?.recipient?.id || 'unknown';
     const eventKind = this.detectMessagingKind(event);
@@ -91,8 +96,8 @@ export class MetaService {
       ? message.attachments
       : [];
     const attachmentUrls = attachments
-      .map((item: any) => item?.payload?.url)
-      .filter((url: any) => typeof url === 'string');
+      .map((item) => item?.payload?.url)
+      .filter((url): url is string => typeof url === 'string');
     const isCommentLinked = attachmentUrls.some((url: string) =>
       /story_fbid|permalink\.php|\/posts\//i.test(url),
     );
@@ -124,7 +129,7 @@ export class MetaService {
             isEcho: Boolean(message.is_echo),
             appId: message.app_id,
             hasAttachments: attachments.length > 0,
-            attachmentTypes: attachments.map((item: any) => item?.type).filter(Boolean),
+            attachmentTypes: attachments.map((item) => item?.type).filter(Boolean),
             attachmentUrls,
             isCommentLinked,
             messageSource,
@@ -167,7 +172,7 @@ export class MetaService {
     );
   }
 
-  private detectMessagingKind(event: any): string {
+  private detectMessagingKind(event: MetaMessagingEvent): string {
     if (event?.delivery) return 'delivery';
     if (event?.read) return 'read';
     if (event?.postback) return 'postback';
@@ -178,7 +183,7 @@ export class MetaService {
   }
 
   private buildMessagingExternalEventId(input: {
-    event: any;
+    event: MetaMessagingEvent;
     eventKind: string;
     senderId: string;
     recipientId: string;
@@ -197,7 +202,7 @@ export class MetaService {
     return rawId.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 250);
   }
 
-  private resolveObjectType(rawObject: any): 'PAGE' | 'INSTAGRAM' {
+  private resolveObjectType(rawObject: unknown): 'PAGE' | 'INSTAGRAM' {
     const normalized = String(rawObject || '').toLowerCase();
     return normalized === 'instagram' ? 'INSTAGRAM' : 'PAGE';
   }
@@ -207,7 +212,7 @@ export class MetaService {
    * CHANGE EVENTS
    * ==================================
    */
-  private async processChangeEvent(change: any, objectType: 'PAGE' | 'INSTAGRAM') {
+  private async processChangeEvent(change: MetaChangeEvent, objectType: 'PAGE' | 'INSTAGRAM') {
 
     const field = change.field;
     const value = change.value;
