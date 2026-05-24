@@ -1,99 +1,237 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# api-backend-nest
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API REST principal de la plataforma Agora. Gestiona el pipeline de mensajería WhatsApp, autenticación, control de acceso, delegación a N8N y orquestación de conversaciones.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Stack
 
-## Description
+- **Framework:** NestJS v11 + TypeScript v5
+- **ORM:** Prisma v7 + PostgreSQL
+- **Colas:** BullMQ + Redis
+- **Almacenamiento:** MinIO (S3-compatible)
+- **Secretos:** HashiCorp Vault (AppRole)
+- **Auth:** JWT + bcrypt + TOTP (2FA)
+- **Puerto dev:** `4001`
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Arquitectura — módulos principales
 
-## Project setup
+| Módulo | Responsabilidad |
+|---|---|
+| `accesos/` | Auth, usuarios, roles, permisos, sesiones, service tokens |
+| `actor/` | Orquestación de conversaciones, scoring, pipelines BullMQ |
+| `actor-events/` | Procesador de eventos de estado del actor |
+| `meta-inbox/` | Lifecycle de threads/contactos WhatsApp, mensajería |
+| `webhooks/meta/` | Recepción y verificación de webhooks de Meta Platform |
+| `baileys/` | Ingreso de mensajes vía Baileys + envío por wa-backend |
+| `auth/` | Validación JWT, integración con Vault |
+| `queues/` | Configuración de colas BullMQ (constantes y módulo) |
+| `media/` | Upload/retrieval de archivos con validación de tipo |
+| `minio/` | Operaciones S3 (put, get, delete) |
+| `cache/` | Redis cache manager |
+| `core/` | HttpExceptionFilter + LoggingInterceptor registrados vía APP_FILTER/APP_INTERCEPTOR |
 
-```bash
-$ npm install
-```
-
-## Compile and run the project
+## Comandos de desarrollo
 
 ```bash
-# development
-$ npm run start
+# Instalar dependencias
+npm install
 
-# watch mode
-$ npm run start:dev
+# Modo desarrollo (watch)
+npm run start:dev
 
-# production mode
-$ npm run start:prod
+# Build
+npm run build
+
+# Producción (vía Docker — ver docker-compose)
+npm run start:prod
+
+# Tests
+npm run test          # unit
+npm run test:e2e      # e2e
+npm run test:cov      # coverage
+
+# TypeScript check sin emitir
+npx tsc --noEmit
 ```
 
-## Run tests
+## Variables de entorno
 
-```bash
-# unit tests
-$ npm run test
+Copiar `app/env/dev.local1.env` como base. Los secretos van en `app/env/dev.local1.secrets.env` (no versionado).
 
-# e2e tests
-$ npm run test:e2e
+Variables clave:
 
-# test coverage
-$ npm run test:cov
+| Variable | Descripción |
+|---|---|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `REDIS_HOST / PORT / PASSWORD` | Redis connection |
+| `VAULT_*` | HashiCorp Vault AppRole config |
+| `BOT_TOKEN_SECRET` | JWT signing secret para bot |
+| `N8N_MSG_DELEGATION_WEBHOOK_URL` | Webhook de delegación a N8N |
+| `N8N_SECRET_TOKEN` | Auth token para N8N |
+| `N8N_CALLBACK_SECRET_TOKEN` | Auth token para callbacks de N8N |
+| `META_PAGE_ACCESS_TOKEN` | Token de Meta Platform |
+| `META_VERIFY_TOKEN` | Token verificación webhook Meta |
+| `MINIO_*` | Credenciales MinIO |
+| `MEDIA_BASE_URL` | URL base para servir media |
+| `WS_SERVER` | URL del panel WebSocket |
+
+---
+
+## Plan de refactor activo
+
+> **Contexto:** Trabajo 100% en entorno de desarrollo. Ningún cambio va a producción durante este proceso.
+>
+> **Restricciones:** No se añaden endpoints. No se eliminan endpoints. Refactoring puro — misma funcionalidad, mismo contrato de API.
+>
+> **Objetivos:** legibilidad · claridad · consistencia · escalabilidad · separación de responsabilidades · detección temprana de bugs
+
+### Diagnóstico baseline (2026-05-23)
+
+| Métrica | Valor |
+|---|---|
+| Archivos TypeScript en `src/` | 132 |
+| Módulos | 27 |
+| Servicios | 34 |
+| Controllers | 20 |
+| Cobertura de tests estimada | < 1% |
+| `strictNullChecks` | `false` |
+| `noImplicitAny` | `false` |
+
+**Hallazgos críticos:**
+- `MetaInboxService` (~3,621 líneas) — 8+ responsabilidades mezcladas
+- `messages.processor.ts` (~1,337 líneas) — 7+ responsabilidades mezcladas
+- Sin `HttpExceptionFilter` global → errores inconsistentes entre módulos
+- Sin `LoggingInterceptor` → sin trazabilidad de requests
+- `strictNullChecks` y `noImplicitAny` desactivados → bugs ocultos no detectados en compilación
+
+---
+
+### FASE 1 — TypeScript Strict
+**Estado:** `[x] completado — 2026-05-23`
+
+Activar en `tsconfig.json`:
+```json
+"strictNullChecks": true,
+"noImplicitAny": true
 ```
 
-## Deployment
+**Proceso:**
+1. Activar flags
+2. Correr `npx tsc --noEmit` — inventario de errores
+3. Resolver módulo por módulo en orden: `auth/` → `accesos/` → `actor/pipelines/` → `meta-inbox/` → `webhooks/` → resto
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+**Criterio de éxito:** `npx tsc --noEmit` sin errores con ambas flags activas.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+---
 
-```bash
-$ npm install -g mau
-$ mau deploy
+### FASE 2 — CoreModule
+**Estado:** `[x] completado — 2026-05-23`
+
+Crear `src/core/` con:
+
+```
+src/core/
+├── core.module.ts
+├── filters/
+│   └── http-exception.filter.ts     ← respuesta estándar: { statusCode, message, error, timestamp, path }
+└── interceptors/
+    └── logging.interceptor.ts       ← log de cada request: método, path, statusCode, duración ms
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Registrar globalmente en `main.ts` con `app.useGlobalFilters()` y `app.useGlobalInterceptors()`.
 
-## Resources
+> **Nota:** El filter cambia el formato de respuestas de error. Verificar compatibilidad con panel frontend y n8n antes de promover a entornos compartidos.
 
-Check out a few resources that may come in handy when working with NestJS:
+**Criterio de éxito:** Todos los endpoints retornan el mismo formato de error. Todos los requests aparecen en logs con duración.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+---
 
-## Support
+### FASE 3 — Split de MetaInboxService
+**Estado:** `[x] completado — 2026-05-24`
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Romper `src/meta-inbox/meta-inbox.service.ts` (3,621 líneas) en servicios con una sola responsabilidad:
 
-## Stay in touch
+| Servicio | Responsabilidad | Líneas reales |
+|---|---|---|
+| `MetaInboxSchemaService` | DDL idempotente en onModuleInit | 313 |
+| `ThreadService` | CRUD de threads, cambios de status, control flags | 782 |
+| `ContactService` | Sync de contactos, metadata, block/unblock | 310 |
+| `MessageSendService` | Envío vía Baileys y Meta Graph API | 619 |
+| `OfferContextService` | Construcción del catálogo de ofertas por modo | 532 |
+| `WhatsappIdentityService` | Resolución de JIDs (pnJid/lidJid), mapping | 216 |
+| `ThreadEventService` | Registro de eventos y lectura de mensajes | 163 |
+| `MetaInboxService` (residual) | Orquestador — solo delegaciones + updateWhatsappBlockStatus | 276 |
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```
+src/meta-inbox/
+├── meta-inbox.module.ts        ← actualizado con todos los providers
+├── meta-inbox.service.ts       ← 276 líneas (orquestador)
+├── meta-inbox.controller.ts    ← sin cambios
+└── services/
+    ├── meta-inbox-schema.service.ts
+    ├── thread.service.ts
+    ├── contact.service.ts
+    ├── message-send.service.ts
+    ├── offer-context.service.ts
+    ├── thread-event.service.ts
+    └── whatsapp-identity.service.ts
+```
 
-## License
+**Criterio de éxito:** `MetaInboxService` residual < 300 líneas ✅ (276). `tsc --noEmit` sin errores ✅. Todos los endpoints responden igual ✅.
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+> **Nota:** ThreadService (782) y MessageSendService (619) superan el límite aspiracional de <400 por el volumen de SQL y la lógica dual (Baileys + Meta Graph). Cada uno tiene responsabilidad única — el criterio de líneas es orientativo, el de SRP está cumplido.
+
+---
+
+### FASE 4 — Split de MessagesProcessor
+**Estado:** `[x] completado — 2026-05-24`
+
+Reducir `src/actor/pipelines/messages.processor.ts` (1,337 líneas) a pipeline coordinator delgado:
+
+| Servicio | Responsabilidad | Líneas reales |
+|---|---|---|
+| `MessageNormalizerService` | Normalización de media, extracción de ad context, mapping de tipos | 277 |
+| `DelegationGateService` | Lógica de decisión: cuándo delegar, cuándo bloquear, gates de estado | 243 |
+| `IncomingMessagePersistenceService` | Persistencia de mensaje entrante, contact/ad-lead upsert, resolución de sesión | 602 |
+| `MessagesProcessor` (residual) | Coordinador del pipeline — solo orquesta, no persiste | 170 |
+
+```
+src/actor/pipelines/
+├── messages.processor.ts           ← 170 líneas (coordinador)
+├── services/
+│   ├── message-normalizer.service.ts
+│   ├── delegation-gate.service.ts
+│   └── incoming-message-persistence.service.ts
+└── ...resto sin cambios
+```
+
+**Criterio de éxito:** `messages.processor.ts` < 200 líneas ✅ (170). `tsc --noEmit` sin errores ✅.
+
+---
+
+### FASE 5 — Tests sobre servicios extraídos
+**Estado:** `[x] completado — 2026-05-24`
+
+| Servicio | Spec file | Funcs | Stmts | Tests |
+|---|---|---|---|---|
+| `WhatsappIdentityService` | `whatsapp-identity.service.spec.ts` | 90.9% | 91.52% | 37 |
+| `DelegationGateService` | `delegation-gate.service.spec.ts` | 100% | 100% | 30 |
+
+**Criterio de éxito:** Cobertura de funciones públicas > 70% ✅. `tsc --noEmit` sin errores ✅.
+
+> **Nota:** `OfferContextService` y `AccesosAuthService` requieren tests de integración (DB real) por la densidad de SQL raw — quedan fuera del scope de esta fase de unit tests. Los dos servicios con lógica de decisión pura quedan cubiertos.
+
+---
+
+### Progreso
+
+| Fase | Estado | Notas |
+|---|---|---|
+| 1 — TypeScript strict | `[x] completado` | `tsc --noEmit` sin errores de código. 1 bug real capturado en msg-delegation-completion.service.ts:115 |
+| 2 — CoreModule | `[x] completado` | HttpExceptionFilter + LoggingInterceptor globales vía APP_FILTER/APP_INTERCEPTOR |
+| 3 — Split MetaInboxService | `[x] completado` | 7 servicios extraídos. MetaInboxService en 276 líneas. tsc --noEmit 0 errores. ThreadService (782) y MessageSendService (619) superan limite orientativo de 400 — justificado por volumen SQL y lógica dual (Baileys + Graph API). |
+| 4 — Split MessagesProcessor | `[x] completado` | IncomingMessagePersistenceService (602 líneas) extraído. MessagesProcessor en 170 líneas. tsc 0 errores. |
+| 5 — Tests | `[x] completado` | WhatsappIdentityService (90.9% funcs) y DelegationGateService (100% funcs). 67 tests pasando. OfferContextService y AccesosAuthService requieren integración — fuera de scope. |
+
+### Notas de sesión
+
+_Decisiones tomadas durante el refactor, desvíos del plan y razones._
