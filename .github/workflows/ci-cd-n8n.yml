@@ -12,12 +12,13 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - uses: actions/checkout@v4
-
       - name: Recrear stack_n8n
         env:
+          PROD_DIR: /home/deploy/agora-platform
           ENV_FILE: /home/deploy/agora-platform/n8n/env/prod.vps1.secrets.env
         run: |
+          cd "$PROD_DIR"
+          git pull origin main
           docker compose -p stack_n8n \
             --env-file "$ENV_FILE" \
             -f n8n/docker-compose.yml \
@@ -29,12 +30,12 @@ jobs:
     needs: deploy-n8n
 
     steps:
-      - uses: actions/checkout@v4
-
       - name: Recrear stack_tesseract
         env:
+          PROD_DIR: /home/deploy/agora-platform
           ENV_FILE: /home/deploy/agora-platform/n8n/env/prod.vps1.secrets.env
         run: |
+          cd "$PROD_DIR"
           docker compose -p stack_tesseract \
             --env-file "$ENV_FILE" \
             -f n8n/tesseract/docker-compose.yml \

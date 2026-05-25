@@ -51,12 +51,13 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
-      - uses: actions/checkout@v4
-
       - name: Rebuild stack_agora
         env:
+          PROD_DIR: /home/deploy/agora-platform
           ENV_FILE: /home/deploy/agora-platform/app/env/prod.vps1.secrets.env
         run: |
+          cd "$PROD_DIR"
+          git pull origin main
           docker compose -p stack_agora \
             --env-file "$ENV_FILE" \
             -f app/agora/docker-compose.yml \
