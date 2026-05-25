@@ -1,0 +1,41 @@
+name: CI / CD — N8N
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'n8n/**'
+
+jobs:
+  deploy-n8n:
+    name: Deploy n8n → prod.vps1
+    runs-on: self-hosted
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Recrear stack_n8n
+        env:
+          ENV_FILE: /home/deploy/agora-platform/n8n/env/prod.vps1.secrets.env
+        run: |
+          docker compose -p stack_n8n \
+            --env-file "$ENV_FILE" \
+            -f n8n/docker-compose.yml \
+            up -d --force-recreate --remove-orphans n8n
+
+  deploy-tesseract:
+    name: Deploy Tesseract → prod.vps1
+    runs-on: self-hosted
+    needs: deploy-n8n
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Recrear stack_tesseract
+        env:
+          ENV_FILE: /home/deploy/agora-platform/n8n/env/prod.vps1.secrets.env
+        run: |
+          docker compose -p stack_tesseract \
+            --env-file "$ENV_FILE" \
+            -f n8n/tesseract/docker-compose.yml \
+            up -d --force-recreate --remove-orphans

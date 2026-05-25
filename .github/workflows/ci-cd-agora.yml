@@ -1,0 +1,61 @@
+name: CI / CD — Agora
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/agora/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'app/agora/**'
+
+jobs:
+  ci:
+    name: Lint, Test y Build
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: app/agora/api-backend-nest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: app/agora/api-backend-nest/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Generar cliente Prisma
+        run: npx prisma generate
+
+      - name: Lint
+        run: npx eslint "{src,test}/**/*.ts" --max-warnings 0
+
+      - name: Tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  deploy:
+    name: Deploy → prod.vps1
+    needs: ci
+    runs-on: self-hosted
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rebuild stack_agora
+        env:
+          ENV_FILE: /home/deploy/agora-platform/app/env/prod.vps1.secrets.env
+        run: |
+          docker compose -p stack_agora \
+            --env-file "$ENV_FILE" \
+            -f app/agora/docker-compose.yml \
+            up -d --build --force-recreate frontend backend websocket

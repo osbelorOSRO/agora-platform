@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.6.0
+
+### Added
+- CI/CD con GitHub Actions self-hosted runner en prod.vps1 — tres workflows con path filters: `ci-cd-agora.yml` (lint + test + build NestJS → rebuild frontend/backend/websocket), `ci-cd-wa.yml` (rebuild wa-backend), `ci-cd-n8n.yml` (recrear n8n + tesseract)
+
 ## 2.5.1
 
 ### Fixed

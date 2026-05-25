@@ -1,0 +1,24 @@
+name: CI / CD — WA Backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/wa-backend/**'
+
+jobs:
+  deploy:
+    name: Deploy → prod.vps1
+    runs-on: self-hosted
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rebuild stack_wabackend
+        env:
+          ENV_FILE: /home/deploy/agora-platform/app/env/prod.vps1.secrets.env
+        run: |
+          docker compose -p stack_wabackend \
+            --env-file "$ENV_FILE" \
+            -f app/wa-backend/docker-compose.yml \
+            up -d --build --force-recreate
