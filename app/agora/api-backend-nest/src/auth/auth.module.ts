@@ -4,10 +4,18 @@ import { VaultService } from './vault.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { PanelJwtAuthGuard } from './panel-jwt-auth.guard';
 import { SuperadminJwtGuard } from './superadmin-jwt.guard';
+import { VAULT_GATEWAY } from './interfaces/vault-gateway.interface';
 
 @Module({
   controllers: [],
-  providers: [AuthService, VaultService, JwtAuthGuard, PanelJwtAuthGuard, SuperadminJwtGuard],
-  exports: [AuthService, VaultService, PanelJwtAuthGuard, SuperadminJwtGuard],
+  providers: [
+    AuthService,
+    VaultService,
+    { provide: VAULT_GATEWAY, useExisting: VaultService },
+    JwtAuthGuard,
+    PanelJwtAuthGuard,
+    SuperadminJwtGuard,
+  ],
+  exports: [AuthService, VaultService, VAULT_GATEWAY, PanelJwtAuthGuard, SuperadminJwtGuard],
 })
 export class AuthModule {}

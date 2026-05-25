@@ -1,12 +1,12 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from '../../auth/auth.service';
-import { VaultService } from '../../auth/vault.service';
+import { IVaultGateway, VAULT_GATEWAY } from '../../auth/interfaces/vault-gateway.interface';
 
 @Injectable()
 export class ServiceTokenService {
   constructor(
     private readonly authService: AuthService,
-    private readonly vaultService: VaultService,
+    @Inject(VAULT_GATEWAY) private readonly vaultService: IVaultGateway,
   ) {}
 
   async issueServiceToken(serviceId: string, secretKey: string): Promise<object> {

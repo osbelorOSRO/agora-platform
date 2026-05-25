@@ -3,9 +3,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { getRuntimeSecret } from '../shared/runtime-secrets';
+import { IWebsocketNotifierGateway } from './interfaces/websocket-notifier-gateway.interface';
 
 @Injectable()
-export class WebsocketNotifierService {
+export class WebsocketNotifierService implements IWebsocketNotifierGateway {
   private readonly logger = new Logger(WebsocketNotifierService.name);
   private readonly baseUrl: string = process.env.WS_SERVER || '';
 

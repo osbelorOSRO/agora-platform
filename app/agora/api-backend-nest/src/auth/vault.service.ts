@@ -1,8 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import Vault from 'node-vault';
+import { IVaultGateway } from './interfaces/vault-gateway.interface';
 
 @Injectable()
-export class VaultService {
+export class VaultService implements IVaultGateway {
   private readonly logger = new Logger(VaultService.name);
   private endpoint: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

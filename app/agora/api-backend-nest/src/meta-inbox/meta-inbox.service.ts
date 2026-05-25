@@ -1,6 +1,7 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { IMetaInboxGateway } from './interfaces/meta-inbox-gateway.interface';
 import { MetaInboxSchemaService } from './services/meta-inbox-schema.service';
-import { ThreadService, ThreadSelectorInput } from './services/thread.service';
+import { IThreadGateway, THREAD_GATEWAY, ThreadSelectorInput } from './interfaces/thread-gateway.interface';
 import { ContactService } from './services/contact.service';
 import { MessageSendService } from './services/message-send.service';
 import { OfferContextService } from './services/offer-context.service';
@@ -8,10 +9,10 @@ import { WhatsappIdentityService } from './services/whatsapp-identity.service';
 import { ThreadEventService, ThreadEventInput } from './services/thread-event.service';
 
 @Injectable()
-export class MetaInboxService implements OnModuleInit {
+export class MetaInboxService implements OnModuleInit, IMetaInboxGateway {
   constructor(
     private readonly schema: MetaInboxSchemaService,
-    private readonly threadService: ThreadService,
+    @Inject(THREAD_GATEWAY) private readonly threadService: IThreadGateway,
     private readonly contactService: ContactService,
     private readonly messageSend: MessageSendService,
     private readonly offerContext: OfferContextService,

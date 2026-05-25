@@ -1,11 +1,14 @@
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma/prisma.service';
-import { WebsocketNotifierService } from '../../websocket-notifier/websocket-notifier.service';
+import { IWebsocketNotifierGateway, WEBSOCKET_NOTIFIER_GATEWAY } from '../../websocket-notifier/interfaces/websocket-notifier-gateway.interface';
 import { ThreadEventService, ThreadEventInput } from './thread-event.service';
 import { CacheService } from '../../cache/cache.service';
+import type { IThreadGateway } from '../interfaces/thread-gateway.interface';
 
 const CACHE_TTL_THREAD_IDENTITY = 120;
 const CACHE_TTL_STAGE_TEMPLATES = 300;
+const CACHE_TTL_THREAD_ROW = 60;
+const CACHE_TTL_THREAD_SNAPSHOT = 60;
 
 export type ThreadRow = {
   threadId: string;
@@ -79,10 +82,10 @@ type StageTemplateRow = {
 };
 
 @Injectable()
-export class ThreadService {
+export class ThreadService implements IThreadGateway {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly websocketNotifier: WebsocketNotifierService,
+    @Inject(WEBSOCKET_NOTIFIER_GATEWAY) private readonly websocketNotifier: IWebsocketNotifierGateway,
     private readonly threadEvent: ThreadEventService,
     private readonly cache: CacheService,
   ) {}
@@ -370,6 +373,11 @@ export class ThreadService {
       input.stageControl ? JSON.stringify(input.stageControl) : null,
     );
 
+    await Promise.all([
+      this.cache.del(`thread:snapshot:${sessionId}`),
+      this.cache.del(`thread:row:${sessionId}`),
+    ]);
+
     const updated = await this.getThreadSnapshot(sessionId);
     if (!updated) throw new NotFoundException(`session_not_found:${sessionId}`);
 
@@ -454,6 +462,11 @@ export class ThreadService {
       openedAt,
     );
 
+    await Promise.all([
+      this.cache.del(`thread:row:${current.sessionId}`),
+      this.cache.del(`thread:snapshot:${current.sessionId}`),
+    ]);
+
     const reopened = await this.getThreadRow(current.sessionId);
     if (!reopened) throw new InternalServerErrorException(`thread_reopen_failed:${current.sessionId}`);
 
@@ -528,6 +541,10 @@ export class ThreadService {
   }
 
   async getThreadRow(sessionId: string): Promise<ThreadRow | null> {
+    const cacheKey = `thread:row:${sessionId}`;
+    const cached = await this.cache.get<ThreadRow>(cacheKey);
+    if (cached) return cached;
+
     // raw: multi-table JOIN con LATERAL para actor_lifecycle + actor_score en un query
     const rows = await this.prisma.$queryRawUnsafe<ThreadRow[]>(
       `SELECT
@@ -572,7 +589,9 @@ export class ThreadService {
        LIMIT 1`,
       sessionId,
     );
-    return rows[0] || null;
+    const row = rows[0] || null;
+    if (row) await this.cache.set(cacheKey, row, CACHE_TTL_THREAD_ROW);
+    return row;
   }
 
   async getThreadIdentity(sessionId: string): Promise<ThreadIdentity | null> {
@@ -617,6 +636,10 @@ export class ThreadService {
   }
 
   async getThreadSnapshot(sessionId: string): Promise<ThreadControlSnapshot | null> {
+    const cacheKey = `thread:snapshot:${sessionId}`;
+    const cached = await this.cache.get<ThreadControlSnapshot>(cacheKey);
+    if (cached) return cached;
+
     const rows = await this.prisma.$queryRawUnsafe<ThreadControlSnapshot[]>(
       `SELECT
         id AS "threadId",
@@ -636,7 +659,9 @@ export class ThreadService {
        LIMIT 1`,
       sessionId,
     );
-    return rows[0] || null;
+    const snapshot = rows[0] || null;
+    if (snapshot) await this.cache.set(cacheKey, snapshot, CACHE_TTL_THREAD_SNAPSHOT);
+    return snapshot;
   }
 
   async resolveSessionIdForAutomation(input: ThreadSelectorInput): Promise<string> {
@@ -712,6 +737,11 @@ export class ThreadService {
       input.lastDirection,
       input.lastMessageAt,
     );
+
+    await Promise.all([
+      this.cache.del(`thread:row:${input.sessionId}`),
+      this.cache.del(`thread:snapshot:${input.sessionId}`),
+    ]);
   }
 
   async notifyThreadUpsert(thread: ThreadControlSnapshot): Promise<void> {

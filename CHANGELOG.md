@@ -1,5 +1,25 @@
 # Changelog
 
+## 2.5.0
+
+### Added
+- `api-backend-nest`: interfaces OCP/DIP — `IVaultGateway` (auth), `IMetaInboxGateway` (meta-inbox), `IThreadGateway` (meta-inbox); providers `useExisting` exportados por sus módulos; `AuthService`, `ServiceTokenService`, `IncomingMessagePersistenceService`, `ContactService`, `MetaInboxService`, `MessageSendService` inyectan por token en lugar de concreto
+- `api-backend-nest`: `IWebsocketNotifierGateway` — interfaz con 9 métodos; `WebsocketNotifierModule` exporta el token
+- `api-backend-nest`: `MediaSendService` extraído de `MessageSendService` — responsable de validar, convertir y subir archivos a Minio; `MessageSendService` pasa de 8 a 7 dependencias
+- `api-backend-nest`: caching Redis en `ThreadService` — `getThreadRow` y `getThreadSnapshot` cacheados 60 s; invalidación activa en `updateThreadControl`, `reopenThread`, `upsertThreadRecord`
+- `api-backend-nest`: `AuthService` stateless — `privateKey`, `publicKey`, `publicKeyBot` movidos de propiedades de instancia a Redis con TTL 1 h vía `CacheService`
+- `api-backend-nest`: specs nuevos — `access-auth.service.spec.ts` (9 casos), `incoming-message-persistence.service.spec.ts` (7 casos), `offer-context.service.spec.ts` (5 casos)
+
+### Changed
+- `api-backend-nest`: `roles.service.ts` — `mapRol(r: any)` tipado con `Prisma.rolGetPayload<{include: typeof ROL_INCLUDE}>`; `rp: any` eliminado
+- `api-backend-nest`: `users.service.ts` — `actualizarUsuario(data: any)` con shape inline tipado; `datosActualizados: any` → `Prisma.usuariosUpdateInput`; `ActualizarUsuarioDto.rol` de `Record<string, unknown>` a `{ id: number }`
+- `api-backend-nest`: `media.service.ts` — inyecta `IMinioGateway` por token `MINIO_GATEWAY` en lugar de `MinioService` concreto
+- `api-backend-nest`: rate limiting fail-closed — `limitadorLogin`, `limitadorRecuperacion`, `limitadorRegistro` cambian `skip: () => !redisClient` a `skip: () => false`; siempre aplican límite (fallback in-memory si Redis cae)
+
+### Fixed
+- `wa-backend`: `@whiskeysockets/baileys` actualizado de `rc11` a `rc13`
+- `wa-backend`: `protobufjs` override corregido de `7.5.6` (vulnerable GHSA-jggg-4jg4-v7c6) a `7.6.1`; `qs` y `ws` actualizados — 0 vulnerabilidades en audit
+
 ## 2.4.0
 
 ### Added

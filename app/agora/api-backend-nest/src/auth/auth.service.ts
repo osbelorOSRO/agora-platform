@@ -1,22 +1,26 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
-import { VaultService } from './vault.service';
+import { Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { IVaultGateway, VAULT_GATEWAY } from './interfaces/vault-gateway.interface';
+import { CacheService } from '../cache/cache.service';
 import jwt, { SignOptions } from 'jsonwebtoken';
+
+const CACHE_TTL_JWT_KEY = 3600; // 1 hora — misma instancia entre redeployos normales
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
-  private privateKey: string | undefined;
-  private publicKey: string | undefined;
-  private publicKeyBot: string | undefined;
 
-  constructor(private readonly vaultService: VaultService) {}
+  constructor(
+    @Inject(VAULT_GATEWAY) private readonly vaultService: IVaultGateway,
+    private readonly cache: CacheService,
+  ) {}
 
   private async getPrivateKey(): Promise<string> {
-    if (!this.privateKey) {
-      const path = process.env.VAULT_JWT_PRIVATE_KEY_PATH || 'accesos/keys/private';
-      this.privateKey = await this.vaultService.getSecretKey(path);
-    }
-    return this.privateKey;
+    const cached = await this.cache.get<string>('auth:jwt:privateKey');
+    if (cached) return cached;
+    const vaultPath = process.env.VAULT_JWT_PRIVATE_KEY_PATH || 'accesos/keys/private';
+    const key = await this.vaultService.getSecretKey(vaultPath);
+    await this.cache.set('auth:jwt:privateKey', key, CACHE_TTL_JWT_KEY);
+    return key;
   }
 
   async firmarToken(payload: object, expiresIn: string | number = '12h'): Promise<string> {
@@ -25,19 +29,21 @@ export class AuthService {
   }
 
   private async getPublicKey(): Promise<string> {
-    if (!this.publicKey) {
-      const path = process.env.VAULT_JWT_PUBLIC_KEY_PATH || 'accesos/keys/public';
-      this.publicKey = await this.vaultService.getSecretKey(path);
-    }
-    return this.publicKey;
+    const cached = await this.cache.get<string>('auth:jwt:publicKey');
+    if (cached) return cached;
+    const vaultPath = process.env.VAULT_JWT_PUBLIC_KEY_PATH || 'accesos/keys/public';
+    const key = await this.vaultService.getSecretKey(vaultPath);
+    await this.cache.set('auth:jwt:publicKey', key, CACHE_TTL_JWT_KEY);
+    return key;
   }
 
   private async getPublicKeyBot(): Promise<string> {
-    if (!this.publicKeyBot) {
-      const path = process.env.VAULT_JWT_BOT_PUBLIC_KEY_PATH || 'accesos/keys/public_bot';
-      this.publicKeyBot = await this.vaultService.getSecretKey(path);
-    }
-    return this.publicKeyBot;
+    const cached = await this.cache.get<string>('auth:jwt:publicKeyBot');
+    if (cached) return cached;
+    const vaultPath = process.env.VAULT_JWT_BOT_PUBLIC_KEY_PATH || 'accesos/keys/public_bot';
+    const key = await this.vaultService.getSecretKey(vaultPath);
+    await this.cache.set('auth:jwt:publicKeyBot', key, CACHE_TTL_JWT_KEY);
+    return key;
   }
 
   async verificarToken(token: string, origen: 'panel' | 'bot' = 'panel'): Promise<any> {

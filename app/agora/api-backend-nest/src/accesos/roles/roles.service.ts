@@ -1,15 +1,24 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma/prisma.service';
+
+const ROL_INCLUDE = {
+  rol_permiso: { include: { permiso: true } },
+  usuarios_rol_creado_por_idTousuarios: true,
+  usuarios_rol_actualizado_por_idTousuarios: true,
+} as const;
+
+type RolRow = Prisma.rolGetPayload<{ include: typeof ROL_INCLUDE }>;
 
 @Injectable()
 export class RolesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private mapRol(r: any) {
+  private mapRol(r: RolRow) {
     return {
       id: r.id,
       nombre: r.nombre,
-      permisos: r.rol_permiso.map((rp: any) => rp.permiso.id),
+      permisos: r.rol_permiso.map((rp) => rp.permiso.id),
       creado_por_username: r.usuarios_rol_creado_por_idTousuarios?.username ?? null,
       actualizado_por_username: r.usuarios_rol_actualizado_por_idTousuarios?.username ?? null,
       creado_en: r.creado_en,
@@ -17,11 +26,7 @@ export class RolesService {
     };
   }
 
-  private readonly include = {
-    rol_permiso: { include: { permiso: true } },
-    usuarios_rol_creado_por_idTousuarios: true,
-    usuarios_rol_actualizado_por_idTousuarios: true,
-  };
+  private readonly include = ROL_INCLUDE;
 
   async obtenerRoles() {
     const roles = await this.prisma.rol.findMany({ include: this.include });

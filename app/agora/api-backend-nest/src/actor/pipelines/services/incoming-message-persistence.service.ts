@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma/prisma.service';
-import { WebsocketNotifierService } from '../../../websocket-notifier/websocket-notifier.service';
-import { MetaInboxService } from '../../../meta-inbox/meta-inbox.service';
+import { IWebsocketNotifierGateway, WEBSOCKET_NOTIFIER_GATEWAY } from '../../../websocket-notifier/interfaces/websocket-notifier-gateway.interface';
+import { IMetaInboxGateway, META_INBOX_GATEWAY } from '../../../meta-inbox/interfaces/meta-inbox-gateway.interface';
 import { ConversationBootstrapService } from '../../bootstrap/conversation-bootstrap.service';
 import { MessageNormalizerService } from './message-normalizer.service';
 import { IncomingMessageEnvelope } from '../incoming-message-envelope';
@@ -12,8 +12,8 @@ export class IncomingMessagePersistenceService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly websocketNotifier: WebsocketNotifierService,
-    private readonly metaInbox: MetaInboxService,
+    @Inject(WEBSOCKET_NOTIFIER_GATEWAY) private readonly websocketNotifier: IWebsocketNotifierGateway,
+    @Inject(META_INBOX_GATEWAY) private readonly metaInbox: IMetaInboxGateway,
     private readonly conversationBootstrap: ConversationBootstrapService,
     private readonly normalizer: MessageNormalizerService,
   ) {}

@@ -116,8 +116,19 @@ export class UsersService {
     });
   }
 
-  async actualizarUsuario(id: number, data: any) {
-    const isOptionalString = (v: any, max: number) =>
+  async actualizarUsuario(
+    id: number,
+    data: {
+      nombre?: string | null;
+      apellido?: string | null;
+      run?: string | null;
+      email?: string | null;
+      telefono?: string | null;
+      rolId?: number | null;
+      rol?: { id: number } | null;
+    },
+  ) {
+    const isOptionalString = (v: unknown, max: number) =>
       v === undefined || v === null || (typeof v === 'string' && v.length <= max);
     if (
       !isOptionalString(data.nombre, 120) ||
@@ -129,7 +140,7 @@ export class UsersService {
       throw new BadRequestException('Datos inválidos');
     }
 
-    const datosActualizados: any = {
+    const datosActualizados: Prisma.usuariosUpdateInput = {
       nombre: data.nombre,
       apellido: data.apellido,
       run: data.run,

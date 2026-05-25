@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
 import fs from 'fs';
 import path from 'path';
 import util from 'util';
@@ -9,13 +9,13 @@ import {
   removeFileQuietly,
   validateStoredMediaFile,
 } from './media-security';
-import { MinioService } from '../minio/minio.service';
+import { IMinioGateway, MINIO_GATEWAY } from '../minio/interfaces/minio-gateway.interface';
 
 const execFilePromise = util.promisify(execFile);
 
 @Injectable()
 export class MediaService {
-  constructor(private readonly minio: MinioService) {}
+  constructor(@Inject(MINIO_GATEWAY) private readonly minio: IMinioGateway) {}
 
   async procesarArchivo(
     archivo: Express.Multer.File,

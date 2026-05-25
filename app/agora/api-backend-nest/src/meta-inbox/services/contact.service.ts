@@ -1,8 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma/prisma.service';
-import { WebsocketNotifierService } from '../../websocket-notifier/websocket-notifier.service';
+import { IWebsocketNotifierGateway, WEBSOCKET_NOTIFIER_GATEWAY } from '../../websocket-notifier/interfaces/websocket-notifier-gateway.interface';
 import { WhatsappIdentityService } from './whatsapp-identity.service';
-import { ThreadService, ThreadSelectorInput } from './thread.service';
+import { IThreadGateway, THREAD_GATEWAY, ThreadSelectorInput } from '../interfaces/thread-gateway.interface';
 
 type ContactDirectoryRow = {
   actorExternalId: string;
@@ -34,9 +34,9 @@ type ContactDirectoryRow = {
 export class ContactService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly websocketNotifier: WebsocketNotifierService,
+    @Inject(WEBSOCKET_NOTIFIER_GATEWAY) private readonly websocketNotifier: IWebsocketNotifierGateway,
     private readonly whatsappIdentity: WhatsappIdentityService,
-    private readonly thread: ThreadService,
+    @Inject(THREAD_GATEWAY) private readonly thread: IThreadGateway,
   ) {}
 
   async listContacts(input: {

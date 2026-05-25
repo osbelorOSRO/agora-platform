@@ -185,7 +185,8 @@ export const limitadorLegal = rateLimit({
   skip: () => !redisClient,
 });
 
-// Accesos auth — fail-closed: si Redis cae, bloquear en lugar de dejar pasar
+// Accesos auth — fail-closed: si Redis cae, el in-memory store actúa como fallback
+// skip: () => false → nunca bypass; passOnStoreError: false → bloquea si Redis lanza error
 export const limitadorLogin = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
@@ -194,7 +195,7 @@ export const limitadorLogin = rateLimit({
   store: crearStore('login'),
   handler: (_req, res) => respuestaLimite(res),
   passOnStoreError: false,
-  skip: () => !redisClient,
+  skip: () => false,
 });
 
 export const limitadorRecuperacion = rateLimit({
@@ -205,7 +206,7 @@ export const limitadorRecuperacion = rateLimit({
   store: crearStore('recuperacion'),
   handler: (_req, res) => respuestaLimite(res),
   passOnStoreError: false,
-  skip: () => !redisClient,
+  skip: () => false,
 });
 
 export const limitadorRegistro = rateLimit({
@@ -216,7 +217,7 @@ export const limitadorRegistro = rateLimit({
   store: crearStore('registro'),
   handler: (_req, res) => respuestaLimite(res),
   passOnStoreError: false,
-  skip: () => !redisClient,
+  skip: () => false,
 });
 
 export const limitadorSesionesAdmin = rateLimit({

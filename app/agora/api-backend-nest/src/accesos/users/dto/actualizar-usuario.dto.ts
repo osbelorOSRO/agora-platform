@@ -34,5 +34,5 @@ export class ActualizarUsuarioDto {
 
   @IsOptional()
   @IsObject()
-  rol?: Record<string, unknown>;
+  rol?: { id: number };
 }

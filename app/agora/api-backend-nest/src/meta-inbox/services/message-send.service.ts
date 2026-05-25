@@ -1,18 +1,12 @@
 import { BadRequestException, Inject, Injectable, Logger, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma/prisma.service';
-import { WebsocketNotifierService } from '../../websocket-notifier/websocket-notifier.service';
+import { IWebsocketNotifierGateway, WEBSOCKET_NOTIFIER_GATEWAY } from '../../websocket-notifier/interfaces/websocket-notifier-gateway.interface';
 import { IMessageGateway, MESSAGE_GATEWAY } from '../../baileys/interfaces/message-gateway.interface';
-import {
-  assertTrustedMediaUrl,
-  ensureCanonicalExtension,
-  removeFileQuietly,
-  validateStoredMediaFile,
-} from '../../media/media-security';
-import { IMinioGateway, MINIO_GATEWAY } from '../../minio/interfaces/minio-gateway.interface';
-import { ThreadService, ThreadIdentity, ThreadSelectorInput } from './thread.service';
+import { assertTrustedMediaUrl } from '../../media/media-security';
+import { IThreadGateway, THREAD_GATEWAY, ThreadIdentity, ThreadRow, ThreadSelectorInput } from '../interfaces/thread-gateway.interface';
 import { ThreadEventService } from './thread-event.service';
 import { IMetaGraphApiGateway, META_GRAPH_GATEWAY, ThreadMessageMediaType } from '../interfaces/meta-graph-api-gateway.interface';
-import { AudioConversionService } from './audio-conversion.service';
+import { MediaSendService } from './media-send.service';
 
 type ThreadMessageSenderType = 'HUMAN' | 'N8N' | 'SYSTEM';
 type BaileysMessageType = 'text' | 'image' | 'audio' | 'document' | 'video';
@@ -23,20 +17,19 @@ export class MessageSendService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly websocketNotifier: WebsocketNotifierService,
+    @Inject(WEBSOCKET_NOTIFIER_GATEWAY) private readonly websocketNotifier: IWebsocketNotifierGateway,
     @Inject(MESSAGE_GATEWAY) private readonly baileysSender: IMessageGateway,
-    @Inject(MINIO_GATEWAY) private readonly minio: IMinioGateway,
-    private readonly thread: ThreadService,
+    @Inject(THREAD_GATEWAY) private readonly thread: IThreadGateway,
     private readonly threadEvent: ThreadEventService,
     @Inject(META_GRAPH_GATEWAY) private readonly metaGraph: IMetaGraphApiGateway,
-    private readonly audioConversion: AudioConversionService,
+    private readonly mediaSend: MediaSendService,
   ) {}
 
   async sendText(sessionId: string, text: string): Promise<{ ok: boolean; externalEventId: string; messageExternalId: string | null; occurredAt: string; inReplyToExternalEventId: string | null }> {
     return this.sendTextInternal(sessionId, text, 'HUMAN');
   }
 
-  async sendSystemText(input: ThreadSelectorInput & { text: string }): Promise<{ ok: boolean; externalEventId: string; messageExternalId: string | null; occurredAt: string; inReplyToExternalEventId: string | null; thread: import('./thread.service').ThreadRow | null }> {
+  async sendSystemText(input: ThreadSelectorInput & { text: string }): Promise<{ ok: boolean; externalEventId: string; messageExternalId: string | null; occurredAt: string; inReplyToExternalEventId: string | null; thread: ThreadRow | null }> {
     const sessionId = await this.thread.resolveSessionIdForAutomation(input);
     const result = await this.sendTextInternal(sessionId, input.text, 'SYSTEM');
     const threadRow = await this.thread.getThreadRow(sessionId);
@@ -85,22 +78,10 @@ export class MessageSendService {
     file: Express.Multer.File,
     caption?: string,
   ): Promise<Record<string, unknown>> {
-    const threadIdentity = await this.thread.getThreadIdentity(sessionId);
-    if (!threadIdentity) throw new NotFoundException(`session_not_found:${sessionId}`);
-
-    const isInstagram = this.metaGraph.isInstagramThread(threadIdentity.objectType, threadIdentity.sourceChannel);
-    const detected = await validateStoredMediaFile(file, ['image', 'audio', 'video', 'document']);
-    const mediaType = detected.family;
-    ensureCanonicalExtension(file, detected);
-    const preparedMedia = await this.prepareOutgoingMediaForThread(file, {
-      isInstagram,
-      mediaType,
-      mimeType: detected.mimeType,
-    });
-
-    return this.sendMediaByUrlInternal(sessionId, preparedMedia.url, mediaType, 'HUMAN', {
-      mimeType: preparedMedia.mimeType,
-      fileName: file.filename,
+    const prepared = await this.mediaSend.prepareMediaUpload(file, sessionId);
+    return this.sendMediaByUrlInternal(sessionId, prepared.url, prepared.mediaType, 'HUMAN', {
+      mimeType: prepared.mimeType,
+      fileName: prepared.fileName,
       caption,
     });
   }
@@ -451,27 +432,6 @@ export class MessageSendService {
 
     const snapshot = snapshotForEvent || (await this.thread.getThreadSnapshot(input.sessionId));
     if (snapshot) await this.thread.notifyThreadUpsert(snapshot);
-  }
-
-  private async prepareOutgoingMediaForThread(
-    file: Express.Multer.File,
-    input: { isInstagram: boolean; mediaType: ThreadMessageMediaType; mimeType: string },
-  ): Promise<{ url: string; mimeType: string }> {
-    if (!input.isInstagram || input.mediaType !== 'audio') {
-      const url = await this.minio.uploadFile(file.path, file.filename, input.mimeType);
-      removeFileQuietly(file.path);
-      return { url, mimeType: input.mimeType };
-    }
-
-    const converted = await this.audioConversion.convertToM4a(file.path);
-    try {
-      const url = await this.minio.uploadFile(converted.outputPath, converted.outputName, converted.mimeType);
-      removeFileQuietly(converted.outputPath);
-      return { url, mimeType: converted.mimeType };
-    } catch (error) {
-      removeFileQuietly(converted.outputPath);
-      throw error;
-    }
   }
 
   private async getLastIncomingExternalEventId(sessionId: string): Promise<string | null> {
