@@ -19,17 +19,15 @@ git push origin main
 
 ## 3) Deploy en el host destino
 
+El deploy es automático vía CI/CD para los servicios con workflow configurado. El push a `main` dispara el runner self-hosted que reconstruye los contenedores afectados según los archivos cambiados (ver `ops/RUNBOOKS.md` sección CI/CD).
+
+Verificar el estado del run en GitHub → Actions antes de continuar con el paso 4.
+
+**Deploy manual** (si el runner no está disponible o para servicios sin workflow):
+
 ```bash
 cd <repo_root>
 git pull origin main
-./scripts/verify-env.sh <perfil>
-./scripts/verify-compose.sh <perfil>
-./scripts/up-profile.sh <perfil>
-```
-
-Rebuild de servicios que cambiaron (si aplica):
-
-```bash
 docker compose -p <stack> --env-file app/env/<perfil>.secrets.env \
   -f app/agora/docker-compose.yml up -d --build --force-recreate <servicio>
 ```

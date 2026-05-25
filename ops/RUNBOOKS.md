@@ -76,7 +76,67 @@ docker compose -p stack_wa_backend --env-file app/env/<perfil>.secrets.env -f ap
 3. Ejecutar smoke contra datos restaurados.
 4. Documentar resultado y timestamp.
 
-## 6) Vault
+## 6) CI/CD — GitHub Actions self-hosted runner
+
+El stack usa GitHub Actions con un runner self-hosted instalado en el host de producción. No se usan runners en la nube — todo el trabajo corre en el propio servidor.
+
+### Cómo funciona
+
+Hay tres workflows con path filters en `.github/workflows/`:
+
+| Workflow | Se dispara cuando cambia | Qué hace |
+|---|---|---|
+| `ci-cd-agora.yml` | `app/agora/**` | lint + tests + build NestJS → rebuild `frontend`, `backend`, `websocket` |
+| `ci-cd-wa.yml` | `app/wa-backend/**` | rebuild `stack_wabackend` |
+| `ci-cd-n8n.yml` | `n8n/**` | recrear `stack_n8n` → recrear `stack_tesseract` |
+
+Un push que solo toca `n8n/` no dispara el CI de NestJS. Cada workflow es independiente.
+
+El job de deploy solo corre en pushes a `main` — los pull requests solo corren el CI (lint + tests + build) sin desplegar.
+
+### Estado del runner
+
+El runner corre como servicio systemd en el host de producción. Para verificar su estado:
+
+```bash
+sudo systemctl status actions.runner.*
+```
+
+Para reiniciarlo si está caído:
+
+```bash
+sudo systemctl restart actions.runner.*
+```
+
+### Registrar el runner en un host nuevo
+
+Si se migra a un nuevo servidor, el runner debe re-registrarse:
+
+1. En GitHub: `Settings → Actions → Runners → New self-hosted runner`
+2. Crear directorio `~/actions-runner` y seguir las instrucciones de GitHub (descarga + `./config.sh`)
+3. Instalar y arrancar como servicio:
+   ```bash
+   sudo ./svc.sh install
+   sudo ./svc.sh start
+   ```
+
+El env file de secretos (`app/env/<perfil>.secrets.env`, `n8n/env/<perfil>.secrets.env`) debe existir en el host antes de que el runner ejecute el primer deploy. El runner lo referencia por ruta absoluta — no está en el repo.
+
+### Monitorear runs
+
+Los runs están visibles en GitHub: `repositorio → Actions`. Cada run muestra el log de cada step en tiempo real. Si el CI falla, el deploy no se ejecuta.
+
+### Rollback en caso de fallo del runner
+
+Si el runner no está disponible, el deploy manual sigue funcionando igual que antes:
+
+```bash
+git pull origin main
+docker compose -p stack_agora --env-file app/env/<perfil>.secrets.env \
+  -f app/agora/docker-compose.yml up -d --build --force-recreate frontend backend websocket
+```
+
+## 7) Vault
 
 Vault es el gestor centralizado de secretos del stack. Los servicios que lo consumen lo hacen en arranque: leen sus variables sensibles desde Vault en lugar de depender exclusivamente de archivos `.env` locales.
 

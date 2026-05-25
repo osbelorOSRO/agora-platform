@@ -35,6 +35,7 @@ async function bootstrap() {
   });
 
   app.set('trust proxy', 1);
+  app.enableShutdownHooks();
 
   setMetaConfigService(app.get(MetaConfigService));
 
