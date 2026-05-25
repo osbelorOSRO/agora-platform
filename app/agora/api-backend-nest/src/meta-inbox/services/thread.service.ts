@@ -2,6 +2,10 @@ import { BadRequestException, Injectable, InternalServerErrorException, NotFound
 import { PrismaService } from '../../database/prisma/prisma.service';
 import { WebsocketNotifierService } from '../../websocket-notifier/websocket-notifier.service';
 import { ThreadEventService, ThreadEventInput } from './thread-event.service';
+import { CacheService } from '../../cache/cache.service';
+
+const CACHE_TTL_THREAD_IDENTITY = 120;
+const CACHE_TTL_STAGE_TEMPLATES = 300;
 
 export type ThreadRow = {
   threadId: string;
@@ -80,6 +84,7 @@ export class ThreadService {
     private readonly prisma: PrismaService,
     private readonly websocketNotifier: WebsocketNotifierService,
     private readonly threadEvent: ThreadEventService,
+    private readonly cache: CacheService,
   ) {}
 
   async listThreads(input: {
@@ -264,6 +269,10 @@ export class ThreadService {
       throw new BadRequestException('Debes enviar un stage actual valido');
     }
 
+    const cacheKey = `stage_templates:${normalizedStage}`;
+    const cached = await this.cache.get<{ stage_actual: string; caminos: Partial<Record<string, unknown>>[] }>(cacheKey);
+    if (cached) return cached;
+
     const rows = await this.prisma.$queryRawUnsafe<StageTemplateRow[]>(
       `SELECT
         stage_actual AS "stageActual",
@@ -285,7 +294,7 @@ export class ThreadService {
       normalizedStage,
     );
 
-    return {
+    const result = {
       stage_actual: normalizedStage,
       caminos: rows.map((row) =>
         this.omitEmptyFields({
@@ -304,6 +313,8 @@ export class ThreadService {
         }),
       ),
     };
+    await this.cache.set(cacheKey, result, CACHE_TTL_STAGE_TEMPLATES);
+    return result;
   }
 
   async updateThreadControl(
@@ -565,6 +576,10 @@ export class ThreadService {
   }
 
   async getThreadIdentity(sessionId: string): Promise<ThreadIdentity | null> {
+    const cacheKey = `thread:identity:${sessionId}`;
+    const cached = await this.cache.get<ThreadIdentity>(cacheKey);
+    if (cached) return cached;
+
     const rows = await this.prisma.$queryRawUnsafe<ThreadIdentity[]>(
       `SELECT
         session_id AS "sessionId",
@@ -577,7 +592,10 @@ export class ThreadService {
       sessionId,
     );
 
-    if (rows[0]) return rows[0];
+    if (rows[0]) {
+      await this.cache.set(cacheKey, rows[0], CACHE_TTL_THREAD_IDENTITY);
+      return rows[0];
+    }
 
     const fallback = await this.prisma.$queryRawUnsafe<ThreadIdentity[]>(
       `SELECT
@@ -592,6 +610,9 @@ export class ThreadService {
       sessionId,
     );
 
+    if (fallback[0]) {
+      await this.cache.set(cacheKey, fallback[0], CACHE_TTL_THREAD_IDENTITY);
+    }
     return fallback[0] || null;
   }
 

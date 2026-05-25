@@ -1,6 +1,6 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma/prisma.service';
-import { MinioService } from '../minio/minio.service';
+import { IMinioGateway, MINIO_GATEWAY } from '../minio/interfaces/minio-gateway.interface';
 import { validateStoredMediaFile, removeFileQuietly } from '../media/media-security';
 import { randomUUID } from 'crypto';
 import path from 'path';
@@ -9,7 +9,7 @@ import path from 'path';
 export class UserProfileService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly minio: MinioService,
+    @Inject(MINIO_GATEWAY) private readonly minio: IMinioGateway,
   ) {}
 
   async getPhotoUrl(userId: number): Promise<string | null> {

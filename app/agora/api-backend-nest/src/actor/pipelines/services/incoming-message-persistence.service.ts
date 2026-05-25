@@ -4,6 +4,7 @@ import { WebsocketNotifierService } from '../../../websocket-notifier/websocket-
 import { MetaInboxService } from '../../../meta-inbox/meta-inbox.service';
 import { ConversationBootstrapService } from '../../bootstrap/conversation-bootstrap.service';
 import { MessageNormalizerService } from './message-normalizer.service';
+import { IncomingMessageEnvelope } from '../incoming-message-envelope';
 
 @Injectable()
 export class IncomingMessagePersistenceService {
@@ -17,8 +18,7 @@ export class IncomingMessagePersistenceService {
     private readonly normalizer: MessageNormalizerService,
   ) {}
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async persistMessageSession(env: any): Promise<{ inserted: boolean; primedFirstDelegate: boolean }> {
+  async persistMessageSession(env: IncomingMessageEnvelope): Promise<{ inserted: boolean; primedFirstDelegate: boolean }> {
     const payload = env?.payload || {};
     const eventKind = String(env?.eventType || '').replace(/^messaging\./, '') || 'unknown';
     const direction = this.normalizer.resolveDirection(payload, eventKind);
@@ -185,8 +185,7 @@ export class IncomingMessagePersistenceService {
     };
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async handlePageEcho(env: any): Promise<void> {
+  async handlePageEcho(env: IncomingMessageEnvelope): Promise<void> {
     const payload = env?.payload || {};
     const recipientId = String(payload?.recipientId || payload?.recipient?.id || '').trim();
     const objectType = String(env.objectType || 'PAGE');
@@ -385,8 +384,7 @@ export class IncomingMessagePersistenceService {
     );
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private async upsertWhatsappContactFromIncoming(env: any, payload: any): Promise<void> {
+  private async upsertWhatsappContactFromIncoming(env: IncomingMessageEnvelope, payload: Record<string, any>): Promise<void> {
     const identity = this.normalizer.normalizeWhatsappIdentity(env, payload);
     const adContext = this.normalizer.normalizeExternalAdContext(payload);
     const actorExternalId = String(
@@ -517,8 +515,7 @@ export class IncomingMessagePersistenceService {
   }
 
   private async resolveSessionIdForIncomingMessage(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    env: any,
+    env: IncomingMessageEnvelope,
     direction: 'INCOMING' | 'OUTGOING' | 'SYSTEM',
   ): Promise<{ sessionId: string; primeFirstIncomingDelegate: boolean }> {
     const provider = String(env.provider || 'META');
@@ -559,8 +556,7 @@ export class IncomingMessagePersistenceService {
 
   private async primeFirstIncomingDelegate(
     sessionId: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    env: any,
+    env: IncomingMessageEnvelope,
     _sourceChannel: string | null,
   ): Promise<void> {
     await this.prisma.threads.update({

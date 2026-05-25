@@ -16,14 +16,17 @@ import { MinioModule } from '../minio/minio.module';
 import { N8nAuthGuard } from '../shared/guards/n8n-auth.guard';
 import { MetaGraphApiService } from './services/meta-graph-api.service';
 import { AudioConversionService } from './services/audio-conversion.service';
+import { CacheConfigModule } from '../cache/cache.module';
+import { META_GRAPH_GATEWAY } from './interfaces/meta-graph-api-gateway.interface';
 
 @Module({
-  imports: [WebsocketNotifierModule, BaileysModule, AuthModule, MinioModule],
+  imports: [WebsocketNotifierModule, BaileysModule, AuthModule, MinioModule, CacheConfigModule],
   controllers: [MetaInboxController],
   providers: [
     PrismaService,
     N8nAuthGuard,
     MetaGraphApiService,
+    { provide: META_GRAPH_GATEWAY, useExisting: MetaGraphApiService },
     AudioConversionService,
     MetaInboxSchemaService,
     ThreadEventService,

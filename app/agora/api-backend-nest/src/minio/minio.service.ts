@@ -1,9 +1,10 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Client } from 'minio';
 import fs from 'fs';
+import { IMinioGateway } from './interfaces/minio-gateway.interface';
 
 @Injectable()
-export class MinioService implements OnModuleInit {
+export class MinioService implements OnModuleInit, IMinioGateway {
   private readonly logger = new Logger(MinioService.name);
   private readonly client: Client;
   private readonly bucket: string;

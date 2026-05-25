@@ -1,11 +1,10 @@
 import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import axios from 'axios';
 import { getRuntimeSecret } from '../../shared/runtime-secrets';
-
-type ThreadMessageMediaType = 'image' | 'audio' | 'document' | 'video';
+import { IMetaGraphApiGateway, ThreadMessageMediaType } from '../interfaces/meta-graph-api-gateway.interface';
 
 @Injectable()
-export class MetaGraphApiService {
+export class MetaGraphApiService implements IMetaGraphApiGateway {
   private readonly logger = new Logger(MetaGraphApiService.name);
 
   isInstagramThread(objectType: string, sourceChannel: string | null): boolean {

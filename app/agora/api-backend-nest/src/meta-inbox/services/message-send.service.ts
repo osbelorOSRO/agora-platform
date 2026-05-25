@@ -8,14 +8,13 @@ import {
   removeFileQuietly,
   validateStoredMediaFile,
 } from '../../media/media-security';
-import { MinioService } from '../../minio/minio.service';
+import { IMinioGateway, MINIO_GATEWAY } from '../../minio/interfaces/minio-gateway.interface';
 import { ThreadService, ThreadIdentity, ThreadSelectorInput } from './thread.service';
 import { ThreadEventService } from './thread-event.service';
-import { MetaGraphApiService } from './meta-graph-api.service';
+import { IMetaGraphApiGateway, META_GRAPH_GATEWAY, ThreadMessageMediaType } from '../interfaces/meta-graph-api-gateway.interface';
 import { AudioConversionService } from './audio-conversion.service';
 
 type ThreadMessageSenderType = 'HUMAN' | 'N8N' | 'SYSTEM';
-type ThreadMessageMediaType = 'image' | 'audio' | 'document' | 'video';
 type BaileysMessageType = 'text' | 'image' | 'audio' | 'document' | 'video';
 
 @Injectable()
@@ -26,10 +25,10 @@ export class MessageSendService {
     private readonly prisma: PrismaService,
     private readonly websocketNotifier: WebsocketNotifierService,
     @Inject(MESSAGE_GATEWAY) private readonly baileysSender: IMessageGateway,
-    private readonly minio: MinioService,
+    @Inject(MINIO_GATEWAY) private readonly minio: IMinioGateway,
     private readonly thread: ThreadService,
     private readonly threadEvent: ThreadEventService,
-    private readonly metaGraph: MetaGraphApiService,
+    @Inject(META_GRAPH_GATEWAY) private readonly metaGraph: IMetaGraphApiGateway,
     private readonly audioConversion: AudioConversionService,
   ) {}
 
@@ -382,7 +381,7 @@ export class MessageSendService {
     objectType: string;
     sourceChannel: string | null;
     contentText: string;
-    contentJson: any;
+    contentJson: Record<string, unknown>;
     inReplyToExternalEventId: string | null;
     occurredAt: Date;
     senderType: ThreadMessageSenderType;
