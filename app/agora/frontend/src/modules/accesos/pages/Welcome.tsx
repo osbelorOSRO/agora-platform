@@ -238,7 +238,7 @@ const buildWeeklyBuckets = (
     const current = buckets.get(weekStartKey);
     if (!current) return;
 
-    current.total = Number(row.total_eventos || 0);
+    current.total = Number(row.threads_distintos || 0);
   });
 
   return Array.from(buckets.values());
@@ -537,8 +537,8 @@ export default function Welcome() {
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.3em] text-primary">Actividad semanal</p>
-              <h2 className="mt-2 text-2xl font-bold text-foreground">Eventos registrados por semana</h2>
-              <p className="mt-2 text-sm text-muted-foreground">Ventana móvil de ocho semanas, agrupada de lunes a domingo.</p>
+              <h2 className="mt-2 text-2xl font-bold text-foreground">Threads únicos por semana</h2>
+              <p className="mt-2 text-sm text-muted-foreground">Sessions únicas (sin duplicados por origen) en ventana móvil de ocho semanas.</p>
             </div>
             <div className="inline-flex items-center gap-2 rounded-full border border-border bg-input px-4 py-2 text-sm text-muted-foreground">
               <BarChart3 className="h-4 w-4" />
@@ -569,7 +569,7 @@ export default function Welcome() {
                         <div
                           className="w-full rounded-t-xl bg-primary transition-[height]"
                           style={{ height }}
-                          title={`${item.total} eventos`}
+                          title={`${item.total} threads únicos`}
                         />
                       </div>
                       <div className="text-center text-[10px] md:text-xs text-muted-foreground">

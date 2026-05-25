@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.3.1
+
+### Fixed
+- `api-backend-nest`: PATCH `/api/auth/usuarios/:id` devolvía 400 — `ActualizarUsuarioDto` ahora acepta `rol` como objeto completo (el frontend envía el objeto `Rol` completo) y `email` vacío (`@ValidateIf` evita que `@IsEmail()` rechace string vacío).
+
+### Changed
+- `frontend/Welcome.tsx`: gráfico semanal muestra `threads_distintos` (session IDs únicos por semana) en lugar de `total_eventos`, eliminando el doble conteo de sesiones que pasaron por múltiples orígenes (N8N, HUMAN, SYSTEM, etc.).
+
 ## 2.3.0
 
 ### Changed
