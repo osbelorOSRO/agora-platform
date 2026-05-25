@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.5.1
+
+### Fixed
+- `api-backend-nest`, `frontend`, `websocket`: `package-lock.json` actualizados — `engine.io-client` → 6.6.5, `ws` → ~8.20.1 (fix CVE GHSA-58qx-3vcg-4xpx); `websocket` suma `engine.io` 6.6.8 y `@types/ws` 8.18.1
+
 ## 2.5.0
 
 ### Added
