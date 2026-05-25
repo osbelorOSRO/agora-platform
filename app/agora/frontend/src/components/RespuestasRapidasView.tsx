@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { X, Plus, Send, Edit2, Trash2, Zap } from 'lucide-react';
-import type { RespuestaRapida } from '../types/respuestas-rapidas';
+import type { Shortcut } from '../types/shortcut';
 import {
-  fetchRespuestas,
-  createRespuesta,
-  updateRespuesta,
-  deleteRespuesta,
-} from '../services/respuestas-rapidas.service';
+  fetchShortcuts,
+  createShortcut,
+  updateShortcut,
+  deleteShortcut,
+} from '../services/shortcut.service';
 
 interface Props {
   onSend: (texto: string) => void;
@@ -14,7 +14,7 @@ interface Props {
 }
 
 export default function RespuestasRapidasView({ onSend, onClose }: Props) {
-  const [respuestas, setRespuestas] = useState<RespuestaRapida[]>([]);
+  const [respuestas, setRespuestas] = useState<Shortcut[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newData, setNewData] = useState({ atajo: '', texto: '' });
@@ -28,7 +28,7 @@ export default function RespuestasRapidasView({ onSend, onClose }: Props) {
   async function loadRespuestas() {
     setLoading(true);
     try {
-      const data = await fetchRespuestas();
+      const data = await fetchShortcuts();
       setRespuestas(data);
     } catch {
       setError('Error cargando respuestas');
@@ -61,7 +61,7 @@ export default function RespuestasRapidasView({ onSend, onClose }: Props) {
 
   async function saveEdit(id: string, atajo: string, texto: string) {
     try {
-      const updated = await updateRespuesta(id, { atajo, texto });
+      const updated = await updateShortcut(id, { atajo, texto });
       setRespuestas((prev) => prev.map((r) => (r.uuid === id ? updated : r)));
       setEditingId(null);
       setError(null);
@@ -76,7 +76,7 @@ export default function RespuestasRapidasView({ onSend, onClose }: Props) {
       return;
     }
     try {
-      const created = await createRespuesta(newData);
+      const created = await createShortcut(newData);
       setRespuestas((prev) => [created, ...prev]);
       setCreating(false);
       setNewData({ atajo: '', texto: '' });
@@ -89,7 +89,7 @@ export default function RespuestasRapidasView({ onSend, onClose }: Props) {
   async function handleDelete(id: string) {
     if (!window.confirm('¿Eliminar esta respuesta rápida?')) return;
     try {
-      await deleteRespuesta(id);
+      await deleteShortcut(id);
       setRespuestas((prev) => prev.filter((r) => r.uuid !== id));
       if (editingId === id) setEditingId(null);
       setError(null);

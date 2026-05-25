@@ -50,8 +50,8 @@ import ChatAnimation from "@/components/ChatAnimation";
 import VoiceRecorder from "@/components/VoiceRecorder";
 import RespuestasRapidasView from "@/components/RespuestasRapidasView";
 import { normalizeMediaUrl } from "@/utils/mediaUrl";
-import { fetchRespuestas } from "@/services/respuestas-rapidas.service";
-import type { RespuestaRapida } from "@/types/respuestas-rapidas";
+import { fetchShortcuts } from "@/services/shortcut.service";
+import type { Shortcut } from "@/types/shortcut";
 
 type InboxRealtimePayload = Partial<MetaInboxThread> &
   Partial<MetaInboxMessage> & {
@@ -297,8 +297,8 @@ const MetaInboxPage: React.FC = () => {
   });
   const [showRecorder, setShowRecorder] = useState(false);
   const [showRespuestasPanel, setShowRespuestasPanel] = useState(false);
-  const [respuestasList, setRespuestasList] = useState<RespuestaRapida[]>([]);
-  const [slashSuggestions, setSlashSuggestions] = useState<RespuestaRapida[]>([]);
+  const [respuestasList, setRespuestasList] = useState<Shortcut[]>([]);
+  const [slashSuggestions, setSlashSuggestions] = useState<Shortcut[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const selectedThread = useMemo(
@@ -749,7 +749,7 @@ const MetaInboxPage: React.FC = () => {
 
   // Carga de respuestas rápidas para autocomplete
   useEffect(() => {
-    fetchRespuestas().then(setRespuestasList).catch(() => {});
+    fetchShortcuts().then(setRespuestasList).catch(() => {});
   }, []);
 
   // Auto-resize textarea estilo WhatsApp
