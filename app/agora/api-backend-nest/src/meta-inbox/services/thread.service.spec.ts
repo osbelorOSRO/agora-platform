@@ -1,9 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { ThreadService, ThreadRow, ThreadControlSnapshot } from './thread.service';
+import {
+  BadRequestException,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  ThreadService,
+  ThreadRow,
+  ThreadControlSnapshot,
+} from './thread.service';
 import { PrismaService } from '../../database/prisma/prisma.service';
-import { WebsocketNotifierService } from '../../websocket-notifier/websocket-notifier.service';
+import { WEBSOCKET_NOTIFIER_GATEWAY } from '../../websocket-notifier/interfaces/websocket-notifier-gateway.interface';
 import { ThreadEventService } from './thread-event.service';
+import { CacheService } from '../../cache/cache.service';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -39,7 +48,9 @@ const makeThreadRow = (overrides: Partial<ThreadRow> = {}): ThreadRow => ({
   ...overrides,
 });
 
-const makeSnapshot = (overrides: Partial<ThreadControlSnapshot> = {}): ThreadControlSnapshot => ({
+const makeSnapshot = (
+  overrides: Partial<ThreadControlSnapshot> = {},
+): ThreadControlSnapshot => ({
   threadId: 'thread-uuid-1',
   sessionId: 'sess-001',
   actorExternalId: '56912345678@s.whatsapp.net',
@@ -79,8 +90,12 @@ async function buildService(): Promise<ThreadService> {
     providers: [
       ThreadService,
       { provide: PrismaService, useValue: mockPrisma },
-      { provide: WebsocketNotifierService, useValue: mockWebsocket },
+      { provide: WEBSOCKET_NOTIFIER_GATEWAY, useValue: mockWebsocket },
       { provide: ThreadEventService, useValue: mockThreadEvent },
+      {
+        provide: CacheService,
+        useValue: { get: jest.fn(), set: jest.fn(), del: jest.fn() },
+      },
     ],
   }).compile();
   return module.get(ThreadService);
@@ -89,7 +104,9 @@ async function buildService(): Promise<ThreadService> {
 describe('ThreadService', () => {
   let svc: ThreadService;
 
-  beforeAll(async () => { svc = await buildService(); });
+  beforeAll(async () => {
+    svc = await buildService();
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -164,19 +181,30 @@ describe('ThreadService', () => {
     const JID = '56912345678@s.whatsapp.net';
 
     it('lanza BadRequestException cuando el JID no termina en @s.whatsapp.net', async () => {
-      await expect(svc.ensureWhatsappThreadForContact('56912345678')).rejects.toBeInstanceOf(BadRequestException);
+      await expect(
+        svc.ensureWhatsappThreadForContact('56912345678'),
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
 
     it('lanza BadRequestException cuando el contacto no existe en BD', async () => {
       mockPrisma.meta_inbox_contacts.findUnique.mockResolvedValue(null);
-      await expect(svc.ensureWhatsappThreadForContact(JID)).rejects.toBeInstanceOf(BadRequestException);
+      await expect(
+        svc.ensureWhatsappThreadForContact(JID),
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
 
     describe('ruta A — thread abierto existente', () => {
       it('reutiliza el thread abierto sin crear uno nuevo', async () => {
-        mockPrisma.meta_inbox_contacts.findUnique.mockResolvedValue({ actor_external_id: JID });
-        mockPrisma.threads.findFirst.mockResolvedValue({ session_id: 'sess-existing' });
-        const existingRow = makeThreadRow({ sessionId: 'sess-existing', threadStatus: 'OPEN' });
+        mockPrisma.meta_inbox_contacts.findUnique.mockResolvedValue({
+          actor_external_id: JID,
+        });
+        mockPrisma.threads.findFirst.mockResolvedValue({
+          session_id: 'sess-existing',
+        });
+        const existingRow = makeThreadRow({
+          sessionId: 'sess-existing',
+          threadStatus: 'OPEN',
+        });
         mockPrisma.$queryRawUnsafe.mockResolvedValue([existingRow]);
 
         const result = await svc.ensureWhatsappThreadForContact(JID);
@@ -187,9 +215,16 @@ describe('ThreadService', () => {
       });
 
       it('activa el thread ARCHIVED al reutilizarlo (UPDATE status → OPEN)', async () => {
-        mockPrisma.meta_inbox_contacts.findUnique.mockResolvedValue({ actor_external_id: JID });
-        mockPrisma.threads.findFirst.mockResolvedValue({ session_id: 'sess-archived' });
-        const archivedRow = makeThreadRow({ sessionId: 'sess-archived', threadStatus: 'ARCHIVED' });
+        mockPrisma.meta_inbox_contacts.findUnique.mockResolvedValue({
+          actor_external_id: JID,
+        });
+        mockPrisma.threads.findFirst.mockResolvedValue({
+          session_id: 'sess-archived',
+        });
+        const archivedRow = makeThreadRow({
+          sessionId: 'sess-archived',
+          threadStatus: 'ARCHIVED',
+        });
         mockPrisma.$queryRawUnsafe.mockResolvedValue([archivedRow]);
 
         await svc.ensureWhatsappThreadForContact(JID);
@@ -201,11 +236,15 @@ describe('ThreadService', () => {
 
     describe('ruta B — sin thread abierto pero con historial', () => {
       it('crea thread con sessionId único cuando ya existe historial previo', async () => {
-        mockPrisma.meta_inbox_contacts.findUnique.mockResolvedValue({ actor_external_id: JID });
+        mockPrisma.meta_inbox_contacts.findUnique.mockResolvedValue({
+          actor_external_id: JID,
+        });
         mockPrisma.threads.findFirst
-          .mockResolvedValueOnce(null)           // sin thread abierto
+          .mockResolvedValueOnce(null) // sin thread abierto
           .mockResolvedValueOnce({ session_id: 'prev-sess' }); // con historial
-        const newRow = makeThreadRow({ sessionId: `BAILEYS:WHATSAPP:${JID}:new` });
+        const newRow = makeThreadRow({
+          sessionId: `BAILEYS:WHATSAPP:${JID}:new`,
+        });
         mockPrisma.$queryRawUnsafe.mockResolvedValue([newRow]);
         mockPrisma.threads.upsert.mockResolvedValue({});
 
@@ -221,7 +260,9 @@ describe('ThreadService', () => {
 
     describe('ruta C — sin historial previo', () => {
       it('crea thread con sessionId base cuando no existe ningún thread previo', async () => {
-        mockPrisma.meta_inbox_contacts.findUnique.mockResolvedValue({ actor_external_id: JID });
+        mockPrisma.meta_inbox_contacts.findUnique.mockResolvedValue({
+          actor_external_id: JID,
+        });
         mockPrisma.threads.findFirst.mockResolvedValue(null);
         const newRow = makeThreadRow({ sessionId: `BAILEYS:WHATSAPP:${JID}` });
         mockPrisma.$queryRawUnsafe.mockResolvedValue([newRow]);
@@ -240,7 +281,9 @@ describe('ThreadService', () => {
       });
 
       it('registra evento THREAD_CREATED y notifica por websocket al crear', async () => {
-        mockPrisma.meta_inbox_contacts.findUnique.mockResolvedValue({ actor_external_id: JID });
+        mockPrisma.meta_inbox_contacts.findUnique.mockResolvedValue({
+          actor_external_id: JID,
+        });
         mockPrisma.threads.findFirst.mockResolvedValue(null);
         const newRow = makeThreadRow({ sessionId: `BAILEYS:WHATSAPP:${JID}` });
         mockPrisma.$queryRawUnsafe.mockResolvedValue([newRow]);
@@ -249,18 +292,27 @@ describe('ThreadService', () => {
         await svc.ensureWhatsappThreadForContact(JID);
 
         expect(mockThreadEvent.recordThreadEvent).toHaveBeenCalledWith(
-          expect.objectContaining({ eventType: 'THREAD_CREATED', eventSource: 'HUMAN' }),
+          expect.objectContaining({
+            eventType: 'THREAD_CREATED',
+            eventSource: 'HUMAN',
+          }),
         );
-        expect(mockWebsocket.notificarMetaInboxThreadUpsert).toHaveBeenCalledTimes(1);
+        expect(
+          mockWebsocket.notificarMetaInboxThreadUpsert,
+        ).toHaveBeenCalledTimes(1);
       });
 
       it('lanza InternalServerErrorException si getThreadRow devuelve null tras upsert', async () => {
-        mockPrisma.meta_inbox_contacts.findUnique.mockResolvedValue({ actor_external_id: JID });
+        mockPrisma.meta_inbox_contacts.findUnique.mockResolvedValue({
+          actor_external_id: JID,
+        });
         mockPrisma.threads.findFirst.mockResolvedValue(null);
         mockPrisma.$queryRawUnsafe.mockResolvedValue([]); // getThreadRow retorna null
         mockPrisma.threads.upsert.mockResolvedValue({});
 
-        await expect(svc.ensureWhatsappThreadForContact(JID)).rejects.toBeInstanceOf(InternalServerErrorException);
+        await expect(
+          svc.ensureWhatsappThreadForContact(JID),
+        ).rejects.toBeInstanceOf(InternalServerErrorException);
       });
     });
   });
@@ -271,29 +323,35 @@ describe('ThreadService', () => {
 
   describe('getStageTemplatePaths()', () => {
     it('lanza BadRequestException cuando stageActual está vacío', async () => {
-      await expect(svc.getStageTemplatePaths('')).rejects.toBeInstanceOf(BadRequestException);
+      await expect(svc.getStageTemplatePaths('')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
     });
 
     it('lanza BadRequestException cuando stageActual solo tiene espacios', async () => {
-      await expect(svc.getStageTemplatePaths('   ')).rejects.toBeInstanceOf(BadRequestException);
+      await expect(svc.getStageTemplatePaths('   ')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
     });
 
     it('devuelve stage_actual y array de caminos', async () => {
-      mockPrisma.$queryRawUnsafe.mockResolvedValue([{
-        stageActual: 'inicio',
-        posicion: 1,
-        posiblesMatch: 'hola|hi',
-        esFallback: false,
-        procesaDatos: false,
-        datoEsperado: null,
-        modoDefault: null,
-        factible: true,
-        decision: 'continuar',
-        accion: null,
-        nuevoStage: 'menu',
-        tipoRespuesta: 'texto',
-        stageRoute: null,
-      }]);
+      mockPrisma.$queryRawUnsafe.mockResolvedValue([
+        {
+          stageActual: 'inicio',
+          posicion: 1,
+          posiblesMatch: 'hola|hi',
+          esFallback: false,
+          procesaDatos: false,
+          datoEsperado: null,
+          modoDefault: null,
+          factible: true,
+          decision: 'continuar',
+          accion: null,
+          nuevoStage: 'menu',
+          tipoRespuesta: 'texto',
+          stageRoute: null,
+        },
+      ]);
 
       const result = await svc.getStageTemplatePaths('inicio');
 
@@ -302,21 +360,23 @@ describe('ThreadService', () => {
     });
 
     it('omite campos null, undefined y cadena vacía en los caminos', async () => {
-      mockPrisma.$queryRawUnsafe.mockResolvedValue([{
-        stageActual: 'inicio',
-        posicion: null,
-        posiblesMatch: 'hola',
-        esFallback: false,
-        procesaDatos: false,
-        datoEsperado: null,
-        modoDefault: '',
-        factible: null,
-        decision: null,
-        accion: null,
-        nuevoStage: 'menu',
-        tipoRespuesta: 'texto',
-        stageRoute: null,
-      }]);
+      mockPrisma.$queryRawUnsafe.mockResolvedValue([
+        {
+          stageActual: 'inicio',
+          posicion: null,
+          posiblesMatch: 'hola',
+          esFallback: false,
+          procesaDatos: false,
+          datoEsperado: null,
+          modoDefault: '',
+          factible: null,
+          decision: null,
+          accion: null,
+          nuevoStage: 'menu',
+          tipoRespuesta: 'texto',
+          stageRoute: null,
+        },
+      ]);
 
       const result = await svc.getStageTemplatePaths('inicio');
       const camino = result.caminos[0] as Record<string, unknown>;
@@ -348,12 +408,22 @@ describe('ThreadService', () => {
   // ──────────────────────────────────────────────
 
   describe('updateThreadControl()', () => {
-    const before = makeSnapshot({ threadStatus: 'OPEN', attentionMode: 'BOT', threadStage: 'inicio' });
-    const after = makeSnapshot({ threadStatus: 'CLOSED', attentionMode: 'HUMAN', threadStage: 'fin' });
+    const before = makeSnapshot({
+      threadStatus: 'OPEN',
+      attentionMode: 'BOT',
+      threadStage: 'inicio',
+    });
+    const after = makeSnapshot({
+      threadStatus: 'CLOSED',
+      attentionMode: 'HUMAN',
+      threadStage: 'fin',
+    });
 
     it('lanza NotFoundException cuando el thread no existe', async () => {
       mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
-      await expect(svc.updateThreadControl('sess-ghost', {})).rejects.toBeInstanceOf(NotFoundException);
+      await expect(
+        svc.updateThreadControl('sess-ghost', {}),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
 
     it('devuelve ok:true con el estado actualizado', async () => {
@@ -361,7 +431,9 @@ describe('ThreadService', () => {
         .mockResolvedValueOnce([before])
         .mockResolvedValueOnce([after]);
 
-      const result = await svc.updateThreadControl('sess-001', { threadStatus: 'CLOSED' });
+      const result = await svc.updateThreadControl('sess-001', {
+        threadStatus: 'CLOSED',
+      });
 
       expect(result.ok).toBe(true);
       expect(result.threadStatus).toBe('CLOSED');
@@ -374,7 +446,9 @@ describe('ThreadService', () => {
 
       await svc.updateThreadControl('sess-001', { threadStatus: 'CLOSED' });
 
-      const calls = mockThreadEvent.recordThreadEvent.mock.calls.map((c) => c[0].eventType);
+      const calls = mockThreadEvent.recordThreadEvent.mock.calls.map(
+        (c) => c[0].eventType,
+      );
       expect(calls).toContain('THREAD_STATUS_CHANGED');
     });
 
@@ -386,7 +460,9 @@ describe('ThreadService', () => {
 
       await svc.updateThreadControl('sess-001', { threadStatus: 'OPEN' });
 
-      const calls = mockThreadEvent.recordThreadEvent.mock.calls.map((c) => c[0].eventType);
+      const calls = mockThreadEvent.recordThreadEvent.mock.calls.map(
+        (c) => c[0].eventType,
+      );
       expect(calls).not.toContain('THREAD_STATUS_CHANGED');
     });
 
@@ -397,7 +473,9 @@ describe('ThreadService', () => {
 
       await svc.updateThreadControl('sess-001', { attentionMode: 'HUMAN' });
 
-      const calls = mockThreadEvent.recordThreadEvent.mock.calls.map((c) => c[0].eventType);
+      const calls = mockThreadEvent.recordThreadEvent.mock.calls.map(
+        (c) => c[0].eventType,
+      );
       expect(calls).toContain('ATTENTION_MODE_CHANGED');
     });
 
@@ -408,12 +486,18 @@ describe('ThreadService', () => {
 
       await svc.updateThreadControl('sess-001', { threadStage: 'fin' });
 
-      const calls = mockThreadEvent.recordThreadEvent.mock.calls.map((c) => c[0].eventType);
+      const calls = mockThreadEvent.recordThreadEvent.mock.calls.map(
+        (c) => c[0].eventType,
+      );
       expect(calls).toContain('THREAD_STAGE_CHANGED');
     });
 
     it('NO registra ningún evento cuando ningún campo cambia', async () => {
-      const snap = makeSnapshot({ threadStatus: 'OPEN', attentionMode: 'BOT', threadStage: 'inicio' });
+      const snap = makeSnapshot({
+        threadStatus: 'OPEN',
+        attentionMode: 'BOT',
+        threadStage: 'inicio',
+      });
       mockPrisma.$queryRawUnsafe
         .mockResolvedValueOnce([snap])
         .mockResolvedValueOnce([snap]);
@@ -434,7 +518,9 @@ describe('ThreadService', () => {
 
       await svc.updateThreadControl('sess-001', {});
 
-      expect(mockWebsocket.notificarMetaInboxThreadUpsert).toHaveBeenCalledTimes(1);
+      expect(
+        mockWebsocket.notificarMetaInboxThreadUpsert,
+      ).toHaveBeenCalledTimes(1);
     });
 
     it('usa eventSource "HUMAN" por defecto', async () => {
@@ -456,22 +542,35 @@ describe('ThreadService', () => {
   describe('reopenThread()', () => {
     it('lanza NotFoundException cuando el thread no existe', async () => {
       mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
-      await expect(svc.reopenThread('sess-ghost')).rejects.toBeInstanceOf(NotFoundException);
+      await expect(svc.reopenThread('sess-ghost')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
     });
 
     it('lanza BadRequestException cuando el thread no está ARCHIVED', async () => {
-      mockPrisma.$queryRawUnsafe.mockResolvedValue([makeThreadRow({ threadStatus: 'OPEN' })]);
-      await expect(svc.reopenThread('sess-001')).rejects.toBeInstanceOf(BadRequestException);
+      mockPrisma.$queryRawUnsafe.mockResolvedValue([
+        makeThreadRow({ threadStatus: 'OPEN' }),
+      ]);
+      await expect(svc.reopenThread('sess-001')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
     });
 
     it('lanza BadRequestException también cuando el thread está CLOSED', async () => {
-      mockPrisma.$queryRawUnsafe.mockResolvedValue([makeThreadRow({ threadStatus: 'CLOSED' })]);
-      await expect(svc.reopenThread('sess-001')).rejects.toBeInstanceOf(BadRequestException);
+      mockPrisma.$queryRawUnsafe.mockResolvedValue([
+        makeThreadRow({ threadStatus: 'CLOSED' }),
+      ]);
+      await expect(svc.reopenThread('sess-001')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
     });
 
     it('reabre thread ARCHIVED: ejecuta UPDATE y devuelve ThreadRow', async () => {
       const archived = makeThreadRow({ threadStatus: 'ARCHIVED' });
-      const reopened = makeThreadRow({ threadStatus: 'OPEN', attentionMode: 'HUMAN' });
+      const reopened = makeThreadRow({
+        threadStatus: 'OPEN',
+        attentionMode: 'HUMAN',
+      });
       mockPrisma.$queryRawUnsafe
         .mockResolvedValueOnce([archived])
         .mockResolvedValueOnce([reopened]);
@@ -505,9 +604,11 @@ describe('ThreadService', () => {
       const archived = makeThreadRow({ threadStatus: 'ARCHIVED' });
       mockPrisma.$queryRawUnsafe
         .mockResolvedValueOnce([archived])
-        .mockResolvedValueOnce([]);  // getThreadRow retorna null después del UPDATE
+        .mockResolvedValueOnce([]); // getThreadRow retorna null después del UPDATE
 
-      await expect(svc.reopenThread('sess-001')).rejects.toBeInstanceOf(InternalServerErrorException);
+      await expect(svc.reopenThread('sess-001')).rejects.toBeInstanceOf(
+        InternalServerErrorException,
+      );
     });
   });
 
@@ -518,17 +619,23 @@ describe('ThreadService', () => {
   describe('resolveSessionIdForAutomation()', () => {
     it('devuelve sessionId directamente cuando se proporciona y existe', async () => {
       mockPrisma.$queryRawUnsafe.mockResolvedValue([{ sessionId: 'sess-001' }]);
-      const result = await svc.resolveSessionIdForAutomation({ sessionId: 'sess-001' });
+      const result = await svc.resolveSessionIdForAutomation({
+        sessionId: 'sess-001',
+      });
       expect(result).toBe('sess-001');
     });
 
     it('lanza NotFoundException cuando el sessionId proporcionado no existe', async () => {
       mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
-      await expect(svc.resolveSessionIdForAutomation({ sessionId: 'sess-ghost' })).rejects.toBeInstanceOf(NotFoundException);
+      await expect(
+        svc.resolveSessionIdForAutomation({ sessionId: 'sess-ghost' }),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
 
     it('lanza BadRequestException cuando no hay sessionId ni actorExternalId+objectType', async () => {
-      await expect(svc.resolveSessionIdForAutomation({})).rejects.toBeInstanceOf(BadRequestException);
+      await expect(
+        svc.resolveSessionIdForAutomation({}),
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
 
     it('lanza BadRequestException cuando solo hay actorExternalId sin objectType', async () => {
@@ -550,7 +657,10 @@ describe('ThreadService', () => {
     it('lanza NotFoundException cuando no hay thread para actorExternalId+objectType', async () => {
       mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
       await expect(
-        svc.resolveSessionIdForAutomation({ actorExternalId: 'actor-ghost', objectType: 'WHATSAPP' }),
+        svc.resolveSessionIdForAutomation({
+          actorExternalId: 'actor-ghost',
+          objectType: 'WHATSAPP',
+        }),
       ).rejects.toBeInstanceOf(NotFoundException);
     });
   });
@@ -561,7 +671,12 @@ describe('ThreadService', () => {
 
   describe('getThreadIdentity()', () => {
     it('devuelve identity desde threads cuando el thread existe', async () => {
-      const identity = { sessionId: 'sess-001', actorExternalId: 'actor', objectType: 'WHATSAPP', sourceChannel: null };
+      const identity = {
+        sessionId: 'sess-001',
+        actorExternalId: 'actor',
+        objectType: 'WHATSAPP',
+        sourceChannel: null,
+      };
       mockPrisma.$queryRawUnsafe.mockResolvedValue([identity]);
       const result = await svc.getThreadIdentity('sess-001');
       expect(result).toEqual(identity);
@@ -569,9 +684,14 @@ describe('ThreadService', () => {
     });
 
     it('hace fallback a thread_messages cuando threads no tiene el session_id', async () => {
-      const fallbackIdentity = { sessionId: 'sess-001', actorExternalId: 'actor', objectType: 'WHATSAPP', sourceChannel: null };
+      const fallbackIdentity = {
+        sessionId: 'sess-001',
+        actorExternalId: 'actor',
+        objectType: 'WHATSAPP',
+        sourceChannel: null,
+      };
       mockPrisma.$queryRawUnsafe
-        .mockResolvedValueOnce([])               // sin fila en threads
+        .mockResolvedValueOnce([]) // sin fila en threads
         .mockResolvedValueOnce([fallbackIdentity]); // fila en thread_messages
 
       const result = await svc.getThreadIdentity('sess-001');
@@ -612,7 +732,9 @@ describe('ThreadService', () => {
     });
 
     it('convierte lastMessageAt a ISO string antes de notificar', async () => {
-      const snapshot = makeSnapshot({ lastMessageAt: new Date('2024-06-01T12:00:00Z') });
+      const snapshot = makeSnapshot({
+        lastMessageAt: new Date('2024-06-01T12:00:00Z'),
+      });
       await svc.notifyThreadUpsert(snapshot);
       const arg = mockWebsocket.notificarMetaInboxThreadUpsert.mock.calls[0][0];
       expect(arg.lastMessageAt).toBe('2024-06-01T12:00:00.000Z');
@@ -633,7 +755,9 @@ describe('ThreadService', () => {
 
     it('lanza NotFoundException cuando no hay thread para el actor', async () => {
       mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
-      await expect(svc.resolveThreadByActor('actor-ghost', 'WHATSAPP')).rejects.toBeInstanceOf(NotFoundException);
+      await expect(
+        svc.resolveThreadByActor('actor-ghost', 'WHATSAPP'),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
   });
 });

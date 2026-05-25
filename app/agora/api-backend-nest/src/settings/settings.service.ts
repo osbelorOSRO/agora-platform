@@ -22,7 +22,9 @@ export class SettingsService {
   }
 
   async updateTransitionThreshold(id: string, score_threshold: number) {
-    const rule = await this.prisma.lifecycle_transition_rules.findUnique({ where: { id } });
+    const rule = await this.prisma.lifecycle_transition_rules.findUnique({
+      where: { id },
+    });
     if (!rule) throw new NotFoundException(`transition_rule_not_found:${id}`);
 
     return this.prisma.lifecycle_transition_rules.update({
@@ -56,8 +58,11 @@ export class SettingsService {
   }
 
   async updateSignalDelta(id: string, delta: number) {
-    const rule = await this.prisma.signal_scoring_rules.findUnique({ where: { id } });
-    if (!rule) throw new NotFoundException(`signal_scoring_rule_not_found:${id}`);
+    const rule = await this.prisma.signal_scoring_rules.findUnique({
+      where: { id },
+    });
+    if (!rule)
+      throw new NotFoundException(`signal_scoring_rule_not_found:${id}`);
 
     return this.prisma.signal_scoring_rules.update({
       where: { id },

@@ -1,4 +1,10 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import speakeasy from 'speakeasy';
 import { PrismaService } from '../../database/prisma/prisma.service';
@@ -15,7 +21,8 @@ function calcularEstado(u: {
   if (u.bloqueado) return 'bloqueado';
   if (!u.password) {
     if (!u.invitation_token) return 'sin_invitacion';
-    if (u.invitation_expires_at && u.invitation_expires_at < new Date()) return 'invitacion_expirada';
+    if (u.invitation_expires_at && u.invitation_expires_at < new Date())
+      return 'invitacion_expirada';
     return 'preregistrado';
   }
   if (u.mfa_bypass_token) return 'reset_2fa';
@@ -23,23 +30,45 @@ function calcularEstado(u: {
   return 'activo';
 }
 
-function checkGuarda(id: number, usuario: { protegido: boolean }, selfId?: number): void {
-  if (selfId && id === selfId) throw new ForbiddenException('No puedes realizar esta acción sobre tu propia cuenta');
-  if (usuario.protegido) throw new ForbiddenException('Este usuario está protegido y no puede ser modificado');
+function checkGuarda(
+  id: number,
+  usuario: { protegido: boolean },
+  selfId?: number,
+): void {
+  if (selfId && id === selfId)
+    throw new ForbiddenException(
+      'No puedes realizar esta acción sobre tu propia cuenta',
+    );
+  if (usuario.protegido)
+    throw new ForbiddenException(
+      'Este usuario está protegido y no puede ser modificado',
+    );
 }
 
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async preregistrarUsuario(username: string, rolId: number, actorId: number | null) {
-    if (!username || !rolId) throw new BadRequestException('Faltan campos obligatorios (username y rolId)');
-    if (typeof username !== 'string' || username.length > 100) throw new BadRequestException('username inválido');
+  async preregistrarUsuario(
+    username: string,
+    rolId: number,
+    actorId: number | null,
+  ) {
+    if (!username || !rolId)
+      throw new BadRequestException(
+        'Faltan campos obligatorios (username y rolId)',
+      );
+    if (typeof username !== 'string' || username.length > 100)
+      throw new BadRequestException('username inválido');
 
-    const rol = await this.prisma.rol.findUnique({ where: { id: Number(rolId) } });
+    const rol = await this.prisma.rol.findUnique({
+      where: { id: Number(rolId) },
+    });
     if (!rol) throw new BadRequestException('Rol no válido');
 
-    const existente = await this.prisma.usuarios.findUnique({ where: { username } });
+    const existente = await this.prisma.usuarios.findUnique({
+      where: { username },
+    });
     if (existente) {
       const msg = existente.cancelado
         ? 'Ese nombre de usuario no está disponible'
@@ -66,13 +95,20 @@ export class UsersService {
           creado_en: new Date(),
           actualizado_en: new Date(),
           ...(actorId && {
-            usuarios_usuarios_creado_por_idTousuarios: { connect: { id: actorId } },
-            usuarios_usuarios_actualizado_por_idTousuarios: { connect: { id: actorId } },
+            usuarios_usuarios_creado_por_idTousuarios: {
+              connect: { id: actorId },
+            },
+            usuarios_usuarios_actualizado_por_idTousuarios: {
+              connect: { id: actorId },
+            },
           }),
         },
       });
     } catch (err) {
-      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002'
+      ) {
         throw new ConflictException('Ese nombre de usuario no está disponible');
       }
       throw err;
@@ -91,8 +127,12 @@ export class UsersService {
       omit: { token_2fa: true, mfa_new_secret: true },
       include: {
         rol_usuarios_rol_idTorol: true,
-        usuarios_usuarios_creado_por_idTousuarios: { select: { username: true } },
-        usuarios_usuarios_actualizado_por_idTousuarios: { select: { username: true } },
+        usuarios_usuarios_creado_por_idTousuarios: {
+          select: { username: true },
+        },
+        usuarios_usuarios_actualizado_por_idTousuarios: {
+          select: { username: true },
+        },
       },
     });
     return usuarios.map((u) => {
@@ -107,9 +147,13 @@ export class UsersService {
         email: u.email,
         creado_en: u.creado_en,
         actualizado_en: u.actualizado_en,
-        creado_por_username: u.usuarios_usuarios_creado_por_idTousuarios?.username ?? null,
-        actualizado_por_username: u.usuarios_usuarios_actualizado_por_idTousuarios?.username ?? null,
-        rol: rolObj ? { id: rolObj.id ?? null, nombre: rolObj.nombre ?? null } : null,
+        creado_por_username:
+          u.usuarios_usuarios_creado_por_idTousuarios?.username ?? null,
+        actualizado_por_username:
+          u.usuarios_usuarios_actualizado_por_idTousuarios?.username ?? null,
+        rol: rolObj
+          ? { id: rolObj.id ?? null, nombre: rolObj.nombre ?? null }
+          : null,
         oficina: null,
         estado: calcularEstado(u),
       };
@@ -129,7 +173,9 @@ export class UsersService {
     },
   ) {
     const isOptionalString = (v: unknown, max: number) =>
-      v === undefined || v === null || (typeof v === 'string' && v.length <= max);
+      v === undefined ||
+      v === null ||
+      (typeof v === 'string' && v.length <= max);
     if (
       !isOptionalString(data.nombre, 120) ||
       !isOptionalString(data.apellido, 120) ||
@@ -149,17 +195,30 @@ export class UsersService {
     };
     const rolId = data.rolId ?? data.rol?.id;
     if (rolId !== undefined && rolId !== null) {
-      datosActualizados.rol_usuarios_rol_idTorol = { connect: { id: Number(rolId) } };
+      datosActualizados.rol_usuarios_rol_idTorol = {
+        connect: { id: Number(rolId) },
+      };
     }
 
     const u = await this.prisma.usuarios.update({
       where: { id },
       data: datosActualizados,
-      omit: { password: true, token_2fa: true, reset_token: true, invitation_token: true, mfa_bypass_token: true, mfa_new_secret: true },
+      omit: {
+        password: true,
+        token_2fa: true,
+        reset_token: true,
+        invitation_token: true,
+        mfa_bypass_token: true,
+        mfa_new_secret: true,
+      },
       include: {
         rol_usuarios_rol_idTorol: true,
-        usuarios_usuarios_creado_por_idTousuarios: { select: { username: true } },
-        usuarios_usuarios_actualizado_por_idTousuarios: { select: { username: true } },
+        usuarios_usuarios_creado_por_idTousuarios: {
+          select: { username: true },
+        },
+        usuarios_usuarios_actualizado_por_idTousuarios: {
+          select: { username: true },
+        },
       },
     });
     const rolObj = u.rol_usuarios_rol_idTorol;
@@ -173,9 +232,13 @@ export class UsersService {
       email: u.email,
       creado_en: u.creado_en,
       actualizado_en: u.actualizado_en,
-      creado_por_username: u.usuarios_usuarios_creado_por_idTousuarios?.username ?? null,
-      actualizado_por_username: u.usuarios_usuarios_actualizado_por_idTousuarios?.username ?? null,
-      rol: rolObj ? { id: rolObj.id ?? null, nombre: rolObj.nombre ?? null } : null,
+      creado_por_username:
+        u.usuarios_usuarios_creado_por_idTousuarios?.username ?? null,
+      actualizado_por_username:
+        u.usuarios_usuarios_actualizado_por_idTousuarios?.username ?? null,
+      rol: rolObj
+        ? { id: rolObj.id ?? null, nombre: rolObj.nombre ?? null }
+        : null,
       oficina: null,
     };
   }
@@ -187,11 +250,21 @@ export class UsersService {
     });
     if (!usuario) throw new NotFoundException('Usuario no encontrado');
     checkGuarda(id, usuario, selfId);
-    if (!usuario.password) throw new BadRequestException('El usuario aún no ha completado el registro');
+    if (!usuario.password)
+      throw new BadRequestException(
+        'El usuario aún no ha completado el registro',
+      );
 
     const { plain, hash } = generarTokenUnico();
-    await this.prisma.usuarios.update({ where: { id }, data: { reset_token: hash, reset_token_expires: expiracionEn(24) } });
-    return { message: 'Token de reset generado', resetToken: plain, expiresAt: expiracionEn(24).toISOString() };
+    await this.prisma.usuarios.update({
+      where: { id },
+      data: { reset_token: hash, reset_token_expires: expiracionEn(24) },
+    });
+    return {
+      message: 'Token de reset generado',
+      resetToken: plain,
+      expiresAt: expiracionEn(24).toISOString(),
+    };
   }
 
   async reset2FA(id: number, selfId?: number) {
@@ -201,15 +274,28 @@ export class UsersService {
     });
     if (!usuario) throw new NotFoundException('Usuario no encontrado');
     checkGuarda(id, usuario, selfId);
-    if (!usuario.password) throw new BadRequestException('El usuario aún no ha completado el registro');
+    if (!usuario.password)
+      throw new BadRequestException(
+        'El usuario aún no ha completado el registro',
+      );
 
     const { plain, hash } = generarTokenUnico();
-    const newSecret = speakeasy.generateSecret({ name: `Accesos LTP (${usuario.username})` });
+    const newSecret = speakeasy.generateSecret({
+      name: `Accesos LTP (${usuario.username})`,
+    });
     await this.prisma.usuarios.update({
       where: { id },
-      data: { mfa_bypass_token: hash, mfa_new_secret: newSecret.base32, mfa_reset_expires: expiracionEn(24) },
+      data: {
+        mfa_bypass_token: hash,
+        mfa_new_secret: newSecret.base32,
+        mfa_reset_expires: expiracionEn(24),
+      },
     });
-    return { message: 'Token de reset 2FA generado', bypassToken: plain, expiresAt: expiracionEn(24).toISOString() };
+    return {
+      message: 'Token de reset 2FA generado',
+      bypassToken: plain,
+      expiresAt: expiracionEn(24).toISOString(),
+    };
   }
 
   async desbloquear(id: number, selfId?: number) {
@@ -219,7 +305,10 @@ export class UsersService {
     });
     if (!usuario) throw new NotFoundException('Usuario no encontrado');
     checkGuarda(id, usuario, selfId);
-    await this.prisma.usuarios.update({ where: { id }, data: { bloqueado: false, login_attempts: 0, bloqueado_en: null } });
+    await this.prisma.usuarios.update({
+      where: { id },
+      data: { bloqueado: false, login_attempts: 0, bloqueado_en: null },
+    });
     return { message: 'Cuenta desbloqueada' };
   }
 
@@ -230,14 +319,23 @@ export class UsersService {
     });
     if (!usuario) throw new NotFoundException('Usuario no encontrado');
     checkGuarda(id, usuario, selfId);
-    if (usuario.password) throw new BadRequestException('El usuario ya está registrado');
+    if (usuario.password)
+      throw new BadRequestException('El usuario ya está registrado');
 
     const { plain, hash } = generarTokenUnico();
     await this.prisma.usuarios.update({
       where: { id },
-      data: { invitation_token: hash, invitation_expires_at: expiracionEn(24), invitation_attempts: 0 },
+      data: {
+        invitation_token: hash,
+        invitation_expires_at: expiracionEn(24),
+        invitation_attempts: 0,
+      },
     });
-    return { message: 'Invitación regenerada', invitationToken: plain, expiresAt: expiracionEn(24).toISOString() };
+    return {
+      message: 'Invitación regenerada',
+      invitationToken: plain,
+      expiresAt: expiracionEn(24).toISOString(),
+    };
   }
 
   async cancelarPreregistro(id: number, selfId?: number) {
@@ -247,11 +345,19 @@ export class UsersService {
     });
     if (!usuario) throw new NotFoundException('Usuario no encontrado');
     checkGuarda(id, usuario, selfId);
-    if (usuario.password) throw new BadRequestException('No se puede cancelar un usuario ya registrado');
+    if (usuario.password)
+      throw new BadRequestException(
+        'No se puede cancelar un usuario ya registrado',
+      );
 
     await this.prisma.usuarios.update({
       where: { id },
-      data: { cancelado: true, invitation_token: null, invitation_expires_at: null, invitation_attempts: 0 },
+      data: {
+        cancelado: true,
+        invitation_token: null,
+        invitation_expires_at: null,
+        invitation_attempts: 0,
+      },
     });
     return { message: 'Preregistro cancelado' };
   }

@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, UnauthorizedException, ValidationPipe } from '@nestjs/common';
+import {
+  INestApplication,
+  UnauthorizedException,
+  ValidationPipe,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import request from 'supertest';
 import { PermissionsController } from './permissions.controller';
@@ -7,8 +11,18 @@ import { PermissionsService } from './permissions.service';
 import { PanelJwtAuthGuard } from '../../auth/panel-jwt-auth.guard';
 import { RequirePermissionGuard } from '../guards/require-permission.guard';
 
-const WITH_PERM = { id: 12, username: 'obeltran', rol: 'superadmin', permisos: ['editar_configuracion'] };
-const WITHOUT_PERM = { id: 19, username: 'fmartinez', rol: 'agente', permisos: [] };
+const WITH_PERM = {
+  id: 12,
+  username: 'obeltran',
+  rol: 'superadmin',
+  permisos: ['editar_configuracion'],
+};
+const WITHOUT_PERM = {
+  id: 19,
+  username: 'fmartinez',
+  rol: 'agente',
+  permisos: [],
+};
 
 const makeAuthGuard = (payload: object) => ({
   canActivate: (ctx: any) => {
@@ -33,7 +47,13 @@ async function buildApp(authGuard: object): Promise<INestApplication> {
     .compile();
 
   const app = module.createNestApplication();
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
   await app.init();
   return app;
 }
@@ -47,8 +67,12 @@ describe('PermissionsController', () => {
   describe('GET /api/permisos', () => {
     it('returns 200 with permissions list', async () => {
       app = await buildApp(makeAuthGuard(WITH_PERM));
-      mockService.obtenerPermisos.mockResolvedValue([{ id: 1, nombre: 'ver_reportes' }]);
-      const res = await request(app.getHttpServer()).get('/api/permisos').expect(200);
+      mockService.obtenerPermisos.mockResolvedValue([
+        { id: 1, nombre: 'ver_reportes' },
+      ]);
+      const res = await request(app.getHttpServer())
+        .get('/api/permisos')
+        .expect(200);
       expect(Array.isArray(res.body)).toBe(true);
       expect(mockService.obtenerPermisos).toHaveBeenCalledTimes(1);
     });
@@ -59,7 +83,11 @@ describe('PermissionsController', () => {
     });
 
     it('returns 401 when token is absent', async () => {
-      app = await buildApp({ canActivate: () => { throw new UnauthorizedException(); } });
+      app = await buildApp({
+        canActivate: () => {
+          throw new UnauthorizedException();
+        },
+      });
       await request(app.getHttpServer()).get('/api/permisos').expect(401);
     });
   });

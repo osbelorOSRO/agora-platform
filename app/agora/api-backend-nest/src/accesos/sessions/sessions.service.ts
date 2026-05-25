@@ -1,4 +1,9 @@
-import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../database/prisma/prisma.service';
 
 const JWT_TTL_MS = 12 * 60 * 60 * 1000;
@@ -25,14 +30,23 @@ export class SessionsService {
       email: usuario.email ?? null,
       telefono: usuario.telefono ?? null,
       rol: Array.isArray(rolObj)
-        ? (rolObj.length > 0 ? rolObj[0].nombre : null)
+        ? rolObj.length > 0
+          ? rolObj[0].nombre
+          : null
         : (rolObj?.nombre ?? null),
     };
   }
 
   async registrarSesion(userId: number, ip: string, userAgent: string) {
     await this.prisma.sesion.create({
-      data: { usuarioId: userId, ip, userAgent, horaLogin: new Date(), ultimaInteraccion: new Date(), activo: true },
+      data: {
+        usuarioId: userId,
+        ip,
+        userAgent,
+        horaLogin: new Date(),
+        ultimaInteraccion: new Date(),
+        activo: true,
+      },
     });
     return { ok: true };
   }
@@ -88,7 +102,8 @@ export class SessionsService {
   }
 
   async cerrarSesionAdmin(id: number) {
-    if (!Number.isFinite(id) || id < 1) throw new ForbiddenException('ID de sesión inválido');
+    if (!Number.isFinite(id) || id < 1)
+      throw new ForbiddenException('ID de sesión inválido');
     await this.prisma.sesion.update({ where: { id }, data: { activo: false } });
     return { ok: true };
   }
@@ -103,9 +118,15 @@ export class SessionsService {
   }
 
   private async actualizarUltimaInteraccion(userId: number) {
-    await this.prisma.sesion.updateMany({
-      where: { usuarioId: userId, activo: true },
-      data: { ultimaInteraccion: new Date() },
-    }).catch((e: Error) => this.logger.error(`Error al actualizar última interacción: ${e.message}`));
+    await this.prisma.sesion
+      .updateMany({
+        where: { usuarioId: userId, activo: true },
+        data: { ultimaInteraccion: new Date() },
+      })
+      .catch((e: Error) =>
+        this.logger.error(
+          `Error al actualizar última interacción: ${e.message}`,
+        ),
+      );
   }
 }

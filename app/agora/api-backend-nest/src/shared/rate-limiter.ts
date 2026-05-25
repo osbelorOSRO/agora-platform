@@ -20,7 +20,9 @@ function crearRedisClient(): Redis | null {
       maxRetriesPerRequest: null,
     });
     client.on('connect', () => logger.log('Rate limiter conectado a Redis'));
-    client.on('error', (err: Error) => logger.error(`Rate limiter Redis error: ${err.message}`));
+    client.on('error', (err: Error) =>
+      logger.error(`Rate limiter Redis error: ${err.message}`),
+    );
     return client;
   } catch {
     return null;
@@ -251,4 +253,3 @@ export const limitadorRaiz = rateLimit({
   handler: (_req, res) => respuestaLimite(res),
   skip: () => !redisClient,
 });
-

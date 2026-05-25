@@ -28,8 +28,10 @@ export class MediaController {
     @Body('tipo') tipo: string,
   ) {
     if (!archivo) throw new BadRequestException('Archivo no recibido');
-    if (!actorId || actorId.length > 255) throw new BadRequestException('actorId requerido');
-    if (!tipo || !TIPOS_MEDIA_VALIDOS.has(tipo)) throw new BadRequestException('tipo invalido');
+    if (!actorId || actorId.length > 255)
+      throw new BadRequestException('actorId requerido');
+    if (!tipo || !TIPOS_MEDIA_VALIDOS.has(tipo))
+      throw new BadRequestException('tipo invalido');
 
     return this.mediaService.procesarArchivo(archivo, actorId, tipo);
   }

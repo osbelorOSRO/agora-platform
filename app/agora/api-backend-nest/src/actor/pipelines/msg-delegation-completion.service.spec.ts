@@ -53,7 +53,9 @@ describe('MsgDelegationCompletionService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockPrisma.$transaction.mockImplementation((cb: (tx: any) => Promise<any>) => cb(mockTx));
+    mockPrisma.$transaction.mockImplementation(
+      (cb: (tx: any) => Promise<any>) => cb(mockTx),
+    );
     mockState.ensurePending.mockResolvedValue(undefined);
     mockState.markCompleted.mockResolvedValue(undefined);
     mockState.markFailed.mockResolvedValue(undefined);
@@ -73,7 +75,11 @@ describe('MsgDelegationCompletionService', () => {
 
         const result = await svc.complete(base);
 
-        expect(result).toEqual({ accepted: true, idempotent: true, reason: 'already_done' });
+        expect(result).toEqual({
+          accepted: true,
+          idempotent: true,
+          reason: 'already_done',
+        });
         expect(mockState.ensurePending).not.toHaveBeenCalled();
         expect(mockState.markCompleted).not.toHaveBeenCalled();
       });
@@ -85,9 +91,16 @@ describe('MsgDelegationCompletionService', () => {
 
         const result = await svc.complete({ ...base, hasSignal: false });
 
-        expect(result).toEqual({ accepted: true, idempotent: false, transitionEnqueued: false, hasSignal: false });
+        expect(result).toEqual({
+          accepted: true,
+          idempotent: false,
+          transitionEnqueued: false,
+          hasSignal: false,
+        });
         expect(mockState.markCompleted).toHaveBeenCalledWith(
-          expect.objectContaining({ metadata: expect.objectContaining({ status: 'no_signal' }) }),
+          expect.objectContaining({
+            metadata: expect.objectContaining({ status: 'no_signal' }),
+          }),
         );
         expect(mockQueue.add).not.toHaveBeenCalled();
       });
@@ -95,10 +108,17 @@ describe('MsgDelegationCompletionService', () => {
       it('incluye metadata adicional en el registro cuando se proporciona', async () => {
         mockState.isDone.mockResolvedValue(false);
 
-        await svc.complete({ ...base, hasSignal: false, metadata: { origen: 'test' } });
+        await svc.complete({
+          ...base,
+          hasSignal: false,
+          metadata: { origen: 'test' },
+        });
 
         const callArg = mockState.markCompleted.mock.calls[0][0];
-        expect(callArg.metadata).toMatchObject({ status: 'no_signal', origen: 'test' });
+        expect(callArg.metadata).toMatchObject({
+          status: 'no_signal',
+          origen: 'test',
+        });
       });
     });
 
@@ -106,7 +126,9 @@ describe('MsgDelegationCompletionService', () => {
       it('lanza BadRequestException cuando hasSignal=true y no hay signalType', async () => {
         mockState.isDone.mockResolvedValue(false);
 
-        await expect(svc.complete({ ...base, hasSignal: true })).rejects.toBeInstanceOf(BadRequestException);
+        await expect(
+          svc.complete({ ...base, hasSignal: true }),
+        ).rejects.toBeInstanceOf(BadRequestException);
         expect(mockState.markCompleted).not.toHaveBeenCalled();
       });
 
@@ -114,7 +136,9 @@ describe('MsgDelegationCompletionService', () => {
         mockState.isDone.mockResolvedValue(false);
 
         // hasSignal no especificado → input.hasSignal !== false → true → requiere signalType
-        await expect(svc.complete(base)).rejects.toBeInstanceOf(BadRequestException);
+        await expect(svc.complete(base)).rejects.toBeInstanceOf(
+          BadRequestException,
+        );
       });
     });
 
@@ -125,9 +149,17 @@ describe('MsgDelegationCompletionService', () => {
         mockTx.$queryRaw.mockResolvedValue([{ delta: 10 }]);
         mockScoring.applyDeltaIfNew.mockResolvedValue(undefined);
 
-        const result = await svc.complete({ ...base, hasSignal: true, signalType: 'CERRAR' });
+        const result = await svc.complete({
+          ...base,
+          hasSignal: true,
+          signalType: 'CERRAR',
+        });
 
-        expect(result).toEqual({ accepted: true, idempotent: false, transitionEnqueued: false });
+        expect(result).toEqual({
+          accepted: true,
+          idempotent: false,
+          transitionEnqueued: false,
+        });
         expect(mockQueue.add).not.toHaveBeenCalled();
         expect(mockState.markCompleted).toHaveBeenCalledTimes(1);
       });
@@ -140,9 +172,17 @@ describe('MsgDelegationCompletionService', () => {
         mockTx.$queryRaw.mockResolvedValue([{ delta: 5 }]);
         mockScoring.applyDeltaIfNew.mockResolvedValue(undefined);
 
-        const result = await svc.complete({ ...base, hasSignal: true, signalType: 'VENTA' });
+        const result = await svc.complete({
+          ...base,
+          hasSignal: true,
+          signalType: 'VENTA',
+        });
 
-        expect(result).toEqual({ accepted: true, idempotent: false, transitionEnqueued: true });
+        expect(result).toEqual({
+          accepted: true,
+          idempotent: false,
+          transitionEnqueued: true,
+        });
         expect(mockScoring.applyDeltaIfNew).toHaveBeenCalledWith(
           mockTx,
           expect.objectContaining({ delta: '5', signalType: 'VENTA' }),
@@ -160,7 +200,12 @@ describe('MsgDelegationCompletionService', () => {
         mockTx.$queryRaw.mockResolvedValue([{ delta: 3 }]);
         mockScoring.applyDeltaIfNew.mockResolvedValue(undefined);
 
-        await svc.complete({ ...base, externalEventId: 'evt-XYZ', hasSignal: true, signalType: 'RENOVAR' });
+        await svc.complete({
+          ...base,
+          externalEventId: 'evt-XYZ',
+          hasSignal: true,
+          signalType: 'RENOVAR',
+        });
 
         expect(mockQueue.add).toHaveBeenCalledWith(
           expect.anything(),
@@ -251,7 +296,11 @@ describe('MsgDelegationCompletionService', () => {
 
       const result = await svc.completeWithoutSignal(base);
 
-      expect(result).toEqual({ accepted: true, idempotent: true, reason: 'already_done' });
+      expect(result).toEqual({
+        accepted: true,
+        idempotent: true,
+        reason: 'already_done',
+      });
       expect(mockState.markCompleted).not.toHaveBeenCalled();
     });
 
@@ -261,20 +310,34 @@ describe('MsgDelegationCompletionService', () => {
 
       const result = await svc.completeWithoutSignal(base);
 
-      expect(result).toEqual({ accepted: true, idempotent: true, reason: 'pending_not_found' });
+      expect(result).toEqual({
+        accepted: true,
+        idempotent: true,
+        reason: 'pending_not_found',
+      });
       expect(mockState.markCompleted).not.toHaveBeenCalled();
     });
 
     it('marca completed con no_signal y reason cuando hay pending', async () => {
       mockState.isDone.mockResolvedValue(false);
-      mockState.getPending.mockResolvedValue({ externalEventId: 'evt-timeout' });
+      mockState.getPending.mockResolvedValue({
+        externalEventId: 'evt-timeout',
+      });
 
       const result = await svc.completeWithoutSignal(base);
 
-      expect(result).toEqual({ accepted: true, idempotent: false, transitionEnqueued: false, hasSignal: false });
+      expect(result).toEqual({
+        accepted: true,
+        idempotent: false,
+        transitionEnqueued: false,
+        hasSignal: false,
+      });
       expect(mockState.markCompleted).toHaveBeenCalledWith(
         expect.objectContaining({
-          metadata: expect.objectContaining({ status: 'no_signal', reason: 'timeout' }),
+          metadata: expect.objectContaining({
+            status: 'no_signal',
+            reason: 'timeout',
+          }),
         }),
       );
     });
@@ -292,7 +355,11 @@ describe('MsgDelegationCompletionService', () => {
 
       const result = await svc.fail(base);
 
-      expect(result).toEqual({ accepted: true, idempotent: true, reason: 'already_done' });
+      expect(result).toEqual({
+        accepted: true,
+        idempotent: true,
+        reason: 'already_done',
+      });
       expect(mockState.markFailed).not.toHaveBeenCalled();
     });
 
@@ -301,13 +368,23 @@ describe('MsgDelegationCompletionService', () => {
 
       const result = await svc.fail({ ...base, reason: 'timeout en n8n' });
 
-      expect(result).toEqual({ accepted: true, idempotent: false, transitionEnqueued: false });
+      expect(result).toEqual({
+        accepted: true,
+        idempotent: false,
+        transitionEnqueued: false,
+      });
       expect(mockState.markFailed).toHaveBeenCalledWith(
-        expect.objectContaining({ externalEventId: 'evt-fail', reason: 'timeout en n8n' }),
+        expect.objectContaining({
+          externalEventId: 'evt-fail',
+          reason: 'timeout en n8n',
+        }),
       );
       expect(mockState.markCompleted).toHaveBeenCalledWith(
         expect.objectContaining({
-          metadata: expect.objectContaining({ status: 'failed', reason: 'timeout en n8n' }),
+          metadata: expect.objectContaining({
+            status: 'failed',
+            reason: 'timeout en n8n',
+          }),
         }),
       );
     });
@@ -340,7 +417,12 @@ describe('MsgDelegationCompletionService', () => {
     });
 
     const run = (metadata: unknown) =>
-      svc.complete({ externalEventId: 'evt-meta', actorExternalId: 'actor', hasSignal: false, metadata: metadata as any });
+      svc.complete({
+        externalEventId: 'evt-meta',
+        actorExternalId: 'actor',
+        hasSignal: false,
+        metadata: metadata as any,
+      });
 
     it('acepta objeto plano y lo incluye en metadata', async () => {
       await run({ clave: 'valor' });

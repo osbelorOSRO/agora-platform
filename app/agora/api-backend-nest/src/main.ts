@@ -29,7 +29,6 @@ import {
 } from './shared/rate-limiter';
 import { Request, Response, NextFunction } from 'express';
 
-
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     rawBody: true,
@@ -42,7 +41,10 @@ async function bootstrap() {
 
   const config = app.get(ConfigService);
   const port = config.get<number>('PORT') || 4001;
-  const corsAllowedOrigins = (config.get<string>('CORS_ALLOWED_ORIGINS') || 'http://localhost:5173,http://127.0.0.1:5173')
+  const corsAllowedOrigins = (
+    config.get<string>('CORS_ALLOWED_ORIGINS') ||
+    'http://localhost:5173,http://127.0.0.1:5173'
+  )
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
@@ -54,12 +56,14 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-    transformOptions: { enableImplicitConversion: true },
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+    }),
+  );
 
   app.use('/media/guardar', limitadorMediaGuardar);
   app.use('/media/upload-tts', limitadorMediaUploadTts);
@@ -67,14 +71,19 @@ async function bootstrap() {
   app.use('/internal/baileys/events', limitadorBaileysEvents);
   app.use('/actor/msg-delegation', limitadorMsgDelegation);
   app.use('/meta-inbox/n8n', limitadorN8n);
-  app.use(/^\/meta-inbox\/threads\/[^/]+\/send-(text|message)$/, limitadorPanelEnvio);
+  app.use(
+    /^\/meta-inbox\/threads\/[^/]+\/send-(text|message)$/,
+    limitadorPanelEnvio,
+  );
   app.use('/meta-inbox', limitadorPanelGeneral);
   app.use('/shortcut', limitadorRespuestasRapidas);
   app.use('/ping', limitadorPing);
-  app.use('/webhooks/meta', (req: Request, res: Response, next: NextFunction) =>
-    req.method === 'POST'
-      ? limitadorWebhookMetaPost(req, res, next)
-      : limitadorWebhookMetaGet(req, res, next),
+  app.use(
+    '/webhooks/meta',
+    (req: Request, res: Response, next: NextFunction) =>
+      req.method === 'POST'
+        ? limitadorWebhookMetaPost(req, res, next)
+        : limitadorWebhookMetaGet(req, res, next),
   );
   app.use('/legal', limitadorLegal);
   app.use('/api/auth/login', limitadorLogin);

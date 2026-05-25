@@ -25,11 +25,17 @@ export class MsgDelegationStateService {
   }
 
   private pendingTtl(): number {
-    return parseInt(process.env.MSG_DELEGATION_PENDING_TTL_SECONDS || '1800', 10);
+    return parseInt(
+      process.env.MSG_DELEGATION_PENDING_TTL_SECONDS || '1800',
+      10,
+    );
   }
 
   private doneTtl(): number {
-    return parseInt(process.env.MSG_DELEGATION_DONE_TTL_SECONDS || '604800', 10);
+    return parseInt(
+      process.env.MSG_DELEGATION_DONE_TTL_SECONDS || '604800',
+      10,
+    );
   }
 
   async setPending(input: {
@@ -47,7 +53,11 @@ export class MsgDelegationStateService {
       metadata: input.metadata,
     };
 
-    await this.cache.set(this.pendingKey(input.externalEventId), value, this.pendingTtl());
+    await this.cache.set(
+      this.pendingKey(input.externalEventId),
+      value,
+      this.pendingTtl(),
+    );
   }
 
   async setAcked(input: {
@@ -71,7 +81,11 @@ export class MsgDelegationStateService {
     await this.cache.set(key, value, this.pendingTtl());
   }
 
-  async markFailed(input: { externalEventId: string; actorExternalId: string; reason?: string }) {
+  async markFailed(input: {
+    externalEventId: string;
+    actorExternalId: string;
+    reason?: string;
+  }) {
     const key = this.pendingKey(input.externalEventId);
     const now = new Date().toISOString();
     const prev = await this.cache.get<PendingState>(key);
@@ -82,13 +96,20 @@ export class MsgDelegationStateService {
       status: 'FAILED',
       createdAt: prev?.createdAt || now,
       updatedAt: now,
-      metadata: { ...(prev?.metadata || {}), reason: input.reason || 'unknown' },
+      metadata: {
+        ...(prev?.metadata || {}),
+        reason: input.reason || 'unknown',
+      },
     };
 
     await this.cache.set(key, value, this.pendingTtl());
   }
 
-  async markCompleted(input: { externalEventId: string; actorExternalId: string; metadata?: Record<string, unknown> }) {
+  async markCompleted(input: {
+    externalEventId: string;
+    actorExternalId: string;
+    metadata?: Record<string, unknown>;
+  }) {
     await this.cache.set(
       this.doneKey(input.externalEventId),
       {
@@ -114,7 +135,9 @@ export class MsgDelegationStateService {
   async ensurePending(externalEventId: string) {
     const pending = await this.getPending(externalEventId);
     if (!pending) {
-      this.logger.warn(`FLOW[CALLBACK] pending state not found externalEventId=${externalEventId}`);
+      this.logger.warn(
+        `FLOW[CALLBACK] pending state not found externalEventId=${externalEventId}`,
+      );
     }
     return pending;
   }

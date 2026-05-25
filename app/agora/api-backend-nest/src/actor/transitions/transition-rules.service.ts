@@ -29,7 +29,10 @@ export class TransitionRulesService {
     `;
 
     for (const rule of rules) {
-      if (rule.required_current_state && rule.required_current_state !== currentState) {
+      if (
+        rule.required_current_state &&
+        rule.required_current_state !== currentState
+      ) {
         continue;
       }
 
@@ -41,17 +44,28 @@ export class TransitionRulesService {
       return rule.target_state;
     }
 
-    this.logger.log(`FLOW[TRANSITION] no_rule_matched score=${score} currentState=${currentState}`);
+    this.logger.log(
+      `FLOW[TRANSITION] no_rule_matched score=${score} currentState=${currentState}`,
+    );
     return null;
   }
 
-  private scoreMatches(score: number, operator: ScoreOperator, threshold: number): boolean {
+  private scoreMatches(
+    score: number,
+    operator: ScoreOperator,
+    threshold: number,
+  ): boolean {
     switch (operator) {
-      case ScoreOperator.LT:  return score < threshold;
-      case ScoreOperator.LTE: return score <= threshold;
-      case ScoreOperator.GT:  return score > threshold;
-      case ScoreOperator.GTE: return score >= threshold;
-      case ScoreOperator.EQ:  return score === threshold;
+      case ScoreOperator.LT:
+        return score < threshold;
+      case ScoreOperator.LTE:
+        return score <= threshold;
+      case ScoreOperator.GT:
+        return score > threshold;
+      case ScoreOperator.GTE:
+        return score >= threshold;
+      case ScoreOperator.EQ:
+        return score === threshold;
     }
   }
 }

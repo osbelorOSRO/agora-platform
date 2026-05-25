@@ -16,14 +16,20 @@ export class ShortcutService {
   }
 
   async findOne(uuid: string) {
-    const respuesta = await this.prisma.respuestas_rapidas.findUnique({ where: { uuid } });
-    if (!respuesta) throw new NotFoundException('Respuesta rápida no encontrada');
+    const respuesta = await this.prisma.respuestas_rapidas.findUnique({
+      where: { uuid },
+    });
+    if (!respuesta)
+      throw new NotFoundException('Respuesta rápida no encontrada');
     return respuesta;
   }
 
   async update(uuid: string, data: UpdateShortcutDto) {
-    const respuesta = await this.prisma.respuestas_rapidas.findUnique({ where: { uuid } });
-    if (!respuesta) throw new NotFoundException('Respuesta rápida no encontrada');
+    const respuesta = await this.prisma.respuestas_rapidas.findUnique({
+      where: { uuid },
+    });
+    if (!respuesta)
+      throw new NotFoundException('Respuesta rápida no encontrada');
 
     return this.prisma.respuestas_rapidas.update({
       where: { uuid },
@@ -32,8 +38,11 @@ export class ShortcutService {
   }
 
   async remove(uuid: string) {
-    const respuesta = await this.prisma.respuestas_rapidas.findUnique({ where: { uuid } });
-    if (!respuesta) throw new NotFoundException('Respuesta rápida no encontrada');
+    const respuesta = await this.prisma.respuestas_rapidas.findUnique({
+      where: { uuid },
+    });
+    if (!respuesta)
+      throw new NotFoundException('Respuesta rápida no encontrada');
 
     await this.prisma.respuestas_rapidas.delete({
       where: { uuid },

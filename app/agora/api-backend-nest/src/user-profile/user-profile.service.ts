@@ -1,9 +1,14 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma/prisma.service';
-import { IMinioGateway, MINIO_GATEWAY } from '../minio/interfaces/minio-gateway.interface';
-import { validateStoredMediaFile, removeFileQuietly } from '../media/media-security';
+import {
+  IMinioGateway,
+  MINIO_GATEWAY,
+} from '../minio/interfaces/minio-gateway.interface';
+import {
+  validateStoredMediaFile,
+  removeFileQuietly,
+} from '../media/media-security';
 import { randomUUID } from 'crypto';
-import path from 'path';
 
 @Injectable()
 export class UserProfileService {
@@ -19,7 +24,10 @@ export class UserProfileService {
     return rows[0]?.photo_url ?? null;
   }
 
-  async uploadPhoto(userId: number, file: Express.Multer.File): Promise<string> {
+  async uploadPhoto(
+    userId: number,
+    file: Express.Multer.File,
+  ): Promise<string> {
     let detected;
     try {
       detected = await validateStoredMediaFile(file, ['image']);
@@ -33,7 +41,11 @@ export class UserProfileService {
 
     let photoUrl: string;
     try {
-      photoUrl = await this.minio.uploadFile(file.path, filename, detected.mimeType);
+      photoUrl = await this.minio.uploadFile(
+        file.path,
+        filename,
+        detected.mimeType,
+      );
     } finally {
       removeFileQuietly(file.path);
     }

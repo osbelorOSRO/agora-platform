@@ -5,5 +5,7 @@ export const META_INBOX_GATEWAY = Symbol('META_INBOX_GATEWAY');
 
 export interface IMetaInboxGateway {
   recordThreadEvent(input: ThreadEventInput): Promise<void>;
-  sendSystemText(input: ThreadSelectorInput & { text: string }): Promise<unknown>;
+  sendSystemText(
+    input: ThreadSelectorInput & { text: string },
+  ): Promise<unknown>;
 }

@@ -23,7 +23,13 @@ import { THREAD_GATEWAY } from './interfaces/thread-gateway.interface';
 import { META_INBOX_GATEWAY } from './interfaces/meta-inbox-gateway.interface';
 
 @Module({
-  imports: [WebsocketNotifierModule, BaileysModule, AuthModule, MinioModule, CacheConfigModule],
+  imports: [
+    WebsocketNotifierModule,
+    BaileysModule,
+    AuthModule,
+    MinioModule,
+    CacheConfigModule,
+  ],
   controllers: [MetaInboxController],
   providers: [
     PrismaService,

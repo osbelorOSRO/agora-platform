@@ -45,7 +45,9 @@ export class ThreadEventService {
     const occurredAt = input.occurredAt || new Date();
     const dedupeKey =
       input.dedupeKey ??
-      (input.externalEventId ? `${input.eventType}:${input.externalEventId}` : null);
+      (input.externalEventId
+        ? `${input.eventType}:${input.externalEventId}`
+        : null);
 
     await this.prisma.$executeRawUnsafe(
       `
@@ -113,30 +115,48 @@ export class ThreadEventService {
   }
 
   private normalizeLegacyMessageContentJson(contentJson: unknown): unknown {
-    if (!contentJson || typeof contentJson !== 'object' || Array.isArray(contentJson)) {
+    if (
+      !contentJson ||
+      typeof contentJson !== 'object' ||
+      Array.isArray(contentJson)
+    ) {
       return contentJson;
     }
 
     const cloned = { ...(contentJson as Record<string, unknown>) };
     const currentMediaType = String(cloned['mediaType'] || '').toLowerCase();
-    const currentMediaUrl = cloned['mediaUrl'] ? String(cloned['mediaUrl']) : '';
-    if (currentMediaUrl && (currentMediaType === 'audio' || currentMediaType === 'image')) {
+    const currentMediaUrl = cloned['mediaUrl']
+      ? String(cloned['mediaUrl'])
+      : '';
+    if (
+      currentMediaUrl &&
+      (currentMediaType === 'audio' || currentMediaType === 'image')
+    ) {
       return cloned;
     }
 
     const message =
-      cloned['message'] && typeof cloned['message'] === 'object' ? cloned['message'] as Record<string, unknown> : null;
-    const attachments = Array.isArray(message?.['attachments']) ? message!['attachments'] as unknown[] : [];
+      cloned['message'] && typeof cloned['message'] === 'object'
+        ? (cloned['message'] as Record<string, unknown>)
+        : null;
+    const attachments = Array.isArray(message?.['attachments'])
+      ? (message!['attachments'] as unknown[])
+      : [];
     const first = attachments[0] as Record<string, unknown> | undefined;
-    const attachmentType = String((first?.['type']) || '').toLowerCase();
-    const attachmentUrl = (first?.['payload'] as Record<string, unknown>)?.['url']
+    const attachmentType = String(first?.['type'] || '').toLowerCase();
+    const attachmentUrl = (first?.['payload'] as Record<string, unknown>)?.[
+      'url'
+    ]
       ? String((first!['payload'] as Record<string, unknown>)['url'])
       : '';
-    if (attachmentUrl && (attachmentType === 'audio' || attachmentType === 'image')) {
+    if (
+      attachmentUrl &&
+      (attachmentType === 'audio' || attachmentType === 'image')
+    ) {
       return { ...cloned, mediaType: attachmentType, mediaUrl: attachmentUrl };
     }
 
-    const topLevelType = String((cloned['type']) || '').toLowerCase();
+    const topLevelType = String(cloned['type'] || '').toLowerCase();
     const topLevelUrl = cloned['url']
       ? String(cloned['url'])
       : cloned['mediaUrl']
@@ -148,10 +168,12 @@ export class ThreadEventService {
 
     const graphAttachment =
       cloned['attachment'] && typeof cloned['attachment'] === 'object'
-        ? cloned['attachment'] as Record<string, unknown>
+        ? (cloned['attachment'] as Record<string, unknown>)
         : null;
     const graphType = String(graphAttachment?.['type'] || '').toLowerCase();
-    const graphUrl = (graphAttachment?.['payload'] as Record<string, unknown>)?.['url']
+    const graphUrl = (
+      graphAttachment?.['payload'] as Record<string, unknown>
+    )?.['url']
       ? String((graphAttachment!['payload'] as Record<string, unknown>)['url'])
       : '';
     if (graphUrl && (graphType === 'audio' || graphType === 'image')) {

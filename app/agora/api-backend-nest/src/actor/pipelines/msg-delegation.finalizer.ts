@@ -1,10 +1,18 @@
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleInit,
+  OnModuleDestroy,
+} from '@nestjs/common';
 import { QueueEvents } from 'bullmq';
 import { PrismaService } from '../../database/prisma/prisma.service';
 import { ActorScoringService } from '../scoring/actor-scoring.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { Q_ACTOR_TRANSITIONS, Q_MSG_DELEGATION } from '../../queues/queues.constants';
+import {
+  Q_ACTOR_TRANSITIONS,
+  Q_MSG_DELEGATION,
+} from '../../queues/queues.constants';
 import { MsgDelegationStateService } from './msg-delegation-state.service';
 
 @Injectable()
@@ -34,7 +42,10 @@ export class MsgDelegationFinalizer implements OnModuleInit, OnModuleDestroy {
       try {
         await this.finalizeCompleted(jobId);
       } catch (e: any) {
-        this.logger.error(`finalizeCompleted failed jobId=${jobId}`, e?.stack || e);
+        this.logger.error(
+          `finalizeCompleted failed jobId=${jobId}`,
+          e?.stack || e,
+        );
       }
     });
 
@@ -42,7 +53,10 @@ export class MsgDelegationFinalizer implements OnModuleInit, OnModuleDestroy {
       try {
         await this.finalizeFailed(jobId, failedReason);
       } catch (e: any) {
-        this.logger.error(`finalizeFailed failed jobId=${jobId}`, e?.stack || e);
+        this.logger.error(
+          `finalizeFailed failed jobId=${jobId}`,
+          e?.stack || e,
+        );
       }
     });
 
@@ -75,7 +89,9 @@ export class MsgDelegationFinalizer implements OnModuleInit, OnModuleDestroy {
         return;
       }
 
-      this.logger.log(`FLOW[DELEGATION] pending externalEventId=${externalEventId}, waiting callback`);
+      this.logger.log(
+        `FLOW[DELEGATION] pending externalEventId=${externalEventId}, waiting callback`,
+      );
       await this.state.setAcked({
         externalEventId,
         actorExternalId,
@@ -85,7 +101,8 @@ export class MsgDelegationFinalizer implements OnModuleInit, OnModuleDestroy {
     }
 
     const delta = typeof rv.delta === 'string' ? rv.delta : '0';
-    const signalType = typeof rv.signalType === 'string' ? rv.signalType : 'msg.signal';
+    const signalType =
+      typeof rv.signalType === 'string' ? rv.signalType : 'msg.signal';
     const metadata = rv.metadata ?? { source: 'n8n' };
 
     await this.finalizeWithDelta({
@@ -123,27 +140,35 @@ export class MsgDelegationFinalizer implements OnModuleInit, OnModuleDestroy {
     metadata?: Record<string, unknown>;
   }) {
     // Todo en tx: history_score + actor_score (si NO terminal)
-    const shouldEnqueueTransition = await this.prisma.$transaction(async (tx) => {
-      const { isTerminal } = await this.scoring.getLifecycleState(tx, input.actorExternalId);
-      if (isTerminal) return false;
+    const shouldEnqueueTransition = await this.prisma.$transaction(
+      async (tx) => {
+        const { isTerminal } = await this.scoring.getLifecycleState(
+          tx,
+          input.actorExternalId,
+        );
+        if (isTerminal) return false;
 
-      await this.scoring.applyDeltaIfNew(tx, {
-        actorExternalId: input.actorExternalId,
-        externalEventId: input.externalEventId,
-        delta: input.delta,
-        signalType: input.signalType,
-        metadata: input.metadata,
-      });
+        await this.scoring.applyDeltaIfNew(tx, {
+          actorExternalId: input.actorExternalId,
+          externalEventId: input.externalEventId,
+          delta: input.delta,
+          signalType: input.signalType,
+          metadata: input.metadata,
+        });
 
-      return true;
-    });
+        return true;
+      },
+    );
 
     // transición siempre al final
     if (!shouldEnqueueTransition) return;
 
     await this.transitionsQueue.add(
       'actor.transition.evaluate',
-      { actorExternalId: input.actorExternalId, triggerExternalEventId: input.externalEventId },
+      {
+        actorExternalId: input.actorExternalId,
+        triggerExternalEventId: input.externalEventId,
+      },
       { jobId: `tr_${input.externalEventId}` },
     );
   }

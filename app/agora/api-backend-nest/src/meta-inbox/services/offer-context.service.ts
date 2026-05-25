@@ -82,7 +82,9 @@ export class OfferContextService {
     codigo: string;
     decision?: string;
   }) {
-    const normalizedDecision = (input.decision || 'indefinido').trim().toLowerCase();
+    const normalizedDecision = (input.decision || 'indefinido')
+      .trim()
+      .toLowerCase();
     const plan = await this.getOfferPlanByCode(input.codigo);
 
     const rows = await this.prisma.$queryRawUnsafe<OfferEventRow[]>(
@@ -162,7 +164,8 @@ export class OfferContextService {
   ) {
     const current = await this.getOfferEventById(id);
     const hasChanges = Object.values(input).some(
-      (value) => value !== undefined && value !== null && String(value).trim() !== '',
+      (value) =>
+        value !== undefined && value !== null && String(value).trim() !== '',
     );
 
     if (!hasChanges) throw new BadRequestException('offer_event_update_empty');
@@ -179,7 +182,11 @@ export class OfferContextService {
           urlArchivo: current.urlArchivo,
         };
 
-    const normalizedDecision = (input.decision || current.decision || 'indefinido')
+    const normalizedDecision = (
+      input.decision ||
+      current.decision ||
+      'indefinido'
+    )
       .trim()
       .toLowerCase();
 
@@ -296,7 +303,9 @@ export class OfferContextService {
     } else {
       const decision = input.decision?.trim().toLowerCase();
       currentOffer =
-        (decision ? recentEvents.find((event) => event.decision === decision) : null) ||
+        (decision
+          ? recentEvents.find((event) => event.decision === decision)
+          : null) ||
         recentEvents[0] ||
         null;
     }
@@ -326,10 +335,15 @@ export class OfferContextService {
     const currentPrecioNormal = this.toFiniteNumber(currentOffer?.precioNormal);
     const currentLevel =
       (currentOffer?.codigo ? codeLevel.get(currentOffer.codigo) : undefined) ||
-      catalog.find((level) => level.precioNormal === currentPrecioNormal)?.nivel ||
+      catalog.find((level) => level.precioNormal === currentPrecioNormal)
+        ?.nivel ||
       null;
     const currentCodigo = currentOffer?.codigo || null;
-    const candidates = this.buildOfferCandidates(filteredCatalog, codeLevel, currentCodigo);
+    const candidates = this.buildOfferCandidates(
+      filteredCatalog,
+      codeLevel,
+      currentCodigo,
+    );
 
     return {
       sessionId,
@@ -367,7 +381,8 @@ export class OfferContextService {
 
   async getOfferPlanByCode(codigo: string): Promise<OfferPlanRow> {
     const normalizedCode = (codigo || '').trim();
-    if (!normalizedCode) throw new BadRequestException('Debes enviar un codigo valido');
+    if (!normalizedCode)
+      throw new BadRequestException('Debes enviar un codigo valido');
 
     const rows = await this.prisma.$queryRawUnsafe<OfferPlanRow[]>(
       `
@@ -390,7 +405,8 @@ export class OfferContextService {
       normalizedCode,
     );
 
-    if (!rows[0]) throw new BadRequestException(`codigo_no_encontrado:${normalizedCode}`);
+    if (!rows[0])
+      throw new BadRequestException(`codigo_no_encontrado:${normalizedCode}`);
     return rows[0];
   }
 
@@ -398,7 +414,11 @@ export class OfferContextService {
     modo?: string,
   ): 'alta' | 'portabilidad' | 'portabilidad_postpago' {
     const normalized = (modo || 'portabilidad').trim().toLowerCase();
-    if (normalized === 'alta' || normalized === 'portabilidad' || normalized === 'portabilidad_postpago') {
+    if (
+      normalized === 'alta' ||
+      normalized === 'portabilidad' ||
+      normalized === 'portabilidad_postpago'
+    ) {
       return normalized;
     }
     return 'portabilidad';
@@ -429,7 +449,9 @@ export class OfferContextService {
     );
   }
 
-  private buildOfferCatalogLevels(plans: OfferPlanCatalogRow[]): OfferCatalogLevelRow[] {
+  private buildOfferCatalogLevels(
+    plans: OfferPlanCatalogRow[],
+  ): OfferCatalogLevelRow[] {
     const groups = new Map<number, OfferPlanCatalogRow[]>();
     for (const plan of plans) {
       const precioNormal = this.toFiniteNumber(plan.precioNormal);
@@ -446,7 +468,8 @@ export class OfferContextService {
             left.codigo.localeCompare(right.codigo),
         );
         const codeForLines = (lineas: number) =>
-          sorted.find((plan) => Number(plan.lineas ?? 0) === lineas)?.codigo || null;
+          sorted.find((plan) => Number(plan.lineas ?? 0) === lineas)?.codigo ||
+          null;
 
         return {
           nivel: index + 1,
@@ -524,7 +547,9 @@ export class OfferContextService {
     };
   }
 
-  private toFiniteNumber(value: string | number | null | undefined): number | null {
+  private toFiniteNumber(
+    value: string | number | null | undefined,
+  ): number | null {
     if (value === null || value === undefined || value === '') return null;
     const numberValue = Number(value);
     return Number.isFinite(numberValue) ? numberValue : null;

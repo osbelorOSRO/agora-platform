@@ -109,11 +109,15 @@ export async function validateStoredMediaFile(
   const detected = detectMedia(header);
   if (!detected || !allowedFamilies.includes(detected.family)) {
     removeFileQuietly(file.path);
-    throw new BadRequestException('Tipo de archivo no permitido o no verificable');
+    throw new BadRequestException(
+      'Tipo de archivo no permitido o no verificable',
+    );
   }
   if (stat.size > FAMILY_MAX_BYTES[detected.family]) {
     removeFileQuietly(file.path);
-    throw new BadRequestException('Archivo excede el tamano maximo permitido para su tipo');
+    throw new BadRequestException(
+      'Archivo excede el tamano maximo permitido para su tipo',
+    );
   }
 
   return detected;
@@ -131,7 +135,9 @@ export function ensureCanonicalExtension(
   const nextPath = path.join(path.dirname(file.path), nextFilename);
   if (fs.existsSync(nextPath)) {
     removeFileQuietly(file.path);
-    throw new BadRequestException('No se pudo almacenar el archivo con nombre seguro');
+    throw new BadRequestException(
+      'No se pudo almacenar el archivo con nombre seguro',
+    );
   }
   fs.renameSync(file.path, nextPath);
 
@@ -141,11 +147,14 @@ export function ensureCanonicalExtension(
 }
 
 export function familiesForTipo(tipo: string): MediaFamily[] {
-  const normalized = String(tipo || '').trim().toLowerCase();
+  const normalized = String(tipo || '')
+    .trim()
+    .toLowerCase();
   if (['imagen', 'image'].includes(normalized)) return ['image'];
   if (['audio'].includes(normalized)) return ['audio'];
   if (['video'].includes(normalized)) return ['video'];
-  if (['documento', 'document', 'file'].includes(normalized)) return ['document'];
+  if (['documento', 'document', 'file'].includes(normalized))
+    return ['document'];
   return ['image', 'audio', 'video', 'document'];
 }
 
@@ -167,7 +176,9 @@ export function assertTrustedMediaUrl(rawUrl: string): string {
   }
 
   if (!isSafeUploadsPath(parsed.pathname)) {
-    throw new BadRequestException('mediaUrl debe apuntar a una ruta de media valida');
+    throw new BadRequestException(
+      'mediaUrl debe apuntar a una ruta de media valida',
+    );
   }
 
   const allowedHosts = trustedMediaHosts();
@@ -201,11 +212,17 @@ export function isSafeUploadsPath(pathname: string): boolean {
   } catch {
     return false;
   }
-  if (decoded !== relative || decoded.includes('..') || decoded.startsWith('.')) {
+  if (
+    decoded !== relative ||
+    decoded.includes('..') ||
+    decoded.startsWith('.')
+  ) {
     return false;
   }
 
-  return /^[a-f0-9-]{36}(?:_(?:wa|ig))?\.(?:jpg|png|gif|webp|ogg|mp3|wav|m4a|mp4|webm|pdf)$/i.test(decoded);
+  return /^[a-f0-9-]{36}(?:_(?:wa|ig))?\.(?:jpg|png|gif|webp|ogg|mp3|wav|m4a|mp4|webm|pdf)$/i.test(
+    decoded,
+  );
 }
 
 export function removeFileQuietly(filePath: string) {
@@ -240,7 +257,12 @@ function trustedMediaHosts(): Set<string> {
 }
 
 function detectMedia(header: Buffer): DetectedMedia | null {
-  if (header.length >= 4 && header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff) {
+  if (
+    header.length >= 4 &&
+    header[0] === 0xff &&
+    header[1] === 0xd8 &&
+    header[2] === 0xff
+  ) {
     return { family: 'image', mimeType: 'image/jpeg', extension: 'jpg' };
   }
   if (matchesAscii(header, 1, 'PNG')) {
@@ -253,7 +275,11 @@ function detectMedia(header: Buffer): DetectedMedia | null {
     return { family: 'image', mimeType: 'image/webp', extension: 'webp' };
   }
   if (matchesAscii(header, 0, '%PDF-')) {
-    return { family: 'document', mimeType: 'application/pdf', extension: 'pdf' };
+    return {
+      family: 'document',
+      mimeType: 'application/pdf',
+      extension: 'pdf',
+    };
   }
   if (matchesAscii(header, 0, 'OggS')) {
     return { family: 'audio', mimeType: 'audio/ogg', extension: 'ogg' };
@@ -268,7 +294,13 @@ function detectMedia(header: Buffer): DetectedMedia | null {
   if (mp4Like) {
     return mp4Like;
   }
-  if (header.length >= 4 && header[0] === 0x1a && header[1] === 0x45 && header[2] === 0xdf && header[3] === 0xa3) {
+  if (
+    header.length >= 4 &&
+    header[0] === 0x1a &&
+    header[1] === 0x45 &&
+    header[2] === 0xdf &&
+    header[3] === 0xa3
+  ) {
     return { family: 'video', mimeType: 'video/webm', extension: 'webm' };
   }
 
@@ -282,11 +314,16 @@ function sanitizeExtension(ext: string): string {
 }
 
 function matchesAscii(buffer: Buffer, offset: number, value: string): boolean {
-  return buffer.length >= offset + value.length && buffer.subarray(offset, offset + value.length).toString('ascii') === value;
+  return (
+    buffer.length >= offset + value.length &&
+    buffer.subarray(offset, offset + value.length).toString('ascii') === value
+  );
 }
 
 function isMp3Frame(buffer: Buffer): boolean {
-  return buffer.length >= 2 && buffer[0] === 0xff && (buffer[1] & 0xe0) === 0xe0;
+  return (
+    buffer.length >= 2 && buffer[0] === 0xff && (buffer[1] & 0xe0) === 0xe0
+  );
 }
 
 function detectMp4Like(buffer: Buffer): DetectedMedia | null {
@@ -295,7 +332,19 @@ function detectMp4Like(buffer: Buffer): DetectedMedia | null {
   if (brand === 'M4A ') {
     return { family: 'audio', mimeType: 'audio/mp4', extension: 'm4a' };
   }
-  if (['isom', 'iso2', 'mp41', 'mp42', 'avc1', 'M4V ', '3gp4', '3gp5', 'qt  '].includes(brand)) {
+  if (
+    [
+      'isom',
+      'iso2',
+      'mp41',
+      'mp42',
+      'avc1',
+      'M4V ',
+      '3gp4',
+      '3gp5',
+      'qt  ',
+    ].includes(brand)
+  ) {
     return { family: 'video', mimeType: 'video/mp4', extension: 'mp4' };
   }
   return null;

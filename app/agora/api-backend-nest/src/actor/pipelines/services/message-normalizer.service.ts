@@ -26,8 +26,12 @@ export type ExternalAdContext = {
 
 @Injectable()
 export class MessageNormalizerService {
-  resolveDirection(payload: unknown, eventKind: string): 'INCOMING' | 'OUTGOING' | 'SYSTEM' {
-    if (['delivery', 'read', 'reaction', 'unknown'].includes(eventKind)) return 'SYSTEM';
+  resolveDirection(
+    payload: unknown,
+    eventKind: string,
+  ): 'INCOMING' | 'OUTGOING' | 'SYSTEM' {
+    if (['delivery', 'read', 'reaction', 'unknown'].includes(eventKind))
+      return 'SYSTEM';
     if (eventKind === 'postback') return 'INCOMING';
     const p = payload as Record<string, unknown>;
     const isEcho = (p?.['message'] as Record<string, unknown>)?.['isEcho'];
@@ -44,7 +48,9 @@ export class MessageNormalizerService {
     const p = payload as Record<string, unknown>;
     if (eventKind === 'postback') {
       const title = (p?.['postback'] as Record<string, unknown>)?.['title'];
-      const selectedPayload = (p?.['postback'] as Record<string, unknown>)?.['payload'];
+      const selectedPayload = (p?.['postback'] as Record<string, unknown>)?.[
+        'payload'
+      ];
       return String(title || selectedPayload || '[postback]');
     }
 
@@ -80,7 +86,8 @@ export class MessageNormalizerService {
     if (!media || !contentText) return null;
     const p = payload as Record<string, unknown>;
     const messageText = (p?.['message'] as Record<string, unknown>)?.['text'];
-    const directText = typeof messageText === 'string' ? messageText.trim() : '';
+    const directText =
+      typeof messageText === 'string' ? messageText.trim() : '';
     if (!directText) return null;
     return directText === contentText ? directText : contentText;
   }
@@ -104,17 +111,22 @@ export class MessageNormalizerService {
 
   resolveSourceChannel(payload: unknown, eventKind: string): string | null {
     const p = payload as Record<string, unknown>;
-    const messageSource = (p?.['message'] as Record<string, unknown>)?.['messageSource'];
+    const messageSource = (p?.['message'] as Record<string, unknown>)?.[
+      'messageSource'
+    ];
     if (messageSource) return String(messageSource);
 
     if (eventKind === 'postback') {
       const postbackReferralSource = (
-        (p?.['postback'] as Record<string, unknown>)?.['referral'] as Record<string, unknown>
+        (p?.['postback'] as Record<string, unknown>)?.['referral'] as Record<
+          string,
+          unknown
+        >
       )?.['source'];
       const referralSource = String(
         postbackReferralSource ||
-        (p?.['referral'] as Record<string, unknown>)?.['source'] ||
-        '',
+          (p?.['referral'] as Record<string, unknown>)?.['source'] ||
+          '',
       ).toLowerCase();
       if (referralSource.includes('comment')) return 'post_comment_ref';
       return 'inbox_dm';
@@ -129,7 +141,8 @@ export class MessageNormalizerService {
       return {
         kind: 'postback',
         title: (p?.['postback'] as Record<string, unknown>)?.['title'] || null,
-        value: (p?.['postback'] as Record<string, unknown>)?.['payload'] || null,
+        value:
+          (p?.['postback'] as Record<string, unknown>)?.['payload'] || null,
         referral:
           (p?.['postback'] as Record<string, unknown>)?.['referral'] ||
           p?.['referral'] ||
@@ -149,19 +162,29 @@ export class MessageNormalizerService {
     }
 
     const message = p?.['message'] as Record<string, unknown> | undefined;
-    const attachments = Array.isArray(message?.['attachments']) ? message!['attachments'] : [];
+    const attachments = Array.isArray(message?.['attachments'])
+      ? message!['attachments']
+      : [];
     const first = attachments[0] as Record<string, unknown> | undefined;
     const type = String(first?.['type'] || '').toLowerCase();
-    const firstPayload = first?.['payload'] as Record<string, unknown> | undefined;
-    const attachmentUrls = Array.isArray(message?.['attachmentUrls']) ? message!['attachmentUrls'] : [];
+    const firstPayload = first?.['payload'] as
+      | Record<string, unknown>
+      | undefined;
+    const attachmentUrls = Array.isArray(message?.['attachmentUrls'])
+      ? message!['attachmentUrls']
+      : [];
     const mediaUrl = firstPayload?.['url']
       ? String(firstPayload['url'])
       : attachmentUrls[0]
         ? String(attachmentUrls[0])
         : null;
     if (!mediaUrl) return null;
-    const attachmentTypes = Array.isArray(message?.['attachmentTypes']) ? message!['attachmentTypes'] : [];
-    const mediaType = this.normalizeMediaType(type || String(attachmentTypes[0] || ''));
+    const attachmentTypes = Array.isArray(message?.['attachmentTypes'])
+      ? message!['attachmentTypes']
+      : [];
+    const mediaType = this.normalizeMediaType(
+      type || String(attachmentTypes[0] || ''),
+    );
     if (mediaType) return { mediaType, mediaUrl };
     return null;
   }
@@ -170,7 +193,8 @@ export class MessageNormalizerService {
     if (rawType === 'audio') return 'audio';
     if (rawType === 'image' || rawType === 'imagen') return 'image';
     if (rawType === 'video') return 'video';
-    if (rawType === 'document' || rawType === 'documento' || rawType === 'file') return 'document';
+    if (rawType === 'document' || rawType === 'documento' || rawType === 'file')
+      return 'document';
     return null;
   }
 
@@ -180,12 +204,23 @@ export class MessageNormalizerService {
     const wa = p?.['wa'] as Record<string, unknown> | undefined;
 
     const pnJid = this.firstString(
-      [wa?.['pnJid'], wa?.['remoteJidAlt'], wa?.['senderPn'], wa?.['resolvedJid'], e?.['actorExternalId']],
+      [
+        wa?.['pnJid'],
+        wa?.['remoteJidAlt'],
+        wa?.['senderPn'],
+        wa?.['resolvedJid'],
+        e?.['actorExternalId'],
+      ],
       (value) => this.isWhatsappPnJid(value),
     );
 
     const lidJid = this.firstString(
-      [wa?.['lidJid'], wa?.['remoteJid'], wa?.['senderKey'], e?.['actorExternalId']],
+      [
+        wa?.['lidJid'],
+        wa?.['remoteJid'],
+        wa?.['senderKey'],
+        e?.['actorExternalId'],
+      ],
       (value) => this.isWhatsappLidJid(value),
     );
 
@@ -210,10 +245,15 @@ export class MessageNormalizerService {
       mediaType: this.cleanNullableString(r['mediaType']),
       thumbnailUrl: this.cleanNullableString(r['thumbnailUrl']),
       originalImageUrl: this.cleanNullableString(r['originalImageUrl']),
-      clickToWhatsappCall: typeof r['clickToWhatsappCall'] === 'boolean' ? r['clickToWhatsappCall'] : null,
+      clickToWhatsappCall:
+        typeof r['clickToWhatsappCall'] === 'boolean'
+          ? r['clickToWhatsappCall']
+          : null,
     };
 
-    return Object.values(context).some((value) => value !== null) ? context : null;
+    return Object.values(context).some((value) => value !== null)
+      ? context
+      : null;
   }
 
   findExternalAdReply(value: unknown, depth = 0): unknown {
@@ -236,7 +276,10 @@ export class MessageNormalizerService {
     return null;
   }
 
-  firstString(values: unknown[], predicate?: (value: string) => boolean): string | null {
+  firstString(
+    values: unknown[],
+    predicate?: (value: string) => boolean,
+  ): string | null {
     for (const value of values) {
       if (typeof value !== 'string') continue;
       const cleaned = value.trim();
@@ -255,7 +298,12 @@ export class MessageNormalizerService {
   cleanContactDisplayName(value: unknown): string | null {
     if (typeof value !== 'string') return null;
     const cleaned = value.trim();
-    if (!cleaned || cleaned.toLowerCase() === 'undefined' || cleaned.toLowerCase() === 'null') return null;
+    if (
+      !cleaned ||
+      cleaned.toLowerCase() === 'undefined' ||
+      cleaned.toLowerCase() === 'null'
+    )
+      return null;
     return cleaned.slice(0, 120);
   }
 

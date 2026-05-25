@@ -1,7 +1,15 @@
-import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import axios from 'axios';
 import { getRuntimeSecret } from '../../shared/runtime-secrets';
-import { IMetaGraphApiGateway, ThreadMessageMediaType } from '../interfaces/meta-graph-api-gateway.interface';
+import {
+  IMetaGraphApiGateway,
+  ThreadMessageMediaType,
+} from '../interfaces/meta-graph-api-gateway.interface';
 
 @Injectable()
 export class MetaGraphApiService implements IMetaGraphApiGateway {
@@ -26,7 +34,10 @@ export class MetaGraphApiService implements IMetaGraphApiGateway {
       throw new BadRequestException('whatsapp_sender_not_configured');
     }
     const isInstagram = this.isInstagramThread(objectType, sourceChannel);
-    const accessToken = await this.resolveAccessToken(objectType, sourceChannel);
+    const accessToken = await this.resolveAccessToken(
+      objectType,
+      sourceChannel,
+    );
     return {
       graphUrl: isInstagram
         ? 'https://graph.instagram.com/v21.0/me/messages'
@@ -39,7 +50,10 @@ export class MetaGraphApiService implements IMetaGraphApiGateway {
     mediaType: ThreadMessageMediaType,
     thread: { objectType: string; sourceChannel: string | null },
   ): 'image' | 'audio' | 'video' | 'file' {
-    if (mediaType === 'document' && this.isInstagramThread(thread.objectType, thread.sourceChannel)) {
+    if (
+      mediaType === 'document' &&
+      this.isInstagramThread(thread.objectType, thread.sourceChannel)
+    ) {
       throw new BadRequestException('document_not_supported_for_instagram');
     }
     if (mediaType === 'document') return 'file';
@@ -53,7 +67,10 @@ export class MetaGraphApiService implements IMetaGraphApiGateway {
   ): Promise<any> {
     try {
       return await axios.post(primary.graphUrl, body, {
-        headers: { Authorization: `Bearer ${primary.accessToken}`, 'Content-Type': 'application/json' },
+        headers: {
+          Authorization: `Bearer ${primary.accessToken}`,
+          'Content-Type': 'application/json',
+        },
         timeout: 15000,
       });
     } catch (err: any) {
@@ -72,14 +89,23 @@ export class MetaGraphApiService implements IMetaGraphApiGateway {
     }
   }
 
-  private async resolveAccessToken(objectType: string, sourceChannel: string | null): Promise<string> {
+  private async resolveAccessToken(
+    objectType: string,
+    sourceChannel: string | null,
+  ): Promise<string> {
     if (this.isInstagramThread(objectType, sourceChannel)) {
       const igToken = await getRuntimeSecret('META_INSTAGRAM_ACCESS_TOKEN');
-      if (!igToken) throw new InternalServerErrorException('missing_env:META_INSTAGRAM_ACCESS_TOKEN');
+      if (!igToken)
+        throw new InternalServerErrorException(
+          'missing_env:META_INSTAGRAM_ACCESS_TOKEN',
+        );
       return igToken;
     }
     const pageToken = await getRuntimeSecret('META_PAGE_ACCESS_TOKEN');
-    if (!pageToken) throw new InternalServerErrorException('missing_env:META_PAGE_ACCESS_TOKEN');
+    if (!pageToken)
+      throw new InternalServerErrorException(
+        'missing_env:META_PAGE_ACCESS_TOKEN',
+      );
     return pageToken;
   }
 }

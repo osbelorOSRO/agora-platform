@@ -1,7 +1,13 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma/prisma.service';
-import { IWebsocketNotifierGateway, WEBSOCKET_NOTIFIER_GATEWAY } from '../../../websocket-notifier/interfaces/websocket-notifier-gateway.interface';
-import { IMetaInboxGateway, META_INBOX_GATEWAY } from '../../../meta-inbox/interfaces/meta-inbox-gateway.interface';
+import {
+  IWebsocketNotifierGateway,
+  WEBSOCKET_NOTIFIER_GATEWAY,
+} from '../../../websocket-notifier/interfaces/websocket-notifier-gateway.interface';
+import {
+  IMetaInboxGateway,
+  META_INBOX_GATEWAY,
+} from '../../../meta-inbox/interfaces/meta-inbox-gateway.interface';
 import { ConversationBootstrapService } from '../../bootstrap/conversation-bootstrap.service';
 import { MessageNormalizerService } from './message-normalizer.service';
 import { IncomingMessageEnvelope } from '../incoming-message-envelope';
@@ -12,27 +18,49 @@ export class IncomingMessagePersistenceService {
 
   constructor(
     private readonly prisma: PrismaService,
-    @Inject(WEBSOCKET_NOTIFIER_GATEWAY) private readonly websocketNotifier: IWebsocketNotifierGateway,
+    @Inject(WEBSOCKET_NOTIFIER_GATEWAY)
+    private readonly websocketNotifier: IWebsocketNotifierGateway,
     @Inject(META_INBOX_GATEWAY) private readonly metaInbox: IMetaInboxGateway,
     private readonly conversationBootstrap: ConversationBootstrapService,
     private readonly normalizer: MessageNormalizerService,
   ) {}
 
-  async persistMessageSession(env: IncomingMessageEnvelope): Promise<{ inserted: boolean; primedFirstDelegate: boolean }> {
+  async persistMessageSession(
+    env: IncomingMessageEnvelope,
+  ): Promise<{ inserted: boolean; primedFirstDelegate: boolean }> {
     const payload = env?.payload || {};
-    const eventKind = String(env?.eventType || '').replace(/^messaging\./, '') || 'unknown';
+    const eventKind =
+      String(env?.eventType || '').replace(/^messaging\./, '') || 'unknown';
     const direction = this.normalizer.resolveDirection(payload, eventKind);
-    const sessionResolution = await this.resolveSessionIdForIncomingMessage(env, direction);
+    const sessionResolution = await this.resolveSessionIdForIncomingMessage(
+      env,
+      direction,
+    );
     const sessionId = sessionResolution.sessionId;
     const media = this.normalizer.extractIncomingMedia(payload);
-    const contentText = this.normalizer.resolveVisibleContentText(payload, eventKind, media);
-    const mediaCaption = this.normalizer.resolveIncomingMediaCaption(payload, media, contentText);
-    const sourceChannel = this.normalizer.resolveSourceChannel(payload, eventKind);
+    const contentText = this.normalizer.resolveVisibleContentText(
+      payload,
+      eventKind,
+      media,
+    );
+    const mediaCaption = this.normalizer.resolveIncomingMediaCaption(
+      payload,
+      media,
+      contentText,
+    );
+    const sourceChannel = this.normalizer.resolveSourceChannel(
+      payload,
+      eventKind,
+    );
     const messageType = this.normalizer.resolveMessageType(eventKind, media);
     const senderType = this.normalizer.resolveSenderType(direction);
-    const structuredPayload = this.normalizer.resolveStructuredPayload(payload, eventKind);
+    const structuredPayload = this.normalizer.resolveStructuredPayload(
+      payload,
+      eventKind,
+    );
     const isWhatsappIncoming =
-      direction === 'INCOMING' && String(env.objectType || '').toUpperCase() === 'WHATSAPP';
+      direction === 'INCOMING' &&
+      String(env.objectType || '').toUpperCase() === 'WHATSAPP';
     const whatsappIdentity = isWhatsappIncoming
       ? this.normalizer.normalizeWhatsappIdentity(env, payload)
       : null;
@@ -56,7 +84,11 @@ export class IncomingMessagePersistenceService {
       sourceChannel,
       structuredPayload,
       ...(media
-        ? { mediaType: media.mediaType, mediaUrl: media.mediaUrl, caption: mediaCaption }
+        ? {
+            mediaType: media.mediaType,
+            mediaUrl: media.mediaUrl,
+            caption: mediaCaption,
+          }
         : {}),
     };
 
@@ -65,7 +97,9 @@ export class IncomingMessagePersistenceService {
     }
 
     // raw: ON CONFLICT DO NOTHING + RETURNING — Prisma create no soporta RETURNING con skip de duplicados
-    const insertedRows = await this.prisma.$queryRawUnsafe<Array<{ externalEventId: string }>>(
+    const insertedRows = await this.prisma.$queryRawUnsafe<
+      Array<{ externalEventId: string }>
+    >(
       `INSERT INTO thread_messages (
         session_id, external_event_id, message_external_id, actor_external_id,
         provider, object_type, source_channel, event_kind, direction,
@@ -92,7 +126,9 @@ export class IncomingMessagePersistenceService {
     );
 
     if (insertedRows.length === 0) {
-      this.logger.warn(`FLOW[MESSAGE] duplicate session skip notify externalEventId=${env.externalEventId}`);
+      this.logger.warn(
+        `FLOW[MESSAGE] duplicate session skip notify externalEventId=${env.externalEventId}`,
+      );
       return { inserted: false, primedFirstDelegate: false };
     }
 
@@ -108,7 +144,11 @@ export class IncomingMessagePersistenceService {
         thumbnailUrl: adContext.thumbnailUrl || null,
         originalImageUrl: adContext.originalImageUrl || null,
         firstMessageText: contentText,
-        metadata: { adContext, externalEventId: env.externalEventId, occurredAt: env.occurredAt },
+        metadata: {
+          adContext,
+          externalEventId: env.externalEventId,
+          occurredAt: env.occurredAt,
+        },
       });
     }
 
@@ -144,7 +184,9 @@ export class IncomingMessagePersistenceService {
         actorExternalId: env.actorExternalId,
         contenido: contentText || undefined,
         fecha_envio: env.occurredAt,
-        phone: this.normalizer.extractWhatsappPhone(env.actorExternalId) || undefined,
+        phone:
+          this.normalizer.extractWhatsappPhone(env.actorExternalId) ||
+          undefined,
       });
     }
 
@@ -163,7 +205,8 @@ export class IncomingMessagePersistenceService {
       sessionId,
       actorExternalId: env.actorExternalId,
       objectType: String(env.objectType || 'PAGE'),
-      eventType: direction === 'OUTGOING' ? 'MESSAGE_OUTGOING' : 'MESSAGE_INCOMING',
+      eventType:
+        direction === 'OUTGOING' ? 'MESSAGE_OUTGOING' : 'MESSAGE_INCOMING',
       eventSource: env.provider || 'META',
       externalEventId: env.externalEventId,
       messageExternalId: payload?.message?.mid || null,
@@ -175,58 +218,95 @@ export class IncomingMessagePersistenceService {
       dedupeKey: `${direction === 'OUTGOING' ? 'MESSAGE_OUTGOING' : 'MESSAGE_INCOMING'}:${env.externalEventId}`,
     });
 
-    if (direction === 'INCOMING' && sessionResolution.primeFirstIncomingDelegate) {
+    if (
+      direction === 'INCOMING' &&
+      sessionResolution.primeFirstIncomingDelegate
+    ) {
       await this.primeFirstIncomingDelegate(sessionId, env, sourceChannel);
     }
 
     return {
       inserted: true,
-      primedFirstDelegate: direction === 'INCOMING' && sessionResolution.primeFirstIncomingDelegate,
+      primedFirstDelegate:
+        direction === 'INCOMING' &&
+        sessionResolution.primeFirstIncomingDelegate,
     };
   }
 
   async handlePageEcho(env: IncomingMessageEnvelope): Promise<void> {
     const payload = env?.payload || {};
-    const recipientId = String(payload?.recipientId || payload?.recipient?.id || '').trim();
+    const recipientId = String(
+      payload?.recipientId || payload?.recipient?.id || '',
+    ).trim();
     const objectType = String(env.objectType || 'PAGE');
 
     if (!recipientId) {
-      this.logger.log(`FLOW[MESSAGE] page_echo skip no_recipient externalEventId=${env.externalEventId}`);
+      this.logger.log(
+        `FLOW[MESSAGE] page_echo skip no_recipient externalEventId=${env.externalEventId}`,
+      );
       return;
     }
 
     const threadRow = await this.prisma.threads.findFirst({
       where: { actor_external_id: recipientId, object_type: objectType },
-      orderBy: [{ updated_at: 'desc' }, { last_message_at: { sort: 'desc', nulls: 'last' } }],
+      orderBy: [
+        { updated_at: 'desc' },
+        { last_message_at: { sort: 'desc', nulls: 'last' } },
+      ],
       select: { session_id: true },
     });
 
     const sessionId = threadRow?.session_id;
     if (!sessionId) {
-      this.logger.log(`FLOW[MESSAGE] page_echo skip no_thread recipient=${recipientId} externalEventId=${env.externalEventId}`);
+      this.logger.log(
+        `FLOW[MESSAGE] page_echo skip no_thread recipient=${recipientId} externalEventId=${env.externalEventId}`,
+      );
       return;
     }
 
     const eventKind = 'message_echo';
     const direction = 'OUTGOING' as const;
     const media = this.normalizer.extractIncomingMedia(payload);
-    const contentText = this.normalizer.resolveVisibleContentText(payload, eventKind, media);
-    const mediaCaption = this.normalizer.resolveIncomingMediaCaption(payload, media, contentText);
-    const sourceChannel = this.normalizer.resolveSourceChannel(payload, eventKind);
+    const contentText = this.normalizer.resolveVisibleContentText(
+      payload,
+      eventKind,
+      media,
+    );
+    const mediaCaption = this.normalizer.resolveIncomingMediaCaption(
+      payload,
+      media,
+      contentText,
+    );
+    const sourceChannel = this.normalizer.resolveSourceChannel(
+      payload,
+      eventKind,
+    );
     const messageType = this.normalizer.resolveMessageType(eventKind, media);
     const senderType = 'META_PAGE';
-    const structuredPayload = this.normalizer.resolveStructuredPayload(payload, eventKind);
+    const structuredPayload = this.normalizer.resolveStructuredPayload(
+      payload,
+      eventKind,
+    );
     const contentJson = {
       ...(payload || {}),
       senderType,
       messageType,
       sourceChannel,
       structuredPayload,
-      ...(media ? { mediaType: media.mediaType, mediaUrl: media.mediaUrl, caption: mediaCaption } : {}),
-      _sourceApp: payload?.message?.appId || payload?.message?.app_id || 'external',
+      ...(media
+        ? {
+            mediaType: media.mediaType,
+            mediaUrl: media.mediaUrl,
+            caption: mediaCaption,
+          }
+        : {}),
+      _sourceApp:
+        payload?.message?.appId || payload?.message?.app_id || 'external',
     };
 
-    const insertedRows = await this.prisma.$queryRawUnsafe<Array<{ externalEventId: string }>>(
+    const insertedRows = await this.prisma.$queryRawUnsafe<
+      Array<{ externalEventId: string }>
+    >(
       `INSERT INTO thread_messages (
         session_id, external_event_id, message_external_id, actor_external_id,
         provider, object_type, source_channel, event_kind, direction,
@@ -253,11 +333,15 @@ export class IncomingMessagePersistenceService {
     );
 
     if (insertedRows.length === 0) {
-      this.logger.log(`FLOW[MESSAGE] page_echo duplicate skip externalEventId=${env.externalEventId}`);
+      this.logger.log(
+        `FLOW[MESSAGE] page_echo duplicate skip externalEventId=${env.externalEventId}`,
+      );
       return;
     }
 
-    this.logger.log(`FLOW[MESSAGE] page_echo persisted recipient=${recipientId} sessionId=${sessionId} externalEventId=${env.externalEventId}`);
+    this.logger.log(
+      `FLOW[MESSAGE] page_echo persisted recipient=${recipientId} sessionId=${sessionId} externalEventId=${env.externalEventId}`,
+    );
 
     await this.upsertThreadRecord({
       sessionId,
@@ -280,7 +364,13 @@ export class IncomingMessagePersistenceService {
       direction,
       provider: env.provider || 'META',
       sourceChannel,
-      metadata: { eventKind, messageType, senderType, status: 'received', externalEcho: true },
+      metadata: {
+        eventKind,
+        messageType,
+        senderType,
+        status: 'received',
+        externalEcho: true,
+      },
       occurredAt: new Date(env.occurredAt),
       dedupeKey: `MESSAGE_OUTGOING:${env.externalEventId}`,
     });
@@ -384,22 +474,25 @@ export class IncomingMessagePersistenceService {
     );
   }
 
-  private async upsertWhatsappContactFromIncoming(env: IncomingMessageEnvelope, payload: Record<string, any>): Promise<void> {
+  private async upsertWhatsappContactFromIncoming(
+    env: IncomingMessageEnvelope,
+    payload: Record<string, any>,
+  ): Promise<void> {
     const identity = this.normalizer.normalizeWhatsappIdentity(env, payload);
     const adContext = this.normalizer.normalizeExternalAdContext(payload);
     const actorExternalId = String(
       identity.pnJid ||
-      payload?.wa?.resolvedJid ||
-      identity.lidJid ||
-      env.actorExternalId ||
-      '',
+        payload?.wa?.resolvedJid ||
+        identity.lidJid ||
+        env.actorExternalId ||
+        '',
     ).trim();
     if (!actorExternalId) return;
 
     const pushName = this.normalizer.cleanContactDisplayName(
       payload?.wa?.pushName ||
-      payload?.rawEvent?.messages?.[0]?.pushName ||
-      payload?.pushName,
+        payload?.rawEvent?.messages?.[0]?.pushName ||
+        payload?.pushName,
     );
     const phone =
       this.normalizer.extractWhatsappPhone(actorExternalId) ||
@@ -525,7 +618,10 @@ export class IncomingMessagePersistenceService {
 
     const latestThread = await this.prisma.threads.findFirst({
       where: { actor_external_id: actorExternalId, object_type: objectType },
-      orderBy: [{ updated_at: 'desc' }, { last_message_at: { sort: 'desc', nulls: 'last' } }],
+      orderBy: [
+        { updated_at: 'desc' },
+        { last_message_at: { sort: 'desc', nulls: 'last' } },
+      ],
       select: { session_id: true, thread_status: true },
     });
 
@@ -537,21 +633,33 @@ export class IncomingMessagePersistenceService {
       });
 
       const resolvedSessionId = existingMessage?.session_id || baseSessionId;
-      const isNewActorThread = direction === 'INCOMING' && !existingMessage?.session_id;
-      return { sessionId: resolvedSessionId, primeFirstIncomingDelegate: isNewActorThread };
+      const isNewActorThread =
+        direction === 'INCOMING' && !existingMessage?.session_id;
+      return {
+        sessionId: resolvedSessionId,
+        primeFirstIncomingDelegate: isNewActorThread,
+      };
     }
 
-    if (direction === 'INCOMING' && String(latestThread.thread_status || '') === 'CLOSED') {
-      const suffix = `${new Date(env.occurredAt).getTime()}_${String(env.externalEventId || '')
-        .replace(/[^a-zA-Z0-9_-]/g, '')
-        .slice(-12) || Math.random().toString(16).slice(2, 10)}`;
+    if (
+      direction === 'INCOMING' &&
+      String(latestThread.thread_status || '') === 'CLOSED'
+    ) {
+      const suffix = `${new Date(env.occurredAt).getTime()}_${
+        String(env.externalEventId || '')
+          .replace(/[^a-zA-Z0-9_-]/g, '')
+          .slice(-12) || Math.random().toString(16).slice(2, 10)
+      }`;
       return {
         sessionId: `${baseSessionId}:${suffix}`.slice(0, 255),
         primeFirstIncomingDelegate: true,
       };
     }
 
-    return { sessionId: latestThread.session_id, primeFirstIncomingDelegate: false };
+    return {
+      sessionId: latestThread.session_id,
+      primeFirstIncomingDelegate: false,
+    };
   }
 
   private async primeFirstIncomingDelegate(
@@ -570,13 +678,20 @@ export class IncomingMessagePersistenceService {
     });
 
     if (!decision.shouldWelcome || !decision.welcomeText) {
-      this.logger.log(`FLOW[MESSAGE] bootstrap greeting skipped sessionId=${sessionId} reason=${decision.reason}`);
+      this.logger.log(
+        `FLOW[MESSAGE] bootstrap greeting skipped sessionId=${sessionId} reason=${decision.reason}`,
+      );
       return;
     }
 
     try {
-      await this.metaInbox.sendSystemText({ sessionId, text: decision.welcomeText });
-      this.logger.log(`FLOW[MESSAGE] bootstrap greeting sent sessionId=${sessionId}`);
+      await this.metaInbox.sendSystemText({
+        sessionId,
+        text: decision.welcomeText,
+      });
+      this.logger.log(
+        `FLOW[MESSAGE] bootstrap greeting sent sessionId=${sessionId}`,
+      );
     } catch (error) {
       this.logger.error(
         `FLOW[MESSAGE] bootstrap greeting failed sessionId=${sessionId}: ${error instanceof Error ? error.message : String(error)}`,

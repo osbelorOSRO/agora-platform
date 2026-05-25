@@ -12,13 +12,17 @@ export class ThreadMsgDelegationProcessor extends WorkerHost {
 
   async process(job: Job<any>) {
     if (job.name !== 'thread.msg.delegation') {
-      this.logger.warn(`Job ignorado en ${Q_THREAD_MSG_DELEGATION}: name=${job.name}, id=${job.id}`);
+      this.logger.warn(
+        `Job ignorado en ${Q_THREAD_MSG_DELEGATION}: name=${job.name}, id=${job.id}`,
+      );
       return { status: 'ignored' };
     }
 
     const webhookUrl = process.env.N8N_THREAD_MSG_DELEGATION_WEBHOOK_URL;
     if (!webhookUrl) {
-      this.logger.warn(`FLOW[THREAD_DELEGATION] skip externalEventId=${job.data?.externalEventId} reason=missing_webhook_url`);
+      this.logger.warn(
+        `FLOW[THREAD_DELEGATION] skip externalEventId=${job.data?.externalEventId} reason=missing_webhook_url`,
+      );
       return { status: 'skipped', reason: 'missing_webhook_url' };
     }
 
@@ -56,7 +60,9 @@ export class ThreadMsgDelegationProcessor extends WorkerHost {
     const accepted = rv.accepted !== false;
 
     if (!accepted) {
-      throw new Error(`n8n thread webhook did not accept task externalEventId=${env.externalEventId}`);
+      throw new Error(
+        `n8n thread webhook did not accept task externalEventId=${env.externalEventId}`,
+      );
     }
 
     const metadata = rv.metadata ?? { source: 'n8n', status: response.status };

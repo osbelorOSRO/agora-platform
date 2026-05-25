@@ -1,5 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypto';
+import {
+  createCipheriv,
+  createDecipheriv,
+  randomBytes,
+  scryptSync,
+} from 'crypto';
 import { PrismaService } from '../database/prisma/prisma.service';
 import { CacheService } from '../cache/cache.service';
 import { UpdateMetaConfigDto } from './dto/update-meta-config.dto';
@@ -31,7 +36,10 @@ export class MetaConfigService {
   private encrypt(plaintext: string): string {
     const iv = randomBytes(16);
     const cipher = createCipheriv('aes-256-gcm', this.encKey, iv);
-    const encrypted = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
+    const encrypted = Buffer.concat([
+      cipher.update(plaintext, 'utf8'),
+      cipher.final(),
+    ]);
     const tag = cipher.getAuthTag();
     return `${iv.toString('hex')}:${tag.toString('hex')}:${encrypted.toString('hex')}`;
   }
@@ -43,19 +51,24 @@ export class MetaConfigService {
     const enc = Buffer.from(encHex, 'hex');
     const decipher = createDecipheriv('aes-256-gcm', this.encKey, iv);
     decipher.setAuthTag(tag);
-    return Buffer.concat([decipher.update(enc), decipher.final()]).toString('utf8');
+    return Buffer.concat([decipher.update(enc), decipher.final()]).toString(
+      'utf8',
+    );
   }
 
   private encryptRow(dto: UpdateMetaConfigDto): Record<string, string | null> {
     const result: Record<string, string | null> = {};
     for (const [key, value] of Object.entries(dto)) {
       if (value === undefined) continue;
-      result[key] = ENCRYPTED_FIELDS.has(key) && value ? this.encrypt(value) : value;
+      result[key] =
+        ENCRYPTED_FIELDS.has(key) && value ? this.encrypt(value) : value;
     }
     return result;
   }
 
-  private decryptRow(row: Record<string, unknown>): Record<string, string | null> {
+  private decryptRow(
+    row: Record<string, unknown>,
+  ): Record<string, string | null> {
     const result: Record<string, string | null> = {};
     for (const [key, value] of Object.entries(row)) {
       if (key === 'id' || key === 'updated_at') continue;
@@ -72,7 +85,9 @@ export class MetaConfigService {
     return result;
   }
 
-  private maskRow(row: Record<string, string | null>): Record<string, string | null> {
+  private maskRow(
+    row: Record<string, string | null>,
+  ): Record<string, string | null> {
     const masked = { ...row };
     for (const field of ENCRYPTED_FIELDS) {
       if (masked[field]) masked[field] = '••••••••';
@@ -81,7 +96,8 @@ export class MetaConfigService {
   }
 
   async get(): Promise<Record<string, string | null>> {
-    const cached = await this.cache.get<Record<string, string | null>>(CACHE_KEY);
+    const cached =
+      await this.cache.get<Record<string, string | null>>(CACHE_KEY);
     if (cached) return this.maskRow(cached);
 
     const rows = await this.prisma.$queryRawUnsafe<Record<string, unknown>[]>(
@@ -96,7 +112,8 @@ export class MetaConfigService {
   }
 
   async getSecret(field: string): Promise<string | null> {
-    const cached = await this.cache.get<Record<string, string | null>>(CACHE_KEY);
+    const cached =
+      await this.cache.get<Record<string, string | null>>(CACHE_KEY);
     if (cached) return cached[field] ?? null;
 
     const rows = await this.prisma.$queryRawUnsafe<Record<string, unknown>[]>(
@@ -115,7 +132,9 @@ export class MetaConfigService {
     return this.getSecret(field);
   }
 
-  async upsert(dto: UpdateMetaConfigDto): Promise<Record<string, string | null>> {
+  async upsert(
+    dto: UpdateMetaConfigDto,
+  ): Promise<Record<string, string | null>> {
     const encrypted = this.encryptRow(dto);
     const fields = Object.keys(encrypted);
     if (!fields.length) return this.get();

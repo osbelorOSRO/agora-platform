@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
 import { WhatsappIdentityService } from './whatsapp-identity.service';
 import { PrismaService } from '../../database/prisma/prisma.service';
+import { MESSAGE_GATEWAY } from '../../baileys/interfaces/message-gateway.interface';
+import { ThreadEventService } from './thread-event.service';
 
 describe('WhatsappIdentityService', () => {
   let service: WhatsappIdentityService;
@@ -13,6 +15,14 @@ describe('WhatsappIdentityService', () => {
       providers: [
         WhatsappIdentityService,
         { provide: PrismaService, useValue: prisma },
+        {
+          provide: MESSAGE_GATEWAY,
+          useValue: { enviarMensajeWhatsApp: jest.fn() },
+        },
+        {
+          provide: ThreadEventService,
+          useValue: { recordThreadEvent: jest.fn() },
+        },
       ],
     }).compile();
     service = module.get<WhatsappIdentityService>(WhatsappIdentityService);
@@ -54,7 +64,9 @@ describe('WhatsappIdentityService', () => {
     });
 
     it('returns false for @s.whatsapp.net', () => {
-      expect(service.isWhatsappLidJid('56912345678@s.whatsapp.net')).toBe(false);
+      expect(service.isWhatsappLidJid('56912345678@s.whatsapp.net')).toBe(
+        false,
+      );
     });
 
     it('is case-insensitive', () => {
@@ -66,7 +78,9 @@ describe('WhatsappIdentityService', () => {
 
   describe('normalizeWhatsappPhone', () => {
     it('strips non-digits and returns clean number', () => {
-      expect(service.normalizeWhatsappPhone('+56 9 1234 5678')).toBe('56912345678');
+      expect(service.normalizeWhatsappPhone('+56 9 1234 5678')).toBe(
+        '56912345678',
+      );
     });
 
     it('accepts bare 11-digit number', () => {
@@ -74,15 +88,21 @@ describe('WhatsappIdentityService', () => {
     });
 
     it('throws BadRequestException when input is empty', () => {
-      expect(() => service.normalizeWhatsappPhone('')).toThrow(BadRequestException);
+      expect(() => service.normalizeWhatsappPhone('')).toThrow(
+        BadRequestException,
+      );
     });
 
     it('throws BadRequestException when number is too short (< 8 digits)', () => {
-      expect(() => service.normalizeWhatsappPhone('1234567')).toThrow(BadRequestException);
+      expect(() => service.normalizeWhatsappPhone('1234567')).toThrow(
+        BadRequestException,
+      );
     });
 
     it('throws BadRequestException when number is too long (> 15 digits)', () => {
-      expect(() => service.normalizeWhatsappPhone('1234567890123456')).toThrow(BadRequestException);
+      expect(() => service.normalizeWhatsappPhone('1234567890123456')).toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -90,7 +110,9 @@ describe('WhatsappIdentityService', () => {
 
   describe('tryNormalizeWhatsappPhone', () => {
     it('returns digits for a valid phone with formatting', () => {
-      expect(service.tryNormalizeWhatsappPhone('+56 9 1234 5678')).toBe('56912345678');
+      expect(service.tryNormalizeWhatsappPhone('+56 9 1234 5678')).toBe(
+        '56912345678',
+      );
     });
 
     it('returns null for empty string', () => {
@@ -118,11 +140,15 @@ describe('WhatsappIdentityService', () => {
 
   describe('extractPhoneFromWhatsappJid', () => {
     it('extracts phone from pnJid format', () => {
-      expect(service.extractPhoneFromWhatsappJid('56912345678@s.whatsapp.net')).toBe('56912345678');
+      expect(
+        service.extractPhoneFromWhatsappJid('56912345678@s.whatsapp.net'),
+      ).toBe('56912345678');
     });
 
     it('extracts phone from bare 11-digit number', () => {
-      expect(service.extractPhoneFromWhatsappJid('56912345678')).toBe('56912345678');
+      expect(service.extractPhoneFromWhatsappJid('56912345678')).toBe(
+        '56912345678',
+      );
     });
 
     it('returns null for @lid JID (letters after @)', () => {
@@ -135,7 +161,9 @@ describe('WhatsappIdentityService', () => {
     });
 
     it('returns null for short number not matching pattern', () => {
-      expect(service.extractPhoneFromWhatsappJid('123@s.whatsapp.net')).toBeNull();
+      expect(
+        service.extractPhoneFromWhatsappJid('123@s.whatsapp.net'),
+      ).toBeNull();
     });
   });
 
@@ -143,7 +171,9 @@ describe('WhatsappIdentityService', () => {
 
   describe('firstNonEmptyString', () => {
     it('returns the first non-empty trimmed string', () => {
-      expect(service.firstNonEmptyString([null, '', '  ', 'hello', 'world'])).toBe('hello');
+      expect(
+        service.firstNonEmptyString([null, '', '  ', 'hello', 'world']),
+      ).toBe('hello');
     });
 
     it('returns null when all values are empty or non-string', () => {
@@ -188,7 +218,9 @@ describe('WhatsappIdentityService', () => {
         ]) // contact query
         .mockResolvedValueOnce([]); // message query
 
-      const result = await service.resolveWhatsappIdentity({ phone: '56912345678' });
+      const result = await service.resolveWhatsappIdentity({
+        phone: '56912345678',
+      });
 
       expect(result.phone).toBe('56912345678');
       expect(result.pnJid).toBe('56912345678@s.whatsapp.net');
@@ -220,7 +252,9 @@ describe('WhatsappIdentityService', () => {
           },
         ]); // message query
 
-      const result = await service.resolveWhatsappIdentity({ actorExternalId: '56912345678@s.whatsapp.net' });
+      const result = await service.resolveWhatsappIdentity({
+        actorExternalId: '56912345678@s.whatsapp.net',
+      });
 
       expect(result.pnJid).toBe('56912345678@s.whatsapp.net');
       expect(result.lidJid).toBe('12345678901234@lid');
@@ -229,11 +263,26 @@ describe('WhatsappIdentityService', () => {
 
     it('sets source flags correctly', async () => {
       prisma.$queryRawUnsafe
-        .mockResolvedValueOnce([{ sessionId: 'sess1', actorExternalId: '56912345678@s.whatsapp.net', metadata: {} }])
-        .mockResolvedValueOnce([{ actorExternalId: '56912345678@s.whatsapp.net', phone: '56912345678', displayName: 'X', metadata: {} }])
+        .mockResolvedValueOnce([
+          {
+            sessionId: 'sess1',
+            actorExternalId: '56912345678@s.whatsapp.net',
+            metadata: {},
+          },
+        ])
+        .mockResolvedValueOnce([
+          {
+            actorExternalId: '56912345678@s.whatsapp.net',
+            phone: '56912345678',
+            displayName: 'X',
+            metadata: {},
+          },
+        ])
         .mockResolvedValueOnce([]);
 
-      const result = await service.resolveWhatsappIdentity({ sessionId: 'sess1' });
+      const result = await service.resolveWhatsappIdentity({
+        sessionId: 'sess1',
+      });
 
       expect(result.source.thread).toBe(true);
       expect(result.source.contact).toBe(true);

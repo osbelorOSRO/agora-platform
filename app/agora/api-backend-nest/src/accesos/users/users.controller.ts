@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { Request as Req } from '@nestjs/common';
 import type { Request } from 'express';
 import { UsersService } from './users.service';
@@ -16,8 +27,15 @@ export class UsersController {
 
   @Post('preregistrar-usuario')
   @HttpCode(201)
-  preregistrarUsuario(@Body() body: PreregistrarUsuarioDto, @Req() req: Request) {
-    return this.service.preregistrarUsuario(body.username, body.rolId, req.userPayload?.id ?? null);
+  preregistrarUsuario(
+    @Body() body: PreregistrarUsuarioDto,
+    @Req() req: Request,
+  ) {
+    return this.service.preregistrarUsuario(
+      body.username,
+      body.rolId,
+      req.userPayload?.id ?? null,
+    );
   }
 
   @Get('usuarios')
@@ -26,13 +44,19 @@ export class UsersController {
   }
 
   @Patch('usuarios/:id')
-  actualizarUsuario(@Param('id', ParseIntPipe) id: number, @Body() body: ActualizarUsuarioDto) {
+  actualizarUsuario(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: ActualizarUsuarioDto,
+  ) {
     return this.service.actualizarUsuario(id, body);
   }
 
   @Post('usuarios/:id/reset-password')
   @HttpCode(200)
-  adminResetPassword(@Param('id', ParseIntPipe) id: number, @Req() req: Request) {
+  adminResetPassword(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: Request,
+  ) {
     return this.service.adminResetPassword(id, req.userPayload?.id);
   }
 
@@ -50,13 +74,19 @@ export class UsersController {
 
   @Post('usuarios/:id/regenerar-invitacion')
   @HttpCode(200)
-  regenerarInvitacion(@Param('id', ParseIntPipe) id: number, @Req() req: Request) {
+  regenerarInvitacion(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: Request,
+  ) {
     return this.service.regenerarInvitacion(id, req.userPayload?.id);
   }
 
   @Delete('usuarios/:id/preregistro')
   @HttpCode(200)
-  cancelarPreregistro(@Param('id', ParseIntPipe) id: number, @Req() req: Request) {
+  cancelarPreregistro(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: Request,
+  ) {
     return this.service.cancelarPreregistro(id, req.userPayload?.id);
   }
 }

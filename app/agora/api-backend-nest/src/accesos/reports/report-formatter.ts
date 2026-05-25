@@ -13,7 +13,8 @@ export function parseDate(value: any): Date | null {
 function csvEscape(value: any): string {
   if (value === null || value === undefined) return '';
   if (value instanceof Date) return value.toISOString();
-  const serialized = typeof value === 'object' ? JSON.stringify(value) : String(value);
+  const serialized =
+    typeof value === 'object' ? JSON.stringify(value) : String(value);
   return `"${serialized.replace(/"/g, '""')}"`;
 }
 
@@ -44,5 +45,11 @@ export function formatReportResponse(result: ReportResult): {
       body: rowsToCsv(result.rows),
     };
   }
-  return { body: { report: result.filename, total: result.rows.length, rows: result.rows } };
+  return {
+    body: {
+      report: result.filename,
+      total: result.rows.length,
+      rows: result.rows,
+    },
+  };
 }

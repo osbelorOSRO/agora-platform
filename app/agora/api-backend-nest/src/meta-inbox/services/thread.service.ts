@@ -1,6 +1,15 @@
-import { BadRequestException, Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../database/prisma/prisma.service';
-import { IWebsocketNotifierGateway, WEBSOCKET_NOTIFIER_GATEWAY } from '../../websocket-notifier/interfaces/websocket-notifier-gateway.interface';
+import {
+  IWebsocketNotifierGateway,
+  WEBSOCKET_NOTIFIER_GATEWAY,
+} from '../../websocket-notifier/interfaces/websocket-notifier-gateway.interface';
 import { ThreadEventService, ThreadEventInput } from './thread-event.service';
 import { CacheService } from '../../cache/cache.service';
 import type { IThreadGateway } from '../interfaces/thread-gateway.interface';
@@ -85,7 +94,8 @@ type StageTemplateRow = {
 export class ThreadService implements IThreadGateway {
   constructor(
     private readonly prisma: PrismaService,
-    @Inject(WEBSOCKET_NOTIFIER_GATEWAY) private readonly websocketNotifier: IWebsocketNotifierGateway,
+    @Inject(WEBSOCKET_NOTIFIER_GATEWAY)
+    private readonly websocketNotifier: IWebsocketNotifierGateway,
     private readonly threadEvent: ThreadEventService,
     private readonly cache: CacheService,
   ) {}
@@ -156,7 +166,9 @@ export class ThreadService implements IThreadGateway {
     `);
   }
 
-  async ensureWhatsappThreadForContact(actorExternalId: string): Promise<ThreadRow> {
+  async ensureWhatsappThreadForContact(
+    actorExternalId: string,
+  ): Promise<ThreadRow> {
     const normalizedActor = String(actorExternalId || '').trim();
     if (!normalizedActor.endsWith('@s.whatsapp.net')) {
       throw new BadRequestException(
@@ -165,7 +177,12 @@ export class ThreadService implements IThreadGateway {
     }
 
     const contact = await this.prisma.meta_inbox_contacts.findUnique({
-      where: { actor_external_id_object_type: { actor_external_id: normalizedActor, object_type: 'WHATSAPP' } },
+      where: {
+        actor_external_id_object_type: {
+          actor_external_id: normalizedActor,
+          object_type: 'WHATSAPP',
+        },
+      },
       select: { actor_external_id: true },
     });
     if (!contact) {
@@ -178,7 +195,10 @@ export class ThreadService implements IThreadGateway {
         object_type: 'WHATSAPP',
         thread_status: { in: ['OPEN', 'PAUSED', 'ARCHIVED'] },
       },
-      orderBy: [{ updated_at: 'desc' }, { last_message_at: { sort: 'desc', nulls: 'last' } }],
+      orderBy: [
+        { updated_at: 'desc' },
+        { last_message_at: { sort: 'desc', nulls: 'last' } },
+      ],
       select: { session_id: true },
     });
 
@@ -201,11 +221,17 @@ export class ThreadService implements IThreadGateway {
     const baseSessionId = `BAILEYS:WHATSAPP:${normalizedActor}`;
     const latestThread = await this.prisma.threads.findFirst({
       where: { actor_external_id: normalizedActor, object_type: 'WHATSAPP' },
-      orderBy: [{ updated_at: 'desc' }, { last_message_at: { sort: 'desc', nulls: 'last' } }],
+      orderBy: [
+        { updated_at: 'desc' },
+        { last_message_at: { sort: 'desc', nulls: 'last' } },
+      ],
       select: { session_id: true },
     });
     const sessionId = latestThread?.session_id
-      ? `${baseSessionId}:${Date.now()}_${Math.random().toString(16).slice(2, 8)}`.slice(0, 255)
+      ? `${baseSessionId}:${Date.now()}_${Math.random().toString(16).slice(2, 8)}`.slice(
+          0,
+          255,
+        )
       : baseSessionId;
 
     await this.prisma.threads.upsert({
@@ -225,7 +251,10 @@ export class ThreadService implements IThreadGateway {
     });
 
     const created = await this.getThreadRow(sessionId);
-    if (!created) throw new InternalServerErrorException(`whatsapp_thread_prepare_failed:${sessionId}`);
+    if (!created)
+      throw new InternalServerErrorException(
+        `whatsapp_thread_prepare_failed:${sessionId}`,
+      );
 
     await this.threadEvent.recordThreadEvent({
       sessionId: created.sessionId,
@@ -266,14 +295,20 @@ export class ThreadService implements IThreadGateway {
     return created;
   }
 
-  async getStageTemplatePaths(stageActual: string): Promise<{ stage_actual: string; caminos: Partial<Record<string, unknown>>[] }> {
+  async getStageTemplatePaths(stageActual: string): Promise<{
+    stage_actual: string;
+    caminos: Partial<Record<string, unknown>>[];
+  }> {
     const normalizedStage = (stageActual || '').trim();
     if (!normalizedStage) {
       throw new BadRequestException('Debes enviar un stage actual valido');
     }
 
     const cacheKey = `stage_templates:${normalizedStage}`;
-    const cached = await this.cache.get<{ stage_actual: string; caminos: Partial<Record<string, unknown>>[] }>(cacheKey);
+    const cached = await this.cache.get<{
+      stage_actual: string;
+      caminos: Partial<Record<string, unknown>>[];
+    }>(cacheKey);
     if (cached) return cached;
 
     const rows = await this.prisma.$queryRawUnsafe<StageTemplateRow[]>(
@@ -329,7 +364,13 @@ export class ThreadService implements IThreadGateway {
       stageControl?: Record<string, unknown>;
     },
     eventSource: 'HUMAN' | 'N8N' | 'SYSTEM' | 'API' = 'HUMAN',
-  ): Promise<{ ok: boolean; threadStatus: string; attentionMode: string; threadStage: string; stageControl: Record<string, unknown> | null }> {
+  ): Promise<{
+    ok: boolean;
+    threadStatus: string;
+    attentionMode: string;
+    threadStage: string;
+    stageControl: Record<string, unknown> | null;
+  }> {
     const thread = await this.getThreadSnapshot(sessionId);
     if (!thread) throw new NotFoundException(`session_not_found:${sessionId}`);
 
@@ -381,7 +422,15 @@ export class ThreadService implements IThreadGateway {
     const updated = await this.getThreadSnapshot(sessionId);
     if (!updated) throw new NotFoundException(`session_not_found:${sessionId}`);
 
-    const baseEvent: Pick<ThreadEventInput, 'sessionId' | 'threadId' | 'actorExternalId' | 'objectType' | 'eventSource' | 'sourceChannel'> = {
+    const baseEvent: Pick<
+      ThreadEventInput,
+      | 'sessionId'
+      | 'threadId'
+      | 'actorExternalId'
+      | 'objectType'
+      | 'eventSource'
+      | 'sourceChannel'
+    > = {
       sessionId,
       threadId: updated.threadId,
       actorExternalId: updated.actorExternalId,
@@ -396,7 +445,11 @@ export class ThreadService implements IThreadGateway {
         eventType: 'THREAD_STATUS_CHANGED',
         fromValue: thread.threadStatus,
         toValue: updated.threadStatus,
-        metadata: { attentionMode: updated.attentionMode, threadStage: updated.threadStage, stageControl: updated.stageControl },
+        metadata: {
+          attentionMode: updated.attentionMode,
+          threadStage: updated.threadStage,
+          stageControl: updated.stageControl,
+        },
         dedupeKey: `THREAD_STATUS_CHANGED:${sessionId}:${thread.threadStatus}:${updated.threadStatus}:${Date.now()}`,
       });
     }
@@ -407,7 +460,11 @@ export class ThreadService implements IThreadGateway {
         eventType: 'ATTENTION_MODE_CHANGED',
         fromValue: thread.attentionMode,
         toValue: updated.attentionMode,
-        metadata: { threadStatus: updated.threadStatus, threadStage: updated.threadStage, stageControl: updated.stageControl },
+        metadata: {
+          threadStatus: updated.threadStatus,
+          threadStage: updated.threadStage,
+          stageControl: updated.stageControl,
+        },
         dedupeKey: `ATTENTION_MODE_CHANGED:${sessionId}:${thread.attentionMode}:${updated.attentionMode}:${Date.now()}`,
       });
     }
@@ -418,7 +475,11 @@ export class ThreadService implements IThreadGateway {
         eventType: 'THREAD_STAGE_CHANGED',
         fromValue: thread.threadStage,
         toValue: updated.threadStage,
-        metadata: { threadStatus: updated.threadStatus, attentionMode: updated.attentionMode, stageControl: updated.stageControl },
+        metadata: {
+          threadStatus: updated.threadStatus,
+          attentionMode: updated.attentionMode,
+          stageControl: updated.stageControl,
+        },
         dedupeKey: `THREAD_STAGE_CHANGED:${sessionId}:${thread.threadStage}:${updated.threadStage}:${Date.now()}`,
       });
     }
@@ -468,7 +529,10 @@ export class ThreadService implements IThreadGateway {
     ]);
 
     const reopened = await this.getThreadRow(current.sessionId);
-    if (!reopened) throw new InternalServerErrorException(`thread_reopen_failed:${current.sessionId}`);
+    if (!reopened)
+      throw new InternalServerErrorException(
+        `thread_reopen_failed:${current.sessionId}`,
+      );
 
     await this.threadEvent.recordThreadEvent({
       sessionId: reopened.sessionId,
@@ -480,7 +544,10 @@ export class ThreadService implements IThreadGateway {
       fromValue: current.threadStatus,
       toValue: reopened.threadStatus,
       sourceChannel: reopened.sourceChannel,
-      metadata: { attentionMode: reopened.attentionMode, threadStage: reopened.threadStage },
+      metadata: {
+        attentionMode: reopened.attentionMode,
+        threadStage: reopened.threadStage,
+      },
       occurredAt: openedAt,
       dedupeKey: `THREAD_REOPENED:${reopened.sessionId}:${openedAt.toISOString()}`,
     });
@@ -494,10 +561,14 @@ export class ThreadService implements IThreadGateway {
       threadStatus: reopened.threadStatus,
       attentionMode: reopened.attentionMode,
       threadStage: reopened.threadStage,
-      stageControl: ((reopened.metadata as Record<string, unknown> | null)?.stage_control as Record<string, unknown> | null) ?? null,
+      stageControl:
+        ((reopened.metadata as Record<string, unknown> | null)
+          ?.stage_control as Record<string, unknown> | null) ?? null,
       lastMessageText: reopened.lastMessageText,
       lastDirection: reopened.lastDirection,
-      lastMessageAt: reopened.lastMessageAt ? new Date(reopened.lastMessageAt) : null,
+      lastMessageAt: reopened.lastMessageAt
+        ? new Date(reopened.lastMessageAt)
+        : null,
     });
 
     return reopened;
@@ -508,9 +579,15 @@ export class ThreadService implements IThreadGateway {
     objectType: string,
     includeClosed = false,
   ): Promise<ThreadRow> {
-    const thread = await this.getPreferredThreadByActor(actorExternalId, objectType, includeClosed);
+    const thread = await this.getPreferredThreadByActor(
+      actorExternalId,
+      objectType,
+      includeClosed,
+    );
     if (!thread) {
-      throw new NotFoundException(`thread_not_found:${objectType}:${actorExternalId}`);
+      throw new NotFoundException(
+        `thread_not_found:${objectType}:${actorExternalId}`,
+      );
     }
     return thread;
   }
@@ -523,7 +600,15 @@ export class ThreadService implements IThreadGateway {
     attentionMode?: string;
     threadStage?: string;
     stageControl?: Record<string, unknown>;
-  }): Promise<{ ok: boolean; threadStatus: string; attentionMode: string; threadStage: string; stageControl: Record<string, unknown> | null; sessionId: string; thread: ThreadRow | null }> {
+  }): Promise<{
+    ok: boolean;
+    threadStatus: string;
+    attentionMode: string;
+    threadStage: string;
+    stageControl: Record<string, unknown> | null;
+    sessionId: string;
+    thread: ThreadRow | null;
+  }> {
     const sessionId = await this.resolveSessionIdForAutomation(input);
     const result = await this.updateThreadControl(
       sessionId,
@@ -635,7 +720,9 @@ export class ThreadService implements IThreadGateway {
     return fallback[0] || null;
   }
 
-  async getThreadSnapshot(sessionId: string): Promise<ThreadControlSnapshot | null> {
+  async getThreadSnapshot(
+    sessionId: string,
+  ): Promise<ThreadControlSnapshot | null> {
     const cacheKey = `thread:snapshot:${sessionId}`;
     const cached = await this.cache.get<ThreadControlSnapshot>(cacheKey);
     if (cached) return cached;
@@ -660,24 +747,36 @@ export class ThreadService implements IThreadGateway {
       sessionId,
     );
     const snapshot = rows[0] || null;
-    if (snapshot) await this.cache.set(cacheKey, snapshot, CACHE_TTL_THREAD_SNAPSHOT);
+    if (snapshot)
+      await this.cache.set(cacheKey, snapshot, CACHE_TTL_THREAD_SNAPSHOT);
     return snapshot;
   }
 
-  async resolveSessionIdForAutomation(input: ThreadSelectorInput): Promise<string> {
+  async resolveSessionIdForAutomation(
+    input: ThreadSelectorInput,
+  ): Promise<string> {
     if (input.sessionId) {
       const exists = await this.getThreadIdentity(input.sessionId);
-      if (!exists) throw new NotFoundException(`session_not_found:${input.sessionId}`);
+      if (!exists)
+        throw new NotFoundException(`session_not_found:${input.sessionId}`);
       return input.sessionId;
     }
 
     if (!input.actorExternalId || !input.objectType) {
-      throw new BadRequestException('Debes enviar sessionId o actorExternalId + objectType');
+      throw new BadRequestException(
+        'Debes enviar sessionId o actorExternalId + objectType',
+      );
     }
 
-    const thread = await this.getPreferredThreadByActor(input.actorExternalId, input.objectType, true);
+    const thread = await this.getPreferredThreadByActor(
+      input.actorExternalId,
+      input.objectType,
+      true,
+    );
     if (!thread) {
-      throw new NotFoundException(`thread_not_found:${input.objectType}:${input.actorExternalId}`);
+      throw new NotFoundException(
+        `thread_not_found:${input.objectType}:${input.actorExternalId}`,
+      );
     }
 
     return thread.sessionId;
@@ -823,9 +922,13 @@ export class ThreadService implements IThreadGateway {
     return rows[0] || null;
   }
 
-  private omitEmptyFields<T extends Record<string, unknown>>(input: T): Partial<T> {
+  private omitEmptyFields<T extends Record<string, unknown>>(
+    input: T,
+  ): Partial<T> {
     return Object.fromEntries(
-      Object.entries(input).filter(([, value]) => value !== null && value !== undefined && value !== ''),
+      Object.entries(input).filter(
+        ([, value]) => value !== null && value !== undefined && value !== '',
+      ),
     ) as Partial<T>;
   }
 }

@@ -46,7 +46,10 @@ export class StageTemplatesController {
   }
 
   @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateStageTemplateDto) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateStageTemplateDto,
+  ) {
     return this.service.update(id, dto);
   }
 

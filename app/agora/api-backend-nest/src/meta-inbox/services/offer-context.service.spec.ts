@@ -1,6 +1,10 @@
 import { BadRequestException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { OfferContextService, OfferEventRow, OfferPlanRow } from './offer-context.service';
+import {
+  OfferContextService,
+  OfferEventRow,
+  OfferPlanRow,
+} from './offer-context.service';
 import { PrismaService } from '../../database/prisma/prisma.service';
 
 const PLAN_STUB: OfferPlanRow = {
@@ -47,7 +51,10 @@ function buildPrisma(overrides: Partial<{ queryRawUnsafe: jest.Mock }> = {}) {
 
 async function buildService(prisma: PrismaService) {
   const module = await Test.createTestingModule({
-    providers: [OfferContextService, { provide: PrismaService, useValue: prisma }],
+    providers: [
+      OfferContextService,
+      { provide: PrismaService, useValue: prisma },
+    ],
   }).compile();
   return module.get(OfferContextService);
 }
@@ -56,8 +63,9 @@ describe('OfferContextService', () => {
   describe('createOfferEventForAutomation', () => {
     it('inserta evento y retorna la fila', async () => {
       const prisma = buildPrisma({
-        queryRawUnsafe: jest.fn()
-          .mockResolvedValueOnce([PLAN_STUB])   // getOfferPlanByCode
+        queryRawUnsafe: jest
+          .fn()
+          .mockResolvedValueOnce([PLAN_STUB]) // getOfferPlanByCode
           .mockResolvedValueOnce([EVENT_STUB]), // INSERT RETURNING
       });
       const svc = await buildService(prisma);
@@ -83,14 +91,21 @@ describe('OfferContextService', () => {
       const svc = await buildService(prisma);
 
       await expect(
-        svc.createOfferEventForAutomation({ sessionId: 's', stageActual: 'x', tipo: 'portabilidad', codigo: 'BAD' }),
+        svc.createOfferEventForAutomation({
+          sessionId: 's',
+          stageActual: 'x',
+          tipo: 'portabilidad',
+          codigo: 'BAD',
+        }),
       ).rejects.toThrow(BadRequestException);
     });
   });
 
   describe('getOfferEventById', () => {
     it('retorna el evento cuando existe', async () => {
-      const prisma = buildPrisma({ queryRawUnsafe: jest.fn().mockResolvedValueOnce([EVENT_STUB]) });
+      const prisma = buildPrisma({
+        queryRawUnsafe: jest.fn().mockResolvedValueOnce([EVENT_STUB]),
+      });
       const svc = await buildService(prisma);
 
       const result = await svc.getOfferEventById('uuid-1');
@@ -99,26 +114,36 @@ describe('OfferContextService', () => {
     });
 
     it('lanza BadRequest si el evento no existe', async () => {
-      const prisma = buildPrisma({ queryRawUnsafe: jest.fn().mockResolvedValueOnce([]) });
+      const prisma = buildPrisma({
+        queryRawUnsafe: jest.fn().mockResolvedValueOnce([]),
+      });
       const svc = await buildService(prisma);
 
-      await expect(svc.getOfferEventById('no-existe')).rejects.toThrow(BadRequestException);
+      await expect(svc.getOfferEventById('no-existe')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
   describe('listOfferEvents', () => {
     it('retorna lista filtrada por sessionId', async () => {
       const events = [EVENT_STUB, { ...EVENT_STUB, id: 'uuid-2' }];
-      const prisma = buildPrisma({ queryRawUnsafe: jest.fn().mockResolvedValueOnce(events) });
+      const prisma = buildPrisma({
+        queryRawUnsafe: jest.fn().mockResolvedValueOnce(events),
+      });
       const svc = await buildService(prisma);
 
       const result = await svc.listOfferEvents({ sessionId: 'sess-1' });
       expect(result).toHaveLength(2);
-      expect((prisma.$queryRawUnsafe as jest.Mock).mock.calls[0]).toContain('sess-1');
+      expect((prisma.$queryRawUnsafe as jest.Mock).mock.calls[0]).toContain(
+        'sess-1',
+      );
     });
 
     it('pasa null para filtros omitidos', async () => {
-      const prisma = buildPrisma({ queryRawUnsafe: jest.fn().mockResolvedValueOnce([]) });
+      const prisma = buildPrisma({
+        queryRawUnsafe: jest.fn().mockResolvedValueOnce([]),
+      });
       const svc = await buildService(prisma);
 
       await svc.listOfferEvents({});

@@ -1,4 +1,13 @@
-import { IsEmail, IsInt, IsObject, IsOptional, IsString, MaxLength, Min, ValidateIf } from 'class-validator';
+import {
+  IsEmail,
+  IsInt,
+  IsObject,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+  ValidateIf,
+} from 'class-validator';
 
 export class ActualizarUsuarioDto {
   @IsOptional()
@@ -17,7 +26,7 @@ export class ActualizarUsuarioDto {
   run?: string;
 
   @IsOptional()
-  @ValidateIf(o => !!o.email)
+  @ValidateIf((o) => !!o.email)
   @IsEmail()
   @MaxLength(200)
   email?: string;

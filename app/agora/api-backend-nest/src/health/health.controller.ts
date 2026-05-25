@@ -7,7 +7,7 @@ export class HealthController {
 
   @Get()
   getPing(): string {
-   return 'pong\n';
+    return 'pong\n';
   }
 
   @Get('db')

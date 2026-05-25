@@ -57,7 +57,8 @@ export class StageTemplatesService {
        FROM stage_templates WHERE id = $1 LIMIT 1`,
       id,
     );
-    if (!rows[0]) throw new NotFoundException(`stage_template ${id} no encontrado`);
+    if (!rows[0])
+      throw new NotFoundException(`stage_template ${id} no encontrado`);
     return rows[0];
   }
 
@@ -89,7 +90,10 @@ export class StageTemplatesService {
     return rows[0];
   }
 
-  async update(id: number, dto: UpdateStageTemplateDto): Promise<StageTemplateRow> {
+  async update(
+    id: number,
+    dto: UpdateStageTemplateDto,
+  ): Promise<StageTemplateRow> {
     await this.findOne(id);
 
     const sets: string[] = [];
@@ -97,9 +101,20 @@ export class StageTemplatesService {
     let idx = 1;
 
     const fields: Array<keyof UpdateStageTemplateDto> = [
-      'stage_actual', 'posicion', 'posibles_match', 'es_fallback', 'procesa_datos',
-      'dato_esperado', 'nuevo_stage', 'tipo_respuesta', 'activo', 'stage_route',
-      'modo_default', 'factible', 'decision', 'accion',
+      'stage_actual',
+      'posicion',
+      'posibles_match',
+      'es_fallback',
+      'procesa_datos',
+      'dato_esperado',
+      'nuevo_stage',
+      'tipo_respuesta',
+      'activo',
+      'stage_route',
+      'modo_default',
+      'factible',
+      'decision',
+      'accion',
     ];
 
     for (const field of fields) {
@@ -128,7 +143,10 @@ export class StageTemplatesService {
 
   async remove(id: number): Promise<{ ok: boolean; id: number }> {
     await this.findOne(id);
-    await this.prisma.$executeRawUnsafe(`DELETE FROM stage_templates WHERE id = $1`, id);
+    await this.prisma.$executeRawUnsafe(
+      `DELETE FROM stage_templates WHERE id = $1`,
+      id,
+    );
     return { ok: true, id };
   }
 }

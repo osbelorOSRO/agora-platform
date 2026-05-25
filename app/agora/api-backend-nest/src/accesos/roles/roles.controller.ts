@@ -1,4 +1,14 @@
-import { Body, Controller, Get, HttpCode, Param, ParseIntPipe, Post, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  ParseIntPipe,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { Request as Req } from '@nestjs/common';
 import type { Request } from 'express';
 import { RolesService } from './roles.service';
@@ -26,11 +36,24 @@ export class RolesController {
   @Post()
   @HttpCode(201)
   crearRol(@Body() body: CreateRolDto, @Req() req: Request) {
-    return this.service.crearRol(body.nombre, body.permisos, req.userPayload?.id);
+    return this.service.crearRol(
+      body.nombre,
+      body.permisos,
+      req.userPayload?.id,
+    );
   }
 
   @Put(':id')
-  actualizarRol(@Param('id', ParseIntPipe) id: number, @Body() body: CreateRolDto, @Req() req: Request) {
-    return this.service.actualizarRol(id, body.nombre, body.permisos, req.userPayload?.id);
+  actualizarRol(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: CreateRolDto,
+    @Req() req: Request,
+  ) {
+    return this.service.actualizarRol(
+      id,
+      body.nombre,
+      body.permisos,
+      req.userPayload?.id,
+    );
   }
 }

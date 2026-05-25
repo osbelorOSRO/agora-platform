@@ -35,8 +35,15 @@ type ThreadDelegationRow = {
 
 @Injectable()
 export class DelegationGateService {
-  static readonly DELEGATION_BLOCKING_ATTENTION_MODES = new Set(['HUMAN', 'SYSTEM', 'PAUSED']);
-  static readonly DELEGATION_BLOCKING_THREAD_STATUSES = new Set(['PAUSED', 'CLOSED']);
+  static readonly DELEGATION_BLOCKING_ATTENTION_MODES = new Set([
+    'HUMAN',
+    'SYSTEM',
+    'PAUSED',
+  ]);
+  static readonly DELEGATION_BLOCKING_THREAD_STATUSES = new Set([
+    'PAUSED',
+    'CLOSED',
+  ]);
 
   constructor(private readonly normalizer: MessageNormalizerService) {}
 
@@ -57,12 +64,16 @@ export class DelegationGateService {
     direction: 'INCOMING' | 'OUTGOING' | 'SYSTEM',
   ): boolean {
     const normalizedProvider = String(provider || 'META').toUpperCase();
-    if (normalizedProvider !== 'META' && normalizedProvider !== 'BAILEYS') return false;
+    if (normalizedProvider !== 'META' && normalizedProvider !== 'BAILEYS')
+      return false;
     const eventKind = String(eventType || '').replace(/^messaging\./, '');
     return eventKind === 'message' && direction === 'INCOMING';
   }
 
-  async getLatestLifecycleState(tx: Prisma.TransactionClient, actorExternalId: string): Promise<LifecycleState> {
+  async getLatestLifecycleState(
+    tx: Prisma.TransactionClient,
+    actorExternalId: string,
+  ): Promise<LifecycleState> {
     const row = await tx.actor_lifecycle.findFirst({
       where: { actor_external_id: actorExternalId },
       orderBy: { occurred_at: 'desc' },
@@ -79,28 +90,77 @@ export class DelegationGateService {
     const row = await tx.threads.findFirst({
       where: { actor_external_id: actorExternalId, object_type: objectType },
       orderBy: { updated_at: 'desc' },
-      select: { session_id: true, thread_status: true, attention_mode: true, thread_stage: true, awaiting_first_incoming_delegate: true },
+      select: {
+        session_id: true,
+        thread_status: true,
+        attention_mode: true,
+        thread_stage: true,
+        awaiting_first_incoming_delegate: true,
+      },
     });
 
     const sessionId = row?.session_id ?? null;
     const threadStatus = row?.thread_status ?? null;
     const attentionMode = row?.attention_mode ?? null;
     const threadStage = row?.thread_stage ?? null;
-    const awaitingFirstIncomingDelegate = row?.awaiting_first_incoming_delegate === true;
+    const awaitingFirstIncomingDelegate =
+      row?.awaiting_first_incoming_delegate === true;
 
     if (awaitingFirstIncomingDelegate) {
-      return { blocked: true, reason: 'awaiting_first_incoming_delegate', sessionId, threadStatus, attentionMode, threadStage, awaitingFirstIncomingDelegate };
+      return {
+        blocked: true,
+        reason: 'awaiting_first_incoming_delegate',
+        sessionId,
+        threadStatus,
+        attentionMode,
+        threadStage,
+        awaitingFirstIncomingDelegate,
+      };
     }
 
-    if (threadStatus && DelegationGateService.DELEGATION_BLOCKING_THREAD_STATUSES.has(threadStatus)) {
-      return { blocked: true, reason: `thread_status_${threadStatus.toLowerCase()}`, sessionId, threadStatus, attentionMode, threadStage, awaitingFirstIncomingDelegate };
+    if (
+      threadStatus &&
+      DelegationGateService.DELEGATION_BLOCKING_THREAD_STATUSES.has(
+        threadStatus,
+      )
+    ) {
+      return {
+        blocked: true,
+        reason: `thread_status_${threadStatus.toLowerCase()}`,
+        sessionId,
+        threadStatus,
+        attentionMode,
+        threadStage,
+        awaitingFirstIncomingDelegate,
+      };
     }
 
-    if (attentionMode && DelegationGateService.DELEGATION_BLOCKING_ATTENTION_MODES.has(attentionMode)) {
-      return { blocked: true, reason: `attention_mode_${attentionMode.toLowerCase()}`, sessionId, threadStatus, attentionMode, threadStage, awaitingFirstIncomingDelegate };
+    if (
+      attentionMode &&
+      DelegationGateService.DELEGATION_BLOCKING_ATTENTION_MODES.has(
+        attentionMode,
+      )
+    ) {
+      return {
+        blocked: true,
+        reason: `attention_mode_${attentionMode.toLowerCase()}`,
+        sessionId,
+        threadStatus,
+        attentionMode,
+        threadStage,
+        awaitingFirstIncomingDelegate,
+      };
     }
 
-    return { blocked: false, reason: null, sessionId, threadStatus, attentionMode, threadStage, awaitingFirstIncomingDelegate };
+    return {
+      blocked: false,
+      reason: null,
+      sessionId,
+      threadStatus,
+      attentionMode,
+      threadStage,
+      awaitingFirstIncomingDelegate,
+    };
   }
 
   async clearAwaitingFirstIncomingDelegate(
@@ -124,15 +184,30 @@ export class DelegationGateService {
     },
   ): Promise<Record<string, unknown>> {
     const payload = (env?.['payload'] as Record<string, unknown>) || {};
-    const eventKind = String(env?.['eventType'] || '').replace(/^messaging\./, '') || 'unknown';
+    const eventKind =
+      String(env?.['eventType'] || '').replace(/^messaging\./, '') || 'unknown';
     const direction = this.normalizer.resolveDirection(payload, eventKind);
     const media = this.normalizer.extractIncomingMedia(payload);
-    const contentText = this.normalizer.resolveVisibleContentText(payload, eventKind, media);
-    const mediaCaption = this.normalizer.resolveIncomingMediaCaption(payload, media, contentText);
-    const sourceChannel = this.normalizer.resolveSourceChannel(payload, eventKind);
+    const contentText = this.normalizer.resolveVisibleContentText(
+      payload,
+      eventKind,
+      media,
+    );
+    const mediaCaption = this.normalizer.resolveIncomingMediaCaption(
+      payload,
+      media,
+      contentText,
+    );
+    const sourceChannel = this.normalizer.resolveSourceChannel(
+      payload,
+      eventKind,
+    );
     const messageType = this.normalizer.resolveMessageType(eventKind, media);
     const senderType = this.normalizer.resolveSenderType(direction);
-    const structuredPayload = this.normalizer.resolveStructuredPayload(payload, eventKind);
+    const structuredPayload = this.normalizer.resolveStructuredPayload(
+      payload,
+      eventKind,
+    );
     const sessionId = String(delegationControl.sessionId || '');
 
     // raw: LATERAL JOIN para actor_lifecycle más reciente + actor_score en un solo query
@@ -188,21 +263,33 @@ export class DelegationGateService {
       threadStage: delegationControl.threadStage,
       payload,
       thread: thread
-        ? { ...thread, actorLifecycleUpdatedAt: thread.actorLifecycleUpdatedAt?.toISOString?.() || null }
+        ? {
+            ...thread,
+            actorLifecycleUpdatedAt:
+              thread.actorLifecycleUpdatedAt?.toISOString?.() || null,
+          }
         : null,
       contact: thread
-        ? { displayName: thread.displayName, phone: thread.phone, email: thread.email, city: thread.city, notes: thread.notes }
+        ? {
+            displayName: thread.displayName,
+            phone: thread.phone,
+            email: thread.email,
+            city: thread.city,
+            notes: thread.notes,
+          }
         : null,
       actor: {
         actorExternalId: env['actorExternalId'],
         objectType: env['objectType'],
         score: thread?.actorScore ?? null,
         lifecycleState: thread?.actorLifecycleState ?? null,
-        lifecycleUpdatedAt: thread?.actorLifecycleUpdatedAt?.toISOString?.() || null,
+        lifecycleUpdatedAt:
+          thread?.actorLifecycleUpdatedAt?.toISOString?.() || null,
       },
       message: {
         externalEventId: env['externalEventId'],
-        messageExternalId: (payload?.['message'] as Record<string, unknown>)?.['mid'] || null,
+        messageExternalId:
+          (payload?.['message'] as Record<string, unknown>)?.['mid'] || null,
         eventKind,
         direction,
         senderType,
@@ -210,7 +297,13 @@ export class DelegationGateService {
         sourceChannel,
         contentText,
         structuredPayload,
-        media: media ? { mediaType: media.mediaType, mediaUrl: media.mediaUrl, caption: mediaCaption } : null,
+        media: media
+          ? {
+              mediaType: media.mediaType,
+              mediaUrl: media.mediaUrl,
+              caption: mediaCaption,
+            }
+          : null,
       },
     };
   }

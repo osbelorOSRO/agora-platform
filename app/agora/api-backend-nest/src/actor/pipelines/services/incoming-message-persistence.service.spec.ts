@@ -2,7 +2,7 @@ import { Test } from '@nestjs/testing';
 import { IncomingMessagePersistenceService } from './incoming-message-persistence.service';
 import { PrismaService } from '../../../database/prisma/prisma.service';
 import { WEBSOCKET_NOTIFIER_GATEWAY } from '../../../websocket-notifier/interfaces/websocket-notifier-gateway.interface';
-import { MetaInboxService } from '../../../meta-inbox/meta-inbox.service';
+import { META_INBOX_GATEWAY } from '../../../meta-inbox/interfaces/meta-inbox-gateway.interface';
 import { ConversationBootstrapService } from '../../bootstrap/conversation-bootstrap.service';
 import { MessageNormalizerService } from './message-normalizer.service';
 import { IncomingMessageEnvelope } from '../incoming-message-envelope';
@@ -18,7 +18,10 @@ const BASE_ENV: IncomingMessageEnvelope = {
   payload: { message: { mid: 'mid-001', text: 'Hola' } },
 };
 
-const OPEN_THREAD = { session_id: 'META:PAGE:56912345678', thread_status: 'OPEN' };
+const OPEN_THREAD = {
+  session_id: 'META:PAGE:56912345678',
+  thread_status: 'OPEN',
+};
 
 type PrismaMock = ReturnType<typeof buildPrisma>;
 
@@ -36,7 +39,9 @@ function buildPrisma(): {
     thread_messages: {
       findFirst: jest.fn().mockResolvedValue(null),
     },
-    $queryRawUnsafe: jest.fn().mockResolvedValue([{ externalEventId: BASE_ENV.externalEventId }]),
+    $queryRawUnsafe: jest
+      .fn()
+      .mockResolvedValue([{ externalEventId: BASE_ENV.externalEventId }]),
     $executeRawUnsafe: jest.fn().mockResolvedValue(undefined),
   };
 }
@@ -58,15 +63,22 @@ function buildNormalizer(overrides?: Partial<Record<string, jest.Mock>>) {
   };
 }
 
-async function buildService(prisma: PrismaMock, normalizerOverrides?: Partial<Record<string, jest.Mock>>) {
+async function buildService(
+  prisma: PrismaMock,
+  normalizerOverrides?: Partial<Record<string, jest.Mock>>,
+) {
   const websocketNotifier = {
     notificarMetaInboxMessageNew: jest.fn().mockResolvedValue(undefined),
     notificarMetaInboxThreadUpsert: jest.fn().mockResolvedValue(undefined),
     notificarGlobito: jest.fn().mockResolvedValue(undefined),
   };
-  const metaInbox = { recordThreadEvent: jest.fn().mockResolvedValue(undefined) };
+  const metaInbox = {
+    recordThreadEvent: jest.fn().mockResolvedValue(undefined),
+  };
   const conversationBootstrap = {
-    decideForFirstIncoming: jest.fn().mockReturnValue({ shouldWelcome: false, reason: 'no_config' }),
+    decideForFirstIncoming: jest
+      .fn()
+      .mockReturnValue({ shouldWelcome: false, reason: 'no_config' }),
   };
 
   const module = await Test.createTestingModule({
@@ -74,9 +86,15 @@ async function buildService(prisma: PrismaMock, normalizerOverrides?: Partial<Re
       IncomingMessagePersistenceService,
       { provide: PrismaService, useValue: prisma },
       { provide: WEBSOCKET_NOTIFIER_GATEWAY, useValue: websocketNotifier },
-      { provide: MetaInboxService, useValue: metaInbox },
-      { provide: ConversationBootstrapService, useValue: conversationBootstrap },
-      { provide: MessageNormalizerService, useValue: buildNormalizer(normalizerOverrides) },
+      { provide: META_INBOX_GATEWAY, useValue: metaInbox },
+      {
+        provide: ConversationBootstrapService,
+        useValue: conversationBootstrap,
+      },
+      {
+        provide: MessageNormalizerService,
+        useValue: buildNormalizer(normalizerOverrides),
+      },
     ],
   }).compile();
 
@@ -96,25 +114,33 @@ describe('IncomingMessagePersistenceService', () => {
       const prisma = buildPrisma();
       prisma.$queryRawUnsafe.mockResolvedValue([]); // RETURNING vacío = conflicto
 
-      const { service, websocketNotifier, metaInbox } = await buildService(prisma);
+      const { service, websocketNotifier, metaInbox } =
+        await buildService(prisma);
 
       const result = await service.persistMessageSession(BASE_ENV);
 
       expect(result).toEqual({ inserted: false, primedFirstDelegate: false });
-      expect(websocketNotifier.notificarMetaInboxMessageNew).not.toHaveBeenCalled();
+      expect(
+        websocketNotifier.notificarMetaInboxMessageNew,
+      ).not.toHaveBeenCalled();
       expect(metaInbox.recordThreadEvent).not.toHaveBeenCalled();
     });
 
     it('retorna inserted:true y notifica cuando el evento es nuevo (thread existente)', async () => {
       const prisma = buildPrisma(); // $queryRawUnsafe ya devuelve [{ externalEventId }] por defecto
 
-      const { service, websocketNotifier, metaInbox } = await buildService(prisma);
+      const { service, websocketNotifier, metaInbox } =
+        await buildService(prisma);
 
       const result = await service.persistMessageSession(BASE_ENV);
 
       expect(result).toEqual({ inserted: true, primedFirstDelegate: false });
-      expect(websocketNotifier.notificarMetaInboxMessageNew).toHaveBeenCalledTimes(1);
-      expect(websocketNotifier.notificarMetaInboxThreadUpsert).toHaveBeenCalledTimes(1);
+      expect(
+        websocketNotifier.notificarMetaInboxMessageNew,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        websocketNotifier.notificarMetaInboxThreadUpsert,
+      ).toHaveBeenCalledTimes(1);
       expect(metaInbox.recordThreadEvent).toHaveBeenCalledTimes(1);
     });
 
@@ -158,7 +184,9 @@ describe('IncomingMessagePersistenceService', () => {
       await service.handlePageEcho(env);
 
       expect(prisma.threads.findFirst).not.toHaveBeenCalled();
-      expect(websocketNotifier.notificarMetaInboxMessageNew).not.toHaveBeenCalled();
+      expect(
+        websocketNotifier.notificarMetaInboxMessageNew,
+      ).not.toHaveBeenCalled();
     });
 
     it('retorna sin notificar cuando no existe thread para el recipient', async () => {
@@ -173,25 +201,38 @@ describe('IncomingMessagePersistenceService', () => {
 
       await service.handlePageEcho(env);
 
-      expect(websocketNotifier.notificarMetaInboxMessageNew).not.toHaveBeenCalled();
+      expect(
+        websocketNotifier.notificarMetaInboxMessageNew,
+      ).not.toHaveBeenCalled();
     });
 
     it('inserta echo y notifica cuando existe thread para el recipient', async () => {
       const prisma = buildPrisma();
-      prisma.threads.findFirst.mockResolvedValue({ session_id: 'META:PAGE:56900000000' });
-      prisma.$queryRawUnsafe.mockResolvedValue([]);
+      prisma.threads.findFirst.mockResolvedValue({
+        session_id: 'META:PAGE:56900000000',
+      });
+      prisma.$queryRawUnsafe.mockResolvedValue([
+        { externalEventId: 'evt-echo-001' },
+      ]);
 
       const { service, websocketNotifier } = await buildService(prisma);
       const env: IncomingMessageEnvelope = {
         ...BASE_ENV,
-        payload: { recipientId: '56900000000', message: { mid: 'mid-echo-001', text: 'Echo' } },
+        payload: {
+          recipientId: '56900000000',
+          message: { mid: 'mid-echo-001', text: 'Echo' },
+        },
       };
 
       await service.handlePageEcho(env);
 
       expect(prisma.$queryRawUnsafe).toHaveBeenCalled();
-      expect(websocketNotifier.notificarMetaInboxMessageNew).toHaveBeenCalledTimes(1);
-      expect(websocketNotifier.notificarMetaInboxThreadUpsert).toHaveBeenCalledTimes(1);
+      expect(
+        websocketNotifier.notificarMetaInboxMessageNew,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        websocketNotifier.notificarMetaInboxThreadUpsert,
+      ).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../database/prisma/prisma.service';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { UpdateOfferDto } from './dto/update-offer.dto';
@@ -43,7 +47,8 @@ export class OffersService {
        FROM precios_planes WHERE codigo = $1 LIMIT 1`,
       codigo,
     );
-    if (!rows[0]) throw new NotFoundException(`Oferta "${codigo}" no encontrada`);
+    if (!rows[0])
+      throw new NotFoundException(`Oferta "${codigo}" no encontrada`);
     return rows[0];
   }
 
@@ -52,7 +57,8 @@ export class OffersService {
       `SELECT codigo FROM precios_planes WHERE codigo = $1 LIMIT 1`,
       dto.codigo,
     );
-    if (existing[0]) throw new ConflictException(`El código "${dto.codigo}" ya existe`);
+    if (existing[0])
+      throw new ConflictException(`El código "${dto.codigo}" ya existe`);
 
     const rows = await this.prisma.$queryRawUnsafe<OfferRow[]>(
       `INSERT INTO precios_planes
@@ -90,9 +96,20 @@ export class OffersService {
     let idx = 1;
 
     const fields: Array<keyof UpdateOfferDto> = [
-      'nombre', 'precio_base', 'tipo', 'descripcion', 'lineas',
-      'excluye_alta', 'excluye_portabilidad_postpago', 'url_archivo', 'precio_normal',
-      'duracion_precio', 'gigas', 'minutos', 'tiene_redes_libres', 'roaming',
+      'nombre',
+      'precio_base',
+      'tipo',
+      'descripcion',
+      'lineas',
+      'excluye_alta',
+      'excluye_portabilidad_postpago',
+      'url_archivo',
+      'precio_normal',
+      'duracion_precio',
+      'gigas',
+      'minutos',
+      'tiene_redes_libres',
+      'roaming',
     ];
 
     for (const field of fields) {
@@ -119,7 +136,10 @@ export class OffersService {
 
   async remove(codigo: string): Promise<{ ok: boolean; codigo: string }> {
     await this.findOne(codigo);
-    await this.prisma.$executeRawUnsafe(`DELETE FROM precios_planes WHERE codigo = $1`, codigo);
+    await this.prisma.$executeRawUnsafe(
+      `DELETE FROM precios_planes WHERE codigo = $1`,
+      codigo,
+    );
     return { ok: true, codigo };
   }
 }

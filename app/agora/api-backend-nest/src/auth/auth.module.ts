@@ -18,6 +18,12 @@ import { CacheConfigModule } from '../cache/cache.module';
     PanelJwtAuthGuard,
     SuperadminJwtGuard,
   ],
-  exports: [AuthService, VaultService, VAULT_GATEWAY, PanelJwtAuthGuard, SuperadminJwtGuard],
+  exports: [
+    AuthService,
+    VaultService,
+    VAULT_GATEWAY,
+    PanelJwtAuthGuard,
+    SuperadminJwtGuard,
+  ],
 })
 export class AuthModule {}

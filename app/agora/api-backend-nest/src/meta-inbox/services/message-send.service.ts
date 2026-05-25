@@ -1,11 +1,34 @@
-import { BadRequestException, Inject, Injectable, Logger, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { PrismaService } from '../../database/prisma/prisma.service';
-import { IWebsocketNotifierGateway, WEBSOCKET_NOTIFIER_GATEWAY } from '../../websocket-notifier/interfaces/websocket-notifier-gateway.interface';
-import { IMessageGateway, MESSAGE_GATEWAY } from '../../baileys/interfaces/message-gateway.interface';
+import {
+  IWebsocketNotifierGateway,
+  WEBSOCKET_NOTIFIER_GATEWAY,
+} from '../../websocket-notifier/interfaces/websocket-notifier-gateway.interface';
+import {
+  IMessageGateway,
+  MESSAGE_GATEWAY,
+} from '../../baileys/interfaces/message-gateway.interface';
 import { assertTrustedMediaUrl } from '../../media/media-security';
-import { IThreadGateway, THREAD_GATEWAY, ThreadIdentity, ThreadRow, ThreadSelectorInput } from '../interfaces/thread-gateway.interface';
+import {
+  IThreadGateway,
+  THREAD_GATEWAY,
+  ThreadIdentity,
+  ThreadRow,
+  ThreadSelectorInput,
+} from '../interfaces/thread-gateway.interface';
 import { ThreadEventService } from './thread-event.service';
-import { IMetaGraphApiGateway, META_GRAPH_GATEWAY, ThreadMessageMediaType } from '../interfaces/meta-graph-api-gateway.interface';
+import {
+  IMetaGraphApiGateway,
+  META_GRAPH_GATEWAY,
+  ThreadMessageMediaType,
+} from '../interfaces/meta-graph-api-gateway.interface';
 import { MediaSendService } from './media-send.service';
 
 type ThreadMessageSenderType = 'HUMAN' | 'N8N' | 'SYSTEM';
@@ -17,19 +40,37 @@ export class MessageSendService {
 
   constructor(
     private readonly prisma: PrismaService,
-    @Inject(WEBSOCKET_NOTIFIER_GATEWAY) private readonly websocketNotifier: IWebsocketNotifierGateway,
+    @Inject(WEBSOCKET_NOTIFIER_GATEWAY)
+    private readonly websocketNotifier: IWebsocketNotifierGateway,
     @Inject(MESSAGE_GATEWAY) private readonly baileysSender: IMessageGateway,
     @Inject(THREAD_GATEWAY) private readonly thread: IThreadGateway,
     private readonly threadEvent: ThreadEventService,
-    @Inject(META_GRAPH_GATEWAY) private readonly metaGraph: IMetaGraphApiGateway,
+    @Inject(META_GRAPH_GATEWAY)
+    private readonly metaGraph: IMetaGraphApiGateway,
     private readonly mediaSend: MediaSendService,
   ) {}
 
-  async sendText(sessionId: string, text: string): Promise<{ ok: boolean; externalEventId: string; messageExternalId: string | null; occurredAt: string; inReplyToExternalEventId: string | null }> {
+  async sendText(
+    sessionId: string,
+    text: string,
+  ): Promise<{
+    ok: boolean;
+    externalEventId: string;
+    messageExternalId: string | null;
+    occurredAt: string;
+    inReplyToExternalEventId: string | null;
+  }> {
     return this.sendTextInternal(sessionId, text, 'HUMAN');
   }
 
-  async sendSystemText(input: ThreadSelectorInput & { text: string }): Promise<{ ok: boolean; externalEventId: string; messageExternalId: string | null; occurredAt: string; inReplyToExternalEventId: string | null; thread: ThreadRow | null }> {
+  async sendSystemText(input: ThreadSelectorInput & { text: string }): Promise<{
+    ok: boolean;
+    externalEventId: string;
+    messageExternalId: string | null;
+    occurredAt: string;
+    inReplyToExternalEventId: string | null;
+    thread: ThreadRow | null;
+  }> {
     const sessionId = await this.thread.resolveSessionIdForAutomation(input);
     const result = await this.sendTextInternal(sessionId, input.text, 'SYSTEM');
     const threadRow = await this.thread.getThreadRow(sessionId);
@@ -55,7 +96,8 @@ export class MessageSendService {
     const mediaType = input.mediaType;
 
     if (!mediaUrl) {
-      if (!text) throw new BadRequestException('invalid_thread_message_payload');
+      if (!text)
+        throw new BadRequestException('invalid_thread_message_payload');
       const result = await this.sendTextInternal(sessionId, text, senderType);
       const threadRow = await this.thread.getThreadRow(sessionId);
       return { ...result, thread: threadRow };
@@ -64,11 +106,17 @@ export class MessageSendService {
     if (!mediaType) throw new BadRequestException('media_type_required');
 
     const trustedMediaUrl = assertTrustedMediaUrl(mediaUrl);
-    const result = await this.sendMediaByUrlInternal(sessionId, trustedMediaUrl, mediaType, senderType, {
-      caption: caption || text || undefined,
-      mimeType: input.mimeType,
-      fileName: input.fileName,
-    });
+    const result = await this.sendMediaByUrlInternal(
+      sessionId,
+      trustedMediaUrl,
+      mediaType,
+      senderType,
+      {
+        caption: caption || text || undefined,
+        mimeType: input.mimeType,
+        fileName: input.fileName,
+      },
+    );
     const threadRow = await this.thread.getThreadRow(sessionId);
     return { ...result, thread: threadRow };
   }
@@ -79,32 +127,58 @@ export class MessageSendService {
     caption?: string,
   ): Promise<Record<string, unknown>> {
     const prepared = await this.mediaSend.prepareMediaUpload(file, sessionId);
-    return this.sendMediaByUrlInternal(sessionId, prepared.url, prepared.mediaType, 'HUMAN', {
-      mimeType: prepared.mimeType,
-      fileName: prepared.fileName,
-      caption,
-    });
+    return this.sendMediaByUrlInternal(
+      sessionId,
+      prepared.url,
+      prepared.mediaType,
+      'HUMAN',
+      {
+        mimeType: prepared.mimeType,
+        fileName: prepared.fileName,
+        caption,
+      },
+    );
   }
 
   private async sendTextInternal(
     sessionId: string,
     text: string,
     senderType: ThreadMessageSenderType,
-  ): Promise<{ ok: boolean; externalEventId: string; messageExternalId: string | null; occurredAt: string; inReplyToExternalEventId: string | null }> {
+  ): Promise<{
+    ok: boolean;
+    externalEventId: string;
+    messageExternalId: string | null;
+    occurredAt: string;
+    inReplyToExternalEventId: string | null;
+  }> {
     const threadIdentity = await this.thread.getThreadIdentity(sessionId);
-    if (!threadIdentity) throw new NotFoundException(`session_not_found:${sessionId}`);
+    if (!threadIdentity)
+      throw new NotFoundException(`session_not_found:${sessionId}`);
 
     if (this.isWhatsAppThread(threadIdentity.objectType)) {
-      const inReplyToExternalEventId = await this.getLastIncomingExternalEventId(sessionId);
-      return this.sendTextViaBaileys(sessionId, threadIdentity, text, senderType, inReplyToExternalEventId);
+      const inReplyToExternalEventId =
+        await this.getLastIncomingExternalEventId(sessionId);
+      return this.sendTextViaBaileys(
+        sessionId,
+        threadIdentity,
+        text,
+        senderType,
+        inReplyToExternalEventId,
+      );
     }
 
-    const inReplyToExternalEventId = await this.getLastIncomingExternalEventId(sessionId);
+    const inReplyToExternalEventId =
+      await this.getLastIncomingExternalEventId(sessionId);
     if (!inReplyToExternalEventId) {
-      throw new UnprocessableEntityException(`missing_conversation_context:${sessionId}`);
+      throw new UnprocessableEntityException(
+        `missing_conversation_context:${sessionId}`,
+      );
     }
 
-    const transport = await this.metaGraph.resolveSendTransport(threadIdentity.objectType, threadIdentity.sourceChannel);
+    const transport = await this.metaGraph.resolveSendTransport(
+      threadIdentity.objectType,
+      threadIdentity.sourceChannel,
+    );
     const response = await this.metaGraph.postToGraphWithFallback(
       threadIdentity,
       { recipient: { id: threadIdentity.actorExternalId }, message: { text } },
@@ -112,7 +186,9 @@ export class MessageSendService {
     );
 
     const messageExternalId = response?.data?.message_id || null;
-    const externalEventId = messageExternalId || `out_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
+    const externalEventId =
+      messageExternalId ||
+      `out_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
     const occurredAt = new Date();
     const contentJson = {
       senderType,
@@ -133,9 +209,16 @@ export class MessageSendService {
         $7, $8::jsonb, $9, 'sent', $10, now(), now(), now()
       )
       ON CONFLICT (external_event_id) DO NOTHING`,
-      sessionId, externalEventId, messageExternalId, threadIdentity.actorExternalId,
-      threadIdentity.objectType, threadIdentity.sourceChannel,
-      text, JSON.stringify(contentJson), inReplyToExternalEventId, occurredAt,
+      sessionId,
+      externalEventId,
+      messageExternalId,
+      threadIdentity.actorExternalId,
+      threadIdentity.objectType,
+      threadIdentity.sourceChannel,
+      text,
+      JSON.stringify(contentJson),
+      inReplyToExternalEventId,
+      occurredAt,
     );
 
     await this.thread.upsertThreadRecord({
@@ -161,7 +244,11 @@ export class MessageSendService {
       direction: 'OUTGOING',
       provider: 'META',
       sourceChannel: threadIdentity.sourceChannel,
-      metadata: { messageType: 'text', status: 'sent', inReplyToExternalEventId },
+      metadata: {
+        messageType: 'text',
+        status: 'sent',
+        inReplyToExternalEventId,
+      },
       occurredAt,
       dedupeKey: `MESSAGE_OUTGOING:${externalEventId}`,
     });
@@ -184,10 +271,17 @@ export class MessageSendService {
       inReplyToExternalEventId,
     });
 
-    const snapshot = snapshotForEvent || (await this.thread.getThreadSnapshot(sessionId));
+    const snapshot =
+      snapshotForEvent || (await this.thread.getThreadSnapshot(sessionId));
     if (snapshot) await this.thread.notifyThreadUpsert(snapshot);
 
-    return { ok: true, externalEventId, messageExternalId, occurredAt: occurredAt.toISOString(), inReplyToExternalEventId };
+    return {
+      ok: true,
+      externalEventId,
+      messageExternalId,
+      occurredAt: occurredAt.toISOString(),
+      inReplyToExternalEventId,
+    };
   }
 
   private async sendMediaByUrlInternal(
@@ -198,34 +292,59 @@ export class MessageSendService {
     extra?: { mimeType?: string; fileName?: string; caption?: string },
   ): Promise<Record<string, unknown>> {
     const threadIdentity = await this.thread.getThreadIdentity(sessionId);
-    if (!threadIdentity) throw new NotFoundException(`session_not_found:${sessionId}`);
+    if (!threadIdentity)
+      throw new NotFoundException(`session_not_found:${sessionId}`);
 
     if (this.isWhatsAppThread(threadIdentity.objectType)) {
-      const inReplyToExternalEventId = await this.getLastIncomingExternalEventId(sessionId);
-      return this.sendMediaByUrlViaBaileys(sessionId, threadIdentity, mediaUrl, mediaType, senderType, inReplyToExternalEventId, extra);
+      const inReplyToExternalEventId =
+        await this.getLastIncomingExternalEventId(sessionId);
+      return this.sendMediaByUrlViaBaileys(
+        sessionId,
+        threadIdentity,
+        mediaUrl,
+        mediaType,
+        senderType,
+        inReplyToExternalEventId,
+        extra,
+      );
     }
 
-    const inReplyToExternalEventId = await this.getLastIncomingExternalEventId(sessionId);
-    if (!inReplyToExternalEventId) throw new Error(`missing_conversation_context:${sessionId}`);
+    const inReplyToExternalEventId =
+      await this.getLastIncomingExternalEventId(sessionId);
+    if (!inReplyToExternalEventId)
+      throw new Error(`missing_conversation_context:${sessionId}`);
     if (extra?.caption) {
       throw new BadRequestException(
         `caption_not_supported_for_meta:${mediaType}. Meta Graph no permite enviar texto y adjunto en una sola burbuja para este canal.`,
       );
     }
 
-    const transport = await this.metaGraph.resolveSendTransport(threadIdentity.objectType, threadIdentity.sourceChannel);
-    const graphAttachmentType = this.metaGraph.resolveGraphAttachmentType(mediaType, threadIdentity);
+    const transport = await this.metaGraph.resolveSendTransport(
+      threadIdentity.objectType,
+      threadIdentity.sourceChannel,
+    );
+    const graphAttachmentType = this.metaGraph.resolveGraphAttachmentType(
+      mediaType,
+      threadIdentity,
+    );
     const response = await this.metaGraph.postToGraphWithFallback(
       threadIdentity,
       {
         recipient: { id: threadIdentity.actorExternalId },
-        message: { attachment: { type: graphAttachmentType, payload: { url: mediaUrl, is_reusable: true } } },
+        message: {
+          attachment: {
+            type: graphAttachmentType,
+            payload: { url: mediaUrl, is_reusable: true },
+          },
+        },
       },
       transport,
     );
 
     const messageExternalId = response?.data?.message_id || null;
-    const externalEventId = messageExternalId || `out_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
+    const externalEventId =
+      messageExternalId ||
+      `out_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
     const occurredAt = new Date();
     const placeholderText = this.resolveMediaPlaceholder(mediaType);
     const contentJson = {
@@ -257,7 +376,15 @@ export class MessageSendService {
       messageType: mediaType,
     });
 
-    return { ok: true, externalEventId, messageExternalId, occurredAt: occurredAt.toISOString(), inReplyToExternalEventId, mediaType, mediaUrl };
+    return {
+      ok: true,
+      externalEventId,
+      messageExternalId,
+      occurredAt: occurredAt.toISOString(),
+      inReplyToExternalEventId,
+      mediaType,
+      mediaUrl,
+    };
   }
 
   private async sendTextViaBaileys(
@@ -266,10 +393,23 @@ export class MessageSendService {
     text: string,
     senderType: ThreadMessageSenderType,
     inReplyToExternalEventId: string | null,
-  ): Promise<{ ok: boolean; externalEventId: string; messageExternalId: string | null; occurredAt: string; inReplyToExternalEventId: string | null; provider: string }> {
-    const response = await this.baileysSender.enviarMensajeWhatsApp(threadIdentity.actorExternalId, 'text', text);
+  ): Promise<{
+    ok: boolean;
+    externalEventId: string;
+    messageExternalId: string | null;
+    occurredAt: string;
+    inReplyToExternalEventId: string | null;
+    provider: string;
+  }> {
+    const response = await this.baileysSender.enviarMensajeWhatsApp(
+      threadIdentity.actorExternalId,
+      'text',
+      text,
+    );
     const messageExternalId = this.extractBaileysMessageId(response);
-    const externalEventId = messageExternalId || this.buildOutgoingBaileysEventId(threadIdentity.actorExternalId);
+    const externalEventId =
+      messageExternalId ||
+      this.buildOutgoingBaileysEventId(threadIdentity.actorExternalId);
     const occurredAt = new Date();
     const contentJson = {
       senderType,
@@ -295,7 +435,14 @@ export class MessageSendService {
       messageType: 'text',
     });
 
-    return { ok: true, externalEventId, messageExternalId, occurredAt: occurredAt.toISOString(), inReplyToExternalEventId, provider: 'BAILEYS' };
+    return {
+      ok: true,
+      externalEventId,
+      messageExternalId,
+      occurredAt: occurredAt.toISOString(),
+      inReplyToExternalEventId,
+      provider: 'BAILEYS',
+    };
   }
 
   private async sendMediaByUrlViaBaileys(
@@ -318,7 +465,9 @@ export class MessageSendService {
       { fileName: extra?.fileName, mimeType: extra?.mimeType },
     );
     const messageExternalId = this.extractBaileysMessageId(response);
-    const externalEventId = messageExternalId || this.buildOutgoingBaileysEventId(threadIdentity.actorExternalId);
+    const externalEventId =
+      messageExternalId ||
+      this.buildOutgoingBaileysEventId(threadIdentity.actorExternalId);
     const occurredAt = new Date();
     const placeholderText = this.resolveMediaPlaceholder(mediaType);
     const contentJson = {
@@ -350,7 +499,16 @@ export class MessageSendService {
       messageType: mediaType,
     });
 
-    return { ok: true, externalEventId, messageExternalId, occurredAt: occurredAt.toISOString(), inReplyToExternalEventId, mediaType, mediaUrl, provider: 'BAILEYS' };
+    return {
+      ok: true,
+      externalEventId,
+      messageExternalId,
+      occurredAt: occurredAt.toISOString(),
+      inReplyToExternalEventId,
+      mediaType,
+      mediaUrl,
+      provider: 'BAILEYS',
+    };
   }
 
   private async persistOutgoingThreadMessage(input: {
@@ -379,9 +537,17 @@ export class MessageSendService {
         $8, $9::jsonb, $10, 'sent', $11, now(), now(), now()
       )
       ON CONFLICT (external_event_id) DO NOTHING`,
-      input.sessionId, input.externalEventId, input.messageExternalId, input.actorExternalId,
-      input.provider, input.objectType, input.sourceChannel,
-      input.contentText, JSON.stringify(input.contentJson), input.inReplyToExternalEventId, input.occurredAt,
+      input.sessionId,
+      input.externalEventId,
+      input.messageExternalId,
+      input.actorExternalId,
+      input.provider,
+      input.objectType,
+      input.sourceChannel,
+      input.contentText,
+      JSON.stringify(input.contentJson),
+      input.inReplyToExternalEventId,
+      input.occurredAt,
     );
 
     await this.thread.upsertThreadRecord({
@@ -394,7 +560,9 @@ export class MessageSendService {
       lastMessageAt: input.occurredAt,
     });
 
-    const snapshotForEvent = await this.thread.getThreadSnapshot(input.sessionId);
+    const snapshotForEvent = await this.thread.getThreadSnapshot(
+      input.sessionId,
+    );
     await this.threadEvent.recordThreadEvent({
       sessionId: input.sessionId,
       threadId: snapshotForEvent?.threadId ?? null,
@@ -407,7 +575,11 @@ export class MessageSendService {
       direction: 'OUTGOING',
       provider: input.provider,
       sourceChannel: input.sourceChannel,
-      metadata: { messageType: input.messageType, status: 'sent', inReplyToExternalEventId: input.inReplyToExternalEventId },
+      metadata: {
+        messageType: input.messageType,
+        status: 'sent',
+        inReplyToExternalEventId: input.inReplyToExternalEventId,
+      },
       occurredAt: input.occurredAt,
       dedupeKey: `MESSAGE_OUTGOING:${input.externalEventId}`,
     });
@@ -430,12 +602,18 @@ export class MessageSendService {
       inReplyToExternalEventId: input.inReplyToExternalEventId,
     });
 
-    const snapshot = snapshotForEvent || (await this.thread.getThreadSnapshot(input.sessionId));
+    const snapshot =
+      snapshotForEvent ||
+      (await this.thread.getThreadSnapshot(input.sessionId));
     if (snapshot) await this.thread.notifyThreadUpsert(snapshot);
   }
 
-  private async getLastIncomingExternalEventId(sessionId: string): Promise<string | null> {
-    const rows = await this.prisma.$queryRawUnsafe<Array<{ externalEventId: string }>>(
+  private async getLastIncomingExternalEventId(
+    sessionId: string,
+  ): Promise<string | null> {
+    const rows = await this.prisma.$queryRawUnsafe<
+      Array<{ externalEventId: string }>
+    >(
       `SELECT external_event_id AS "externalEventId"
        FROM thread_messages
        WHERE session_id = $1 AND direction = 'INCOMING'
@@ -448,17 +626,26 @@ export class MessageSendService {
 
   private extractBaileysMessageId(response: any): string | null {
     const candidates = [
-      response?.messageId, response?.message_id, response?.id, response?.key?.id,
-      response?.data?.messageId, response?.data?.message_id, response?.data?.key?.id,
+      response?.messageId,
+      response?.message_id,
+      response?.id,
+      response?.key?.id,
+      response?.data?.messageId,
+      response?.data?.message_id,
+      response?.data?.key?.id,
     ];
     for (const candidate of candidates) {
-      if (typeof candidate === 'string' && candidate.trim()) return candidate.trim();
+      if (typeof candidate === 'string' && candidate.trim())
+        return candidate.trim();
     }
     return null;
   }
 
   private buildOutgoingBaileysEventId(actorExternalId: string): string {
-    const actor = String(actorExternalId || 'unknown').replace(/[^a-zA-Z0-9@._:-]/g, '_');
+    const actor = String(actorExternalId || 'unknown').replace(
+      /[^a-zA-Z0-9@._:-]/g,
+      '_',
+    );
     return `baileys:out:${actor}:${Date.now()}:${Math.random().toString(16).slice(2, 10)}`;
   }
 
@@ -473,7 +660,9 @@ export class MessageSendService {
     return '[documento]';
   }
 
-  private resolveBaileysMessageType(mediaType: ThreadMessageMediaType): BaileysMessageType {
+  private resolveBaileysMessageType(
+    mediaType: ThreadMessageMediaType,
+  ): BaileysMessageType {
     return mediaType;
   }
 }

@@ -10,7 +10,12 @@ describe('AppController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
-      providers: [{ provide: AppService, useValue: { getHello: jest.fn().mockReturnValue('Hello World!') } }],
+      providers: [
+        {
+          provide: AppService,
+          useValue: { getHello: jest.fn().mockReturnValue('Hello World!') },
+        },
+      ],
     }).compile();
 
     app = module.createNestApplication();
@@ -21,7 +26,10 @@ describe('AppController', () => {
 
   describe('GET /', () => {
     it('returns 200 with Hello World!', () => {
-      return request(app.getHttpServer()).get('/').expect(200).expect('Hello World!');
+      return request(app.getHttpServer())
+        .get('/')
+        .expect(200)
+        .expect('Hello World!');
     });
   });
 });

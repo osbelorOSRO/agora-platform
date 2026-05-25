@@ -11,13 +11,17 @@ import { MsgDelegationStateService } from './msg-delegation-state.service';
 export class MsgDelegationCompletionService {
   private readonly logger = new Logger(MsgDelegationCompletionService.name);
 
-  private normalizeMetadata(value: unknown): Record<string, unknown> | undefined {
+  private normalizeMetadata(
+    value: unknown,
+  ): Record<string, unknown> | undefined {
     if (value === undefined || value === null) return undefined;
-    if (typeof value === 'object' && !Array.isArray(value)) return value as Record<string, unknown>;
+    if (typeof value === 'object' && !Array.isArray(value))
+      return value as Record<string, unknown>;
     if (typeof value === 'string') {
       try {
         const parsed = JSON.parse(value) as unknown;
-        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed as Record<string, unknown>;
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed))
+          return parsed as Record<string, unknown>;
       } catch {
         // ignore parse errors
       }
@@ -26,7 +30,10 @@ export class MsgDelegationCompletionService {
     return { value };
   }
 
-  private async resolveDeltaForSignal(tx: Prisma.TransactionClient, signalType: string): Promise<string> {
+  private async resolveDeltaForSignal(
+    tx: Prisma.TransactionClient,
+    signalType: string,
+  ): Promise<string> {
     try {
       const rows = await tx.$queryRaw<Array<{ delta: unknown }>>`
         select delta
@@ -37,7 +44,9 @@ export class MsgDelegationCompletionService {
       `;
 
       if (!rows.length) {
-        this.logger.warn(`FLOW[SCORING] rule_not_found signalType=${signalType}, fallback_delta=0`);
+        this.logger.warn(
+          `FLOW[SCORING] rule_not_found signalType=${signalType}, fallback_delta=0`,
+        );
         return '0';
       }
 
@@ -45,7 +54,9 @@ export class MsgDelegationCompletionService {
       const value = typeof raw === 'number' ? raw : Number(raw);
 
       if (!Number.isFinite(value)) {
-        this.logger.warn(`FLOW[SCORING] invalid_delta signalType=${signalType}, raw=${String(raw)}, fallback_delta=0`);
+        this.logger.warn(
+          `FLOW[SCORING] invalid_delta signalType=${signalType}, raw=${String(raw)}, fallback_delta=0`,
+        );
         return '0';
       }
 
@@ -74,7 +85,9 @@ export class MsgDelegationCompletionService {
   }) {
     const alreadyDone = await this.state.isDone(input.externalEventId);
     if (alreadyDone) {
-      this.logger.log(`FLOW[CALLBACK] complete idempotent externalEventId=${input.externalEventId}`);
+      this.logger.log(
+        `FLOW[CALLBACK] complete idempotent externalEventId=${input.externalEventId}`,
+      );
       return { accepted: true, idempotent: true, reason: 'already_done' };
     }
 
@@ -95,34 +108,51 @@ export class MsgDelegationCompletionService {
         },
       });
 
-      this.logger.log(`FLOW[CALLBACK] complete closed_no_signal externalEventId=${input.externalEventId}`);
-      return { accepted: true, idempotent: false, transitionEnqueued: false, hasSignal: false };
+      this.logger.log(
+        `FLOW[CALLBACK] complete closed_no_signal externalEventId=${input.externalEventId}`,
+      );
+      return {
+        accepted: true,
+        idempotent: false,
+        transitionEnqueued: false,
+        hasSignal: false,
+      };
     }
 
     if (!input.signalType) {
-      throw new BadRequestException(`signalType is required when hasSignal=true externalEventId=${input.externalEventId}`);
+      throw new BadRequestException(
+        `signalType is required when hasSignal=true externalEventId=${input.externalEventId}`,
+      );
     }
 
-    const shouldEnqueueTransition = await this.prisma.$transaction(async (tx) => {
-      const { isTerminal } = await this.scoring.getLifecycleState(tx, input.actorExternalId);
-      if (isTerminal) return false;
+    const shouldEnqueueTransition = await this.prisma.$transaction(
+      async (tx) => {
+        const { isTerminal } = await this.scoring.getLifecycleState(
+          tx,
+          input.actorExternalId,
+        );
+        if (isTerminal) return false;
 
-      const resolvedDelta = await this.resolveDeltaForSignal(tx, input.signalType!);
+        const resolvedDelta = await this.resolveDeltaForSignal(
+          tx,
+          input.signalType!,
+        );
 
-      await this.scoring.applyDeltaIfNew(tx, {
-        actorExternalId: input.actorExternalId,
-        externalEventId: input.externalEventId,
-        delta: resolvedDelta,
-        signalType: input.signalType!,
-        metadata: {
-          ...(metadata ?? { source: 'n8n.callback' }),
-          resolvedDelta,
-          scoringRuleSource: 'signal_scoring_rules',
-        },
-      });
+        await this.scoring.applyDeltaIfNew(tx, {
+          actorExternalId: input.actorExternalId,
+          externalEventId: input.externalEventId,
+          delta: resolvedDelta,
+          signalType: input.signalType!,
+          metadata: {
+            ...(metadata ?? { source: 'n8n.callback' }),
+            resolvedDelta,
+            scoringRuleSource: 'signal_scoring_rules',
+          },
+        });
 
-      return true;
-    });
+        return true;
+      },
+    );
 
     await this.state.markCompleted({
       externalEventId: input.externalEventId,
@@ -133,14 +163,20 @@ export class MsgDelegationCompletionService {
       `FLOW[CALLBACK] complete closed_with_signal externalEventId=${input.externalEventId}, signalType=${input.signalType}`,
     );
 
-    if (!shouldEnqueueTransition) return { accepted: true, idempotent: false, transitionEnqueued: false };
+    if (!shouldEnqueueTransition)
+      return { accepted: true, idempotent: false, transitionEnqueued: false };
 
     await this.transitionsQueue.add(
       'actor.transition.evaluate',
-      { actorExternalId: input.actorExternalId, triggerExternalEventId: input.externalEventId },
+      {
+        actorExternalId: input.actorExternalId,
+        triggerExternalEventId: input.externalEventId,
+      },
       { jobId: `tr_${input.externalEventId}` },
     );
-    this.logger.log(`FLOW[CALLBACK] complete transition_enqueued externalEventId=${input.externalEventId}`);
+    this.logger.log(
+      `FLOW[CALLBACK] complete transition_enqueued externalEventId=${input.externalEventId}`,
+    );
 
     return { accepted: true, idempotent: false, transitionEnqueued: true };
   }
@@ -155,13 +191,17 @@ export class MsgDelegationCompletionService {
 
     const alreadyDone = await this.state.isDone(input.externalEventId);
     if (alreadyDone) {
-      this.logger.log(`FLOW[TIMEOUT] idempotent externalEventId=${input.externalEventId}`);
+      this.logger.log(
+        `FLOW[TIMEOUT] idempotent externalEventId=${input.externalEventId}`,
+      );
       return { accepted: true, idempotent: true, reason: 'already_done' };
     }
 
     const pending = await this.state.getPending(input.externalEventId);
     if (!pending) {
-      this.logger.warn(`FLOW[TIMEOUT] pending_not_found externalEventId=${input.externalEventId}`);
+      this.logger.warn(
+        `FLOW[TIMEOUT] pending_not_found externalEventId=${input.externalEventId}`,
+      );
       return { accepted: true, idempotent: true, reason: 'pending_not_found' };
     }
 
@@ -174,9 +214,16 @@ export class MsgDelegationCompletionService {
         ...(metadata || {}),
       },
     });
-    this.logger.warn(`FLOW[TIMEOUT] closed_no_signal externalEventId=${input.externalEventId}`);
+    this.logger.warn(
+      `FLOW[TIMEOUT] closed_no_signal externalEventId=${input.externalEventId}`,
+    );
 
-    return { accepted: true, idempotent: false, transitionEnqueued: false, hasSignal: false };
+    return {
+      accepted: true,
+      idempotent: false,
+      transitionEnqueued: false,
+      hasSignal: false,
+    };
   }
 
   async fail(input: {
@@ -189,7 +236,9 @@ export class MsgDelegationCompletionService {
 
     const alreadyDone = await this.state.isDone(input.externalEventId);
     if (alreadyDone) {
-      this.logger.log(`FLOW[CALLBACK] fail idempotent externalEventId=${input.externalEventId}`);
+      this.logger.log(
+        `FLOW[CALLBACK] fail idempotent externalEventId=${input.externalEventId}`,
+      );
       return { accepted: true, idempotent: true, reason: 'already_done' };
     }
 

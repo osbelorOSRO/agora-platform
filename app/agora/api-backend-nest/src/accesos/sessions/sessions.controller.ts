@@ -1,4 +1,13 @@
-import { Controller, Delete, Get, HttpCode, Param, ParseIntPipe, Post, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseIntPipe,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { Request as Req } from '@nestjs/common';
 import type { Request } from 'express';
 import { SessionsService } from './sessions.service';

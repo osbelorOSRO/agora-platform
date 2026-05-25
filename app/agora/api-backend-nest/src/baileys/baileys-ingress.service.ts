@@ -42,8 +42,14 @@ export class BaileysIngressService {
   }
 
   private normalizeEnvelope(input: BaileysEnvelope) {
-    const externalEventId = this.requireString(input.externalEventId, 'externalEventId');
-    const actorExternalId = this.requireString(input.actorExternalId, 'actorExternalId');
+    const externalEventId = this.requireString(
+      input.externalEventId,
+      'externalEventId',
+    );
+    const actorExternalId = this.requireString(
+      input.actorExternalId,
+      'actorExternalId',
+    );
     const eventType = this.requireString(input.eventType, 'eventType');
     const occurredAt = this.requireDateString(input.occurredAt, 'occurredAt');
     const payload = this.requireRecord(input.payload, 'payload');
@@ -56,7 +62,8 @@ export class BaileysIngressService {
       pipeline: 'MESSAGES',
       eventType,
       occurredAt,
-      receivedAt: this.optionalDateString(input.receivedAt) || new Date().toISOString(),
+      receivedAt:
+        this.optionalDateString(input.receivedAt) || new Date().toISOString(),
       payload: {
         ...payload,
         platform: payload.platform || 'whatsapp',
@@ -71,7 +78,10 @@ export class BaileysIngressService {
     return value.trim();
   }
 
-  private requireRecord(value: unknown, field: string): Record<string, unknown> {
+  private requireRecord(
+    value: unknown,
+    field: string,
+  ): Record<string, unknown> {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
       throw new BadRequestException(`Campo requerido inválido: ${field}`);
     }

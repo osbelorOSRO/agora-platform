@@ -1,8 +1,15 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma/prisma.service';
-import { IWebsocketNotifierGateway, WEBSOCKET_NOTIFIER_GATEWAY } from '../../websocket-notifier/interfaces/websocket-notifier-gateway.interface';
+import {
+  IWebsocketNotifierGateway,
+  WEBSOCKET_NOTIFIER_GATEWAY,
+} from '../../websocket-notifier/interfaces/websocket-notifier-gateway.interface';
 import { WhatsappIdentityService } from './whatsapp-identity.service';
-import { IThreadGateway, THREAD_GATEWAY, ThreadSelectorInput } from '../interfaces/thread-gateway.interface';
+import {
+  IThreadGateway,
+  THREAD_GATEWAY,
+  ThreadSelectorInput,
+} from '../interfaces/thread-gateway.interface';
 
 type ContactDirectoryRow = {
   actorExternalId: string;
@@ -34,7 +41,8 @@ type ContactDirectoryRow = {
 export class ContactService {
   constructor(
     private readonly prisma: PrismaService,
-    @Inject(WEBSOCKET_NOTIFIER_GATEWAY) private readonly websocketNotifier: IWebsocketNotifierGateway,
+    @Inject(WEBSOCKET_NOTIFIER_GATEWAY)
+    private readonly websocketNotifier: IWebsocketNotifierGateway,
     private readonly whatsappIdentity: WhatsappIdentityService,
     @Inject(THREAD_GATEWAY) private readonly thread: IThreadGateway,
   ) {}
@@ -44,13 +52,21 @@ export class ContactService {
     objectType?: string;
     limit?: number;
     offset?: number;
-  }): Promise<{ items: Omit<ContactDirectoryRow, 'totalCount'>[]; total: number; limit: number; offset: number; hasNext: boolean }> {
+  }): Promise<{
+    items: Omit<ContactDirectoryRow, 'totalCount'>[];
+    total: number;
+    limit: number;
+    offset: number;
+    hasNext: boolean;
+  }> {
     const limit = Math.min(Math.max(input.limit ?? 50, 1), 200);
     const offset = Math.max(input.offset ?? 0, 0);
     const search = (input.search || '').trim();
     const objectType = (input.objectType || '').trim().toUpperCase();
     const hasSearch = search.length > 0;
-    const hasObjectType = ['PAGE', 'INSTAGRAM', 'WHATSAPP'].includes(objectType);
+    const hasObjectType = ['PAGE', 'INSTAGRAM', 'WHATSAPP'].includes(
+      objectType,
+    );
 
     const rows = await this.prisma.$queryRawUnsafe<ContactDirectoryRow[]>(
       `SELECT
@@ -116,11 +132,13 @@ export class ContactService {
     );
 
     return {
-      items: rows.map(({ totalCount, ...row }) => row),
+      items: rows.map(({ totalCount: _totalCount, ...row }) => row),
       total: rows[0]?.totalCount ? Number(rows[0].totalCount) : 0,
       limit,
       offset,
-      hasNext: offset + rows.length < (rows[0]?.totalCount ? Number(rows[0].totalCount) : 0),
+      hasNext:
+        offset + rows.length <
+        (rows[0]?.totalCount ? Number(rows[0].totalCount) : 0),
     };
   }
 
@@ -135,12 +153,22 @@ export class ContactService {
     notes?: string;
     city?: string;
     region?: string;
-  }): Promise<Omit<ContactDirectoryRow, 'totalCount'> | { actorExternalId: string; objectType: string; displayName: string; phone: string }> {
+  }): Promise<
+    | Omit<ContactDirectoryRow, 'totalCount'>
+    | {
+        actorExternalId: string;
+        objectType: string;
+        displayName: string;
+        phone: string;
+      }
+  > {
     const phone = this.whatsappIdentity.normalizeWhatsappPhone(input.phone);
     const actorExternalId = `${phone}@s.whatsapp.net`;
     const displayName =
       input.displayName?.trim() ||
-      [input.firstName?.trim(), input.lastName?.trim()].filter(Boolean).join(' ') ||
+      [input.firstName?.trim(), input.lastName?.trim()]
+        .filter(Boolean)
+        .join(' ') ||
       phone;
 
     await this.prisma.$executeRawUnsafe(
@@ -178,11 +206,27 @@ export class ContactService {
       input.notes ?? null,
       input.city ?? null,
       input.region ?? null,
-      JSON.stringify({ created_from: 'agenda', transport: 'baileys', jid: actorExternalId }),
+      JSON.stringify({
+        created_from: 'agenda',
+        transport: 'baileys',
+        jid: actorExternalId,
+      }),
     );
 
-    const result = await this.listContacts({ search: actorExternalId, objectType: 'WHATSAPP', limit: 1, offset: 0 });
-    return result.items[0] || { actorExternalId, objectType: 'WHATSAPP', displayName, phone };
+    const result = await this.listContacts({
+      search: actorExternalId,
+      objectType: 'WHATSAPP',
+      limit: 1,
+      offset: 0,
+    });
+    return (
+      result.items[0] || {
+        actorExternalId,
+        objectType: 'WHATSAPP',
+        displayName,
+        phone,
+      }
+    );
   }
 
   async updateContact(
@@ -199,9 +243,16 @@ export class ContactService {
       city?: string;
       region?: string;
     },
-  ): Promise<{ ok: boolean; sessionId: string; actorExternalId: string; objectType: string; contact: Record<string, string | null> }> {
+  ): Promise<{
+    ok: boolean;
+    sessionId: string;
+    actorExternalId: string;
+    objectType: string;
+    contact: Record<string, string | null>;
+  }> {
     const threadIdentity = await this.thread.getThreadIdentity(sessionId);
-    if (!threadIdentity) throw new NotFoundException(`session_not_found:${sessionId}`);
+    if (!threadIdentity)
+      throw new NotFoundException(`session_not_found:${sessionId}`);
 
     await this.prisma.$executeRawUnsafe(
       `INSERT INTO meta_inbox_contacts(
@@ -279,18 +330,27 @@ export class ContactService {
     };
   }
 
-  async updateContactForAutomation(input: ThreadSelectorInput & {
-    displayName?: string;
-    firstName?: string;
-    lastName?: string;
-    phone?: string;
-    rut?: string;
-    address?: string;
-    email?: string;
-    notes?: string;
-    city?: string;
-    region?: string;
-  }): Promise<{ ok: boolean; sessionId: string; actorExternalId: string; objectType: string; contact: Record<string, string | null>; thread: import('./thread.service').ThreadRow | null }> {
+  async updateContactForAutomation(
+    input: ThreadSelectorInput & {
+      displayName?: string;
+      firstName?: string;
+      lastName?: string;
+      phone?: string;
+      rut?: string;
+      address?: string;
+      email?: string;
+      notes?: string;
+      city?: string;
+      region?: string;
+    },
+  ): Promise<{
+    ok: boolean;
+    sessionId: string;
+    actorExternalId: string;
+    objectType: string;
+    contact: Record<string, string | null>;
+    thread: import('./thread.service').ThreadRow | null;
+  }> {
     const sessionId = await this.thread.resolveSessionIdForAutomation(input);
     const result = await this.updateContact(sessionId, {
       displayName: input.displayName,

@@ -33,21 +33,15 @@ export class ActorEventsProcessor extends WorkerHost {
 
     const data = job.data;
 
-    this.logger.log(
-      `Procesando message event ${data.externalEventId}`,
-    );
+    this.logger.log(`Procesando message event ${data.externalEventId}`);
 
     // 1️⃣ registrar siempre (actor-events)
     await this.actorEventsService.registerEvent(data);
 
     // 2️⃣ enviar a bootstrap / siguiente capa
-    await this.msgDelegationQueue.add(
-      'message.bootstrap',
-      data,
-      {
-        jobId: `bootstrap:${data.externalEventId}`,
-      },
-    );
+    await this.msgDelegationQueue.add('message.bootstrap', data, {
+      jobId: `bootstrap:${data.externalEventId}`,
+    });
   }
 }
 
@@ -60,9 +54,7 @@ export class ActorEventsProcessor extends WorkerHost {
 export class ActorChangesProcessor extends WorkerHost {
   private readonly logger = new Logger(ActorChangesProcessor.name);
 
-  constructor(
-    private readonly actorEventsService: ActorEventsService,
-  ) {
+  constructor(private readonly actorEventsService: ActorEventsService) {
     super();
   }
 
@@ -71,9 +63,7 @@ export class ActorChangesProcessor extends WorkerHost {
 
     const data = job.data;
 
-    this.logger.log(
-      `Procesando change event ${data.externalEventId}`,
-    );
+    this.logger.log(`Procesando change event ${data.externalEventId}`);
 
     // registrar siempre
     await this.actorEventsService.registerEvent(data);

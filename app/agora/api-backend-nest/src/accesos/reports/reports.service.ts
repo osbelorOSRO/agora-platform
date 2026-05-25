@@ -1,6 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma/prisma.service';
-import { parseDate, formatReportResponse, ReportResult } from './report-formatter';
+import {
+  parseDate,
+  formatReportResponse,
+  ReportResult,
+} from './report-formatter';
 
 const TIMEZONE = 'America/Santiago';
 
@@ -10,45 +14,121 @@ export class ReportsService {
 
   catalogo() {
     return [
-      { id: 'procesos', nombre: 'Consulta de eventos de threads', formatos: ['json', 'csv'], filtros: ['desde', 'hasta', 'session_id', 'actor_external_id', 'object_type', 'event_type', 'event_source', 'direction', 'provider'] },
-      { id: 'desempeno', nombre: 'Consulta de desempeño por fuente', formatos: ['json', 'csv'], filtros: ['desde', 'hasta', 'event_source', 'username'] },
-      { id: 'procesos-semanales', nombre: 'Actividad semanal de threads', formatos: ['json', 'csv'], filtros: ['desde', 'hasta'] },
-      { id: 'precios-planes', nombre: 'Consulta de precios de planes', formatos: ['json', 'csv'], filtros: ['codigo', 'tipo', 'nombre'] },
-      { id: 'clientes-info', nombre: 'Agenda de contactos conversacionales', formatos: ['json', 'csv'], filtros: ['desde', 'hasta', 'rut', 'fono', 'nombre', 'object_type'] },
+      {
+        id: 'procesos',
+        nombre: 'Consulta de eventos de threads',
+        formatos: ['json', 'csv'],
+        filtros: [
+          'desde',
+          'hasta',
+          'session_id',
+          'actor_external_id',
+          'object_type',
+          'event_type',
+          'event_source',
+          'direction',
+          'provider',
+        ],
+      },
+      {
+        id: 'desempeno',
+        nombre: 'Consulta de desempeño por fuente',
+        formatos: ['json', 'csv'],
+        filtros: ['desde', 'hasta', 'event_source', 'username'],
+      },
+      {
+        id: 'procesos-semanales',
+        nombre: 'Actividad semanal de threads',
+        formatos: ['json', 'csv'],
+        filtros: ['desde', 'hasta'],
+      },
+      {
+        id: 'precios-planes',
+        nombre: 'Consulta de precios de planes',
+        formatos: ['json', 'csv'],
+        filtros: ['codigo', 'tipo', 'nombre'],
+      },
+      {
+        id: 'clientes-info',
+        nombre: 'Agenda de contactos conversacionales',
+        formatos: ['json', 'csv'],
+        filtros: ['desde', 'hasta', 'rut', 'fono', 'nombre', 'object_type'],
+      },
     ];
   }
 
   async procesos(q: Record<string, any>): Promise<ReportResult> {
     const desde = parseDate(q.desde);
     const hasta = parseDate(q.hasta);
-    if ((q.desde && !desde) || (q.hasta && !hasta)) throw new BadRequestException('Parámetros de fecha inválidos');
+    if ((q.desde && !desde) || (q.hasta && !hasta))
+      throw new BadRequestException('Parámetros de fecha inválidos');
 
     const where: any = {
-      ...(desde || hasta ? { occurred_at: { ...(desde ? { gte: desde } : {}), ...(hasta ? { lte: hasta } : {}) } } : {}),
+      ...(desde || hasta
+        ? {
+            occurred_at: {
+              ...(desde ? { gte: desde } : {}),
+              ...(hasta ? { lte: hasta } : {}),
+            },
+          }
+        : {}),
       ...(q.session_id ? { session_id: String(q.session_id) } : {}),
-      ...(q.actor_external_id ? { actor_external_id: String(q.actor_external_id) } : {}),
-      ...(q.object_type ? { object_type: String(q.object_type).toUpperCase() } : {}),
-      ...(q.event_type ? { event_type: String(q.event_type).toUpperCase() } : {}),
-      ...(q.event_source ? { event_source: String(q.event_source).toUpperCase() } : {}),
+      ...(q.actor_external_id
+        ? { actor_external_id: String(q.actor_external_id) }
+        : {}),
+      ...(q.object_type
+        ? { object_type: String(q.object_type).toUpperCase() }
+        : {}),
+      ...(q.event_type
+        ? { event_type: String(q.event_type).toUpperCase() }
+        : {}),
+      ...(q.event_source
+        ? { event_source: String(q.event_source).toUpperCase() }
+        : {}),
       ...(q.direction ? { direction: String(q.direction).toUpperCase() } : {}),
       ...(q.provider ? { provider: String(q.provider).toUpperCase() } : {}),
     };
 
-    const events = await this.prisma.thread_events.findMany({ where, orderBy: { occurred_at: 'desc' }, take: 5000 });
+    const events = await this.prisma.thread_events.findMany({
+      where,
+      orderBy: { occurred_at: 'desc' },
+      take: 5000,
+    });
     const sessionIds = Array.from(new Set(events.map((e) => e.session_id)));
-    const actorPairs = Array.from(new Map(events.map((e) => [`${e.actor_external_id}::${e.object_type}`, e])).values());
+    const actorPairs = Array.from(
+      new Map(
+        events.map((e) => [`${e.actor_external_id}::${e.object_type}`, e]),
+      ).values(),
+    );
 
     const [threads, contacts] = await Promise.all([
-      sessionIds.length ? this.prisma.threads.findMany({ where: { session_id: { in: sessionIds } } }) : Promise.resolve([]),
-      actorPairs.length ? this.prisma.meta_inbox_contacts.findMany({ where: { OR: actorPairs.map((e) => ({ actor_external_id: e.actor_external_id, object_type: e.object_type })) } }) : Promise.resolve([]),
+      sessionIds.length
+        ? this.prisma.threads.findMany({
+            where: { session_id: { in: sessionIds } },
+          })
+        : Promise.resolve([]),
+      actorPairs.length
+        ? this.prisma.meta_inbox_contacts.findMany({
+            where: {
+              OR: actorPairs.map((e) => ({
+                actor_external_id: e.actor_external_id,
+                object_type: e.object_type,
+              })),
+            },
+          })
+        : Promise.resolve([]),
     ]);
 
     const threadMap = new Map(threads.map((t) => [t.session_id, t]));
-    const contactMap = new Map(contacts.map((c) => [`${c.actor_external_id}::${c.object_type}`, c]));
+    const contactMap = new Map(
+      contacts.map((c) => [`${c.actor_external_id}::${c.object_type}`, c]),
+    );
 
     const rows = events.map((event) => {
       const thread = threadMap.get(event.session_id);
-      const contact = contactMap.get(`${event.actor_external_id}::${event.object_type}`);
+      const contact = contactMap.get(
+        `${event.actor_external_id}::${event.object_type}`,
+      );
       return {
         id: event.id,
         session_id: event.session_id,
@@ -74,20 +154,34 @@ export class ReportsService {
       };
     });
 
-    return { format: q.format === 'csv' ? 'csv' : 'json', filename: 'reporte_threads_eventos', rows };
+    return {
+      format: q.format === 'csv' ? 'csv' : 'json',
+      filename: 'reporte_threads_eventos',
+      rows,
+    };
   }
 
   async desempeno(q: Record<string, any>): Promise<ReportResult> {
     const desde = parseDate(q.desde);
     const hasta = parseDate(q.hasta);
-    if (!desde || !hasta) throw new BadRequestException("Parámetros 'desde' y 'hasta' son requeridos");
+    if (!desde || !hasta)
+      throw new BadRequestException(
+        "Parámetros 'desde' y 'hasta' son requeridos",
+      );
 
     const clauses = ['e.occurred_at >= $1', 'e.occurred_at <= $2'];
     const params: any[] = [desde, hasta];
-    if (q.event_source) { params.push(String(q.event_source).toUpperCase()); clauses.push(`e.event_source = $${params.length}`); }
-    if (q.username) { params.push(`%${String(q.username)}%`); clauses.push(`e.username ILIKE $${params.length}`); }
+    if (q.event_source) {
+      params.push(String(q.event_source).toUpperCase());
+      clauses.push(`e.event_source = $${params.length}`);
+    }
+    if (q.username) {
+      params.push(`%${String(q.username)}%`);
+      clauses.push(`e.username ILIKE $${params.length}`);
+    }
 
-    const rows: any[] = await this.prisma.$queryRawUnsafe(`
+    const rows: any[] = await this.prisma.$queryRawUnsafe(
+      `
       SELECT
         COALESCE(e.username, e.event_source) AS operador,
         e.event_source,
@@ -104,15 +198,24 @@ export class ReportsService {
       WHERE ${clauses.join(' AND ')}
       GROUP BY COALESCE(e.username, e.event_source), e.event_source
       ORDER BY total_eventos DESC, ultima_actividad DESC
-    `, ...params);
+    `,
+      ...params,
+    );
 
-    return { format: q.format === 'csv' ? 'csv' : 'json', filename: 'reporte_desempeno_threads', rows };
+    return {
+      format: q.format === 'csv' ? 'csv' : 'json',
+      filename: 'reporte_desempeno_threads',
+      rows,
+    };
   }
 
   async procesosSemanales(q: Record<string, any>): Promise<ReportResult> {
     const desde = parseDate(q.desde);
     const hasta = parseDate(q.hasta);
-    if (!desde || !hasta) throw new BadRequestException("Parámetros 'desde' y 'hasta' son requeridos");
+    if (!desde || !hasta)
+      throw new BadRequestException(
+        "Parámetros 'desde' y 'hasta' son requeridos",
+      );
 
     const rows: any[] = await this.prisma.$queryRaw`
       SELECT
@@ -134,8 +237,14 @@ export class ReportsService {
       format: q.format === 'csv' ? 'csv' : 'json',
       filename: 'reporte_procesos_semanales',
       rows: rows.map((row) => ({
-        semana_inicio: row.semana_inicio instanceof Date ? row.semana_inicio.toISOString().slice(0, 10) : row.semana_inicio,
-        semana_fin: row.semana_fin instanceof Date ? row.semana_fin.toISOString().slice(0, 10) : row.semana_fin,
+        semana_inicio:
+          row.semana_inicio instanceof Date
+            ? row.semana_inicio.toISOString().slice(0, 10)
+            : row.semana_inicio,
+        semana_fin:
+          row.semana_fin instanceof Date
+            ? row.semana_fin.toISOString().slice(0, 10)
+            : row.semana_fin,
         total_eventos: Number(row.total_eventos),
         threads_creados: Number(row.threads_creados),
         mensajes_entrantes: Number(row.mensajes_entrantes),
@@ -150,7 +259,9 @@ export class ReportsService {
       where: {
         ...(q.codigo ? { codigo: String(q.codigo) } : {}),
         ...(q.tipo ? { tipo: String(q.tipo) } : {}),
-        ...(q.nombre ? { nombre: { contains: String(q.nombre), mode: 'insensitive' } } : {}),
+        ...(q.nombre
+          ? { nombre: { contains: String(q.nombre), mode: 'insensitive' } }
+          : {}),
       },
       orderBy: { codigo: 'asc' },
     });
@@ -167,7 +278,8 @@ export class ReportsService {
         precio_base: row.precio_base ? Number(row.precio_base) : null,
         precio_normal: row.precio_normal ?? null,
         excluye_alta: row.excluye_alta ?? false,
-        excluye_portabilidad_postpago: row.excluye_portabilidad_postpago ?? false,
+        excluye_portabilidad_postpago:
+          row.excluye_portabilidad_postpago ?? false,
         url_archivo: row.url_archivo ?? null,
       })),
     };
@@ -176,15 +288,29 @@ export class ReportsService {
   async clientesInfo(q: Record<string, any>): Promise<ReportResult> {
     const desde = parseDate(q.desde);
     const hasta = parseDate(q.hasta);
-    if ((q.desde && !desde) || (q.hasta && !hasta)) throw new BadRequestException('Parámetros de fecha inválidos');
+    if ((q.desde && !desde) || (q.hasta && !hasta))
+      throw new BadRequestException('Parámetros de fecha inválidos');
 
     const rows = await this.prisma.meta_inbox_contacts.findMany({
       where: {
-        ...(desde || hasta ? { created_at: { ...(desde ? { gte: desde } : {}), ...(hasta ? { lte: hasta } : {}) } } : {}),
+        ...(desde || hasta
+          ? {
+              created_at: {
+                ...(desde ? { gte: desde } : {}),
+                ...(hasta ? { lte: hasta } : {}),
+              },
+            }
+          : {}),
         ...(q.rut ? { rut: String(q.rut) } : {}),
         ...(q.fono ? { phone: String(q.fono) } : {}),
-        ...(q.object_type ? { object_type: String(q.object_type).toUpperCase() } : {}),
-        ...(q.nombre ? { display_name: { contains: String(q.nombre), mode: 'insensitive' } } : {}),
+        ...(q.object_type
+          ? { object_type: String(q.object_type).toUpperCase() }
+          : {}),
+        ...(q.nombre
+          ? {
+              display_name: { contains: String(q.nombre), mode: 'insensitive' },
+            }
+          : {}),
       },
       orderBy: { created_at: 'desc' },
     });
@@ -213,7 +339,10 @@ export class ReportsService {
     };
   }
 
-  formatResponse(result: ReportResult): { headers?: Record<string, string>; body: any } {
+  formatResponse(result: ReportResult): {
+    headers?: Record<string, string>;
+    body: any;
+  } {
     return formatReportResponse(result);
   }
 }

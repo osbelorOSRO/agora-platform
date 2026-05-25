@@ -1,4 +1,9 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { getRuntimeSecret } from '../runtime-secrets';
 
@@ -8,7 +13,9 @@ export class N8nCallbackAuthGuard implements CanActivate {
   constructor(private readonly config: ConfigService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<{ headers: Record<string, string> }>();
+    const request = context
+      .switchToHttp()
+      .getRequest<{ headers: Record<string, string> }>();
     const provided = request.headers['authorization']?.replace('Bearer ', '');
 
     const token =

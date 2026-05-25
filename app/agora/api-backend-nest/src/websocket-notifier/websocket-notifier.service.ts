@@ -16,41 +16,72 @@ export class WebsocketNotifierService implements IWebsocketNotifierGateway {
     return getRuntimeSecret('API_KEY_WS');
   }
 
-  async notificarCambioEstado(clienteId: string, estadoActual: number, etiquetaActual: string): Promise<void> {
+  async notificarCambioEstado(
+    clienteId: string,
+    estadoActual: number,
+    etiquetaActual: string,
+  ): Promise<void> {
     try {
       const apiKey = await this.getApiKey();
       const url = `${this.baseUrl}/notify/cambio-estado`;
       await firstValueFrom(
         this.httpService.post(
           url,
-          { clienteId, estadoActual, etiquetaActual, timestamp: new Date().toISOString() },
+          {
+            clienteId,
+            estadoActual,
+            etiquetaActual,
+            timestamp: new Date().toISOString(),
+          },
           { headers: { 'x-api-key': apiKey } },
         ),
       );
-      this.logger.log(`✅ Notificado cambio de estado para cliente ${clienteId} → ${etiquetaActual}`);
+      this.logger.log(
+        `✅ Notificado cambio de estado para cliente ${clienteId} → ${etiquetaActual}`,
+      );
     } catch (error: any) {
-      this.logger.error(`❌ Error notificando cambio de estado: ${error.message}`, error.stack);
+      this.logger.error(
+        `❌ Error notificando cambio de estado: ${error.message}`,
+        error.stack,
+      );
     }
   }
 
-  async notificarClienteCreado(clienteId: string, tipoId: string, nombre: string, fotoPerfil?: string): Promise<void> {
+  async notificarClienteCreado(
+    clienteId: string,
+    tipoId: string,
+    nombre: string,
+    fotoPerfil?: string,
+  ): Promise<void> {
     try {
       const apiKey = await this.getApiKey();
       const url = `${this.baseUrl}/notify/cliente-creado`;
       await firstValueFrom(
         this.httpService.post(
           url,
-          { clienteId, tipoId, nombre, fotoPerfil, timestamp: new Date().toISOString() },
+          {
+            clienteId,
+            tipoId,
+            nombre,
+            fotoPerfil,
+            timestamp: new Date().toISOString(),
+          },
           { headers: { 'x-api-key': apiKey } },
         ),
       );
       this.logger.log(`✅ Notificado cliente creado: ${clienteId} (${nombre})`);
     } catch (error: any) {
-      this.logger.error(`❌ Error notificando cliente creado: ${error.message}`, error.stack);
+      this.logger.error(
+        `❌ Error notificando cliente creado: ${error.message}`,
+        error.stack,
+      );
     }
   }
 
-  async notificarProcesoCreado(clienteId: string, procesoId: string): Promise<void> {
+  async notificarProcesoCreado(
+    clienteId: string,
+    procesoId: string,
+  ): Promise<void> {
     try {
       const apiKey = await this.getApiKey();
       const url = `${this.baseUrl}/notify/proceso-creado`;
@@ -63,11 +94,17 @@ export class WebsocketNotifierService implements IWebsocketNotifierGateway {
       );
       this.logger.log(`✅ Notificado proceso creado para cliente ${clienteId}`);
     } catch (error: any) {
-      this.logger.error(`❌ Error notificando proceso creado: ${error.message}`, error.stack);
+      this.logger.error(
+        `❌ Error notificando proceso creado: ${error.message}`,
+        error.stack,
+      );
     }
   }
 
-  async notificarCambioIntervencion(clienteId: string, intervenida: boolean): Promise<void> {
+  async notificarCambioIntervencion(
+    clienteId: string,
+    intervenida: boolean,
+  ): Promise<void> {
     try {
       const apiKey = await this.getApiKey();
       const url = `${this.baseUrl}/notify/cambio-intervencion`;
@@ -78,13 +115,21 @@ export class WebsocketNotifierService implements IWebsocketNotifierGateway {
           { headers: { 'x-api-key': apiKey } },
         ),
       );
-      this.logger.log(`✅ Notificado cambio intervención para cliente ${clienteId} → ${intervenida ? 'SI' : 'NO'}`);
+      this.logger.log(
+        `✅ Notificado cambio intervención para cliente ${clienteId} → ${intervenida ? 'SI' : 'NO'}`,
+      );
     } catch (error: any) {
-      this.logger.error(`❌ Error notificando cambio intervención: ${error.message}`, error.stack);
+      this.logger.error(
+        `❌ Error notificando cambio intervención: ${error.message}`,
+        error.stack,
+      );
     }
   }
 
-  async notificarProcesoCerrado(clienteId: string, procesoId: string): Promise<void> {
+  async notificarProcesoCerrado(
+    clienteId: string,
+    procesoId: string,
+  ): Promise<void> {
     try {
       const apiKey = await this.getApiKey();
       const url = `${this.baseUrl}/notify/proceso-cerrado`;
@@ -95,33 +140,52 @@ export class WebsocketNotifierService implements IWebsocketNotifierGateway {
           { headers: { 'x-api-key': apiKey } },
         ),
       );
-      this.logger.log(`✅ Notificado proceso cerrado para cliente ${clienteId}`);
+      this.logger.log(
+        `✅ Notificado proceso cerrado para cliente ${clienteId}`,
+      );
     } catch (error: any) {
-      this.logger.error(`❌ Error notificando proceso cerrado: ${error.message}`, error.stack);
+      this.logger.error(
+        `❌ Error notificando proceso cerrado: ${error.message}`,
+        error.stack,
+      );
     }
   }
 
-  async notificarMetaInboxMessageNew(payload: Record<string, unknown>): Promise<void> {
+  async notificarMetaInboxMessageNew(
+    payload: Record<string, unknown>,
+  ): Promise<void> {
     try {
       const apiKey = await this.getApiKey();
       const url = `${this.baseUrl}/notify/meta-inbox/message-new`;
       await firstValueFrom(
-        this.httpService.post(url, payload, { headers: { 'x-api-key': apiKey } }),
+        this.httpService.post(url, payload, {
+          headers: { 'x-api-key': apiKey },
+        }),
       );
     } catch (error: any) {
-      this.logger.error(`❌ Error notificando meta inbox message: ${error.message}`, error.stack);
+      this.logger.error(
+        `❌ Error notificando meta inbox message: ${error.message}`,
+        error.stack,
+      );
     }
   }
 
-  async notificarMetaInboxThreadUpsert(payload: Record<string, unknown>): Promise<void> {
+  async notificarMetaInboxThreadUpsert(
+    payload: Record<string, unknown>,
+  ): Promise<void> {
     try {
       const apiKey = await this.getApiKey();
       const url = `${this.baseUrl}/notify/meta-inbox/thread-upsert`;
       await firstValueFrom(
-        this.httpService.post(url, payload, { headers: { 'x-api-key': apiKey } }),
+        this.httpService.post(url, payload, {
+          headers: { 'x-api-key': apiKey },
+        }),
       );
     } catch (error: any) {
-      this.logger.error(`❌ Error notificando meta inbox thread: ${error.message}`, error.stack);
+      this.logger.error(
+        `❌ Error notificando meta inbox thread: ${error.message}`,
+        error.stack,
+      );
     }
   }
 
@@ -129,10 +193,17 @@ export class WebsocketNotifierService implements IWebsocketNotifierGateway {
     try {
       const apiKey = await this.getApiKey();
       const url = `${this.baseUrl}/notify/refrescar-clientes`;
-      await firstValueFrom(this.httpService.post(url, data, { headers: { 'x-api-key': apiKey } }));
-      this.logger.log(`✅ Notificación refrescar clientes enviada para clienteId: ${data.clienteId}`);
+      await firstValueFrom(
+        this.httpService.post(url, data, { headers: { 'x-api-key': apiKey } }),
+      );
+      this.logger.log(
+        `✅ Notificación refrescar clientes enviada para clienteId: ${data.clienteId}`,
+      );
     } catch (error: any) {
-      this.logger.error(`❌ Error notificando refrescar clientes: ${error.message}`, error.stack);
+      this.logger.error(
+        `❌ Error notificando refrescar clientes: ${error.message}`,
+        error.stack,
+      );
     }
   }
 
@@ -146,10 +217,15 @@ export class WebsocketNotifierService implements IWebsocketNotifierGateway {
       const apiKey = await this.getApiKey();
       const url = `${this.baseUrl}/notify/globito`;
       await firstValueFrom(
-        this.httpService.post(url, payload, { headers: { 'x-api-key': apiKey } }),
+        this.httpService.post(url, payload, {
+          headers: { 'x-api-key': apiKey },
+        }),
       );
     } catch (error: any) {
-      this.logger.error(`❌ Error notificando globito: ${error.message}`, error.stack);
+      this.logger.error(
+        `❌ Error notificando globito: ${error.message}`,
+        error.stack,
+      );
     }
   }
 }

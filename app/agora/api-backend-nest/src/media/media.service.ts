@@ -1,4 +1,8 @@
-import { Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import fs from 'fs';
 import path from 'path';
 import util from 'util';
@@ -9,7 +13,10 @@ import {
   removeFileQuietly,
   validateStoredMediaFile,
 } from './media-security';
-import { IMinioGateway, MINIO_GATEWAY } from '../minio/interfaces/minio-gateway.interface';
+import {
+  IMinioGateway,
+  MINIO_GATEWAY,
+} from '../minio/interfaces/minio-gateway.interface';
 
 const execFilePromise = util.promisify(execFile);
 
@@ -22,10 +29,17 @@ export class MediaService {
     actorId: string,
     tipo: string,
   ) {
-    const detected = await validateStoredMediaFile(archivo, familiesForTipo(tipo));
+    const detected = await validateStoredMediaFile(
+      archivo,
+      familiesForTipo(tipo),
+    );
     ensureCanonicalExtension(archivo, detected);
 
-    const url = await this.minio.uploadFile(archivo.path, archivo.filename, detected.mimeType);
+    const url = await this.minio.uploadFile(
+      archivo.path,
+      archivo.filename,
+      detected.mimeType,
+    );
     removeFileQuietly(archivo.path);
 
     return {
@@ -48,18 +62,25 @@ export class MediaService {
 
     try {
       await execFilePromise('ffmpeg', [
-        '-i', rutaOriginal,
-        '-c:a', 'libopus',
-        '-b:a', '32k',
-        '-ar', '48000',
-        '-ac', '1',
+        '-i',
+        rutaOriginal,
+        '-c:a',
+        'libopus',
+        '-b:a',
+        '32k',
+        '-ar',
+        '48000',
+        '-ac',
+        '1',
         '-vn',
         rutaOgg,
         '-y',
       ]);
 
       if (!fs.existsSync(rutaOgg)) {
-        throw new InternalServerErrorException('Error convirtiendo audio a formato WhatsApp');
+        throw new InternalServerErrorException(
+          'Error convirtiendo audio a formato WhatsApp',
+        );
       }
     } catch (error) {
       removeFileQuietly(rutaOriginal);

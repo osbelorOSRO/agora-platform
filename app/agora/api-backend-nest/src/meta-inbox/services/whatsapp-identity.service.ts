@@ -1,6 +1,14 @@
-import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../../database/prisma/prisma.service';
-import { IMessageGateway, MESSAGE_GATEWAY } from '../../baileys/interfaces/message-gateway.interface';
+import {
+  IMessageGateway,
+  MESSAGE_GATEWAY,
+} from '../../baileys/interfaces/message-gateway.interface';
 import { ThreadEventService } from './thread-event.service';
 
 @Injectable()
@@ -106,7 +114,8 @@ export class WhatsappIdentityService {
       (value) => this.isWhatsappLidJid(value),
     );
 
-    const resolvedActor = pnJid || contactRow?.actorExternalId || actorExternalId || lidJid || null;
+    const resolvedActor =
+      pnJid || contactRow?.actorExternalId || actorExternalId || lidJid || null;
     const resolvedPhone =
       phone ||
       this.extractPhoneFromWhatsappJid(pnJid) ||
@@ -186,7 +195,8 @@ export class WhatsappIdentityService {
         sessionId: identity.sessionId,
         actorExternalId: identity.actorExternalId,
         objectType: 'WHATSAPP',
-        eventType: input.action === 'block' ? 'WHATSAPP_BLOCKED' : 'WHATSAPP_UNBLOCKED',
+        eventType:
+          input.action === 'block' ? 'WHATSAPP_BLOCKED' : 'WHATSAPP_UNBLOCKED',
         eventSource: 'HUMAN',
         provider: 'BAILEYS',
         metadata: { identity, gatewayResult },
@@ -194,7 +204,13 @@ export class WhatsappIdentityService {
       });
     }
 
-    return { success: true, action: input.action, blockStatus, identity, gatewayResult };
+    return {
+      success: true,
+      action: input.action,
+      blockStatus,
+      identity,
+      gatewayResult,
+    };
   }
 
   async listWhatsappAdLeadStats(input: { sourceId?: string; limit?: number }) {

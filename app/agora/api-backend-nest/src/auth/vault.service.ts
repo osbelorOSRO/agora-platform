@@ -36,9 +36,9 @@ export class VaultService implements IVaultGateway {
       throw new Error('No se pudo obtener token de Vault');
     }
 
-    this.tokenExpiresAt = Date.now() + (response.auth.lease_duration * 1000);
+    this.tokenExpiresAt = Date.now() + response.auth.lease_duration * 1000;
     this.logger.log('Autenticación exitosa con Vault');
-    
+
     return response.auth.client_token;
   }
 
@@ -66,7 +66,12 @@ export class VaultService implements IVaultGateway {
       this.logger.debug(`Leyendo secreto de Vault: ${path}`);
       const secret = await this.vault.read(`secret/data/${path}`);
 
-      if (!secret || !secret.data || !secret.data.data || !secret.data.data[field]) {
+      if (
+        !secret ||
+        !secret.data ||
+        !secret.data.data ||
+        !secret.data.data[field]
+      ) {
         throw new Error(`Vault no contiene el campo ${field} en path ${path}`);
       }
 

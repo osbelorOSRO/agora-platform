@@ -1,10 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import {
-  Q_META_MESSAGES,
-  Q_META_CHANGES,
-} from '../../queues/queues.constants';
+import { Q_META_MESSAGES, Q_META_CHANGES } from '../../queues/queues.constants';
 import {
   MetaWebhookPayload,
   MetaMessagingEvent,
@@ -45,7 +42,9 @@ export class MetaService {
 
       const changeEvents = entry.changes || [];
       for (const change of changeEvents) {
-        this.logger.log(`FLOW[INGRESS] change event field=${change?.field || 'unknown'}`);
+        this.logger.log(
+          `FLOW[INGRESS] change event field=${change?.field || 'unknown'}`,
+        );
         this.logger.log(`FLOW[RAW][CHANGE] ${JSON.stringify(change)}`);
         await this.processChangeEvent(change, objectType);
       }
@@ -61,7 +60,10 @@ export class MetaService {
    * MESSAGING EVENTS
    * ==================================
    */
-  private async processMessagingEvent(event: MetaMessagingEvent, objectType: 'PAGE' | 'INSTAGRAM') {
+  private async processMessagingEvent(
+    event: MetaMessagingEvent,
+    objectType: 'PAGE' | 'INSTAGRAM',
+  ) {
     const senderId = event?.sender?.id || 'unknown';
     const recipientId = event?.recipient?.id || 'unknown';
     const eventKind = this.detectMessagingKind(event);
@@ -82,13 +84,17 @@ export class MetaService {
       'take_thread_control',
       'request_thread_control',
     ]);
-    const unknownKeys = Object.keys(event || {}).filter((key) => !knownKeys.has(key));
+    const unknownKeys = Object.keys(event || {}).filter(
+      (key) => !knownKeys.has(key),
+    );
 
     if (eventKind === 'unknown' || unknownKeys.length > 0) {
       this.logger.warn(
         `FLOW[MESSAGING][UNMAPPED] eventKind=${eventKind} unknownKeys=${unknownKeys.join(',') || 'none'}`,
       );
-      this.logger.warn(`FLOW[MESSAGING][UNMAPPED_RAW] ${JSON.stringify(event)}`);
+      this.logger.warn(
+        `FLOW[MESSAGING][UNMAPPED_RAW] ${JSON.stringify(event)}`,
+      );
     }
 
     const message = event?.message || {};
@@ -103,9 +109,7 @@ export class MetaService {
     );
     const messageSource = isCommentLinked ? 'post_comment_ref' : 'inbox_dm';
 
-    const primaryMid =
-      message?.mid ||
-      event?.reaction?.mid;
+    const primaryMid = message?.mid || event?.reaction?.mid;
 
     const externalEventId = this.buildMessagingExternalEventId({
       event,
@@ -129,7 +133,9 @@ export class MetaService {
             isEcho: Boolean(message.is_echo),
             appId: message.app_id,
             hasAttachments: attachments.length > 0,
-            attachmentTypes: attachments.map((item) => item?.type).filter(Boolean),
+            attachmentTypes: attachments
+              .map((item) => item?.type)
+              .filter(Boolean),
             attachmentUrls,
             isCommentLinked,
             messageSource,
@@ -212,20 +218,18 @@ export class MetaService {
    * CHANGE EVENTS
    * ==================================
    */
-  private async processChangeEvent(change: MetaChangeEvent, objectType: 'PAGE' | 'INSTAGRAM') {
-
+  private async processChangeEvent(
+    change: MetaChangeEvent,
+    objectType: 'PAGE' | 'INSTAGRAM',
+  ) {
     const field = change.field;
     const value = change.value;
 
     this.logger.log(`📡 Evento CHANGE recibido: ${field}`);
 
-    const actorId =
-      value?.sender_id ||
-      value?.from?.id ||
-      'unknown';
+    const actorId = value?.sender_id || value?.from?.id || 'unknown';
 
-    const externalId =
-      `${field}:${actorId}:${value?.created_time || Date.now()}`;
+    const externalId = `${field}:${actorId}:${value?.created_time || Date.now()}`;
 
     await this.changesQueue.add(
       'meta.change',
@@ -244,7 +248,9 @@ export class MetaService {
         jobId: externalId,
       },
     );
-    this.logger.log(`FLOW[QUEUE] meta.change enqueued externalEventId=${externalId}`);
+    this.logger.log(
+      `FLOW[QUEUE] meta.change enqueued externalEventId=${externalId}`,
+    );
 
     switch (field) {
       case 'message_reactions':
@@ -266,5 +272,4 @@ export class MetaService {
         this.logger.warn(`⚠️ Field no manejado: ${field}`);
     }
   }
-
 }

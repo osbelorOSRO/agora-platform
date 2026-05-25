@@ -43,13 +43,23 @@ describe('MetaConfigController', () => {
   describe('GET /meta-config', () => {
     it('returns 200 with config (sensitive fields masked)', async () => {
       app = await buildApp(superadminGuard);
-      mockService.get.mockResolvedValue({ app_id: '123', app_secret: '***', display_name: 'Agora' });
-      const res = await request(app.getHttpServer()).get('/meta-config').expect(200);
+      mockService.get.mockResolvedValue({
+        app_id: '123',
+        app_secret: '***',
+        display_name: 'Agora',
+      });
+      const res = await request(app.getHttpServer())
+        .get('/meta-config')
+        .expect(200);
       expect(res.body).toHaveProperty('app_id');
     });
 
     it('returns 401 when token is absent', async () => {
-      app = await buildApp({ canActivate: () => { throw new UnauthorizedException(); } });
+      app = await buildApp({
+        canActivate: () => {
+          throw new UnauthorizedException();
+        },
+      });
       await request(app.getHttpServer()).get('/meta-config').expect(401);
     });
   });
@@ -60,14 +70,22 @@ describe('MetaConfigController', () => {
     it('returns 200 with revealed field value', async () => {
       app = await buildApp(superadminGuard);
       mockService.reveal.mockResolvedValue('secret_value_xyz');
-      const res = await request(app.getHttpServer()).get('/meta-config/reveal/app_secret').expect(200);
+      const res = await request(app.getHttpServer())
+        .get('/meta-config/reveal/app_secret')
+        .expect(200);
       expect(res.body).toHaveProperty('value', 'secret_value_xyz');
       expect(mockService.reveal).toHaveBeenCalledWith('app_secret');
     });
 
     it('returns 401 when token is absent', async () => {
-      app = await buildApp({ canActivate: () => { throw new UnauthorizedException(); } });
-      await request(app.getHttpServer()).get('/meta-config/reveal/app_secret').expect(401);
+      app = await buildApp({
+        canActivate: () => {
+          throw new UnauthorizedException();
+        },
+      });
+      await request(app.getHttpServer())
+        .get('/meta-config/reveal/app_secret')
+        .expect(401);
     });
   });
 
@@ -82,23 +100,38 @@ describe('MetaConfigController', () => {
         .send({ display_name: 'Agora V2' })
         .expect(200);
       expect(res.body).toHaveProperty('display_name', 'Agora V2');
-      expect(mockService.upsert).toHaveBeenCalledWith(expect.objectContaining({ display_name: 'Agora V2' }));
+      expect(mockService.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ display_name: 'Agora V2' }),
+      );
     });
 
     it('returns 400 when unknown field is sent', async () => {
       app = await buildApp(superadminGuard);
-      await request(app.getHttpServer()).patch('/meta-config').send({ campo_inexistente: 'valor' }).expect(400);
+      await request(app.getHttpServer())
+        .patch('/meta-config')
+        .send({ campo_inexistente: 'valor' })
+        .expect(400);
     });
 
     it('returns 200 with empty body (all fields optional)', async () => {
       app = await buildApp(superadminGuard);
       mockService.upsert.mockResolvedValue({});
-      await request(app.getHttpServer()).patch('/meta-config').send({}).expect(200);
+      await request(app.getHttpServer())
+        .patch('/meta-config')
+        .send({})
+        .expect(200);
     });
 
     it('returns 401 when token is absent', async () => {
-      app = await buildApp({ canActivate: () => { throw new UnauthorizedException(); } });
-      await request(app.getHttpServer()).patch('/meta-config').send({ display_name: 'X' }).expect(401);
+      app = await buildApp({
+        canActivate: () => {
+          throw new UnauthorizedException();
+        },
+      });
+      await request(app.getHttpServer())
+        .patch('/meta-config')
+        .send({ display_name: 'X' })
+        .expect(401);
     });
   });
 });

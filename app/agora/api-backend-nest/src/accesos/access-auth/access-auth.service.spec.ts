@@ -1,5 +1,9 @@
 import { Test } from '@nestjs/testing';
-import { BadRequestException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AccessAuthService } from './access-auth.service';
 import { PrismaService } from '../../database/prisma/prisma.service';
 import { AuthService } from '../../auth/auth.service';
@@ -23,9 +27,9 @@ jest.mock('speakeasy', () => ({
   otpauthURL: jest.fn(),
 }));
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const bcrypt = require('bcryptjs');
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const speakeasy = require('speakeasy');
 
 const baseUsuario = {
@@ -58,7 +62,9 @@ function buildPrismaMock() {
 }
 
 async function buildModule(prismaMock: ReturnType<typeof buildPrismaMock>) {
-  const authServiceMock = { firmarToken: jest.fn().mockResolvedValue('jwt-token') };
+  const authServiceMock = {
+    firmarToken: jest.fn().mockResolvedValue('jwt-token'),
+  };
   const module = await Test.createTestingModule({
     providers: [
       AccessAuthService,
@@ -83,34 +89,40 @@ describe('AccessAuthService', () => {
     it('lanza UnauthorizedException cuando el usuario no existe', async () => {
       prisma.usuarios.findUnique.mockResolvedValue(null);
 
-      await expect(service.login('testuser', 'pass', '123456', '127.0.0.1', 'agent')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.login('testuser', 'pass', '123456', '127.0.0.1', 'agent'),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('lanza UnauthorizedException cuando el usuario está cancelado', async () => {
-      prisma.usuarios.findUnique.mockResolvedValue({ ...baseUsuario, cancelado: true });
+      prisma.usuarios.findUnique.mockResolvedValue({
+        ...baseUsuario,
+        cancelado: true,
+      });
 
-      await expect(service.login('testuser', 'pass', '123456', '127.0.0.1', 'agent')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.login('testuser', 'pass', '123456', '127.0.0.1', 'agent'),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('lanza ForbiddenException cuando el usuario está bloqueado', async () => {
-      prisma.usuarios.findUnique.mockResolvedValue({ ...baseUsuario, bloqueado: true });
+      prisma.usuarios.findUnique.mockResolvedValue({
+        ...baseUsuario,
+        bloqueado: true,
+      });
 
-      await expect(service.login('testuser', 'pass', '123456', '127.0.0.1', 'agent')).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(
+        service.login('testuser', 'pass', '123456', '127.0.0.1', 'agent'),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('lanza UnauthorizedException y registra intento fallido cuando la contraseña es incorrecta', async () => {
       prisma.usuarios.findUnique.mockResolvedValue({ ...baseUsuario });
-      bcrypt.compare.mockResolvedValue(false);
+      bcrypt.default.compare.mockResolvedValue(false);
 
-      await expect(service.login('testuser', 'wrongpass', '123456', '127.0.0.1', 'agent')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.login('testuser', 'wrongpass', '123456', '127.0.0.1', 'agent'),
+      ).rejects.toThrow(UnauthorizedException);
       expect(prisma.usuarios.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: { login_attempts: { increment: 1 } } }),
       );
@@ -118,12 +130,12 @@ describe('AccessAuthService', () => {
 
     it('lanza UnauthorizedException y registra intento fallido cuando el token 2FA es inválido', async () => {
       prisma.usuarios.findUnique.mockResolvedValue({ ...baseUsuario });
-      bcrypt.compare.mockResolvedValue(true);
-      speakeasy.totp.verify.mockReturnValue(false);
+      bcrypt.default.compare.mockResolvedValue(true);
+      speakeasy.default.totp.verify.mockReturnValue(false);
 
-      await expect(service.login('testuser', 'pass', '000000', '127.0.0.1', 'agent')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.login('testuser', 'pass', '000000', '127.0.0.1', 'agent'),
+      ).rejects.toThrow(UnauthorizedException);
       expect(prisma.usuarios.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: { login_attempts: { increment: 1 } } }),
       );
@@ -131,10 +143,16 @@ describe('AccessAuthService', () => {
 
     it('devuelve token y datos del usuario en login exitoso', async () => {
       prisma.usuarios.findUnique.mockResolvedValue({ ...baseUsuario });
-      bcrypt.compare.mockResolvedValue(true);
-      speakeasy.totp.verify.mockReturnValue(true);
+      bcrypt.default.compare.mockResolvedValue(true);
+      speakeasy.default.totp.verify.mockReturnValue(true);
 
-      const result = await service.login('testuser', 'pass', '123456', '127.0.0.1', 'agent');
+      const result = await service.login(
+        'testuser',
+        'pass',
+        '123456',
+        '127.0.0.1',
+        'agent',
+      );
 
       expect(result.token).toBe('jwt-token');
       expect(result.usuario.username).toBe('testuser');
@@ -145,17 +163,22 @@ describe('AccessAuthService', () => {
     });
 
     it('bloquea la cuenta cuando se alcanza el límite de intentos fallidos', async () => {
-      prisma.usuarios.findUnique.mockResolvedValue({ ...baseUsuario, login_attempts: 4 });
+      prisma.usuarios.findUnique.mockResolvedValue({
+        ...baseUsuario,
+        login_attempts: 4,
+      });
       prisma.usuarios.update
         .mockResolvedValueOnce({ login_attempts: 5 })
         .mockResolvedValue({});
-      bcrypt.compare.mockResolvedValue(false);
+      bcrypt.default.compare.mockResolvedValue(false);
 
-      await expect(service.login('testuser', 'wrongpass', '123456', '127.0.0.1', 'agent')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.login('testuser', 'wrongpass', '123456', '127.0.0.1', 'agent'),
+      ).rejects.toThrow(UnauthorizedException);
       expect(prisma.usuarios.update).toHaveBeenCalledWith(
-        expect.objectContaining({ data: { bloqueado: true, bloqueado_en: expect.any(Date) } }),
+        expect.objectContaining({
+          data: { bloqueado: true, bloqueado_en: expect.any(Date) },
+        }),
       );
     });
   });
@@ -192,7 +215,11 @@ describe('AccessAuthService', () => {
     });
 
     it('lanza ForbiddenException cuando el usuario no tiene token de reset', async () => {
-      prisma.usuarios.findUnique.mockResolvedValue({ id: 1, reset_token: null, reset_token_expires: null });
+      prisma.usuarios.findUnique.mockResolvedValue({
+        id: 1,
+        reset_token: null,
+        reset_token_expires: null,
+      });
 
       await expect(
         service.resetPassword('testuser', 'token', 'pass1', 'pass1'),

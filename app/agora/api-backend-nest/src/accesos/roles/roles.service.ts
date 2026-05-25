@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma/prisma.service';
 
@@ -19,8 +23,10 @@ export class RolesService {
       id: r.id,
       nombre: r.nombre,
       permisos: r.rol_permiso.map((rp) => rp.permiso.id),
-      creado_por_username: r.usuarios_rol_creado_por_idTousuarios?.username ?? null,
-      actualizado_por_username: r.usuarios_rol_actualizado_por_idTousuarios?.username ?? null,
+      creado_por_username:
+        r.usuarios_rol_creado_por_idTousuarios?.username ?? null,
+      actualizado_por_username:
+        r.usuarios_rol_actualizado_por_idTousuarios?.username ?? null,
       creado_en: r.creado_en,
       actualizado_en: r.actualizado_en,
     };
@@ -34,7 +40,10 @@ export class RolesService {
   }
 
   async obtenerRolPorId(id: number) {
-    const rol = await this.prisma.rol.findUnique({ where: { id }, include: this.include });
+    const rol = await this.prisma.rol.findUnique({
+      where: { id },
+      include: this.include,
+    });
     if (!rol) throw new NotFoundException('Rol no encontrado');
     return this.mapRol(rol);
   }
@@ -42,7 +51,11 @@ export class RolesService {
   async crearRol(nombre: string, permisos: number[], actorId?: number) {
     if (typeof nombre !== 'string' || nombre.length < 1 || nombre.length > 100)
       throw new BadRequestException('nombre inválido');
-    if (!Array.isArray(permisos) || permisos.length > 100 || permisos.some((p) => typeof p !== 'number' || !Number.isInteger(p)))
+    if (
+      !Array.isArray(permisos) ||
+      permisos.length > 100 ||
+      permisos.some((p) => typeof p !== 'number' || !Number.isInteger(p))
+    )
       throw new BadRequestException('permisos inválidos');
 
     const nuevo = await this.prisma.rol.create({
@@ -50,17 +63,30 @@ export class RolesService {
         nombre,
         creado_por_id: actorId ?? undefined,
         actualizado_por_id: actorId ?? undefined,
-        rol_permiso: { create: permisos.map((permisoId) => ({ permiso: { connect: { id: permisoId } } })) },
+        rol_permiso: {
+          create: permisos.map((permisoId) => ({
+            permiso: { connect: { id: permisoId } },
+          })),
+        },
       },
       include: this.include,
     });
     return this.mapRol(nuevo);
   }
 
-  async actualizarRol(id: number, nombre: string, permisos: number[], actorId?: number) {
+  async actualizarRol(
+    id: number,
+    nombre: string,
+    permisos: number[],
+    actorId?: number,
+  ) {
     if (typeof nombre !== 'string' || nombre.length < 1 || nombre.length > 100)
       throw new BadRequestException('nombre inválido');
-    if (!Array.isArray(permisos) || permisos.length > 100 || permisos.some((p) => typeof p !== 'number' || !Number.isInteger(p)))
+    if (
+      !Array.isArray(permisos) ||
+      permisos.length > 100 ||
+      permisos.some((p) => typeof p !== 'number' || !Number.isInteger(p))
+    )
       throw new BadRequestException('permisos inválidos');
 
     await this.prisma.rol_permiso.deleteMany({ where: { rol_id: id } });
@@ -69,7 +95,11 @@ export class RolesService {
       data: {
         nombre,
         actualizado_por_id: actorId ?? undefined,
-        rol_permiso: { create: permisos.map((permisoId) => ({ permiso: { connect: { id: permisoId } } })) },
+        rol_permiso: {
+          create: permisos.map((permisoId) => ({
+            permiso: { connect: { id: permisoId } },
+          })),
+        },
       },
       include: this.include,
     });

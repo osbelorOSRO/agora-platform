@@ -31,7 +31,7 @@ export class MetaController {
    * =========================
    * 🔐 Verificación Webhook
    * =========================
-  */
+   */
   @Get()
   @UsePipes(
     new ValidationPipe({
@@ -41,13 +41,13 @@ export class MetaController {
       transformOptions: { enableImplicitConversion: true },
     }),
   )
-  async verify(@Query() query: VerifyMetaWebhookQueryDto, @Res() res: Response) {
+  async verify(
+    @Query() query: VerifyMetaWebhookQueryDto,
+    @Res() res: Response,
+  ) {
     const verifyToken = await getRuntimeSecret('META_VERIFY_TOKEN');
     const verifyIgToken = await getRuntimeSecret('META_IG_VERIFY_TOKEN');
-    const VERIFY_TOKENS = [
-      verifyToken,
-      verifyIgToken,
-    ];
+    const VERIFY_TOKENS = [verifyToken, verifyIgToken];
 
     if (
       query['hub.mode'] === 'subscribe' &&
@@ -74,7 +74,9 @@ export class MetaController {
   ) {
     await this.assertMetaSignature(signature, req.rawBody);
 
-    this.logger.debug(`Webhook Meta recibido: object=${body?.object} entries=${Array.isArray(body?.entry) ? body.entry.length : 0}`);
+    this.logger.debug(
+      `Webhook Meta recibido: object=${body?.object} entries=${Array.isArray(body?.entry) ? body.entry.length : 0}`,
+    );
 
     void this.metaService.handleEvent(body).catch((error) => {
       this.logger.error('Error procesando evento Meta', error?.stack || error);
@@ -83,7 +85,10 @@ export class MetaController {
     return 'EVENT_RECEIVED';
   }
 
-  private async assertMetaSignature(signature: string | undefined, rawBody?: Buffer) {
+  private async assertMetaSignature(
+    signature: string | undefined,
+    rawBody?: Buffer,
+  ) {
     if (!signature?.startsWith('sha256=') || !rawBody?.length) {
       throw new UnauthorizedException('Firma Meta requerida');
     }

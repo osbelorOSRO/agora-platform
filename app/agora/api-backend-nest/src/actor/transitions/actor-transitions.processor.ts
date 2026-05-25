@@ -31,14 +31,21 @@ export class ActorTransitionsProcessor extends WorkerHost {
       });
 
       if (!last) {
-        this.logger.warn(`FLOW[TRANSITION] actor without lifecycle actorExternalId=${actorExternalId}`);
+        this.logger.warn(
+          `FLOW[TRANSITION] actor without lifecycle actorExternalId=${actorExternalId}`,
+        );
         return;
       }
 
       const currentState = last.state as ActorLifecycleState;
 
-      if (currentState === ActorLifecycleState.QUALIFIED || currentState === ActorLifecycleState.BLOCKED) {
-        this.logger.log(`FLOW[TRANSITION] already terminal actorExternalId=${actorExternalId}`);
+      if (
+        currentState === ActorLifecycleState.QUALIFIED ||
+        currentState === ActorLifecycleState.BLOCKED
+      ) {
+        this.logger.log(
+          `FLOW[TRANSITION] already terminal actorExternalId=${actorExternalId}`,
+        );
         return;
       }
 
@@ -49,14 +56,22 @@ export class ActorTransitionsProcessor extends WorkerHost {
 
       const score = Number(scoreRow?.score ?? 0);
 
-      const nextState = await this.transitionRules.resolveNextState(tx, score, currentState);
+      const nextState = await this.transitionRules.resolveNextState(
+        tx,
+        score,
+        currentState,
+      );
 
       if (!nextState) {
-        this.logger.log(`FLOW[TRANSITION] no transition actorExternalId=${actorExternalId}`);
+        this.logger.log(
+          `FLOW[TRANSITION] no transition actorExternalId=${actorExternalId}`,
+        );
         return;
       }
       if (nextState === currentState) {
-        this.logger.log(`FLOW[TRANSITION] unchanged state=${currentState} actorExternalId=${actorExternalId}`);
+        this.logger.log(
+          `FLOW[TRANSITION] unchanged state=${currentState} actorExternalId=${actorExternalId}`,
+        );
         return;
       }
 

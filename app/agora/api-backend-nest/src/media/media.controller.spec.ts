@@ -10,15 +10,12 @@ const N8N_TOKEN = 'test-n8n-token';
 
 // Minimal 1×1 PNG
 const TINY_PNG = Buffer.from([
-  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
-  0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,
-  0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
-  0x08, 0x02, 0x00, 0x00, 0x00, 0x90, 0x77, 0x53,
-  0xde, 0x00, 0x00, 0x00, 0x0c, 0x49, 0x44, 0x41,
-  0x54, 0x08, 0xd7, 0x63, 0xf8, 0xcf, 0xc0, 0x00,
-  0x00, 0x00, 0x02, 0x00, 0x01, 0xe2, 0x21, 0xbc,
-  0x33, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e,
-  0x44, 0xae, 0x42, 0x60, 0x82,
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49,
+  0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x02,
+  0x00, 0x00, 0x00, 0x90, 0x77, 0x53, 0xde, 0x00, 0x00, 0x00, 0x0c, 0x49, 0x44,
+  0x41, 0x54, 0x08, 0xd7, 0x63, 0xf8, 0xcf, 0xc0, 0x00, 0x00, 0x00, 0x02, 0x00,
+  0x01, 0xe2, 0x21, 0xbc, 0x33, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44,
+  0xae, 0x42, 0x60, 0x82,
 ]);
 
 const mockConfig = {
@@ -44,7 +41,14 @@ async function buildApp(): Promise<INestApplication> {
   }).compile();
 
   const app = module.createNestApplication();
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true, transformOptions: { enableImplicitConversion: true } }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+    }),
+  );
   await app.init();
   return app;
 }
@@ -62,13 +66,18 @@ describe('MediaController', () => {
 
   describe('POST /media/guardar', () => {
     it('devuelve 201 con archivo PNG válido y token interno correcto', async () => {
-      mockService.procesarArchivo.mockResolvedValue({ url: 'https://minio.example.com/img.png' });
+      mockService.procesarArchivo.mockResolvedValue({
+        url: 'https://minio.example.com/img.png',
+      });
       const res = await request(app.getHttpServer())
         .post('/media/guardar')
         .set('x-internal-token', INTERNAL_TOKEN)
         .field('actorId', 'actor-001')
         .field('tipo', 'imagen')
-        .attach('archivo', TINY_PNG, { filename: 'foto.png', contentType: 'image/png' })
+        .attach('archivo', TINY_PNG, {
+          filename: 'foto.png',
+          contentType: 'image/png',
+        })
         .expect(201);
       expect(res.body).toHaveProperty('url');
       expect(mockService.procesarArchivo).toHaveBeenCalledTimes(1);
@@ -88,7 +97,10 @@ describe('MediaController', () => {
         .post('/media/guardar')
         .set('x-internal-token', INTERNAL_TOKEN)
         .field('tipo', 'imagen')
-        .attach('archivo', TINY_PNG, { filename: 'foto.png', contentType: 'image/png' })
+        .attach('archivo', TINY_PNG, {
+          filename: 'foto.png',
+          contentType: 'image/png',
+        })
         .expect(400);
     });
 
@@ -98,7 +110,10 @@ describe('MediaController', () => {
         .set('x-internal-token', INTERNAL_TOKEN)
         .field('actorId', 'actor-001')
         .field('tipo', 'sticker')
-        .attach('archivo', TINY_PNG, { filename: 'foto.png', contentType: 'image/png' })
+        .attach('archivo', TINY_PNG, {
+          filename: 'foto.png',
+          contentType: 'image/png',
+        })
         .expect(400);
     });
 
@@ -108,7 +123,10 @@ describe('MediaController', () => {
         .set('x-internal-token', 'token-equivocado')
         .field('actorId', 'actor-001')
         .field('tipo', 'imagen')
-        .attach('archivo', TINY_PNG, { filename: 'foto.png', contentType: 'image/png' })
+        .attach('archivo', TINY_PNG, {
+          filename: 'foto.png',
+          contentType: 'image/png',
+        })
         .expect(403);
     });
 
@@ -117,7 +135,10 @@ describe('MediaController', () => {
         .post('/media/guardar')
         .field('actorId', 'actor-001')
         .field('tipo', 'imagen')
-        .attach('archivo', TINY_PNG, { filename: 'foto.png', contentType: 'image/png' })
+        .attach('archivo', TINY_PNG, {
+          filename: 'foto.png',
+          contentType: 'image/png',
+        })
         .expect(403);
     });
   });
@@ -126,11 +147,16 @@ describe('MediaController', () => {
 
   describe('POST /media/upload-tts', () => {
     it('devuelve 201 con archivo y token N8N correcto', async () => {
-      mockService.procesarTts.mockResolvedValue({ url: 'https://minio.example.com/tts.ogg' });
+      mockService.procesarTts.mockResolvedValue({
+        url: 'https://minio.example.com/tts.ogg',
+      });
       const res = await request(app.getHttpServer())
         .post('/media/upload-tts')
         .set('authorization', `Bearer ${N8N_TOKEN}`)
-        .attach('file', TINY_PNG, { filename: 'audio.png', contentType: 'image/png' })
+        .attach('file', TINY_PNG, {
+          filename: 'audio.png',
+          contentType: 'image/png',
+        })
         .expect(201);
       expect(res.body).toHaveProperty('url');
       expect(mockService.procesarTts).toHaveBeenCalledTimes(1);
@@ -147,14 +173,20 @@ describe('MediaController', () => {
       await request(app.getHttpServer())
         .post('/media/upload-tts')
         .set('authorization', 'Bearer token-equivocado')
-        .attach('file', TINY_PNG, { filename: 'audio.png', contentType: 'image/png' })
+        .attach('file', TINY_PNG, {
+          filename: 'audio.png',
+          contentType: 'image/png',
+        })
         .expect(401);
     });
 
     it('devuelve 401 sin header de autorización', async () => {
       await request(app.getHttpServer())
         .post('/media/upload-tts')
-        .attach('file', TINY_PNG, { filename: 'audio.png', contentType: 'image/png' })
+        .attach('file', TINY_PNG, {
+          filename: 'audio.png',
+          contentType: 'image/png',
+        })
         .expect(401);
     });
   });

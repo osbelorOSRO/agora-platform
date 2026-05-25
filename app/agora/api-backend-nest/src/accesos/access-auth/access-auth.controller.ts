@@ -17,30 +17,54 @@ export class AccessAuthController {
   login(@Body() body: LoginDto, @Req() req: Request) {
     const ip = req.ip ?? '0.0.0.0';
     const userAgent = req.headers['user-agent'] ?? 'desconocido';
-    return this.service.login(body.username, body.password, body.token_2fa, ip, userAgent);
+    return this.service.login(
+      body.username,
+      body.password,
+      body.token_2fa,
+      ip,
+      userAgent,
+    );
   }
 
   @Post('registrar-usuario')
   @HttpCode(201)
   registrarUsuario(@Body() body: RegisterUserDto) {
-    return this.service.registrarUsuario(body.username, body.invitationToken, body.password, body.confirmarPassword);
+    return this.service.registrarUsuario(
+      body.username,
+      body.invitationToken,
+      body.password,
+      body.confirmarPassword,
+    );
   }
 
   @Post('reset-password')
   @HttpCode(200)
   resetPassword(@Body() body: ResetPasswordDto) {
-    return this.service.resetPassword(body.username, body.resetToken, body.newPassword, body.confirmarPassword);
+    return this.service.resetPassword(
+      body.username,
+      body.resetToken,
+      body.newPassword,
+      body.confirmarPassword,
+    );
   }
 
   @Post('setup-2fa/init')
   @HttpCode(200)
   setup2FAInit(@Body() body: Setup2FAInitDto) {
-    return this.service.setup2FAInit(body.username, body.password, body.bypassToken);
+    return this.service.setup2FAInit(
+      body.username,
+      body.password,
+      body.bypassToken,
+    );
   }
 
   @Post('setup-2fa/confirmar')
   @HttpCode(200)
   setup2FAConfirmar(@Body() body: Setup2FAConfirmDto) {
-    return this.service.setup2FAConfirmar(body.username, body.bypassToken, body.totpCode);
+    return this.service.setup2FAConfirmar(
+      body.username,
+      body.bypassToken,
+      body.totpCode,
+    );
   }
 }

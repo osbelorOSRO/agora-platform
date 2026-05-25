@@ -42,7 +42,10 @@ export async function getRuntimeSecret(
   opts?: { path?: string; field?: string },
 ): Promise<string> {
   if (META_DB_FIELDS.has(envKey)) {
-    if (!metaConfigService) throw new Error(`MetaConfigService no inicializado — no se puede resolver ${envKey}`);
+    if (!metaConfigService)
+      throw new Error(
+        `MetaConfigService no inicializado — no se puede resolver ${envKey}`,
+      );
     const dbField = META_DB_KEY_MAP[envKey];
     const value = await metaConfigService.getSecret(dbField);
     if (!value) throw new Error(`missing_meta_config:${dbField}`);

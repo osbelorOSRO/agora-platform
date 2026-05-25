@@ -25,7 +25,9 @@ async function buildService(): Promise<ReportsService> {
 describe('ReportsService', () => {
   let svc: ReportsService;
 
-  beforeAll(async () => { svc = await buildService(); });
+  beforeAll(async () => {
+    svc = await buildService();
+  });
   beforeEach(() => jest.clearAllMocks());
 
   // ──────────────────────────────────────────────
@@ -37,7 +39,11 @@ describe('ReportsService', () => {
       const result = svc.catalogo();
       expect(result).toHaveLength(5);
       expect(result.map((r) => r.id)).toEqual([
-        'procesos', 'desempeno', 'procesos-semanales', 'precios-planes', 'clientes-info',
+        'procesos',
+        'desempeno',
+        'procesos-semanales',
+        'precios-planes',
+        'clientes-info',
       ]);
     });
 
@@ -83,11 +89,15 @@ describe('ReportsService', () => {
     });
 
     it('lanza BadRequestException cuando "desde" tiene formato inválido', async () => {
-      await expect(svc.procesos({ desde: 'no-es-fecha' })).rejects.toBeInstanceOf(BadRequestException);
+      await expect(
+        svc.procesos({ desde: 'no-es-fecha' }),
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
 
     it('lanza BadRequestException cuando "hasta" tiene formato inválido', async () => {
-      await expect(svc.procesos({ hasta: 'invalida' })).rejects.toBeInstanceOf(BadRequestException);
+      await expect(svc.procesos({ hasta: 'invalida' })).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
     });
 
     it('no lanza cuando "desde" y "hasta" están ausentes', async () => {
@@ -124,12 +134,14 @@ describe('ReportsService', () => {
     });
 
     it('enriquece filas con datos de contacto cuando existe el contacto', async () => {
-      mockPrisma.meta_inbox_contacts.findMany.mockResolvedValue([{
-        actor_external_id: '56912345678',
-        object_type: 'WHATSAPP',
-        display_name: 'Juan Pérez',
-        phone: '+56912345678',
-      }]);
+      mockPrisma.meta_inbox_contacts.findMany.mockResolvedValue([
+        {
+          actor_external_id: '56912345678',
+          object_type: 'WHATSAPP',
+          display_name: 'Juan Pérez',
+          phone: '+56912345678',
+        },
+      ]);
 
       const result = await svc.procesos({});
       expect(result.rows[0].actor_nombre).toBe('Juan Pérez');
@@ -142,12 +154,14 @@ describe('ReportsService', () => {
     });
 
     it('enriquece filas con estado del thread cuando existe', async () => {
-      mockPrisma.threads.findMany.mockResolvedValue([{
-        session_id: 'sess-001',
-        thread_status: 'open',
-        attention_mode: 'bot',
-        thread_stage: 'menu',
-      }]);
+      mockPrisma.threads.findMany.mockResolvedValue([
+        {
+          session_id: 'sess-001',
+          thread_status: 'open',
+          attention_mode: 'bot',
+          thread_stage: 'menu',
+        },
+      ]);
 
       const result = await svc.procesos({});
       expect(result.rows[0].thread_status_actual).toBe('open');
@@ -166,11 +180,15 @@ describe('ReportsService', () => {
 
   describe('desempeno()', () => {
     it('lanza BadRequestException cuando falta "desde"', async () => {
-      await expect(svc.desempeno({ hasta: '2024-01-31' })).rejects.toBeInstanceOf(BadRequestException);
+      await expect(
+        svc.desempeno({ hasta: '2024-01-31' }),
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
 
     it('lanza BadRequestException cuando falta "hasta"', async () => {
-      await expect(svc.desempeno({ desde: '2024-01-01' })).rejects.toBeInstanceOf(BadRequestException);
+      await expect(
+        svc.desempeno({ desde: '2024-01-01' }),
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
 
     it('llama a $queryRawUnsafe con fechas como primer y segundo parámetro', async () => {
@@ -183,21 +201,33 @@ describe('ReportsService', () => {
 
     it('agrega filtro de event_source cuando se proporciona', async () => {
       mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
-      await svc.desempeno({ desde: '2024-01-01', hasta: '2024-01-31', event_source: 'n8n' });
+      await svc.desempeno({
+        desde: '2024-01-01',
+        hasta: '2024-01-31',
+        event_source: 'n8n',
+      });
       const sql: string = mockPrisma.$queryRawUnsafe.mock.calls[0][0];
       expect(sql).toContain('e.event_source =');
     });
 
     it('agrega filtro ILIKE de username cuando se proporciona', async () => {
       mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
-      await svc.desempeno({ desde: '2024-01-01', hasta: '2024-01-31', username: 'jgarcia' });
+      await svc.desempeno({
+        desde: '2024-01-01',
+        hasta: '2024-01-31',
+        username: 'jgarcia',
+      });
       const sql: string = mockPrisma.$queryRawUnsafe.mock.calls[0][0];
       expect(sql).toContain('ILIKE');
     });
 
     it('devuelve formato csv cuando se solicita', async () => {
       mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
-      const result = await svc.desempeno({ desde: '2024-01-01', hasta: '2024-01-31', format: 'csv' });
+      const result = await svc.desempeno({
+        desde: '2024-01-01',
+        hasta: '2024-01-31',
+        format: 'csv',
+      });
       expect(result.format).toBe('csv');
     });
   });
@@ -218,12 +248,17 @@ describe('ReportsService', () => {
     };
 
     it('lanza BadRequestException cuando faltan "desde" y "hasta"', async () => {
-      await expect(svc.procesosSemanales({})).rejects.toBeInstanceOf(BadRequestException);
+      await expect(svc.procesosSemanales({})).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
     });
 
     it('convierte BigInt a número en las filas de resultado', async () => {
       mockPrisma.$queryRaw.mockResolvedValue([rawRow]);
-      const result = await svc.procesosSemanales({ desde: '2024-01-01', hasta: '2024-01-31' });
+      const result = await svc.procesosSemanales({
+        desde: '2024-01-01',
+        hasta: '2024-01-31',
+      });
       expect(typeof result.rows[0].total_eventos).toBe('number');
       expect(result.rows[0].total_eventos).toBe(42);
       expect(result.rows[0].threads_distintos).toBe(8);
@@ -231,14 +266,22 @@ describe('ReportsService', () => {
 
     it('convierte fechas Date a string YYYY-MM-DD', async () => {
       mockPrisma.$queryRaw.mockResolvedValue([rawRow]);
-      const result = await svc.procesosSemanales({ desde: '2024-01-01', hasta: '2024-01-31' });
+      const result = await svc.procesosSemanales({
+        desde: '2024-01-01',
+        hasta: '2024-01-31',
+      });
       expect(result.rows[0].semana_inicio).toBe('2024-01-15');
       expect(result.rows[0].semana_fin).toBe('2024-01-21');
     });
 
     it('preserva valores no-Date en semana_inicio/semana_fin', async () => {
-      mockPrisma.$queryRaw.mockResolvedValue([{ ...rawRow, semana_inicio: '2024-01-15', semana_fin: '2024-01-21' }]);
-      const result = await svc.procesosSemanales({ desde: '2024-01-01', hasta: '2024-01-31' });
+      mockPrisma.$queryRaw.mockResolvedValue([
+        { ...rawRow, semana_inicio: '2024-01-15', semana_fin: '2024-01-21' },
+      ]);
+      const result = await svc.procesosSemanales({
+        desde: '2024-01-01',
+        hasta: '2024-01-31',
+      });
       expect(result.rows[0].semana_inicio).toBe('2024-01-15');
     });
   });
@@ -271,19 +314,23 @@ describe('ReportsService', () => {
     it('aplica filtro de codigo cuando se proporciona', async () => {
       mockPrisma.precios_planes.findMany.mockResolvedValue([]);
       await svc.preciosPlanes({ codigo: 'PLN-50' });
-      const whereArg = mockPrisma.precios_planes.findMany.mock.calls[0][0].where;
+      const whereArg =
+        mockPrisma.precios_planes.findMany.mock.calls[0][0].where;
       expect(whereArg).toHaveProperty('codigo', 'PLN-50');
     });
 
     it('aplica búsqueda insensible a mayúsculas para nombre', async () => {
       mockPrisma.precios_planes.findMany.mockResolvedValue([]);
       await svc.preciosPlanes({ nombre: 'básico' });
-      const whereArg = mockPrisma.precios_planes.findMany.mock.calls[0][0].where;
+      const whereArg =
+        mockPrisma.precios_planes.findMany.mock.calls[0][0].where;
       expect(whereArg.nombre).toHaveProperty('mode', 'insensitive');
     });
 
     it('devuelve precio_base null cuando el registro no tiene precio', async () => {
-      mockPrisma.precios_planes.findMany.mockResolvedValue([{ ...mockPlan, precio_base: null }]);
+      mockPrisma.precios_planes.findMany.mockResolvedValue([
+        { ...mockPlan, precio_base: null },
+      ]);
       const result = await svc.preciosPlanes({});
       expect(result.rows[0].precio_base).toBeNull();
     });
@@ -314,7 +361,9 @@ describe('ReportsService', () => {
     };
 
     it('lanza BadRequestException cuando "desde" tiene formato inválido', async () => {
-      await expect(svc.clientesInfo({ desde: 'mala-fecha' })).rejects.toBeInstanceOf(BadRequestException);
+      await expect(
+        svc.clientesInfo({ desde: 'mala-fecha' }),
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
 
     it('no lanza cuando los filtros de fecha están ausentes', async () => {
@@ -325,14 +374,16 @@ describe('ReportsService', () => {
     it('convierte object_type a mayúsculas en el filtro', async () => {
       mockPrisma.meta_inbox_contacts.findMany.mockResolvedValue([]);
       await svc.clientesInfo({ object_type: 'whatsapp' });
-      const whereArg = mockPrisma.meta_inbox_contacts.findMany.mock.calls[0][0].where;
+      const whereArg =
+        mockPrisma.meta_inbox_contacts.findMany.mock.calls[0][0].where;
       expect(whereArg).toHaveProperty('object_type', 'WHATSAPP');
     });
 
     it('aplica filtro de rut cuando se proporciona', async () => {
       mockPrisma.meta_inbox_contacts.findMany.mockResolvedValue([]);
       await svc.clientesInfo({ rut: '12345678-9' });
-      const whereArg = mockPrisma.meta_inbox_contacts.findMany.mock.calls[0][0].where;
+      const whereArg =
+        mockPrisma.meta_inbox_contacts.findMany.mock.calls[0][0].where;
       expect(whereArg).toHaveProperty('rut', '12345678-9');
     });
 
@@ -352,19 +403,35 @@ describe('ReportsService', () => {
   // ──────────────────────────────────────────────
 
   describe('formatResponse()', () => {
-    const jsonResult = { format: 'json' as const, filename: 'reporte_test', rows: [{ id: 1, nombre: 'X' }] };
-    const csvResult = { format: 'csv' as const, filename: 'reporte_test', rows: [{ id: 1, nombre: 'X' }] };
+    const jsonResult = {
+      format: 'json' as const,
+      filename: 'reporte_test',
+      rows: [{ id: 1, nombre: 'X' }],
+    };
+    const csvResult = {
+      format: 'csv' as const,
+      filename: 'reporte_test',
+      rows: [{ id: 1, nombre: 'X' }],
+    };
 
     it('devuelve body JSON con report, total y rows para formato json', () => {
       const response = svc.formatResponse(jsonResult);
       expect(response.headers).toBeUndefined();
-      expect(response.body).toEqual({ report: 'reporte_test', total: 1, rows: [{ id: 1, nombre: 'X' }] });
+      expect(response.body).toEqual({
+        report: 'reporte_test',
+        total: 1,
+        rows: [{ id: 1, nombre: 'X' }],
+      });
     });
 
     it('devuelve headers CSV y body string para formato csv', () => {
       const response = svc.formatResponse(csvResult);
-      expect(response.headers?.['Content-Type']).toBe('text/csv; charset=utf-8');
-      expect(response.headers?.['Content-Disposition']).toContain('reporte_test.csv');
+      expect(response.headers?.['Content-Type']).toBe(
+        'text/csv; charset=utf-8',
+      );
+      expect(response.headers?.['Content-Disposition']).toContain(
+        'reporte_test.csv',
+      );
       expect(typeof response.body).toBe('string');
       expect(response.body).toContain('id');
       expect(response.body).toContain('nombre');
@@ -377,7 +444,11 @@ describe('ReportsService', () => {
     });
 
     it('genera CSV vacío cuando rows es array vacío', () => {
-      const response = svc.formatResponse({ format: 'csv', filename: 'vacio', rows: [] });
+      const response = svc.formatResponse({
+        format: 'csv',
+        filename: 'vacio',
+        rows: [],
+      });
       expect(response.body).toBe('');
     });
 

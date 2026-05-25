@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
+import { ConfigService } from '@nestjs/config';
 import { BaileysIngressController } from './baileys-ingress.controller';
 import { BaileysIngressService } from './baileys-ingress.service';
 
@@ -24,11 +25,21 @@ const validBody = {
 async function buildApp(): Promise<INestApplication> {
   const module: TestingModule = await Test.createTestingModule({
     controllers: [BaileysIngressController],
-    providers: [{ provide: BaileysIngressService, useValue: mockService }],
+    providers: [
+      { provide: BaileysIngressService, useValue: mockService },
+      { provide: ConfigService, useValue: { get: () => INTERNAL_TOKEN } },
+    ],
   }).compile();
 
   const app = module.createNestApplication();
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true, transformOptions: { enableImplicitConversion: true } }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+    }),
+  );
   await app.init();
   return app;
 }

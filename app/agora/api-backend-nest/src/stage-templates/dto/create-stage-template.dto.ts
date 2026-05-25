@@ -10,9 +10,19 @@ import {
   MinLength,
 } from 'class-validator';
 
-const ACCION_VALUES = ['enviar', 'delegar', 'negociar', 'rechazar', 'avanzar'] as const;
+const ACCION_VALUES = [
+  'enviar',
+  'delegar',
+  'negociar',
+  'rechazar',
+  'avanzar',
+] as const;
 const DECISION_VALUES = ['offer', 'scraper', 'handoff', 'reiniciar'] as const;
-const MODO_DEFAULT_VALUES = ['alta', 'portabilidad_postpago', 'habilitacion'] as const;
+const MODO_DEFAULT_VALUES = [
+  'alta',
+  'portabilidad_postpago',
+  'habilitacion',
+] as const;
 
 export class CreateStageTemplateDto {
   @IsString()

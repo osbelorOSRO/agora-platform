@@ -11,7 +11,10 @@ type TerminalCheck = {
 export class ActorScoringService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getLifecycleState(tx: Prisma.TransactionClient, actorExternalId: string): Promise<TerminalCheck> {
+  async getLifecycleState(
+    tx: Prisma.TransactionClient,
+    actorExternalId: string,
+  ): Promise<TerminalCheck> {
     const last = await tx.actor_lifecycle.findFirst({
       where: { actor_external_id: actorExternalId },
       orderBy: { occurred_at: 'desc' },
@@ -28,13 +31,16 @@ export class ActorScoringService {
    * Inserta delta idempotente (por external_event_id).
    * Solo debe llamarse si NO terminal.
    */
-  async applyDeltaIfNew(tx: Prisma.TransactionClient, input: {
-    actorExternalId: string;
-    externalEventId: string;
-    delta: string; // Decimal as string
-    signalType: string;
-    metadata?: Record<string, unknown>;
-  }) {
+  async applyDeltaIfNew(
+    tx: Prisma.TransactionClient,
+    input: {
+      actorExternalId: string;
+      externalEventId: string;
+      delta: string; // Decimal as string
+      signalType: string;
+      metadata?: Record<string, unknown>;
+    },
+  ) {
     const inserted = await tx.actor_history_score
       .create({
         data: {

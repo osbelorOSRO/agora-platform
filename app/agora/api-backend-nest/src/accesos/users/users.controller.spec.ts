@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, UnauthorizedException, ValidationPipe } from '@nestjs/common';
+import {
+  INestApplication,
+  UnauthorizedException,
+  ValidationPipe,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import request from 'supertest';
 import { UsersController } from './users.controller';
@@ -7,8 +11,18 @@ import { UsersService } from './users.service';
 import { PanelJwtAuthGuard } from '../../auth/panel-jwt-auth.guard';
 import { RequirePermissionGuard } from '../guards/require-permission.guard';
 
-const WITH_PERM = { id: 12, username: 'obeltran', rol: 'superadmin', permisos: ['editar_configuracion'] };
-const WITHOUT_PERM = { id: 19, username: 'fmartinez', rol: 'agente', permisos: [] };
+const WITH_PERM = {
+  id: 12,
+  username: 'obeltran',
+  rol: 'superadmin',
+  permisos: ['editar_configuracion'],
+};
+const WITHOUT_PERM = {
+  id: 19,
+  username: 'fmartinez',
+  rol: 'agente',
+  permisos: [],
+};
 
 const makeAuthGuard = (payload: object) => ({
   canActivate: (ctx: any) => {
@@ -18,7 +32,9 @@ const makeAuthGuard = (payload: object) => ({
 });
 
 const unauthorizedGuard = {
-  canActivate: () => { throw new UnauthorizedException('Token ausente'); },
+  canActivate: () => {
+    throw new UnauthorizedException('Token ausente');
+  },
 };
 
 const mockService = {
@@ -46,7 +62,13 @@ async function buildApp(authGuard: object): Promise<INestApplication> {
     .compile();
 
   const app = module.createNestApplication();
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
   await app.init();
   return app;
 }
@@ -64,35 +86,61 @@ describe('UsersController', () => {
 
     it('returns 201 on valid preregistro', async () => {
       app = await buildApp(makeAuthGuard(WITH_PERM));
-      mockService.preregistrarUsuario.mockResolvedValue({ message: 'ok', invitationToken: 'T123', expiresAt: new Date().toISOString() });
-      const res = await request(app.getHttpServer()).post('/api/auth/preregistrar-usuario').send(validBody).expect(201);
+      mockService.preregistrarUsuario.mockResolvedValue({
+        message: 'ok',
+        invitationToken: 'T123',
+        expiresAt: new Date().toISOString(),
+      });
+      const res = await request(app.getHttpServer())
+        .post('/api/auth/preregistrar-usuario')
+        .send(validBody)
+        .expect(201);
       expect(res.body).toHaveProperty('invitationToken');
-      expect(mockService.preregistrarUsuario).toHaveBeenCalledWith('newuser', 4, 12);
+      expect(mockService.preregistrarUsuario).toHaveBeenCalledWith(
+        'newuser',
+        4,
+        12,
+      );
     });
 
     it('returns 400 when username is missing', async () => {
       app = await buildApp(makeAuthGuard(WITH_PERM));
-      await request(app.getHttpServer()).post('/api/auth/preregistrar-usuario').send({ rolId: 4 }).expect(400);
+      await request(app.getHttpServer())
+        .post('/api/auth/preregistrar-usuario')
+        .send({ rolId: 4 })
+        .expect(400);
     });
 
     it('returns 400 when username has invalid chars', async () => {
       app = await buildApp(makeAuthGuard(WITH_PERM));
-      await request(app.getHttpServer()).post('/api/auth/preregistrar-usuario').send({ username: 'bad user!', rolId: 4 }).expect(400);
+      await request(app.getHttpServer())
+        .post('/api/auth/preregistrar-usuario')
+        .send({ username: 'bad user!', rolId: 4 })
+        .expect(400);
     });
 
     it('returns 400 when rolId is missing', async () => {
       app = await buildApp(makeAuthGuard(WITH_PERM));
-      await request(app.getHttpServer()).post('/api/auth/preregistrar-usuario').send({ username: 'newuser' }).expect(400);
+      await request(app.getHttpServer())
+        .post('/api/auth/preregistrar-usuario')
+        .send({ username: 'newuser' })
+        .expect(400);
     });
 
     it('returns 403 when permission is missing', async () => {
       app = await buildApp(makeAuthGuard(WITHOUT_PERM));
-      await request(app.getHttpServer()).post('/api/auth/preregistrar-usuario').send(validBody).expect(403);
+      await request(app.getHttpServer())
+        .post('/api/auth/preregistrar-usuario')
+        .send(validBody)
+        .expect(403);
     });
 
     it('returns 401 when token is absent', async () => {
       app = await buildApp(unauthorizedGuard);
-      await request(app.getHttpServer()).post('/api/auth/preregistrar-usuario').send(validBody).expect(401);
+      await request(app.getHttpServer())
+        .post('/api/auth/preregistrar-usuario')
+        .send(validBody)
+        .expect(401);
     });
   });
 
@@ -102,7 +150,9 @@ describe('UsersController', () => {
     it('returns 200 with users list', async () => {
       app = await buildApp(makeAuthGuard(WITH_PERM));
       mockService.obtenerUsuarios.mockResolvedValue([{ id: 19 }]);
-      const res = await request(app.getHttpServer()).get('/api/auth/usuarios').expect(200);
+      const res = await request(app.getHttpServer())
+        .get('/api/auth/usuarios')
+        .expect(200);
       expect(Array.isArray(res.body)).toBe(true);
     });
 
@@ -120,29 +170,54 @@ describe('UsersController', () => {
   // --- PATCH /api/auth/usuarios/:id ---
 
   describe('PATCH /api/auth/usuarios/:id', () => {
-    const validBody = { nombre: 'Felipe', apellido: 'Martínez', run: '', telefono: '', email: '', rol: { id: 4, nombre: 'agente' } };
+    const validBody = {
+      nombre: 'Felipe',
+      apellido: 'Martínez',
+      run: '',
+      telefono: '',
+      email: '',
+      rol: { id: 4, nombre: 'agente' },
+    };
 
     it('returns 200 on valid update', async () => {
       app = await buildApp(makeAuthGuard(WITH_PERM));
-      mockService.actualizarUsuario.mockResolvedValue({ id: 19, nombre: 'Felipe' });
-      const res = await request(app.getHttpServer()).patch('/api/auth/usuarios/19').send(validBody).expect(200);
+      mockService.actualizarUsuario.mockResolvedValue({
+        id: 19,
+        nombre: 'Felipe',
+      });
+      const res = await request(app.getHttpServer())
+        .patch('/api/auth/usuarios/19')
+        .send(validBody)
+        .expect(200);
       expect(res.body).toHaveProperty('id', 19);
-      expect(mockService.actualizarUsuario).toHaveBeenCalledWith(19, expect.objectContaining({ nombre: 'Felipe' }));
+      expect(mockService.actualizarUsuario).toHaveBeenCalledWith(
+        19,
+        expect.objectContaining({ nombre: 'Felipe' }),
+      );
     });
 
     it('returns 400 when email is invalid', async () => {
       app = await buildApp(makeAuthGuard(WITH_PERM));
-      await request(app.getHttpServer()).patch('/api/auth/usuarios/19').send({ ...validBody, email: 'not-an-email' }).expect(400);
+      await request(app.getHttpServer())
+        .patch('/api/auth/usuarios/19')
+        .send({ ...validBody, email: 'not-an-email' })
+        .expect(400);
     });
 
     it('returns 400 when id is not a number', async () => {
       app = await buildApp(makeAuthGuard(WITH_PERM));
-      await request(app.getHttpServer()).patch('/api/auth/usuarios/abc').send(validBody).expect(400);
+      await request(app.getHttpServer())
+        .patch('/api/auth/usuarios/abc')
+        .send(validBody)
+        .expect(400);
     });
 
     it('returns 403 when permission is missing', async () => {
       app = await buildApp(makeAuthGuard(WITHOUT_PERM));
-      await request(app.getHttpServer()).patch('/api/auth/usuarios/19').send(validBody).expect(403);
+      await request(app.getHttpServer())
+        .patch('/api/auth/usuarios/19')
+        .send(validBody)
+        .expect(403);
     });
   });
 
@@ -151,14 +226,21 @@ describe('UsersController', () => {
   describe('POST /api/auth/usuarios/:id/reset-password', () => {
     it('returns 200 with reset token', async () => {
       app = await buildApp(makeAuthGuard(WITH_PERM));
-      mockService.adminResetPassword.mockResolvedValue({ resetToken: 'T123', expiresAt: new Date().toISOString() });
-      const res = await request(app.getHttpServer()).post('/api/auth/usuarios/19/reset-password').expect(200);
+      mockService.adminResetPassword.mockResolvedValue({
+        resetToken: 'T123',
+        expiresAt: new Date().toISOString(),
+      });
+      const res = await request(app.getHttpServer())
+        .post('/api/auth/usuarios/19/reset-password')
+        .expect(200);
       expect(res.body).toHaveProperty('resetToken');
     });
 
     it('returns 403 when permission is missing', async () => {
       app = await buildApp(makeAuthGuard(WITHOUT_PERM));
-      await request(app.getHttpServer()).post('/api/auth/usuarios/19/reset-password').expect(403);
+      await request(app.getHttpServer())
+        .post('/api/auth/usuarios/19/reset-password')
+        .expect(403);
     });
   });
 
@@ -167,14 +249,21 @@ describe('UsersController', () => {
   describe('POST /api/auth/usuarios/:id/reset-2fa', () => {
     it('returns 200 with bypass token', async () => {
       app = await buildApp(makeAuthGuard(WITH_PERM));
-      mockService.reset2FA.mockResolvedValue({ bypassToken: 'B123', expiresAt: new Date().toISOString() });
-      const res = await request(app.getHttpServer()).post('/api/auth/usuarios/19/reset-2fa').expect(200);
+      mockService.reset2FA.mockResolvedValue({
+        bypassToken: 'B123',
+        expiresAt: new Date().toISOString(),
+      });
+      const res = await request(app.getHttpServer())
+        .post('/api/auth/usuarios/19/reset-2fa')
+        .expect(200);
       expect(res.body).toHaveProperty('bypassToken');
     });
 
     it('returns 403 when permission is missing', async () => {
       app = await buildApp(makeAuthGuard(WITHOUT_PERM));
-      await request(app.getHttpServer()).post('/api/auth/usuarios/19/reset-2fa').expect(403);
+      await request(app.getHttpServer())
+        .post('/api/auth/usuarios/19/reset-2fa')
+        .expect(403);
     });
   });
 
@@ -183,14 +272,20 @@ describe('UsersController', () => {
   describe('POST /api/auth/usuarios/:id/desbloquear', () => {
     it('returns 200 on unlock', async () => {
       app = await buildApp(makeAuthGuard(WITH_PERM));
-      mockService.desbloquear.mockResolvedValue({ message: 'Cuenta desbloqueada' });
-      const res = await request(app.getHttpServer()).post('/api/auth/usuarios/19/desbloquear').expect(200);
+      mockService.desbloquear.mockResolvedValue({
+        message: 'Cuenta desbloqueada',
+      });
+      const res = await request(app.getHttpServer())
+        .post('/api/auth/usuarios/19/desbloquear')
+        .expect(200);
       expect(res.body).toHaveProperty('message');
     });
 
     it('returns 403 when permission is missing', async () => {
       app = await buildApp(makeAuthGuard(WITHOUT_PERM));
-      await request(app.getHttpServer()).post('/api/auth/usuarios/19/desbloquear').expect(403);
+      await request(app.getHttpServer())
+        .post('/api/auth/usuarios/19/desbloquear')
+        .expect(403);
     });
   });
 
@@ -199,14 +294,21 @@ describe('UsersController', () => {
   describe('POST /api/auth/usuarios/:id/regenerar-invitacion', () => {
     it('returns 200 with new invitation token', async () => {
       app = await buildApp(makeAuthGuard(WITH_PERM));
-      mockService.regenerarInvitacion.mockResolvedValue({ invitationToken: 'I123', expiresAt: new Date().toISOString() });
-      const res = await request(app.getHttpServer()).post('/api/auth/usuarios/19/regenerar-invitacion').expect(200);
+      mockService.regenerarInvitacion.mockResolvedValue({
+        invitationToken: 'I123',
+        expiresAt: new Date().toISOString(),
+      });
+      const res = await request(app.getHttpServer())
+        .post('/api/auth/usuarios/19/regenerar-invitacion')
+        .expect(200);
       expect(res.body).toHaveProperty('invitationToken');
     });
 
     it('returns 403 when permission is missing', async () => {
       app = await buildApp(makeAuthGuard(WITHOUT_PERM));
-      await request(app.getHttpServer()).post('/api/auth/usuarios/19/regenerar-invitacion').expect(403);
+      await request(app.getHttpServer())
+        .post('/api/auth/usuarios/19/regenerar-invitacion')
+        .expect(403);
     });
   });
 
@@ -216,13 +318,17 @@ describe('UsersController', () => {
     it('returns 200 on preregistro cancel', async () => {
       app = await buildApp(makeAuthGuard(WITH_PERM));
       mockService.cancelarPreregistro.mockResolvedValue({ message: 'ok' });
-      await request(app.getHttpServer()).delete('/api/auth/usuarios/27/preregistro').expect(200);
+      await request(app.getHttpServer())
+        .delete('/api/auth/usuarios/27/preregistro')
+        .expect(200);
       expect(mockService.cancelarPreregistro).toHaveBeenCalledWith(27, 12);
     });
 
     it('returns 403 when permission is missing', async () => {
       app = await buildApp(makeAuthGuard(WITHOUT_PERM));
-      await request(app.getHttpServer()).delete('/api/auth/usuarios/27/preregistro').expect(403);
+      await request(app.getHttpServer())
+        .delete('/api/auth/usuarios/27/preregistro')
+        .expect(403);
     });
   });
 });

@@ -1,5 +1,11 @@
-import { Type } from 'class-transformer';
-import { IsIn, IsObject, IsOptional, IsString, MaxLength, MinLength, ValidateNested } from 'class-validator';
+import {
+  IsIn,
+  IsObject,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 import { IsBoundedJson } from '../../meta-inbox/dto/json-size.validator';
 
 export class BaileysIngressEnvelopeDto {

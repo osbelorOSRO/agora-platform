@@ -1,4 +1,11 @@
-import { IsIn, IsOptional, IsString, MaxLength, MinLength, ValidateIf } from 'class-validator';
+import {
+  IsIn,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+  ValidateIf,
+} from 'class-validator';
 
 export type ThreadMessageSenderType = 'HUMAN' | 'N8N' | 'SYSTEM';
 export type ThreadMessageMediaType = 'image' | 'audio' | 'document' | 'video';

@@ -22,9 +22,7 @@ export class ActorEventsService {
         },
       });
 
-      this.logger.log(
-        `Evento registrado: ${jobData.externalEventId}`,
-      );
+      this.logger.log(`Evento registrado: ${jobData.externalEventId}`);
     } catch (error: any) {
       /**
        * idempotencia DB

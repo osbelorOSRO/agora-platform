@@ -5,7 +5,10 @@ import { PrismaService } from '../../database/prisma/prisma.service';
 import { ActorBootstrapService } from '../bootstrap/actor-bootstrap.service';
 import { ActorScoringService } from '../scoring/actor-scoring.service';
 import { ActorEventsService } from '../../actor-events/actor-events.service';
-import { Q_ACTOR_TRANSITIONS, Q_META_CHANGES } from '../../queues/queues.constants';
+import {
+  Q_ACTOR_TRANSITIONS,
+  Q_META_CHANGES,
+} from '../../queues/queues.constants';
 
 @Processor(Q_META_CHANGES, { concurrency: 1 })
 export class ChangesProcessor extends WorkerHost {
@@ -23,36 +26,48 @@ export class ChangesProcessor extends WorkerHost {
 
   async process(job: Job<any>) {
     if (job.name !== 'meta.change') {
-      this.logger.warn(`Job ignorado en ${Q_META_CHANGES}: name=${job.name}, id=${job.id}`);
+      this.logger.warn(
+        `Job ignorado en ${Q_META_CHANGES}: name=${job.name}, id=${job.id}`,
+      );
       return;
     }
 
     const env = job.data;
-    this.logger.log(`FLOW[CHANGE] start externalEventId=${env.externalEventId}`);
+    this.logger.log(
+      `FLOW[CHANGE] start externalEventId=${env.externalEventId}`,
+    );
 
     await this.prisma.$transaction(async (tx) => {
       // 1) actor-events (SIEMPRE): event_history
-      await this.actorEvents
-        .registerEvent({
-          externalEventId: env.externalEventId,
-          actorExternalId: env.actorExternalId,
-          provider: env.provider,
-          objectType: env.objectType,
-          pipeline: env.pipeline,
-          eventType: env.eventType,
-          payload: env.payload,
-          occurredAt: new Date(env.occurredAt),
-        })
-      this.logger.log(`FLOW[CHANGE] event_history ok externalEventId=${env.externalEventId}`);
+      await this.actorEvents.registerEvent({
+        externalEventId: env.externalEventId,
+        actorExternalId: env.actorExternalId,
+        provider: env.provider,
+        objectType: env.objectType,
+        pipeline: env.pipeline,
+        eventType: env.eventType,
+        payload: env.payload,
+        occurredAt: new Date(env.occurredAt),
+      });
+      this.logger.log(
+        `FLOW[CHANGE] event_history ok externalEventId=${env.externalEventId}`,
+      );
 
       // 2) bootstrap
       await this.bootstrap.ensureActorExists(tx, env.actorExternalId);
-      this.logger.log(`FLOW[CHANGE] bootstrap ok actorExternalId=${env.actorExternalId}`);
+      this.logger.log(
+        `FLOW[CHANGE] bootstrap ok actorExternalId=${env.actorExternalId}`,
+      );
 
       // 3) terminal gate
-      const { isTerminal } = await this.scoring.getLifecycleState(tx, env.actorExternalId);
+      const { isTerminal } = await this.scoring.getLifecycleState(
+        tx,
+        env.actorExternalId,
+      );
       if (isTerminal) {
-        this.logger.log(`FLOW[CHANGE] terminal gate stop actorExternalId=${env.actorExternalId}`);
+        this.logger.log(
+          `FLOW[CHANGE] terminal gate stop actorExternalId=${env.actorExternalId}`,
+        );
         return;
       }
 
@@ -79,22 +94,30 @@ export class ChangesProcessor extends WorkerHost {
       orderBy: { occurred_at: 'desc' },
       select: { state: true },
     });
-    const isTerminalNow = last?.state === 'QUALIFIED' || last?.state === 'BLOCKED';
+    const isTerminalNow =
+      last?.state === 'QUALIFIED' || last?.state === 'BLOCKED';
     if (isTerminalNow) {
-      this.logger.log(`FLOW[CHANGE] transition skip terminal actorExternalId=${env.actorExternalId}`);
+      this.logger.log(
+        `FLOW[CHANGE] transition skip terminal actorExternalId=${env.actorExternalId}`,
+      );
       return;
     }
 
     await this.transitionsQueue.add(
       'actor.transition.evaluate',
-      { actorExternalId: env.actorExternalId, triggerExternalEventId: env.externalEventId },
+      {
+        actorExternalId: env.actorExternalId,
+        triggerExternalEventId: env.externalEventId,
+      },
       { jobId: `tr:${env.externalEventId}` },
     );
-    this.logger.log(`FLOW[CHANGE] transition enqueued externalEventId=${env.externalEventId}`);
+    this.logger.log(
+      `FLOW[CHANGE] transition enqueued externalEventId=${env.externalEventId}`,
+    );
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private computeDeterministicDelta(env: any): string {
+  private computeDeterministicDelta(_env: any): string {
     // placeholder coherente: por defecto 0
     // aquí tú mapeas eventType->delta determinista
     return '0';

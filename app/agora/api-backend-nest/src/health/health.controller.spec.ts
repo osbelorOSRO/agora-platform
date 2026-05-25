@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ServiceUnavailableException } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { HealthController } from './health.controller';
 import { PrismaService } from '../database/prisma/prisma.service';
@@ -13,7 +13,12 @@ describe('HealthController', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [HealthController],
-      providers: [{ provide: PrismaService, useValue: { $queryRawUnsafe: prismaQueryRaw } }],
+      providers: [
+        {
+          provide: PrismaService,
+          useValue: { $queryRawUnsafe: prismaQueryRaw },
+        },
+      ],
     }).compile();
 
     app = module.createNestApplication();
@@ -24,14 +29,19 @@ describe('HealthController', () => {
 
   describe('GET /ping', () => {
     it('returns 200 pong', () => {
-      return request(app.getHttpServer()).get('/ping').expect(200).expect('pong\n');
+      return request(app.getHttpServer())
+        .get('/ping')
+        .expect(200)
+        .expect('pong\n');
     });
   });
 
   describe('GET /ping/db', () => {
     it('returns 200 when DB is reachable', async () => {
       prismaQueryRaw.mockResolvedValue([{ '?column?': 1 }]);
-      const res = await request(app.getHttpServer()).get('/ping/db').expect(200);
+      const res = await request(app.getHttpServer())
+        .get('/ping/db')
+        .expect(200);
       expect(res.body).toEqual({ ok: true, db: 'up' });
     });
 

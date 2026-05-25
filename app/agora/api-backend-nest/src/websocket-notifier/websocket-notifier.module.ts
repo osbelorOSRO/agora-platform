@@ -7,9 +7,11 @@ import { WEBSOCKET_NOTIFIER_GATEWAY } from './interfaces/websocket-notifier-gate
   imports: [HttpModule],
   providers: [
     WebsocketNotifierService,
-    { provide: WEBSOCKET_NOTIFIER_GATEWAY, useExisting: WebsocketNotifierService },
+    {
+      provide: WEBSOCKET_NOTIFIER_GATEWAY,
+      useExisting: WebsocketNotifierService,
+    },
   ],
   exports: [WebsocketNotifierService, WEBSOCKET_NOTIFIER_GATEWAY],
 })
 export class WebsocketNotifierModule {}
-

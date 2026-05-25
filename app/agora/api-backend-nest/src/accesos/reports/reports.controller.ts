@@ -11,7 +11,10 @@ import { RequirePermission } from '../decorators/permission.decorator';
 export class ReportsController {
   constructor(private readonly service: ReportsService) {}
 
-  private send(result: ReturnType<ReportsService['formatResponse']>, res: Response) {
+  private send(
+    result: ReturnType<ReportsService['formatResponse']>,
+    res: Response,
+  ) {
     if (result.headers) {
       Object.entries(result.headers).forEach(([k, v]) => res.setHeader(k, v));
       res.status(200).send(result.body);
@@ -32,21 +35,33 @@ export class ReportsController {
 
   @Get('desempeno')
   async desempeno(@Query() q: any, @Res() res: Response) {
-    this.send(this.service.formatResponse(await this.service.desempeno(q)), res);
+    this.send(
+      this.service.formatResponse(await this.service.desempeno(q)),
+      res,
+    );
   }
 
   @Get('procesos-semanales')
   async procesosSemanales(@Query() q: any, @Res() res: Response) {
-    this.send(this.service.formatResponse(await this.service.procesosSemanales(q)), res);
+    this.send(
+      this.service.formatResponse(await this.service.procesosSemanales(q)),
+      res,
+    );
   }
 
   @Get('precios-planes')
   async preciosPlanes(@Query() q: any, @Res() res: Response) {
-    this.send(this.service.formatResponse(await this.service.preciosPlanes(q)), res);
+    this.send(
+      this.service.formatResponse(await this.service.preciosPlanes(q)),
+      res,
+    );
   }
 
   @Get('clientes-info')
   async clientesInfo(@Query() q: any, @Res() res: Response) {
-    this.send(this.service.formatResponse(await this.service.clientesInfo(q)), res);
+    this.send(
+      this.service.formatResponse(await this.service.clientesInfo(q)),
+      res,
+    );
   }
 }

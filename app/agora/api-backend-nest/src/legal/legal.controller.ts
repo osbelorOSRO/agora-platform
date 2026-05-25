@@ -2,7 +2,6 @@ import { Controller, Get, Header } from '@nestjs/common';
 
 @Controller('legal')
 export class LegalController {
-
   @Get('privacy')
   @Header('Content-Type', 'text/html')
   privacy() {

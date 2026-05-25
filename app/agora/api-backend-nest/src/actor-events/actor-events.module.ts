@@ -4,11 +4,7 @@ import { PrismaService } from '../database/prisma/prisma.service';
 
 @Module({
   imports: [],
-  providers: [
-    ActorEventsService,
-    PrismaService,
-  ],
+  providers: [ActorEventsService, PrismaService],
   exports: [ActorEventsService],
-
 })
 export class ActorEventsModule {}

@@ -30,7 +30,14 @@ async function buildApp(): Promise<INestApplication> {
   }).compile();
 
   const app = module.createNestApplication();
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true, transformOptions: { enableImplicitConversion: true } }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+    }),
+  );
   await app.init();
   return app;
 }
@@ -65,7 +72,9 @@ describe('MsgDelegationCallbackController', () => {
     });
 
     it('devuelve 201 con campos opcionales hasSignal y signalType', async () => {
-      mockCompletion.complete.mockResolvedValue({ status: 'closed_with_signal' });
+      mockCompletion.complete.mockResolvedValue({
+        status: 'closed_with_signal',
+      });
       const res = await request(app.getHttpServer())
         .post('/actor/msg-delegation/complete')
         .set('authorization', `Bearer ${CALLBACK_TOKEN}`)

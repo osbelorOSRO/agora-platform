@@ -25,7 +25,14 @@ async function buildApp(): Promise<INestApplication> {
   }).compile();
 
   const app = module.createNestApplication({ rawBody: true });
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true, transformOptions: { enableImplicitConversion: true } }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+    }),
+  );
   await app.init();
   return app;
 }
@@ -41,7 +48,8 @@ describe('MetaController', () => {
     jest.clearAllMocks();
     (getRuntimeSecret as jest.Mock).mockImplementation((key: string) => {
       if (key === 'META_VERIFY_TOKEN') return Promise.resolve(VERIFY_TOKEN);
-      if (key === 'META_IG_VERIFY_TOKEN') return Promise.resolve('otro-verify-token');
+      if (key === 'META_IG_VERIFY_TOKEN')
+        return Promise.resolve('otro-verify-token');
       if (key === 'META_APP_SECRET') return Promise.resolve(APP_SECRET);
       return Promise.resolve(undefined);
     });

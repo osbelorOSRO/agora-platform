@@ -23,6 +23,9 @@ export class AccessModule implements OnModuleInit {
   constructor(private readonly sessionsService: SessionsService) {}
 
   onModuleInit() {
-    setInterval(() => this.sessionsService.limpiarSesionesExpiradas(), 60 * 60 * 1000);
+    setInterval(
+      () => this.sessionsService.limpiarSesionesExpiradas(),
+      60 * 60 * 1000,
+    );
   }
 }

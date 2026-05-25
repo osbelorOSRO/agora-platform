@@ -27,7 +27,10 @@ export class UserProfileController {
 
   @Post('photo')
   @UseInterceptors(FileInterceptor('photo', secureMediaMulterOptions))
-  async uploadPhoto(@Req() req: Request, @UploadedFile() file: Express.Multer.File) {
+  async uploadPhoto(
+    @Req() req: Request,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
     const photoUrl = await this.service.uploadPhoto(req.userPayload!.id, file);
     return { photoUrl };
   }

@@ -1,5 +1,11 @@
 import { Transform } from 'class-transformer';
-import { IsObject, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import {
+  IsObject,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class MsgDelegationFailedDto {
   @IsString()

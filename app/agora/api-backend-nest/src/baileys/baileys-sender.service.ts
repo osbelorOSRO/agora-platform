@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import axios from 'axios';
 import { IMessageGateway } from './interfaces/message-gateway.interface';
 
@@ -23,7 +28,8 @@ export class BaileysSenderService implements IMessageGateway {
   }
 
   private resolveTipoId(destino: string, explicitTipoId?: string): string {
-    if (explicitTipoId === 'jid' || explicitTipoId === 'lid') return explicitTipoId;
+    if (explicitTipoId === 'jid' || explicitTipoId === 'lid')
+      return explicitTipoId;
     return destino.includes('@lid') ? 'lid' : 'jid';
   }
 
@@ -37,7 +43,7 @@ export class BaileysSenderService implements IMessageGateway {
       fileName?: string;
       mimeType?: string;
     },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): Promise<any> {
     const waId = this.resolveDestino(clienteId);
 
@@ -50,13 +56,19 @@ export class BaileysSenderService implements IMessageGateway {
 
     switch (tipo) {
       case 'text':
-        if (!contenido) throw new BadRequestException('Falta contenido para mensaje de texto.');
+        if (!contenido)
+          throw new BadRequestException(
+            'Falta contenido para mensaje de texto.',
+          );
         payload.contenido = { text: contenido };
         break;
 
       case 'image':
         if (!urlArchivo) throw new BadRequestException('Falta URL de imagen.');
-        payload.contenido = { image: { url: urlArchivo }, caption: contenido || '' };
+        payload.contenido = {
+          image: { url: urlArchivo },
+          caption: contenido || '',
+        };
         break;
 
       case 'audio':
@@ -69,7 +81,8 @@ export class BaileysSenderService implements IMessageGateway {
         break;
 
       case 'document':
-        if (!urlArchivo) throw new BadRequestException('Falta URL de documento.');
+        if (!urlArchivo)
+          throw new BadRequestException('Falta URL de documento.');
         payload.contenido = {
           document: { url: urlArchivo },
           mimetype: options?.mimeType || 'application/pdf',
@@ -80,7 +93,10 @@ export class BaileysSenderService implements IMessageGateway {
 
       case 'video':
         if (!urlArchivo) throw new BadRequestException('Falta URL de video.');
-        payload.contenido = { video: { url: urlArchivo }, caption: contenido || '' };
+        payload.contenido = {
+          video: { url: urlArchivo },
+          caption: contenido || '',
+        };
         break;
 
       default:
@@ -96,21 +112,28 @@ export class BaileysSenderService implements IMessageGateway {
       };
       const internalToken = process.env.BAILEYS_INTERNAL_TOKEN;
       if (!internalToken) {
-        throw new InternalServerErrorException('Missing required env BAILEYS_INTERNAL_TOKEN');
+        throw new InternalServerErrorException(
+          'Missing required env BAILEYS_INTERNAL_TOKEN',
+        );
       }
       headers['x-internal-token'] = internalToken;
 
-      this.logger.debug(`Enviando mensaje a Gateway: ${endpoint} destino=${waId} tipo=${tipo} tipoId=${tipoId}`);
+      this.logger.debug(
+        `Enviando mensaje a Gateway: ${endpoint} destino=${waId} tipo=${tipo} tipoId=${tipoId}`,
+      );
 
       const response = await axios.post(endpoint, payload, {
         headers,
-        timeout: 10000
+        timeout: 10000,
       });
 
       this.logger.log(`Mensaje enviado vía Gateway a ${clienteId} (${tipo})`);
       return response.data;
     } catch (error: any) {
-      this.logger.error(`Error al enviar mensaje vía Gateway: ${error.message}`, { endpoint, status: error.response?.status });
+      this.logger.error(
+        `Error al enviar mensaje vía Gateway: ${error.message}`,
+        { endpoint, status: error.response?.status },
+      );
       throw new InternalServerErrorException('No se pudo enviar el mensaje');
     }
   }
@@ -128,7 +151,9 @@ export class BaileysSenderService implements IMessageGateway {
     try {
       const internalToken = process.env.BAILEYS_INTERNAL_TOKEN;
       if (!internalToken) {
-        throw new InternalServerErrorException('Missing required env BAILEYS_INTERNAL_TOKEN');
+        throw new InternalServerErrorException(
+          'Missing required env BAILEYS_INTERNAL_TOKEN',
+        );
       }
 
       const response = await axios.post(endpoint, input, {
@@ -141,8 +166,13 @@ export class BaileysSenderService implements IMessageGateway {
 
       return response.data;
     } catch (error: any) {
-      this.logger.error(`Error al actualizar bloqueo vía Gateway: ${error.message}`, { endpoint, action: input.action, status: error.response?.status });
-      throw new InternalServerErrorException('No se pudo actualizar el estado de bloqueo');
+      this.logger.error(
+        `Error al actualizar bloqueo vía Gateway: ${error.message}`,
+        { endpoint, action: input.action, status: error.response?.status },
+      );
+      throw new InternalServerErrorException(
+        'No se pudo actualizar el estado de bloqueo',
+      );
     }
   }
 }

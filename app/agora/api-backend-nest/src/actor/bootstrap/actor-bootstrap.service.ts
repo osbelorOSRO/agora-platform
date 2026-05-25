@@ -13,7 +13,10 @@ export class ActorBootstrapService {
    * Regla: bootstrap ocurre DESPUÉS de actor-events (event_history)
    * y ANTES de cualquier procesamiento del pipeline.
    */
-  async ensureActorExists(tx: Prisma.TransactionClient, actorExternalId: string) {
+  async ensureActorExists(
+    tx: Prisma.TransactionClient,
+    actorExternalId: string,
+  ) {
     // ¿ya existe lifecycle?
     const exists = await tx.actor_lifecycle.findFirst({
       where: { actor_external_id: actorExternalId },

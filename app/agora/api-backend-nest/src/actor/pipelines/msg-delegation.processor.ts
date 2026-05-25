@@ -40,8 +40,14 @@ export class MsgDelegationProcessor extends WorkerHost {
     }
 
     if (job.name !== 'msg.delegation') {
-      this.logger.warn(`Job ignorado en ${Q_MSG_DELEGATION}: name=${job.name}, id=${job.id}`);
-      return { status: 'accepted', pending: true, metadata: { ignoredJobName: job.name } };
+      this.logger.warn(
+        `Job ignorado en ${Q_MSG_DELEGATION}: name=${job.name}, id=${job.id}`,
+      );
+      return {
+        status: 'accepted',
+        pending: true,
+        metadata: { ignoredJobName: job.name },
+      };
     }
 
     const webhookUrl = process.env.N8N_MSG_DELEGATION_WEBHOOK_URL;
@@ -51,8 +57,10 @@ export class MsgDelegationProcessor extends WorkerHost {
 
     const authToken = await getRuntimeSecret('N8N_SECRET_TOKEN');
     const env = job.data;
-    const callbackCompleteUrl = process.env.N8N_MSG_DELEGATION_CALLBACK_COMPLETE_URL;
-    const callbackFailedUrl = process.env.N8N_MSG_DELEGATION_CALLBACK_FAILED_URL;
+    const callbackCompleteUrl =
+      process.env.N8N_MSG_DELEGATION_CALLBACK_COMPLETE_URL;
+    const callbackFailedUrl =
+      process.env.N8N_MSG_DELEGATION_CALLBACK_FAILED_URL;
 
     await this.state.setPending({
       externalEventId: env.externalEventId,
@@ -85,23 +93,21 @@ export class MsgDelegationProcessor extends WorkerHost {
       `FLOW[DELEGATION] start externalEventId=${env.externalEventId}, jobId=${job.id}, attempt=${job.attemptsMade}/${job.opts.attempts ?? 1}`,
     );
 
-    const response = await axios.post(
-      webhookUrl,
-      payloadToN8n,
-      {
-        timeout: 20000,
-        headers: {
-          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-          'Content-Type': 'application/json',
-        },
+    const response = await axios.post(webhookUrl, payloadToN8n, {
+      timeout: 20000,
+      headers: {
+        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        'Content-Type': 'application/json',
       },
-    );
+    });
 
     const rv = response.data ?? {};
     const accepted = rv.accepted !== false;
 
     if (!accepted) {
-      throw new Error(`n8n did not accept task externalEventId=${env.externalEventId}`);
+      throw new Error(
+        `n8n did not accept task externalEventId=${env.externalEventId}`,
+      );
     }
 
     const metadata = rv.metadata ?? { source: 'n8n', status: response.status };

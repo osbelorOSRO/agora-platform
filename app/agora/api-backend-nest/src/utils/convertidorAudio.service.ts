@@ -7,11 +7,13 @@ const logger = new Logger('ConvertidorAudio');
 
 const execFilePromise = util.promisify(execFile);
 
-export async function convertirWebmAOgg(rutaOriginal: string): Promise<string | null> {
+export async function convertirWebmAOgg(
+  rutaOriginal: string,
+): Promise<string | null> {
   const rutaOgg = rutaOriginal.replace(/\.webm$/, '_wa.ogg');
 
   try {
-    const { stdout, stderr } = await execFilePromise('ffmpeg', [
+    const { stdout: _stdout, stderr } = await execFilePromise('ffmpeg', [
       '-i',
       rutaOriginal,
       '-c:a',

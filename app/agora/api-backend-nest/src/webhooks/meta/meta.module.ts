@@ -4,9 +4,7 @@ import { MetaService } from './meta.service';
 import { QueuesModule } from '../../queues/queues.module';
 
 @Module({
-  imports: [
-    QueuesModule,
-  ],
+  imports: [QueuesModule],
   controllers: [MetaController],
   providers: [MetaService],
 })

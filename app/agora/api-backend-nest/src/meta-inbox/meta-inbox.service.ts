@@ -1,12 +1,19 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { IMetaInboxGateway } from './interfaces/meta-inbox-gateway.interface';
 import { MetaInboxSchemaService } from './services/meta-inbox-schema.service';
-import { IThreadGateway, THREAD_GATEWAY, ThreadSelectorInput } from './interfaces/thread-gateway.interface';
+import {
+  IThreadGateway,
+  THREAD_GATEWAY,
+  ThreadSelectorInput,
+} from './interfaces/thread-gateway.interface';
 import { ContactService } from './services/contact.service';
 import { MessageSendService } from './services/message-send.service';
 import { OfferContextService } from './services/offer-context.service';
 import { WhatsappIdentityService } from './services/whatsapp-identity.service';
-import { ThreadEventService, ThreadEventInput } from './services/thread-event.service';
+import {
+  ThreadEventService,
+  ThreadEventInput,
+} from './services/thread-event.service';
 
 @Injectable()
 export class MetaInboxService implements OnModuleInit, IMetaInboxGateway {
@@ -36,7 +43,11 @@ export class MetaInboxService implements OnModuleInit, IMetaInboxGateway {
 
   // --- Threads ---
 
-  async listThreads(input: { limit?: number; offset?: number; includeClosed?: boolean }) {
+  async listThreads(input: {
+    limit?: number;
+    offset?: number;
+    includeClosed?: boolean;
+  }) {
     return this.threadService.listThreads(input);
   }
 
@@ -50,32 +61,56 @@ export class MetaInboxService implements OnModuleInit, IMetaInboxGateway {
 
   async updateThreadControl(
     sessionId: string,
-    input: { threadStatus?: string; attentionMode?: string; threadStage?: string; stageControl?: Record<string, unknown> },
+    input: {
+      threadStatus?: string;
+      attentionMode?: string;
+      threadStage?: string;
+      stageControl?: Record<string, unknown>;
+    },
     eventSource: 'HUMAN' | 'N8N' | 'SYSTEM' | 'API' = 'HUMAN',
   ) {
-    return this.threadService.updateThreadControl(sessionId, input, eventSource);
+    return this.threadService.updateThreadControl(
+      sessionId,
+      input,
+      eventSource,
+    );
   }
 
   async reopenThread(sessionId: string) {
     return this.threadService.reopenThread(sessionId);
   }
 
-  async resolveThreadByActor(actorExternalId: string, objectType: string, includeClosed = false) {
-    return this.threadService.resolveThreadByActor(actorExternalId, objectType, includeClosed);
+  async resolveThreadByActor(
+    actorExternalId: string,
+    objectType: string,
+    includeClosed = false,
+  ) {
+    return this.threadService.resolveThreadByActor(
+      actorExternalId,
+      objectType,
+      includeClosed,
+    );
   }
 
-  async updateThreadControlForAutomation(input: ThreadSelectorInput & {
-    threadStatus?: string;
-    attentionMode?: string;
-    threadStage?: string;
-    stageControl?: Record<string, unknown>;
-  }) {
+  async updateThreadControlForAutomation(
+    input: ThreadSelectorInput & {
+      threadStatus?: string;
+      attentionMode?: string;
+      threadStage?: string;
+      stageControl?: Record<string, unknown>;
+    },
+  ) {
     return this.threadService.updateThreadControlForAutomation(input);
   }
 
   // --- Contacts ---
 
-  async listContacts(input: { search?: string; objectType?: string; limit?: number; offset?: number }) {
+  async listContacts(input: {
+    search?: string;
+    objectType?: string;
+    limit?: number;
+    offset?: number;
+  }) {
     return this.contactService.listContacts(input);
   }
 
@@ -94,39 +129,48 @@ export class MetaInboxService implements OnModuleInit, IMetaInboxGateway {
     return this.contactService.createWhatsappContact(input);
   }
 
-  async updateContact(sessionId: string, input: {
-    displayName?: string;
-    firstName?: string;
-    lastName?: string;
-    phone?: string;
-    rut?: string;
-    address?: string;
-    email?: string;
-    notes?: string;
-    city?: string;
-    region?: string;
-  }) {
+  async updateContact(
+    sessionId: string,
+    input: {
+      displayName?: string;
+      firstName?: string;
+      lastName?: string;
+      phone?: string;
+      rut?: string;
+      address?: string;
+      email?: string;
+      notes?: string;
+      city?: string;
+      region?: string;
+    },
+  ) {
     return this.contactService.updateContact(sessionId, input);
   }
 
-  async updateContactForAutomation(input: ThreadSelectorInput & {
-    displayName?: string;
-    firstName?: string;
-    lastName?: string;
-    phone?: string;
-    rut?: string;
-    address?: string;
-    email?: string;
-    notes?: string;
-    city?: string;
-    region?: string;
-  }) {
+  async updateContactForAutomation(
+    input: ThreadSelectorInput & {
+      displayName?: string;
+      firstName?: string;
+      lastName?: string;
+      phone?: string;
+      rut?: string;
+      address?: string;
+      email?: string;
+      notes?: string;
+      city?: string;
+      region?: string;
+    },
+  ) {
     return this.contactService.updateContactForAutomation(input);
   }
 
   // --- WhatsApp Identity ---
 
-  async resolveWhatsappIdentity(input: { sessionId?: string; actorExternalId?: string; phone?: string }) {
+  async resolveWhatsappIdentity(input: {
+    sessionId?: string;
+    actorExternalId?: string;
+    phone?: string;
+  }) {
     return this.whatsappIdentity.resolveWhatsappIdentity(input);
   }
 
@@ -159,17 +203,26 @@ export class MetaInboxService implements OnModuleInit, IMetaInboxGateway {
     return this.offerContext.getOfferEventById(id);
   }
 
-  async updateOfferEventForAutomation(id: string, input: {
-    sessionId?: string;
-    stageActual?: string;
-    tipo?: string;
-    codigo?: string;
-    decision?: string;
-  }) {
+  async updateOfferEventForAutomation(
+    id: string,
+    input: {
+      sessionId?: string;
+      stageActual?: string;
+      tipo?: string;
+      codigo?: string;
+      decision?: string;
+    },
+  ) {
     return this.offerContext.updateOfferEventForAutomation(id, input);
   }
 
-  async listOfferEvents(input: { sessionId?: string; codigo?: string; decision?: string; stageActual?: string; tipo?: string }) {
+  async listOfferEvents(input: {
+    sessionId?: string;
+    codigo?: string;
+    decision?: string;
+    stageActual?: string;
+    tipo?: string;
+  }) {
     return this.offerContext.listOfferEvents(input);
   }
 
@@ -191,7 +244,11 @@ export class MetaInboxService implements OnModuleInit, IMetaInboxGateway {
     return this.messageSend.sendText(sessionId, text);
   }
 
-  async sendMedia(sessionId: string, file: Express.Multer.File, caption?: string) {
+  async sendMedia(
+    sessionId: string,
+    file: Express.Multer.File,
+    caption?: string,
+  ) {
     return this.messageSend.sendMedia(sessionId, file, caption);
   }
 
@@ -199,15 +256,17 @@ export class MetaInboxService implements OnModuleInit, IMetaInboxGateway {
     return this.messageSend.sendSystemText(input);
   }
 
-  async sendThreadMessage(input: ThreadSelectorInput & {
-    senderType?: 'HUMAN' | 'N8N' | 'SYSTEM';
-    text?: string;
-    mediaUrl?: string;
-    mediaType?: 'image' | 'audio' | 'document' | 'video';
-    caption?: string;
-    fileName?: string;
-    mimeType?: string;
-  }) {
+  async sendThreadMessage(
+    input: ThreadSelectorInput & {
+      senderType?: 'HUMAN' | 'N8N' | 'SYSTEM';
+      text?: string;
+      mediaUrl?: string;
+      mediaType?: 'image' | 'audio' | 'document' | 'video';
+      caption?: string;
+      fileName?: string;
+      mimeType?: string;
+    },
+  ) {
     return this.messageSend.sendThreadMessage(input);
   }
 }
