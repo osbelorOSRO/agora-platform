@@ -130,7 +130,7 @@ export const limitadorPanelGeneral = rateLimit({
   skip: () => !redisClient,
 });
 
-// /respuestas-rapidas/* — CRUD panel humano
+// /shortcut/* — CRUD panel humano
 export const limitadorRespuestasRapidas = rateLimit({
   windowMs: 60 * 1000,
   max: 60,

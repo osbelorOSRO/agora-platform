@@ -67,7 +67,7 @@ async function bootstrap() {
   app.use('/meta-inbox/n8n', limitadorN8n);
   app.use(/^\/meta-inbox\/threads\/[^/]+\/send-(text|message)$/, limitadorPanelEnvio);
   app.use('/meta-inbox', limitadorPanelGeneral);
-  app.use('/respuestas-rapidas', limitadorRespuestasRapidas);
+  app.use('/shortcut', limitadorRespuestasRapidas);
   app.use('/ping', limitadorPing);
   app.use('/webhooks/meta', (req: Request, res: Response, next: NextFunction) =>
     req.method === 'POST'
