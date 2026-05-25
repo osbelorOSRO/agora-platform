@@ -1,6 +1,6 @@
 import { IsOptional, IsString, Length, MinLength } from 'class-validator';
 
-export class UpdateRespuestaRapidaDto {
+export class UpdateShortcutDto {
   @IsOptional()
   @IsString()
   @Length(1, 50)

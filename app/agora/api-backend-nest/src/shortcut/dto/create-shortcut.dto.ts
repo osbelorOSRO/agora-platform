@@ -1,6 +1,6 @@
 import { IsString, Length, MinLength } from 'class-validator';
 
-export class CreateRespuestaRapidaDto {
+export class CreateShortcutDto {
   @IsString()
   @Length(1, 50)
   atajo: string;

@@ -8,7 +8,7 @@ import { MediaModule } from './media/media.module';
 import { BaileysModule } from './baileys/baileys.module';
 import { CacheConfigModule } from './cache/cache.module';
 import { WebsocketNotifierModule } from './websocket-notifier/websocket-notifier.module';
-import { RespuestasRapidasModule } from './respuestas-rapidas/respuestas-rapidas.module';
+import { ShortcutModule } from './shortcut/shortcut.module';
 import { MetaModule } from './webhooks/meta/meta.module';
 import { LegalModule } from './legal/legal.module';
 import { ActorEventsModule } from './actor-events/actor-events.module';
@@ -38,7 +38,7 @@ import { SettingsModule } from './settings/settings.module';
     BaileysModule,
     CacheConfigModule,
     WebsocketNotifierModule,
-    RespuestasRapidasModule,
+    ShortcutModule,
     MetaModule,
     LegalModule,
     ActorEventsModule,

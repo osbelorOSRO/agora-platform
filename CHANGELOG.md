@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.4.0
+
+### Added
+- `api-backend-nest`: cobertura de tests — specs para 10+ controllers (meta-inbox, baileys-ingress, media, reports, user-profile, webhooks/meta, msg-delegation-callback, accesos) y 4 services (MsgDelegationCompletionService, ReportsService, ThreadService, MessageSendService)
+- `api-backend-nest`: guards reutilizables extraídos a `shared/guards/` — `N8nAuthGuard`, `N8nCallbackAuthGuard`, `BaileysInternalTokenGuard`; controllers eliminaron métodos privados `assertN8nToken`/`assertInternalToken`
+- `api-backend-nest`: `IMessageGateway` interface y token `MESSAGE_GATEWAY` en `baileys/interfaces/`; `BaileysSenderService` implementa la interfaz; `MessageSendService` y `WhatsappIdentityService` inyectan por interfaz (OCP/DIP)
+- `api-backend-nest`: `MetaGraphApiService` extraído de `MessageSendService` — gestiona transporte Graph API, tokens Meta/IG y manejo de errores `axios`
+- `api-backend-nest`: `AudioConversionService` extraído de `MessageSendService` — conversión ffmpeg a AAC/m4a para Instagram
+- `api-backend-nest`: `ReportFormatter` extraído de `ReportsService` — `parseDate`, `csvEscape`, `rowsToCsv`, `formatReportResponse` como utilidades puras
+
+### Changed
+- `api-backend-nest`: `updateWhatsappBlockStatus` movido de `MetaInboxService` a `WhatsappIdentityService`; `MetaInboxService` eliminó `PrismaService` y `BaileysSenderService` del constructor — facade puro de 26 métodos
+- `api-backend-nest`: DTOs `ListThreadsQueryDto` y `ListMessagesQueryDto` corregidos — `@Transform` compatible con `enableImplicitConversion: true`
+- `api-backend-nest`: módulo `respuestas-rapidas` renombrado a `shortcut`
+
 ## 2.3.1
 
 ### Fixed

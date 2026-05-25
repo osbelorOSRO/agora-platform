@@ -13,12 +13,18 @@ import { WebsocketNotifierModule } from '../websocket-notifier/websocket-notifie
 import { BaileysModule } from '../baileys/baileys.module';
 import { AuthModule } from '../auth/auth.module';
 import { MinioModule } from '../minio/minio.module';
+import { N8nAuthGuard } from '../shared/guards/n8n-auth.guard';
+import { MetaGraphApiService } from './services/meta-graph-api.service';
+import { AudioConversionService } from './services/audio-conversion.service';
 
 @Module({
   imports: [WebsocketNotifierModule, BaileysModule, AuthModule, MinioModule],
   controllers: [MetaInboxController],
   providers: [
     PrismaService,
+    N8nAuthGuard,
+    MetaGraphApiService,
+    AudioConversionService,
     MetaInboxSchemaService,
     ThreadEventService,
     WhatsappIdentityService,

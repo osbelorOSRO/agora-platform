@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma/prisma.service';
-import { CreateRespuestaRapidaDto } from './dto/create-respuesta-rapida.dto';
-import { UpdateRespuestaRapidaDto } from './dto/update-respuesta-rapida.dto';
+import { CreateShortcutDto } from './dto/create-shortcut.dto';
+import { UpdateShortcutDto } from './dto/update-shortcut.dto';
 
 @Injectable()
-export class RespuestasRapidasService {
+export class ShortcutService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: CreateRespuestaRapidaDto) {
+  async create(data: CreateShortcutDto) {
     return this.prisma.respuestas_rapidas.create({ data });
   }
 
@@ -21,7 +21,7 @@ export class RespuestasRapidasService {
     return respuesta;
   }
 
-  async update(uuid: string, data: UpdateRespuestaRapidaDto) {
+  async update(uuid: string, data: UpdateShortcutDto) {
     const respuesta = await this.prisma.respuestas_rapidas.findUnique({ where: { uuid } });
     if (!respuesta) throw new NotFoundException('Respuesta rápida no encontrada');
 

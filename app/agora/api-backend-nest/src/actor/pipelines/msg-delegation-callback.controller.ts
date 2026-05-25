@@ -1,18 +1,16 @@
 import {
   Body,
   Controller,
-  Headers,
   Logger,
   Post,
-  UnauthorizedException,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { MsgDelegationCompleteDto } from './dto/msg-delegation-complete.dto';
 import { MsgDelegationFailedDto } from './dto/msg-delegation-failed.dto';
 import { MsgDelegationCompletionService } from './msg-delegation-completion.service';
-import { getRuntimeSecret } from '../../shared/runtime-secrets';
+import { N8nCallbackAuthGuard } from '../../shared/guards/n8n-callback-auth.guard';
 
 @Controller('actor/msg-delegation')
 @UsePipes(
@@ -26,17 +24,11 @@ import { getRuntimeSecret } from '../../shared/runtime-secrets';
 export class MsgDelegationCallbackController {
   private readonly logger = new Logger(MsgDelegationCallbackController.name);
 
-  constructor(
-    private readonly config: ConfigService,
-    private readonly completion: MsgDelegationCompletionService,
-  ) {}
+  constructor(private readonly completion: MsgDelegationCompletionService) {}
 
   @Post('complete')
-  async complete(
-    @Headers('authorization') auth: string,
-    @Body() body: MsgDelegationCompleteDto,
-  ) {
-    await this.validateAuth(auth);
+  @UseGuards(N8nCallbackAuthGuard)
+  async complete(@Body() body: MsgDelegationCompleteDto) {
     this.logger.log(
       `FLOW[CALLBACK] complete received externalEventId=${body.externalEventId}, actorExternalId=${body.actorExternalId}, hasSignal=${body.hasSignal !== false}`,
     );
@@ -53,11 +45,8 @@ export class MsgDelegationCallbackController {
   }
 
   @Post('failed')
-  async failed(
-    @Headers('authorization') auth: string,
-    @Body() body: MsgDelegationFailedDto,
-  ) {
-    await this.validateAuth(auth);
+  @UseGuards(N8nCallbackAuthGuard)
+  async failed(@Body() body: MsgDelegationFailedDto) {
     this.logger.warn(
       `FLOW[CALLBACK] failed received externalEventId=${body.externalEventId}, actorExternalId=${body.actorExternalId}, reason=${body.reason || 'unknown'}`,
     );
@@ -71,19 +60,5 @@ export class MsgDelegationCallbackController {
       ...result,
       externalEventId: body.externalEventId,
     };
-  }
-
-  private async validateAuth(authHeader: string) {
-    const token =
-      this.config.get<string>('N8N_CALLBACK_SECRET_TOKEN') ||
-      this.config.get<string>('N8N_SECRET_TOKEN') ||
-      (await getRuntimeSecret('N8N_CALLBACK_SECRET_TOKEN').catch(async () =>
-        getRuntimeSecret('N8N_SECRET_TOKEN').catch(() => undefined),
-      ));
-    const provided = authHeader?.replace('Bearer ', '');
-
-    if (!token || !provided || provided !== token) {
-      throw new UnauthorizedException('Token inválido');
-    }
   }
 }

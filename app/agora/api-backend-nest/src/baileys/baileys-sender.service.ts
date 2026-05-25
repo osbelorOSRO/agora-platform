@@ -1,10 +1,11 @@
 import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import axios from 'axios';
+import { IMessageGateway } from './interfaces/message-gateway.interface';
 
 type BaileysMessageType = 'text' | 'image' | 'audio' | 'document' | 'video';
 
 @Injectable()
-export class BaileysSenderService {
+export class BaileysSenderService implements IMessageGateway {
   private readonly logger = new Logger(BaileysSenderService.name);
   private getGatewayUrl(): string {
     const url = process.env.BOT_BASE_URL;

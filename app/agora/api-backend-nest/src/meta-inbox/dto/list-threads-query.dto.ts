@@ -16,7 +16,7 @@ export class ListThreadsQueryDto {
   offset: number = 0;
 
   @IsOptional()
-  @Transform(({ value }) => value === 'true')
+  @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   includeClosed: boolean = false;
 }

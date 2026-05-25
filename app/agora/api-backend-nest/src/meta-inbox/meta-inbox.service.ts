@@ -1,6 +1,4 @@
-import { BadRequestException, Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { PrismaService } from '../database/prisma/prisma.service';
-import { BaileysSenderService } from '../baileys/baileys-sender.service';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { MetaInboxSchemaService } from './services/meta-inbox-schema.service';
 import { ThreadService, ThreadSelectorInput } from './services/thread.service';
 import { ContactService } from './services/contact.service';
@@ -11,11 +9,7 @@ import { ThreadEventService, ThreadEventInput } from './services/thread-event.se
 
 @Injectable()
 export class MetaInboxService implements OnModuleInit {
-  private readonly logger = new Logger(MetaInboxService.name);
-
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly baileysSender: BaileysSenderService,
     private readonly schema: MetaInboxSchemaService,
     private readonly threadService: ThreadService,
     private readonly contactService: ContactService,
@@ -145,65 +139,7 @@ export class MetaInboxService implements OnModuleInit {
     actorExternalId?: string;
     phone?: string;
   }) {
-    if (input.action !== 'block' && input.action !== 'unblock') {
-      throw new BadRequestException('invalid_block_action');
-    }
-
-    const identity = await this.resolveWhatsappIdentity(input);
-    if (!identity.preferredBlockJid && !identity.phone) {
-      throw new BadRequestException('whatsapp_identity_not_resolved');
-    }
-
-    const gatewayResult = await this.baileysSender.updateBlockStatus({
-      action: input.action,
-      phone: identity.phone,
-      pnJid: identity.pnJid,
-      lidJid: identity.lidJid,
-      jid: identity.preferredBlockJid,
-    });
-
-    this.logger.log(
-      `WHATSAPP[BLOCK_STATUS] action=${input.action} sessionId=${identity.sessionId || 'n/a'} ` +
-        `actor=${identity.actorExternalId || 'n/a'} jidUsed=${gatewayResult?.jidUsed || 'n/a'}`,
-    );
-
-    const blockStatus = input.action === 'block' ? 'blocked' : 'unblocked';
-    const metadataPatch = {
-      blockStatus,
-      blockUpdatedAt: new Date().toISOString(),
-      blockJidUsed: gatewayResult?.jidUsed || null,
-      blockCandidates: gatewayResult?.candidates || [],
-    };
-
-    if (identity.actorExternalId) {
-      await this.prisma.$executeRawUnsafe(
-        `UPDATE meta_inbox_contacts
-         SET metadata = COALESCE(metadata, '{}'::jsonb) ||
-           jsonb_build_object(
-             'wa',
-             COALESCE(metadata->'wa', '{}'::jsonb) || $2::jsonb
-           ),
-           updated_at = now()
-         WHERE actor_external_id = $1 AND object_type = 'WHATSAPP'`,
-        identity.actorExternalId,
-        JSON.stringify(metadataPatch),
-      );
-    }
-
-    if (identity.sessionId && identity.actorExternalId) {
-      await this.threadEvent.recordThreadEvent({
-        sessionId: identity.sessionId,
-        actorExternalId: identity.actorExternalId,
-        objectType: 'WHATSAPP',
-        eventType: input.action === 'block' ? 'WHATSAPP_BLOCKED' : 'WHATSAPP_UNBLOCKED',
-        eventSource: 'HUMAN',
-        provider: 'BAILEYS',
-        metadata: { identity, gatewayResult },
-        dedupeKey: `WHATSAPP_BLOCK:${input.action}:${identity.sessionId}:${Date.now()}`,
-      });
-    }
-
-    return { success: true, action: input.action, blockStatus, identity, gatewayResult };
+    return this.whatsappIdentity.updateBlockStatus(input);
   }
 
   // --- Offer Context ---

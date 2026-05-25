@@ -1,12 +1,7 @@
-import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import axios from 'axios';
-import { execFile } from 'child_process';
-import fs from 'fs';
-import path from 'path';
-import util from 'util';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma/prisma.service';
 import { WebsocketNotifierService } from '../../websocket-notifier/websocket-notifier.service';
-import { BaileysSenderService } from '../../baileys/baileys-sender.service';
+import { IMessageGateway, MESSAGE_GATEWAY } from '../../baileys/interfaces/message-gateway.interface';
 import {
   assertTrustedMediaUrl,
   ensureCanonicalExtension,
@@ -14,9 +9,10 @@ import {
   validateStoredMediaFile,
 } from '../../media/media-security';
 import { MinioService } from '../../minio/minio.service';
-import { getRuntimeSecret } from '../../shared/runtime-secrets';
 import { ThreadService, ThreadIdentity, ThreadSelectorInput } from './thread.service';
 import { ThreadEventService } from './thread-event.service';
+import { MetaGraphApiService } from './meta-graph-api.service';
+import { AudioConversionService } from './audio-conversion.service';
 
 type ThreadMessageSenderType = 'HUMAN' | 'N8N' | 'SYSTEM';
 type ThreadMessageMediaType = 'image' | 'audio' | 'document' | 'video';
@@ -25,15 +21,16 @@ type BaileysMessageType = 'text' | 'image' | 'audio' | 'document' | 'video';
 @Injectable()
 export class MessageSendService {
   private readonly logger = new Logger(MessageSendService.name);
-  private readonly execFilePromise = util.promisify(execFile);
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly websocketNotifier: WebsocketNotifierService,
-    private readonly baileysSender: BaileysSenderService,
+    @Inject(MESSAGE_GATEWAY) private readonly baileysSender: IMessageGateway,
     private readonly minio: MinioService,
     private readonly thread: ThreadService,
     private readonly threadEvent: ThreadEventService,
+    private readonly metaGraph: MetaGraphApiService,
+    private readonly audioConversion: AudioConversionService,
   ) {}
 
   async sendText(sessionId: string, text: string): Promise<{ ok: boolean; externalEventId: string; messageExternalId: string | null; occurredAt: string; inReplyToExternalEventId: string | null }> {
@@ -92,7 +89,7 @@ export class MessageSendService {
     const threadIdentity = await this.thread.getThreadIdentity(sessionId);
     if (!threadIdentity) throw new NotFoundException(`session_not_found:${sessionId}`);
 
-    const isInstagram = this.isInstagramThread(threadIdentity.objectType, threadIdentity.sourceChannel);
+    const isInstagram = this.metaGraph.isInstagramThread(threadIdentity.objectType, threadIdentity.sourceChannel);
     const detected = await validateStoredMediaFile(file, ['image', 'audio', 'video', 'document']);
     const mediaType = detected.family;
     ensureCanonicalExtension(file, detected);
@@ -127,8 +124,8 @@ export class MessageSendService {
       throw new UnprocessableEntityException(`missing_conversation_context:${sessionId}`);
     }
 
-    const transport = await this.resolveSendTransport(threadIdentity.objectType, threadIdentity.sourceChannel);
-    const response = await this.postToGraphWithFallback(
+    const transport = await this.metaGraph.resolveSendTransport(threadIdentity.objectType, threadIdentity.sourceChannel);
+    const response = await this.metaGraph.postToGraphWithFallback(
       threadIdentity,
       { recipient: { id: threadIdentity.actorExternalId }, message: { text } },
       transport,
@@ -236,9 +233,9 @@ export class MessageSendService {
       );
     }
 
-    const transport = await this.resolveSendTransport(threadIdentity.objectType, threadIdentity.sourceChannel);
-    const graphAttachmentType = this.resolveGraphAttachmentType(mediaType, threadIdentity);
-    const response = await this.postToGraphWithFallback(
+    const transport = await this.metaGraph.resolveSendTransport(threadIdentity.objectType, threadIdentity.sourceChannel);
+    const graphAttachmentType = this.metaGraph.resolveGraphAttachmentType(mediaType, threadIdentity);
+    const response = await this.metaGraph.postToGraphWithFallback(
       threadIdentity,
       {
         recipient: { id: threadIdentity.actorExternalId },
@@ -457,70 +454,6 @@ export class MessageSendService {
     if (snapshot) await this.thread.notifyThreadUpsert(snapshot);
   }
 
-  private async resolveSendTransport(
-    objectType: string,
-    sourceChannel: string | null,
-  ): Promise<{ graphUrl: string; accessToken: string }> {
-    if ((objectType || '').toUpperCase() === 'WHATSAPP') {
-      throw new BadRequestException('whatsapp_sender_not_configured');
-    }
-
-    const isInstagram = this.isInstagramThread(objectType, sourceChannel);
-    const accessToken = await this.resolveAccessToken(objectType, sourceChannel);
-    return {
-      graphUrl: isInstagram
-        ? 'https://graph.instagram.com/v21.0/me/messages'
-        : 'https://graph.facebook.com/v21.0/me/messages',
-      accessToken,
-    };
-  }
-
-  private async resolveAccessToken(objectType: string, sourceChannel: string | null): Promise<string> {
-    const normalizedObjectType = (objectType || '').toUpperCase();
-    const normalizedSource = (sourceChannel || '').toLowerCase();
-    const isInstagram =
-      normalizedObjectType.includes('INSTAGRAM') ||
-      normalizedObjectType.includes('IG') ||
-      normalizedSource.includes('instagram') ||
-      normalizedSource.includes('ig');
-
-    if (isInstagram) {
-      const igToken = await getRuntimeSecret('META_INSTAGRAM_ACCESS_TOKEN');
-      if (!igToken) throw new InternalServerErrorException('missing_env:META_INSTAGRAM_ACCESS_TOKEN');
-      return igToken;
-    }
-
-    const pageToken = await getRuntimeSecret('META_PAGE_ACCESS_TOKEN');
-    if (!pageToken) throw new InternalServerErrorException('missing_env:META_PAGE_ACCESS_TOKEN');
-    return pageToken;
-  }
-
-  private async postToGraphWithFallback(
-    thread: { objectType: string; sourceChannel: string | null },
-    body: any,
-    primary: { graphUrl: string; accessToken: string },
-  ): Promise<any> {
-    try {
-      return await axios.post(primary.graphUrl, body, {
-        headers: { Authorization: `Bearer ${primary.accessToken}`, 'Content-Type': 'application/json' },
-        timeout: 15000,
-      });
-    } catch (err: any) {
-      const code = err?.response?.data?.error?.code;
-      const subcode = err?.response?.data?.error?.error_subcode;
-      const graphMessage = err?.response?.data?.error?.message;
-      this.logger.warn(
-        `sendGraph failed host=${primary.graphUrl} objectType=${thread.objectType} sourceChannel=${thread.sourceChannel ?? '-'} code=${code ?? 'unknown'} subcode=${subcode ?? 'unknown'}`,
-      );
-      if (code === 100 && subcode === 2534080) {
-        throw new BadRequestException(
-          `Formato de audio no soportado por Instagram API. ${graphMessage ?? ''}`.trim(),
-        );
-      }
-      throw err;
-    }
-  }
-
   private async prepareOutgoingMediaForThread(
     file: Express.Multer.File,
     input: { isInstagram: boolean; mediaType: ThreadMessageMediaType; mimeType: string },
@@ -531,24 +464,14 @@ export class MessageSendService {
       return { url, mimeType: input.mimeType };
     }
 
-    const inputPath = file.path;
-    const outputPath = inputPath.replace(/\.[^/.]+$/, '_ig.m4a');
-    const outputName = path.basename(outputPath);
-
+    const converted = await this.audioConversion.convertToM4a(file.path);
     try {
-      await this.execFilePromise('ffmpeg', [
-        '-i', inputPath, '-c:a', 'aac', '-b:a', '64k', '-ar', '44100', '-ac', '1', outputPath, '-y',
-      ]);
-      if (!fs.existsSync(outputPath)) throw new InternalServerErrorException('ffmpeg_output_missing');
-      removeFileQuietly(inputPath);
-      const url = await this.minio.uploadFile(outputPath, outputName, 'audio/mp4');
-      removeFileQuietly(outputPath);
-      return { url, mimeType: 'audio/mp4' };
-    } catch (error: any) {
-      removeFileQuietly(inputPath);
-      removeFileQuietly(outputPath);
-      this.logger.warn(`audio conversion failed for IG: ${error?.message ?? 'unknown_error'}`);
-      throw new BadRequestException('No se pudo convertir el audio a formato compatible para Instagram (m4a).');
+      const url = await this.minio.uploadFile(converted.outputPath, converted.outputName, converted.mimeType);
+      removeFileQuietly(converted.outputPath);
+      return { url, mimeType: converted.mimeType };
+    } catch (error) {
+      removeFileQuietly(converted.outputPath);
+      throw error;
     }
   }
 
@@ -580,17 +503,6 @@ export class MessageSendService {
     return `baileys:out:${actor}:${Date.now()}:${Math.random().toString(16).slice(2, 10)}`;
   }
 
-  private isInstagramThread(objectType: string, sourceChannel: string | null): boolean {
-    const normalizedObjectType = (objectType || '').toUpperCase();
-    const normalizedSource = (sourceChannel || '').toLowerCase();
-    return (
-      normalizedObjectType.includes('INSTAGRAM') ||
-      normalizedObjectType.includes('IG') ||
-      normalizedSource.includes('instagram') ||
-      normalizedSource.includes('ig')
-    );
-  }
-
   private isWhatsAppThread(objectType: string): boolean {
     return (objectType || '').toUpperCase() === 'WHATSAPP';
   }
@@ -603,17 +515,6 @@ export class MessageSendService {
   }
 
   private resolveBaileysMessageType(mediaType: ThreadMessageMediaType): BaileysMessageType {
-    return mediaType;
-  }
-
-  private resolveGraphAttachmentType(
-    mediaType: ThreadMessageMediaType,
-    thread: { objectType: string; sourceChannel: string | null },
-  ): 'image' | 'audio' | 'video' | 'file' {
-    if (mediaType === 'document' && this.isInstagramThread(thread.objectType, thread.sourceChannel)) {
-      throw new BadRequestException('document_not_supported_for_instagram');
-    }
-    if (mediaType === 'document') return 'file';
     return mediaType;
   }
 }

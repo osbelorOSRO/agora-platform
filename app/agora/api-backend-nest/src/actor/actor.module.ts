@@ -21,6 +21,7 @@ import { CacheConfigModule } from '../cache/cache.module';
 import { PrismaService } from '../database/prisma/prisma.service';
 import { WebsocketNotifierModule } from '../websocket-notifier/websocket-notifier.module';
 import { MetaInboxModule } from '../meta-inbox/meta-inbox.module';
+import { N8nCallbackAuthGuard } from '../shared/guards/n8n-callback-auth.guard';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { MetaInboxModule } from '../meta-inbox/meta-inbox.module';
   controllers: [MsgDelegationCallbackController],
   providers: [
     PrismaService,
+    N8nCallbackAuthGuard,
     ActorBootstrapService,
     ConversationBootstrapService,
     ActorScoringService,

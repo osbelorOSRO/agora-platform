@@ -11,11 +11,11 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { PanelJwtAuthGuard } from '../auth/panel-jwt-auth.guard';
-import { CreateRespuestaRapidaDto } from './dto/create-respuesta-rapida.dto';
-import { UpdateRespuestaRapidaDto } from './dto/update-respuesta-rapida.dto';
-import { RespuestasRapidasService } from './respuestas-rapidas.service';
+import { CreateShortcutDto } from './dto/create-shortcut.dto';
+import { UpdateShortcutDto } from './dto/update-shortcut.dto';
+import { ShortcutService } from './shortcut.service';
 
-@Controller('respuestas-rapidas')
+@Controller('shortcut')
 @UseGuards(PanelJwtAuthGuard)
 @UsePipes(
   new ValidationPipe({
@@ -25,11 +25,11 @@ import { RespuestasRapidasService } from './respuestas-rapidas.service';
     transformOptions: { enableImplicitConversion: true },
   }),
 )
-export class RespuestasRapidasController {
-  constructor(private readonly service: RespuestasRapidasService) {}
+export class ShortcutController {
+  constructor(private readonly service: ShortcutService) {}
 
   @Post()
-  create(@Body() dto: CreateRespuestaRapidaDto) {
+  create(@Body() dto: CreateShortcutDto) {
     return this.service.create(dto);
   }
 
@@ -44,7 +44,7 @@ export class RespuestasRapidasController {
   }
 
   @Put(':uuid')
-  update(@Param('uuid') uuid: string, @Body() dto: UpdateRespuestaRapidaDto) {
+  update(@Param('uuid') uuid: string, @Body() dto: UpdateShortcutDto) {
     return this.service.update(uuid, dto);
   }
 

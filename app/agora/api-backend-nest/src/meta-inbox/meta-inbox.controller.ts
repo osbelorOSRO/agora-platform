@@ -3,12 +3,10 @@ import {
   Body,
   Controller,
   Get,
-  Headers,
   Param,
   Patch,
   Post,
   Query,
-  UnauthorizedException,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -21,8 +19,6 @@ import { UpdateContactDto } from './dto/update-contact.dto';
 import { UpdateThreadControlDto } from './dto/update-thread-control.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { multerConfig } from '../config/multer.config';
-import { ConfigService } from '@nestjs/config';
-import { getRuntimeSecret } from '../shared/runtime-secrets';
 import { N8nThreadControlDto } from './dto/n8n-thread-control.dto';
 import { N8nContactUpsertDto } from './dto/n8n-contact-upsert.dto';
 import { ResolveThreadDto } from './dto/resolve-thread.dto';
@@ -41,6 +37,7 @@ import { ListContactsQueryDto } from './dto/list-contacts-query.dto';
 import { ListAdLeadStatsQueryDto } from './dto/list-ad-lead-stats-query.dto';
 import { ListMessagesQueryDto } from './dto/list-messages-query.dto';
 import { PanelJwtAuthGuard } from '../auth/panel-jwt-auth.guard';
+import { N8nAuthGuard } from '../shared/guards/n8n-auth.guard';
 
 @Controller('meta-inbox')
 @UsePipes(
@@ -52,10 +49,7 @@ import { PanelJwtAuthGuard } from '../auth/panel-jwt-auth.guard';
   }),
 )
 export class MetaInboxController {
-  constructor(
-    private readonly metaInbox: MetaInboxService,
-    private readonly config: ConfigService,
-  ) {}
+  constructor(private readonly metaInbox: MetaInboxService) {}
 
   @Get('threads')
   @UseGuards(PanelJwtAuthGuard)
@@ -115,11 +109,8 @@ export class MetaInboxController {
   }
 
   @Get('n8n/stage-templates/:stageActual')
-  async getStageTemplatePathsForN8n(
-    @Headers('authorization') auth: string,
-    @Param('stageActual') stageActual: string,
-  ) {
-    await this.assertN8nToken(auth);
+  @UseGuards(N8nAuthGuard)
+  async getStageTemplatePathsForN8n(@Param('stageActual') stageActual: string) {
     return this.metaInbox.getStageTemplatePaths(stageActual);
   }
 
@@ -185,11 +176,8 @@ export class MetaInboxController {
   }
 
   @Post('n8n/resolve-thread')
-  async resolveThreadForN8n(
-    @Headers('authorization') auth: string,
-    @Body() body: ResolveThreadDto,
-  ) {
-    await this.assertN8nToken(auth);
+  @UseGuards(N8nAuthGuard)
+  async resolveThreadForN8n(@Body() body: ResolveThreadDto) {
     return this.metaInbox.resolveThreadByActor(
       body.actorExternalId,
       body.objectType,
@@ -198,29 +186,20 @@ export class MetaInboxController {
   }
 
   @Patch('n8n/thread-control')
-  async updateThreadControlForN8n(
-    @Headers('authorization') auth: string,
-    @Body() body: N8nThreadControlDto,
-  ) {
-    await this.assertN8nToken(auth);
+  @UseGuards(N8nAuthGuard)
+  async updateThreadControlForN8n(@Body() body: N8nThreadControlDto) {
     return this.metaInbox.updateThreadControlForAutomation(body);
   }
 
   @Patch('n8n/contact')
-  async updateContactForN8n(
-    @Headers('authorization') auth: string,
-    @Body() body: N8nContactUpsertDto,
-  ) {
-    await this.assertN8nToken(auth);
+  @UseGuards(N8nAuthGuard)
+  async updateContactForN8n(@Body() body: N8nContactUpsertDto) {
     return this.metaInbox.updateContactForAutomation(body);
   }
 
   @Post('n8n/send-thread-message')
-  async sendThreadMessageForN8n(
-    @Headers('authorization') auth: string,
-    @Body() body: SendThreadMessageDto,
-  ) {
-    await this.assertN8nToken(auth);
+  @UseGuards(N8nAuthGuard)
+  async sendThreadMessageForN8n(@Body() body: SendThreadMessageDto) {
     return this.metaInbox.sendThreadMessage({
       ...body,
       senderType: body.senderType || 'N8N',
@@ -231,60 +210,35 @@ export class MetaInboxController {
   }
 
   @Post('n8n/offer-events')
-  async createOfferEventForN8n(
-    @Headers('authorization') auth: string,
-    @Body() body: N8nOfferEventCreateDto,
-  ) {
-    await this.assertN8nToken(auth);
+  @UseGuards(N8nAuthGuard)
+  async createOfferEventForN8n(@Body() body: N8nOfferEventCreateDto) {
     return this.metaInbox.createOfferEventForAutomation(body);
   }
 
   @Patch('n8n/offer-events/:id')
+  @UseGuards(N8nAuthGuard)
   async updateOfferEventForN8n(
-    @Headers('authorization') auth: string,
     @Param('id') id: string,
     @Body() body: N8nOfferEventUpdateDto,
   ) {
-    await this.assertN8nToken(auth);
     return this.metaInbox.updateOfferEventForAutomation(id, body);
   }
 
   @Post('n8n/offer-events/context')
-  async getOfferContextForN8n(
-    @Headers('authorization') auth: string,
-    @Body() body: N8nOfferContextDto,
-  ) {
-    await this.assertN8nToken(auth);
+  @UseGuards(N8nAuthGuard)
+  async getOfferContextForN8n(@Body() body: N8nOfferContextDto) {
     return this.metaInbox.getOfferContextForAutomation(body);
   }
 
   @Get('n8n/offer-events/:id')
-  async getOfferEventForN8n(
-    @Headers('authorization') auth: string,
-    @Param('id') id: string,
-  ) {
-    await this.assertN8nToken(auth);
+  @UseGuards(N8nAuthGuard)
+  async getOfferEventForN8n(@Param('id') id: string) {
     return this.metaInbox.getOfferEventById(id);
   }
 
   @Get('n8n/offer-events')
-  async listOfferEventsForN8n(
-    @Headers('authorization') auth: string,
-    @Query() query: N8nOfferEventQueryDto,
-  ) {
-    await this.assertN8nToken(auth);
+  @UseGuards(N8nAuthGuard)
+  async listOfferEventsForN8n(@Query() query: N8nOfferEventQueryDto) {
     return this.metaInbox.listOfferEvents(query);
   }
-
-  private async assertN8nToken(auth: string) {
-    const token =
-      this.config.get<string>('N8N_SECRET_TOKEN') ||
-      (await getRuntimeSecret('N8N_SECRET_TOKEN').catch(() => undefined));
-    const provided = auth?.replace('Bearer ', '');
-
-    if (!provided || provided !== token) {
-      throw new UnauthorizedException('Token inválido');
-    }
-  }
-
 }
