@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { KeyRound, Users, Activity, Wrench, LayoutList, PackageOpen, Plug, GitMerge, Zap } from "lucide-react";
+import { KeyRound, Users, Activity, Wrench, LayoutList, PackageOpen, Plug, GitMerge, Zap, TrendingUp } from "lucide-react";
 import { getTokenData } from "@/utils/getTokenData";
 import { hasPermission } from "@/utils/permissions";
 
@@ -21,6 +21,12 @@ const adminCards = [
     title: "Sesiones activas",
     description: "Control en vivo de sesiones abiertas. Permite cerrar sesiones individualmente.",
     Icon: Activity,
+  },
+  {
+    to: "/accesos/ajustes/ventas",
+    title: "Registro de ventas",
+    description: "Ingreso manual de ventas, catálogo de ofertas y matriz de precios por rango.",
+    Icon: TrendingUp,
   },
 ];
 

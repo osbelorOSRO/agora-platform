@@ -21,6 +21,7 @@ import StageTemplatesPage from "./pages/StageTemplatesPage";
 import OffersPage from "./pages/OffersPage";
 import MetaConfigPage from "./pages/MetaConfigPage";
 import ProfilePage from "./pages/ProfilePage";
+import VentasPage from "./modules/accesos/pages/VentasPage";
 
 function App() {
   return (
@@ -127,6 +128,14 @@ function App() {
             element={
               <ProtectedRoute requiredPermissions={["editar_configuracion"]}>
                 <SignalScoringRules />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/accesos/ajustes/ventas"
+            element={
+              <ProtectedRoute requiredPermissions={["editar_configuracion"]}>
+                <VentasPage />
               </ProtectedRoute>
             }
           />

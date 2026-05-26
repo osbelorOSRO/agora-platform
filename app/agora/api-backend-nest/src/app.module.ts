@@ -22,6 +22,7 @@ import { MetaConfigModule } from './meta-config/meta-config.module';
 import { UserProfileModule } from './user-profile/user-profile.module';
 import { AccessModule } from './accesos/accesos.module';
 import { SettingsModule } from './settings/settings.module';
+import { SalesRecordModule } from './sales-record/sales-record.module';
 
 @Global()
 @Module({
@@ -33,6 +34,7 @@ import { SettingsModule } from './settings/settings.module';
     HealthModule,
     AccessModule,
     SettingsModule,
+    SalesRecordModule,
     AuthModule,
     MediaModule,
     BaileysModule,

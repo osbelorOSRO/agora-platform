@@ -25,6 +25,7 @@ import {
   limitadorRegistro,
   limitadorSesionesAdmin,
   limitadorSettings,
+  limitadorSalesRecord,
   limitadorRaiz,
 } from './shared/rate-limiter';
 import { Request, Response, NextFunction } from 'express';
@@ -93,6 +94,7 @@ async function bootstrap() {
   app.use('/api/auth/sesiones-activas-admin', limitadorSesionesAdmin);
   app.use('/api/auth/sesiones', limitadorSesionesAdmin);
   app.use('/settings', limitadorSettings);
+  app.use('/sales-record', limitadorSalesRecord);
   app.use('/', limitadorRaiz);
 
   await app.listen(port);

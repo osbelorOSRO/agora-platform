@@ -243,6 +243,17 @@ export const limitadorSettings = rateLimit({
   skip: () => !redisClient,
 });
 
+// /sales-record/* — CRUD de ventas y tablas de configuración (panel humano)
+export const limitadorSalesRecord = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  store: crearStore('sales:record'),
+  handler: (_req, res) => respuestaLimite(res),
+  skip: () => !redisClient,
+});
+
 // GET / — ruta raíz pública
 export const limitadorRaiz = rateLimit({
   windowMs: 60 * 1000,
