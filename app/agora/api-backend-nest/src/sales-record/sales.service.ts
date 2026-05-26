@@ -123,6 +123,29 @@ export class SalesService {
     });
   }
 
+  async bulkImportSales(dtos: CreateSaleDto[]): Promise<{
+    total: number;
+    inserted: number;
+    errors: Array<{ index: number; error: string }>;
+  }> {
+    const errors: Array<{ index: number; error: string }> = [];
+    let inserted = 0;
+
+    for (let i = 0; i < dtos.length; i++) {
+      try {
+        await this.createSale(dtos[i]);
+        inserted++;
+      } catch (err) {
+        errors.push({
+          index: i,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+
+    return { total: dtos.length, inserted, errors };
+  }
+
   async updateSale(id: number, dto: UpdateSaleDto): Promise<SaleWithOffer> {
     const record = await this.prisma.sale_record.findUnique({ where: { id } });
     if (!record) throw new NotFoundException(`Venta #${id} no encontrada`);

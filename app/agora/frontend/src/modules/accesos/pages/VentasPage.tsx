@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -6,6 +6,7 @@ import {
   Pencil,
   Save,
   Trash2,
+  Upload,
   X,
 } from "lucide-react";
 import {
@@ -22,7 +23,9 @@ import {
   crearPrecioNivel,
   actualizarPrecioNivel,
   eliminarPrecioNivel,
+  importarVentasCSV,
 } from "../services/salesRecordService";
+import type { BulkImportResult } from "../services/salesRecordService";
 import type {
   SaleRecord,
   SaleMonthlyPoints,
@@ -108,6 +111,9 @@ export default function VentasPage() {
   const [modalVenta, setModalVenta] = useState(false);
   const [nuevaVenta, setNuevaVenta] = useState<CreateSaleDto>(FORM_INICIAL);
   const [cargandoVenta, setCargandoVenta] = useState(false);
+  const [importando, setImportando] = useState(false);
+  const [resultadoImport, setResultadoImport] = useState<BulkImportResult | null>(null);
+  const csvInputRef = useRef<HTMLInputElement>(null);
 
   // ── Catálogo ─────────────────────────────────────────────────
   const [catalogo, setCatalogo] = useState<Offer[]>([]);
@@ -294,6 +300,29 @@ export default function VentasPage() {
     await cargarPrecios();
   };
 
+  const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    setImportando(true);
+    setResultadoImport(null);
+    try {
+      const result = await importarVentasCSV(file);
+      setResultadoImport(result);
+      await cargarVentas();
+      await cargarPuntos();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Error al importar el archivo");
+    } finally {
+      setImportando(false);
+    }
+  };
+
+  const cargarPuntos = async () => {
+    const p = await obtenerPuntosMes(viewYear, viewMonth);
+    setPuntos(p);
+  };
+
   // ─── Render ───────────────────────────────────────────────────────────────
 
   const { percent: progressPct, label: progressLabel } = progressInfo(
@@ -372,20 +401,59 @@ export default function VentasPage() {
             </div>
           </div>
 
-          {/* Cabecera + botón agregar */}
+          {/* Cabecera + botones */}
           <div className="flex items-center justify-between">
             <p className="text-xs text-[#4D4D4D]">
               {ventas.length} venta{ventas.length !== 1 ? "s" : ""} en {mesNombre}
             </p>
-            <button
-              type="button"
-              onClick={() => setModalVenta(true)}
-              className="flex items-center gap-2 rounded-xl border border-[#2D2D2D] bg-[#141414] px-4 py-2 text-sm font-medium text-[#B3B3B3] transition hover:bg-[#1A1A1A] hover:text-white"
-            >
-              <CirclePlus size={15} />
-              Registrar venta
-            </button>
+            <div className="flex items-center gap-2">
+              <input
+                ref={csvInputRef}
+                type="file"
+                accept=".csv"
+                className="hidden"
+                onChange={handleImportCSV}
+              />
+              <button
+                type="button"
+                onClick={() => csvInputRef.current?.click()}
+                disabled={importando}
+                className="flex items-center gap-2 rounded-xl border border-[#2D2D2D] bg-[#141414] px-4 py-2 text-sm font-medium text-[#B3B3B3] transition hover:bg-[#1A1A1A] hover:text-white disabled:opacity-50"
+              >
+                <Upload size={15} />
+                {importando ? "Importando..." : "Importar CSV"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setModalVenta(true)}
+                className="flex items-center gap-2 rounded-xl border border-[#2D2D2D] bg-[#141414] px-4 py-2 text-sm font-medium text-[#B3B3B3] transition hover:bg-[#1A1A1A] hover:text-white"
+              >
+                <CirclePlus size={15} />
+                Registrar venta
+              </button>
+            </div>
           </div>
+
+          {/* Resultado de importación */}
+          {resultadoImport && (
+            <div className={`flex items-start justify-between gap-3 rounded-xl border px-4 py-3 text-sm ${resultadoImport.errors.length === 0 ? "border-green-800 bg-green-950/40 text-green-400" : "border-yellow-800 bg-yellow-950/40 text-yellow-400"}`}>
+              <div className="space-y-1">
+                <p className="font-medium">
+                  {resultadoImport.inserted} de {resultadoImport.total} filas importadas correctamente
+                </p>
+                {resultadoImport.errors.length > 0 && (
+                  <ul className="space-y-0.5 text-xs text-yellow-500">
+                    {resultadoImport.errors.map((e) => (
+                      <li key={e.index}>Fila {e.index + 1}: {e.error}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <button type="button" onClick={() => setResultadoImport(null)}>
+                <X size={14} />
+              </button>
+            </div>
+          )}
 
           {/* Tabla de ventas */}
           <div className="overflow-x-auto rounded-2xl border border-[#2D2D2D] scrollbar-custom">

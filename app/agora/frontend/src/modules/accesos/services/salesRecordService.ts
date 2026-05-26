@@ -28,6 +28,76 @@ export const obtenerVentas = async (year?: number, month?: number): Promise<Sale
   return res.data;
 };
 
+export interface BulkImportResult {
+  total: number;
+  inserted: number;
+  errors: Array<{ index: number; error: string }>;
+}
+
+export const importarVentasCSV = async (
+  file: File,
+): Promise<BulkImportResult> => {
+  const text = await file.text();
+  const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+  if (lines.length < 2) throw new Error("El archivo no tiene datos");
+
+  const MODALITY_MAP: Record<string, ModalidadVenta> = {
+    "POST A POST": "POST_A_POST",
+    POST_A_POST: "POST_A_POST",
+    "PRE A POST": "PRE_A_POST",
+    PRE_A_POST: "PRE_A_POST",
+    ALTA: "ALTA",
+    SALTA: "SALTA",
+  };
+
+  const parseFecha = (raw: string): string => {
+    // acepta DD-MM-YY o DD-MM-YYYY o DD/MM/YY o DD/MM/YYYY
+    const parts = raw.split(/[-/]/);
+    if (parts.length !== 3) throw new Error(`Fecha inválida: ${raw}`);
+    const [dd, mm, yy] = parts;
+    const year = yy.length === 2 ? `20${yy}` : yy;
+    return `${year}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
+  };
+
+  // normalizar cabecera para tolerar mayúsculas y typos (ej. "adress")
+  const header = lines[0].split(",").map((h) =>
+    h.trim().toLowerCase().replace(/^adress$/, "address"),
+  );
+
+  const records: CreateSaleDto[] = lines.slice(1).map((line, i) => {
+    const cols = line.split(",").map((c) => c.trim());
+    const get = (field: string) => cols[header.indexOf(field)] ?? "";
+
+    const rawModality = get("modality").toUpperCase();
+    const modality = MODALITY_MAP[rawModality];
+    if (!modality)
+      throw new Error(
+        `Fila ${i + 2}: modalidad desconocida "${get("modality")}"`,
+      );
+
+    return {
+      fecha: parseFecha(get("fecha")),
+      run: get("run"),
+      full_name: get("full_name"),
+      phone: get("phone"),
+      address: get("address"),
+      city: get("city"),
+      province: get("province"),
+      country: get("country"),
+      contract_number: get("contract_number"),
+      modality,
+      offers_code: get("offers_code"),
+    };
+  });
+
+  const res = await axios.post(
+    `${API_URL}/sales-record/bulk`,
+    { records },
+    { headers: getAuthHeaders() },
+  );
+  return res.data;
+};
+
 export const crearVenta = async (dto: CreateSaleDto): Promise<SaleRecord> => {
   const res = await axios.post(`${API_URL}/sales-record`, dto, {
     headers: getAuthHeaders(),

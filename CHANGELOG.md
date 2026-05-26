@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.8.0
+
+### Added
+- Endpoint `POST /sales-record/bulk` para carga masiva de ventas — procesa cada fila con la misma lógica transaccional que el registro individual (acumulación de puntos, recálculo de rango, asignación de precio)
+- Botón "Importar CSV" en VentasPage — parsea el archivo en el cliente, normaliza fechas DD-MM-YY, modalidades con espacios y el typo `adress`, y muestra un banner con el resultado fila por fila
+- Archivo de prueba `docs/Pruebas/prueba_carga_ventas.csv` en formato DD-MM-YY correcto
+
 ## 2.7.0
 
 ### Added

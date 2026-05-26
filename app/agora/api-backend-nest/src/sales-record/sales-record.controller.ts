@@ -17,6 +17,7 @@ import { CreateCatalogDto } from './dto/create-catalog.dto';
 import { UpdateCatalogDto } from './dto/update-catalog.dto';
 import { CreatePriceLevelDto } from './dto/create-price-level.dto';
 import { UpdatePriceLevelDto } from './dto/update-price-level.dto';
+import { BulkImportSaleDto } from './dto/bulk-import-sale.dto';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { UpdateSaleDto } from './dto/update-sale.dto';
 import { SalesCatalogService } from './sales-catalog.service';
@@ -110,6 +111,11 @@ export class SalesRecordController {
   @Get()
   listSales(@Query('year') year?: number, @Query('month') month?: number) {
     return this.salesService.listSales(year, month);
+  }
+
+  @Post('bulk')
+  bulkImportSales(@Body() dto: BulkImportSaleDto) {
+    return this.salesService.bulkImportSales(dto.records);
   }
 
   @Post()
