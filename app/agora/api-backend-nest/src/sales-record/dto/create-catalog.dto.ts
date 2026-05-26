@@ -1,4 +1,12 @@
-import { IsEnum, IsIn, IsInt, IsString, Max, MaxLength, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsIn,
+  IsInt,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 import { offer_modality } from '@prisma/client';
 
 export class CreateCatalogDto {

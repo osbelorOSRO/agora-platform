@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import type { offer } from '@prisma/client';
 import { PrismaService } from '../database/prisma/prisma.service';
 import { CacheService } from '../cache/cache.service';
@@ -29,7 +33,10 @@ export class SalesCatalogService {
     const exists = await this.prisma.offer.findUnique({
       where: { code_modality: { code: dto.code, modality: dto.modality } },
     });
-    if (exists) throw new ConflictException(`Ya existe oferta "${dto.code}" / ${dto.modality}`);
+    if (exists)
+      throw new ConflictException(
+        `Ya existe oferta "${dto.code}" / ${dto.modality}`,
+      );
     const result = await this.prisma.offer.create({ data: dto });
     await this.cache.del(CACHE_KEY);
     return result;
@@ -47,7 +54,9 @@ export class SalesCatalogService {
     try {
       await this.prisma.offer.delete({ where: { id } });
     } catch {
-      throw new ConflictException('No se puede eliminar: la oferta tiene ventas asociadas');
+      throw new ConflictException(
+        'No se puede eliminar: la oferta tiene ventas asociadas',
+      );
     }
     await this.cache.del(CACHE_KEY);
     return { ok: true, id };

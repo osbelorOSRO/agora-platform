@@ -70,7 +70,11 @@ describe('SalesCatalogService', () => {
 
       expect(result).toEqual([OFFER_STUB]);
       expect(mockPrisma.offer.findMany).toHaveBeenCalledTimes(1);
-      expect(mockCache.set).toHaveBeenCalledWith('sales:catalog:list', [OFFER_STUB], 300);
+      expect(mockCache.set).toHaveBeenCalledWith(
+        'sales:catalog:list',
+        [OFFER_STUB],
+        300,
+      );
     });
   });
 
@@ -131,7 +135,9 @@ describe('SalesCatalogService', () => {
     it('lanza NotFoundException cuando la oferta no existe', async () => {
       mockPrisma.offer.findUnique.mockResolvedValue(null);
 
-      await expect(svc.updateCatalog(99, { level: 3 })).rejects.toThrow(NotFoundException);
+      await expect(svc.updateCatalog(99, { level: 3 })).rejects.toThrow(
+        NotFoundException,
+      );
 
       expect(mockPrisma.offer.update).not.toHaveBeenCalled();
     });
@@ -160,7 +166,9 @@ describe('SalesCatalogService', () => {
 
     it('lanza ConflictException cuando hay ventas asociadas (FK violation)', async () => {
       mockPrisma.offer.findUnique.mockResolvedValue(OFFER_STUB);
-      mockPrisma.offer.delete.mockRejectedValue(new Error('Foreign key constraint failed'));
+      mockPrisma.offer.delete.mockRejectedValue(
+        new Error('Foreign key constraint failed'),
+      );
 
       await expect(svc.deleteCatalog(1)).rejects.toThrow(ConflictException);
     });

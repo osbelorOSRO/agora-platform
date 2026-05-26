@@ -61,7 +61,11 @@ describe('SalesPriceLevelService', () => {
       const result = await svc.listPriceMatrix();
 
       expect(result).toEqual([PRICE_STUB]);
-      expect(mockCache.set).toHaveBeenCalledWith('sales:price-matrix:list', [PRICE_STUB], 300);
+      expect(mockCache.set).toHaveBeenCalledWith(
+        'sales:price-matrix:list',
+        [PRICE_STUB],
+        300,
+      );
     });
   });
 
@@ -72,7 +76,11 @@ describe('SalesPriceLevelService', () => {
       mockPrisma.price_level.findUnique.mockResolvedValue(null);
       mockPrisma.price_level.create.mockResolvedValue(PRICE_STUB);
 
-      const result = await svc.createPriceLevel({ level: 9, range: 3, price: 1500 });
+      const result = await svc.createPriceLevel({
+        level: 9,
+        range: 3,
+        price: 1500,
+      });
 
       expect(result).toBe(PRICE_STUB);
       expect(mockCache.del).toHaveBeenCalledWith('sales:price-matrix:list');
@@ -110,7 +118,9 @@ describe('SalesPriceLevelService', () => {
     it('lanza NotFoundException cuando la entrada no existe', async () => {
       mockPrisma.price_level.findUnique.mockResolvedValue(null);
 
-      await expect(svc.updatePriceLevel(99, { price: 500 })).rejects.toThrow(NotFoundException);
+      await expect(svc.updatePriceLevel(99, { price: 500 })).rejects.toThrow(
+        NotFoundException,
+      );
 
       expect(mockPrisma.price_level.update).not.toHaveBeenCalled();
     });
