@@ -51,7 +51,7 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
-      - name: Pull y build backend
+      - name: Pull y build
         env:
           PROD_DIR: /home/deploy/agora-platform
           ENV_FILE: /home/deploy/agora-platform/app/env/prod.vps1.secrets.env
@@ -62,7 +62,7 @@ jobs:
           docker compose -p stack_agora \
             --env-file "$ENV_FILE" \
             -f app/agora/docker-compose.yml \
-            build backend
+            build backend frontend
 
       - name: Aplicar migraciones DB
         env:
