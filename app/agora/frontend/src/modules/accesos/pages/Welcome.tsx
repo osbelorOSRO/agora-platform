@@ -304,7 +304,11 @@ export default function Welcome() {
 
         if (cancelled) return;
         setAgendaTotal(agenda?.total ?? 0);
-        setMetaThreadsCount(Array.isArray(metaThreads) ? metaThreads.length : 0);
+        setMetaThreadsCount(
+          Array.isArray(metaThreads)
+            ? metaThreads.filter((t) => t.threadStatus === "OPEN").length
+            : 0,
+        );
       } catch (error) {
         if (cancelled) return;
         console.error("Error cargando metricas del dashboard:", error);
