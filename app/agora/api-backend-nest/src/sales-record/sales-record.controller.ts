@@ -53,7 +53,10 @@ export class SalesRecordController {
   }
 
   @Patch('catalog/:id')
-  updateCatalog(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateCatalogDto) {
+  updateCatalog(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateCatalogDto,
+  ) {
     return this.catalogService.updateCatalog(id, dto);
   }
 
@@ -75,7 +78,10 @@ export class SalesRecordController {
   }
 
   @Patch('price-matrix/:id')
-  updatePriceLevel(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdatePriceLevelDto) {
+  updatePriceLevel(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdatePriceLevelDto,
+  ) {
     return this.priceLevelService.updatePriceLevel(id, dto);
   }
 
@@ -102,10 +108,7 @@ export class SalesRecordController {
   // ─── Ventas ──────────────────────────────────────────────────────────────
 
   @Get()
-  listSales(
-    @Query('year') year?: number,
-    @Query('month') month?: number,
-  ) {
+  listSales(@Query('year') year?: number, @Query('month') month?: number) {
     return this.salesService.listSales(year, month);
   }
 
@@ -115,7 +118,10 @@ export class SalesRecordController {
   }
 
   @Patch(':id')
-  updateSale(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateSaleDto) {
+  updateSale(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateSaleDto,
+  ) {
     return this.salesService.updateSale(id, dto);
   }
 

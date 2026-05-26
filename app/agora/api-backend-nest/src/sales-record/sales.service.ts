@@ -21,12 +21,22 @@ export class SalesService {
   async getMonthlyPoints(
     year: number,
     month: number,
-  ): Promise<{ year: number; month: number; total_points: number; active_range: number }> {
+  ): Promise<{
+    year: number;
+    month: number;
+    total_points: number;
+    active_range: number;
+  }> {
     const entry = await this.prisma.points_level.findUnique({
       where: { year_month: { year, month } },
     });
     const totalPoints = entry ? Number(entry.total_points) : 0;
-    return { year, month, total_points: totalPoints, active_range: computeRange(totalPoints) };
+    return {
+      year,
+      month,
+      total_points: totalPoints,
+      active_range: computeRange(totalPoints),
+    };
   }
 
   async listSales(year?: number, month?: number): Promise<SaleWithOffer[]> {
@@ -49,7 +59,9 @@ export class SalesService {
   async createSale(dto: CreateSaleDto): Promise<SaleWithOffer> {
     return this.prisma.$transaction(async (tx) => {
       const offer = await tx.offer.findUnique({
-        where: { code_modality: { code: dto.offers_code, modality: dto.modality } },
+        where: {
+          code_modality: { code: dto.offers_code, modality: dto.modality },
+        },
       });
       if (!offer) {
         throw new NotFoundException(

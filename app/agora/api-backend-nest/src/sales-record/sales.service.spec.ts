@@ -68,16 +68,21 @@ const mockTx = {
 
 const mockPrisma = {
   points_level: { findMany: jest.fn(), findUnique: jest.fn() },
-  sale_record: { findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
-  $transaction: jest.fn().mockImplementation((fn: (tx: typeof mockTx) => Promise<unknown>) => fn(mockTx)),
+  sale_record: {
+    findMany: jest.fn(),
+    findUnique: jest.fn(),
+    update: jest.fn(),
+  },
+  $transaction: jest
+    .fn()
+    .mockImplementation((fn: (tx: typeof mockTx) => Promise<unknown>) =>
+      fn(mockTx),
+    ),
 };
 
 async function buildService(): Promise<SalesService> {
   const module = await Test.createTestingModule({
-    providers: [
-      SalesService,
-      { provide: PrismaService, useValue: mockPrisma },
-    ],
+    providers: [SalesService, { provide: PrismaService, useValue: mockPrisma }],
   }).compile();
   return module.get(SalesService);
 }
@@ -199,7 +204,10 @@ describe('SalesService', () => {
     });
 
     it('recalcula el mes cuando los puntos cruzan el umbral de 20 (rango 1 → 2)', async () => {
-      mockTx.offer.findUnique.mockResolvedValue({ ...OFFER_STUB, points: '2.0' });
+      mockTx.offer.findUnique.mockResolvedValue({
+        ...OFFER_STUB,
+        points: '2.0',
+      });
       mockTx.points_level.findUnique.mockResolvedValue({ total_points: '19' });
       mockTx.points_level.upsert.mockResolvedValue({});
       mockTx.sale_record.findMany.mockResolvedValue([{ level_price: 5 }]);
@@ -220,7 +228,9 @@ describe('SalesService', () => {
     it('lanza NotFoundException cuando la oferta no existe en el catálogo', async () => {
       mockTx.offer.findUnique.mockResolvedValue(null);
 
-      await expect(svc.createSale(CREATE_DTO)).rejects.toThrow(NotFoundException);
+      await expect(svc.createSale(CREATE_DTO)).rejects.toThrow(
+        NotFoundException,
+      );
 
       expect(mockTx.sale_record.create).not.toHaveBeenCalled();
     });
@@ -231,7 +241,9 @@ describe('SalesService', () => {
       mockTx.points_level.upsert.mockResolvedValue({});
       mockTx.price_level.findUnique.mockResolvedValue(null);
 
-      await expect(svc.createSale(CREATE_DTO)).rejects.toThrow(NotFoundException);
+      await expect(svc.createSale(CREATE_DTO)).rejects.toThrow(
+        NotFoundException,
+      );
 
       expect(mockTx.sale_record.create).not.toHaveBeenCalled();
     });
@@ -258,7 +270,9 @@ describe('SalesService', () => {
     it('lanza NotFoundException cuando la venta no existe', async () => {
       mockPrisma.sale_record.findUnique.mockResolvedValue(null);
 
-      await expect(svc.updateSale(99, { full_name: 'x' })).rejects.toThrow(NotFoundException);
+      await expect(svc.updateSale(99, { full_name: 'x' })).rejects.toThrow(
+        NotFoundException,
+      );
 
       expect(mockPrisma.sale_record.update).not.toHaveBeenCalled();
     });
@@ -279,7 +293,10 @@ describe('SalesService', () => {
     });
 
     it('recalcula el mes cuando la eliminación baja el rango (25 → 23.5, rango 2 → 2, sin recalculo)', async () => {
-      mockTx.sale_record.findUnique.mockResolvedValue({ ...SALE_STUB, points: '1.5' });
+      mockTx.sale_record.findUnique.mockResolvedValue({
+        ...SALE_STUB,
+        points: '1.5',
+      });
       mockTx.sale_record.delete.mockResolvedValue({});
       mockTx.points_level.findUnique.mockResolvedValue({ total_points: '25' });
       mockTx.points_level.update.mockResolvedValue({});
@@ -294,12 +311,20 @@ describe('SalesService', () => {
     });
 
     it('recalcula el mes cuando la eliminación baja el rango (21 → 19.5, rango 2 → 1)', async () => {
-      mockTx.sale_record.findUnique.mockResolvedValue({ ...SALE_STUB, points: '1.5' });
+      mockTx.sale_record.findUnique.mockResolvedValue({
+        ...SALE_STUB,
+        points: '1.5',
+      });
       mockTx.sale_record.delete.mockResolvedValue({});
       mockTx.points_level.findUnique.mockResolvedValue({ total_points: '21' });
       mockTx.points_level.update.mockResolvedValue({});
       mockTx.sale_record.findMany.mockResolvedValue([{ level_price: 5 }]);
-      mockTx.price_level.findUnique.mockResolvedValue({ id: 11, level: 5, range: 1, price: 500 });
+      mockTx.price_level.findUnique.mockResolvedValue({
+        id: 11,
+        level: 5,
+        range: 1,
+        price: 500,
+      });
       mockTx.sale_record.updateMany.mockResolvedValue({ count: 3 });
 
       const result = await svc.deleteSale(1);

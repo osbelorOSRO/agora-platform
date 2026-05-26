@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import type { price_level } from '@prisma/client';
 import { PrismaService } from '../database/prisma/prisma.service';
 import { CacheService } from '../cache/cache.service';
@@ -29,23 +33,34 @@ export class SalesPriceLevelService {
     const exists = await this.prisma.price_level.findUnique({
       where: { level_range: { level: dto.level, range: dto.range } },
     });
-    if (exists) throw new ConflictException(`Ya existe precio para level ${dto.level} / rango ${dto.range}`);
+    if (exists)
+      throw new ConflictException(
+        `Ya existe precio para level ${dto.level} / rango ${dto.range}`,
+      );
     const result = await this.prisma.price_level.create({ data: dto });
     await this.cache.del(CACHE_KEY);
     return result;
   }
 
-  async updatePriceLevel(id: number, dto: UpdatePriceLevelDto): Promise<price_level> {
+  async updatePriceLevel(
+    id: number,
+    dto: UpdatePriceLevelDto,
+  ): Promise<price_level> {
     const entry = await this.prisma.price_level.findUnique({ where: { id } });
-    if (!entry) throw new NotFoundException(`Entrada de precio #${id} no encontrada`);
-    const result = await this.prisma.price_level.update({ where: { id }, data: dto });
+    if (!entry)
+      throw new NotFoundException(`Entrada de precio #${id} no encontrada`);
+    const result = await this.prisma.price_level.update({
+      where: { id },
+      data: dto,
+    });
     await this.cache.del(CACHE_KEY);
     return result;
   }
 
   async deletePriceLevel(id: number): Promise<{ ok: boolean; id: number }> {
     const entry = await this.prisma.price_level.findUnique({ where: { id } });
-    if (!entry) throw new NotFoundException(`Entrada de precio #${id} no encontrada`);
+    if (!entry)
+      throw new NotFoundException(`Entrada de precio #${id} no encontrada`);
     await this.prisma.price_level.delete({ where: { id } });
     await this.cache.del(CACHE_KEY);
     return { ok: true, id };

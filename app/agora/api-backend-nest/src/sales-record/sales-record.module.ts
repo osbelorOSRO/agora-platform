@@ -10,6 +10,11 @@ import { SalesService } from './sales.service';
 @Module({
   imports: [AuthModule, CacheConfigModule],
   controllers: [SalesRecordController],
-  providers: [SalesCatalogService, SalesPriceLevelService, SalesService, PrismaService],
+  providers: [
+    SalesCatalogService,
+    SalesPriceLevelService,
+    SalesService,
+    PrismaService,
+  ],
 })
 export class SalesRecordModule {}

@@ -212,7 +212,11 @@ describe('SalesRecordController — /sales-record/catalog', () => {
   describe('PATCH /sales-record/catalog/:id', () => {
     it('devuelve 200 con actualización de level válido', async () => {
       app = await buildApp(panelGuard);
-      mockCatalog.updateCatalog.mockResolvedValue({ id: 1, ...VALID_CATALOG, level: 7 });
+      mockCatalog.updateCatalog.mockResolvedValue({
+        id: 1,
+        ...VALID_CATALOG,
+        level: 7,
+      });
       const res = await request(app.getHttpServer())
         .patch('/sales-record/catalog/1')
         .send({ level: 7 })
@@ -223,7 +227,11 @@ describe('SalesRecordController — /sales-record/catalog', () => {
 
     it('devuelve 200 con actualización de points válido', async () => {
       app = await buildApp(panelGuard);
-      mockCatalog.updateCatalog.mockResolvedValue({ id: 1, ...VALID_CATALOG, points: 2.5 });
+      mockCatalog.updateCatalog.mockResolvedValue({
+        id: 1,
+        ...VALID_CATALOG,
+        points: 2.5,
+      });
       await request(app.getHttpServer())
         .patch('/sales-record/catalog/1')
         .send({ points: 2.5 })
@@ -304,7 +312,10 @@ describe('SalesRecordController — /sales-record/price-matrix', () => {
   describe('POST /sales-record/price-matrix', () => {
     it('devuelve 201 con body válido', async () => {
       app = await buildApp(panelGuard);
-      mockPriceLevel.createPriceLevel.mockResolvedValue({ id: 1, ...VALID_PRICE_LEVEL });
+      mockPriceLevel.createPriceLevel.mockResolvedValue({
+        id: 1,
+        ...VALID_PRICE_LEVEL,
+      });
       const res = await request(app.getHttpServer())
         .post('/sales-record/price-matrix')
         .send(VALID_PRICE_LEVEL)
@@ -375,13 +386,19 @@ describe('SalesRecordController — /sales-record/price-matrix', () => {
   describe('PATCH /sales-record/price-matrix/:id', () => {
     it('devuelve 200 con price actualizado', async () => {
       app = await buildApp(panelGuard);
-      mockPriceLevel.updatePriceLevel.mockResolvedValue({ id: 1, ...VALID_PRICE_LEVEL, price: 2000 });
+      mockPriceLevel.updatePriceLevel.mockResolvedValue({
+        id: 1,
+        ...VALID_PRICE_LEVEL,
+        price: 2000,
+      });
       const res = await request(app.getHttpServer())
         .patch('/sales-record/price-matrix/1')
         .send({ price: 2000 })
         .expect(200);
       expect(res.body).toHaveProperty('price', 2000);
-      expect(mockPriceLevel.updatePriceLevel).toHaveBeenCalledWith(1, { price: 2000 });
+      expect(mockPriceLevel.updatePriceLevel).toHaveBeenCalledWith(1, {
+        price: 2000,
+      });
     });
 
     it('devuelve 400 cuando price es negativo', async () => {
@@ -687,9 +704,7 @@ describe('SalesRecordController — /sales-record', () => {
 
     it('devuelve 401 sin token', async () => {
       app = await buildApp(noAuthGuard);
-      await request(app.getHttpServer())
-        .delete('/sales-record/1')
-        .expect(401);
+      await request(app.getHttpServer()).delete('/sales-record/1').expect(401);
     });
   });
 });
