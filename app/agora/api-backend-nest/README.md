@@ -132,6 +132,19 @@ npm run test:e2e
 npm run test:cov
 ```
 
+## Schema de DB — Prisma Migrate
+
+Los cambios al schema se gestionan con Prisma Migrate, **nunca con `db push`**.
+
+```bash
+# 1. Modificar prisma/schema.prisma
+# 2. Generar y aplicar migración en DB local
+npx prisma migrate dev --name descripcion_del_cambio
+# 3. Commitear schema.prisma + archivo generado en prisma/migrations/
+```
+
+El CI/CD aplica las migraciones en prod automáticamente antes de reiniciar el backend. Ante un fallo ver `ops/docs/RUNBOOK-PRISMA-MIGRATIONS.md`.
+
 ## Operación via Docker
 
 ```bash
