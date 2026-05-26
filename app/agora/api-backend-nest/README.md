@@ -158,3 +158,4 @@ docker logs -f backend
 
 Ver `README-OPERACION.md` en la raíz del repo para el flujo completo de operación por perfil.
 
+
