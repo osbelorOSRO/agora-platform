@@ -59,7 +59,6 @@ services:
     networks:
       - npm_network
     volumes:
-      # - ${UPLOADS_DIR}:/app/uploads  # legacy disco local — desactivado al migrar a MinIO
       - ./config:/app/config
     env_file:
       - ./api-backend-nest/.env
