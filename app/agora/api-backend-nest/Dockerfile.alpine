@@ -54,11 +54,14 @@ COPY --from=builder /app/dist ./dist
 RUN mkdir -p /app/uploads /app/config && \
     chown -R node:node /app
 
+# Entrypoint: corre migraciones antes de arrancar
+COPY --chown=node:node entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
 # Exponer puerto
 EXPOSE 4001
 
 # Usuario no-root
 USER node
 
-# Comando de producción
-CMD ["node", "dist/main.js"]
+CMD ["./entrypoint.sh"]

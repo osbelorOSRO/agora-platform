@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.7.0
+
+### Added
+- `api-backend-nest`: modelo `wa_ad_leads` en Prisma — tabla para leads de anuncios de WhatsApp con índices en `source_id/first_seen_at` y `session_id`
+- `api-backend-nest`: migración a Prisma Migrate — reemplaza `db push` por flujo de migraciones versionadas; baseline `0_init` + migración `20260525000000_add_wa_ad_leads`
+- `api-backend-nest`: `entrypoint.sh` — corre `prisma migrate deploy` antes de arrancar la app; garantiza migraciones aplicadas en cada deploy
+
+### Changed
+- `api-backend-nest`: `Dockerfile.alpine` — usa `entrypoint.sh` como `CMD` en lugar de `node dist/main.js`
+- `api-backend-nest`: `prisma.config.ts` — elimina `import "dotenv/config"` (Prisma carga `.env` nativamente; el import rompía la CLI en host sin `node_modules`)
+- `api-backend-nest`: `schema.prisma` — limpieza de modelos no gestionados por este servicio (tablas N8N, `configuracion_bot`, `n8n_chat_histories`, `transiciones_estados`)
+- `scripts/prepush-audit.sh` — excluye `prisma/migrations/**` del chequeo de archivos `.sql` sensibles
+
 ## 2.6.0
 
 ### Added

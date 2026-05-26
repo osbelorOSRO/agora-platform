@@ -30,7 +30,8 @@ echo "== prepush-audit: archivos sensibles no ignorados =="
 if [[ "$HAS_GIT_ROOT" -eq 1 ]]; then
   SENSITIVE_LIST="$(find . -type f \
     \( -name '*.secrets.env' -o -name '*.pem' -o -name '*.key' -o -name '*.p12' -o -name '*.crt' -o -name '*.sql' -o -name '*.dump' -o -name '*.backup' -o -name '*.bak' \) \
-    -not -path './node_modules/*' -not -path './*/node_modules/*' 2>/dev/null || true)"
+    -not -path './node_modules/*' -not -path './*/node_modules/*' \
+    -not -path '*/prisma/migrations/*' 2>/dev/null || true)"
 
   LEAK=0
   while IFS= read -r f; do
