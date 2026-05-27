@@ -1,3 +1,5 @@
+import { createHash } from 'crypto';
+
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma/prisma.service';
 import {
@@ -159,9 +161,14 @@ export class IncomingMessagePersistenceService {
       'marketplace'
     ] as Record<string, unknown> | undefined;
     if (isFcaIncoming && marketplace) {
-      if (marketplace.sourceId) {
+      const effectiveSourceId: string | null = marketplace.sourceId
+        ? String(marketplace.sourceId)
+        : marketplace.title
+          ? `title_${createHash('sha256').update(String(marketplace.title).trim().toLowerCase()).digest('hex').slice(0, 24)}`
+          : null;
+      if (effectiveSourceId) {
         await this.upsertFcaMarketplaceLead({
-          sourceId: String(marketplace.sourceId),
+          sourceId: effectiveSourceId,
           sessionId,
           actorExternalId: env.actorExternalId,
           sourceUrl: marketplace.itemUrl ? String(marketplace.itemUrl) : null,
