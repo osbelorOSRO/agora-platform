@@ -169,7 +169,9 @@ export class MessageSendService {
       );
     }
 
-    if (this.isFcaThread(threadIdentity.objectType, threadIdentity.sourceChannel)) {
+    if (
+      this.isFcaThread(threadIdentity.objectType, threadIdentity.sourceChannel)
+    ) {
       const inReplyToExternalEventId =
         await this.getLastIncomingExternalEventId(sessionId);
       return this.sendTextViaFca(
@@ -323,7 +325,9 @@ export class MessageSendService {
       );
     }
 
-    if (this.isFcaThread(threadIdentity.objectType, threadIdentity.sourceChannel)) {
+    if (
+      this.isFcaThread(threadIdentity.objectType, threadIdentity.sourceChannel)
+    ) {
       const inReplyToExternalEventId =
         await this.getLastIncomingExternalEventId(sessionId);
       return this.sendMediaViaFca(
@@ -681,7 +685,10 @@ export class MessageSendService {
     return (objectType || '').toUpperCase() === 'WHATSAPP';
   }
 
-  private isFcaThread(objectType: string, sourceChannel: string | null): boolean {
+  private isFcaThread(
+    objectType: string,
+    sourceChannel: string | null,
+  ): boolean {
     return (objectType || '').toUpperCase() === 'FACEBOOK' && !sourceChannel;
   }
 
