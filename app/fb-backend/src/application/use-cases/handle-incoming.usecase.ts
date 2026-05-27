@@ -144,7 +144,7 @@ export class HandleIncomingUseCase {
       });
     });
     HandleIncomingUseCase.threadInfoCache.set(threadID, info);
-    console.log(`[FCA] threadInfo obtenido threadID=${threadID}:`, JSON.stringify(info).slice(0, 300));
+    console.log(`[FCA] threadInfo obtenido threadID=${threadID}: imageSrc=${info.imageSrc ?? 'null'} name=${String(info.name || info.threadName || '').slice(0, 80)}`);
     return info;
   }
 
@@ -170,7 +170,7 @@ export class HandleIncomingUseCase {
       itemUrl: null,
       title: listingTitle,
       description: null,
-      imageUrl: null,
+      imageUrl: (info.imageSrc as string | undefined | null) || null,
     };
   }
 
