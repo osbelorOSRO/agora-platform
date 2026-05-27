@@ -179,9 +179,7 @@ export class IncomingMessagePersistenceService {
       }
       if (marketplace.sourceId || marketplace.title) {
         await this.setThreadMarketplaceMetadata(sessionId, {
-          sourceId: marketplace.sourceId
-            ? String(marketplace.sourceId)
-            : null,
+          sourceId: marketplace.sourceId ? String(marketplace.sourceId) : null,
           itemUrl: marketplace.itemUrl ? String(marketplace.itemUrl) : null,
           title: marketplace.title ? String(marketplace.title) : null,
           description: marketplace.description
