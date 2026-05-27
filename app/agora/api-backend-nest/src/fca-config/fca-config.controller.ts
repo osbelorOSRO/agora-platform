@@ -35,6 +35,11 @@ export class FcaConfigController {
     return { value };
   }
 
+  @Get('mqtt-status')
+  getMqttStatus() {
+    return this.service.getMqttStatus() ?? { mqtt_connected: null };
+  }
+
   @Patch()
   update(@Body() dto: UpdateFcaConfigDto) {
     return this.service.upsert(dto);

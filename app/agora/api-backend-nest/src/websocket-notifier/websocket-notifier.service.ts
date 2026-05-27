@@ -207,6 +207,30 @@ export class WebsocketNotifierService implements IWebsocketNotifierGateway {
     }
   }
 
+  async notificarFcaMqttStatus(payload: {
+    mqtt_connected: boolean;
+    event: 'connected' | 'disconnected' | 'cycling';
+    fb_user_id?: string | null;
+    fb_user_name?: string | null;
+  }): Promise<void> {
+    try {
+      const apiKey = await this.getApiKey();
+      const url = `${this.baseUrl}/notify/fca/mqtt-status`;
+      await firstValueFrom(
+        this.httpService.post(
+          url,
+          { ...payload, timestamp: new Date().toISOString() },
+          { headers: { 'x-api-key': apiKey } },
+        ),
+      );
+    } catch (error: any) {
+      this.logger.error(
+        `❌ Error notificando FCA MQTT status: ${error.message}`,
+        error.stack,
+      );
+    }
+  }
+
   async notificarGlobito(payload: {
     actorExternalId: string;
     contenido?: string;

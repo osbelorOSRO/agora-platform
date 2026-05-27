@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Eye, EyeOff, Facebook, Link2, Pencil, Save, Settings2, X } from "lucide-react";
-import { getFcaConfig, revealFcaField, updateFcaConfig, type FcaConfig } from "@/services/fcaConfig.service";
+import { getFcaConfig, getFcaMqttStatus, revealFcaField, updateFcaConfig, type FcaConfig, type FcaMqttStatus } from "@/services/fcaConfig.service";
+import { getSocket } from "@/services/socket";
 
 type Tab = "conexion" | "sesion";
 
@@ -187,18 +188,69 @@ const TABS: { key: Tab; label: string; Icon: React.ComponentType<{ size?: number
   { key: "sesion",   label: "Sesión",   Icon: Link2 },
 ];
 
+// ─── Indicador MQTT ───────────────────────────────────────────────────────────
+function MqttStatusBadge({ status }: { status: FcaMqttStatus | null }) {
+  if (!status || status.mqtt_connected === null) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[10px] font-semibold text-muted-foreground">
+        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50" />
+        Desconocido
+      </span>
+    );
+  }
+  if (status.event === 'cycling') {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-yellow-500/10 px-2.5 py-1 text-[10px] font-semibold text-yellow-400">
+        <span className="h-1.5 w-1.5 rounded-full bg-yellow-400 animate-pulse" />
+        Reconectando
+      </span>
+    );
+  }
+  if (status.mqtt_connected) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold text-emerald-400">
+        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+        MQTT conectado
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/10 px-2.5 py-1 text-[10px] font-semibold text-rose-400">
+      <span className="h-1.5 w-1.5 rounded-full bg-rose-400" />
+      MQTT desconectado
+    </span>
+  );
+}
+
 // ─── Página principal ─────────────────────────────────────────────────────────
 export default function FcaConfigPage() {
   const [activeTab, setActiveTab] = useState<Tab>("conexion");
   const [config, setConfig] = useState<FcaConfig>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mqttStatus, setMqttStatus] = useState<FcaMqttStatus | null>(null);
+  const listenerRef = useRef(false);
 
   useEffect(() => {
     getFcaConfig()
       .then(setConfig)
       .catch(() => setError("No se pudo cargar la configuración"))
       .finally(() => setLoading(false));
+
+    getFcaMqttStatus().then(setMqttStatus).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (listenerRef.current) return;
+    const socket = getSocket();
+    if (!socket) return;
+    listenerRef.current = true;
+    const onStatus = (payload: FcaMqttStatus) => setMqttStatus(payload);
+    socket.on("fcaMqttStatus", onStatus);
+    return () => {
+      socket.off("fcaMqttStatus", onStatus);
+      listenerRef.current = false;
+    };
   }, []);
 
   const handleSave = async (key: keyof FcaConfig, value: string) => {
@@ -263,6 +315,12 @@ export default function FcaConfigPage() {
                   value={config.enabled}
                   onToggle={(val) => handleSave("enabled", val)}
                 />
+                <div className="py-3 border-b border-border/50">
+                  <label className="block text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground mb-2">
+                    Conexión MQTT
+                  </label>
+                  <MqttStatusBadge status={mqttStatus} />
+                </div>
                 {field("Nombre visible", "display_name")}
                 {field("URL del servicio fb-backend", "fb_backend_url", {
                   hint: "Ej: http://fb-backend:3001 (interno Docker)",

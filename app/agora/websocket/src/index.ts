@@ -180,6 +180,12 @@ app.post('/notify/globito', apiKeyAuthMiddleware, (req, res) => {
   res.status(200).json({ success: true });
 });
 
+app.post('/notify/fca/mqtt-status', apiKeyAuthMiddleware, (req, res) => {
+  const { mqtt_connected, event, fb_user_id, fb_user_name, timestamp } = req.body;
+  io.emit('fcaMqttStatus', { mqtt_connected, event, fb_user_id, fb_user_name, timestamp });
+  res.status(200).json({ success: true });
+});
+
 httpServer.listen(PORT, () => {
   console.log(`✅ WebSocket escuchando en puerto ${PORT}`);
 });

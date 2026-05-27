@@ -24,6 +24,20 @@ export const revealFcaField = async (field: string): Promise<string | null> => {
   return data.value ?? null;
 };
 
+export type FcaMqttStatus = {
+  mqtt_connected: boolean | null;
+  event?: 'connected' | 'disconnected' | 'cycling';
+  fb_user_id?: string | null;
+  fb_user_name?: string | null;
+  updated_at?: string;
+};
+
+export const getFcaMqttStatus = async (): Promise<FcaMqttStatus> => {
+  const res = await fetch(`${API_URL}/fca-config/mqtt-status`, { headers: getAuthHeaders() });
+  if (!res.ok) return { mqtt_connected: null };
+  return res.json();
+};
+
 export const updateFcaConfig = async (payload: Partial<FcaConfig>): Promise<FcaConfig> => {
   const res = await fetch(`${API_URL}/fca-config`, {
     method: "PATCH",

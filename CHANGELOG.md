@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.10.0
+
+### Added
+- `FcaConfigPage`: indicador de estado MQTT en tiempo real con badge verde/rojo/amarillo (conectado / desconectado / reconectando) suscrito vía WebSocket al evento `fcaMqttStatus`
+- `fca-config.controller`: nuevo endpoint `GET /fca-config/mqtt-status` que devuelve el último estado MQTT conocido
+- `panel-websocket`: nuevo endpoint `POST /notify/fca/mqtt-status` que emite evento `fcaMqttStatus` a todos los clientes conectados
+- `fca-config-internal.controller`: al recibir actualización de estado con `mqtt_event`, persiste el estado en memoria y lo emite al panel vía WebSocket
+- `websocket-notifier.service`: método `notificarFcaMqttStatus` para notificar el estado MQTT al panel
+
+### Fixed
+- `fb-backend`: foto del anuncio de Marketplace ahora se obtiene desde `imageSrc` de `getThreadInfo` en lugar de devolver `null`
+- `incoming-message-persistence.service`: threads de Marketplace sin `sourceId` ahora generan un ID sintético (`title_<sha256[:24]>`) desde el título normalizado, permitiendo que aparezcan en la sección de Ads
+- `fb-backend`: reconexión MQTT preventiva cada 30 minutos para evitar desconexiones silenciosas por inactividad del broker de Facebook (~50 min de idle timeout)
+- `facebook.gateway`: `reportStatus` ahora acepta el evento MQTT (`connected` / `disconnected` / `cycling`) y solo consulta la info del usuario en el evento `connected`
+
 ## 2.9.0
 
 ### Added

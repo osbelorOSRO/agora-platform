@@ -19,6 +19,8 @@ export async function fetchFcaConfig(): Promise<{
 export async function postFcaStatus(data: {
   fb_user_id: string;
   fb_user_name: string;
+  mqtt_connected: boolean;
+  mqtt_event: 'connected' | 'disconnected' | 'cycling';
 }): Promise<void> {
   await client.post('/internal/fca/status', data);
 }

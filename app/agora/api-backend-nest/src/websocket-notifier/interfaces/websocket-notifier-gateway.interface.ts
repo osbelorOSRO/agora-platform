@@ -29,4 +29,10 @@ export interface IWebsocketNotifierGateway {
     fecha_envio?: string;
     phone?: string;
   }): Promise<void>;
+  notificarFcaMqttStatus(payload: {
+    mqtt_connected: boolean;
+    event: 'connected' | 'disconnected' | 'cycling';
+    fb_user_id?: string | null;
+    fb_user_name?: string | null;
+  }): Promise<void>;
 }

@@ -116,7 +116,7 @@ export class FacebookGateway {
 
     this.mqtt.on('ready', () => {
       console.log('[FCA] MQTT conectado (ready event)');
-      void this.reportStatus();
+      void this.reportStatus('connected');
     });
 
     this.mqtt.on('message', async (event: unknown) => {
@@ -135,10 +135,11 @@ export class FacebookGateway {
       const e = err as { type?: string; error?: unknown };
       if (e?.type === 'ready' && e?.error === null) {
         console.log('[FCA] MQTT conectado');
-        void this.reportStatus();
+        void this.reportStatus('connected');
         return;
       }
       console.error('[FCA] MQTT error:', err);
+      void this.reportStatus('disconnected');
     });
   }
 
@@ -149,6 +150,7 @@ export class FacebookGateway {
     this.cycleTimer = setInterval(() => {
       if (!this.api) return;
       console.log('[FCA] Ciclo MQTT preventivo (30 min) — reconectando...');
+      void this.reportStatus('cycling');
       const stop = this.api.stopListening as ((cb?: () => void) => void) | undefined;
       if (typeof stop === 'function') {
         stop(() => {
@@ -160,21 +162,30 @@ export class FacebookGateway {
     }, MQTT_CYCLE_MS);
   }
 
-  private async reportStatus(): Promise<void> {
+  private async reportStatus(
+    mqttEvent: 'connected' | 'disconnected' | 'cycling',
+  ): Promise<void> {
     if (!this.api || !this.myUserID) return;
 
     try {
-      // Resolve display name
-      const userInfoMap = await new Promise<Record<string, { name?: string }>>((resolve, reject) => {
-        this.api.getUserInfo([this.myUserID], (err: unknown, info: Record<string, { name?: string }>) => {
-          if (err) reject(err);
-          else resolve(info);
+      let name = '';
+      if (mqttEvent === 'connected') {
+        const userInfoMap = await new Promise<Record<string, { name?: string }>>((resolve, reject) => {
+          this.api.getUserInfo([this.myUserID], (err: unknown, info: Record<string, { name?: string }>) => {
+            if (err) reject(err);
+            else resolve(info);
+          });
         });
-      });
+        name = userInfoMap[this.myUserID!]?.name || '';
+      }
 
-      const name = userInfoMap[this.myUserID!]?.name || '';
-      await postFcaStatus({ fb_user_id: this.myUserID!, fb_user_name: name });
-      console.log(`[FCA] Status reportado uid=${this.myUserID} name="${name}"`);
+      await postFcaStatus({
+        fb_user_id: this.myUserID!,
+        fb_user_name: name,
+        mqtt_connected: mqttEvent === 'connected',
+        mqtt_event: mqttEvent,
+      });
+      console.log(`[FCA] Status reportado uid=${this.myUserID} event=${mqttEvent}`);
     } catch (err) {
       console.error('[FCA] No se pudo reportar status:', err);
     }

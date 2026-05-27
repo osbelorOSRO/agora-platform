@@ -14,10 +14,19 @@ const ENCRYPTED_FIELDS = new Set(['app_state']);
 const CACHE_KEY = 'fca_app_config:singleton';
 const CACHE_TTL = 300;
 
+type FcaMqttStatus = {
+  mqtt_connected: boolean;
+  event: 'connected' | 'disconnected' | 'cycling';
+  fb_user_id: string | null;
+  fb_user_name: string | null;
+  updated_at: string;
+};
+
 @Injectable()
 export class FcaConfigService {
   private readonly logger = new Logger(FcaConfigService.name);
   private readonly encKey: Buffer;
+  private mqttStatus: FcaMqttStatus | null = null;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -153,5 +162,23 @@ export class FcaConfigService {
     fb_user_name?: string;
   }): Promise<void> {
     await this.upsert(data);
+  }
+
+  setMqttStatus(status: {
+    mqtt_connected: boolean;
+    event: 'connected' | 'disconnected' | 'cycling';
+    fb_user_id?: string | null;
+    fb_user_name?: string | null;
+  }): void {
+    this.mqttStatus = {
+      ...status,
+      fb_user_id: status.fb_user_id ?? null,
+      fb_user_name: status.fb_user_name ?? null,
+      updated_at: new Date().toISOString(),
+    };
+  }
+
+  getMqttStatus(): FcaMqttStatus | null {
+    return this.mqttStatus;
   }
 }
