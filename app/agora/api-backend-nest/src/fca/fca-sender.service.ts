@@ -15,16 +15,29 @@ export class FcaSenderService {
     return url;
   }
 
-  async sendAttachment(threadID: string, mediaUrl: string, caption?: string): Promise<unknown> {
+  async sendAttachment(
+    threadID: string,
+    mediaUrl: string,
+    caption?: string,
+  ): Promise<unknown> {
     const gatewayUrl = this.getGatewayUrl();
     const internalToken = process.env.FCA_INTERNAL_TOKEN;
-    if (!internalToken) throw new InternalServerErrorException('Missing required env FCA_INTERNAL_TOKEN');
+    if (!internalToken)
+      throw new InternalServerErrorException(
+        'Missing required env FCA_INTERNAL_TOKEN',
+      );
 
     try {
       const response = await axios.post(
         `${gatewayUrl}/enviar-adjunto`,
         { threadID, mediaUrl, caption },
-        { headers: { 'Content-Type': 'application/json', 'x-internal-token': internalToken }, timeout: 30000 },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'x-internal-token': internalToken,
+          },
+          timeout: 30000,
+        },
       );
       this.logger.log(`Adjunto FCA enviado threadID=${threadID}`);
       return response.data;

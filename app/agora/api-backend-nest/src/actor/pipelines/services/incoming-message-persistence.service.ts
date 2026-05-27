@@ -154,9 +154,9 @@ export class IncomingMessagePersistenceService {
 
     const isFcaIncoming =
       String(env.provider || '').toUpperCase() === 'FCA' && direction === 'INCOMING';
-    const marketplace = (payload as Record<string, unknown>)?.['marketplace'] as
-      | Record<string, unknown>
-      | undefined;
+    const marketplace = (
+      payload as Record<string, unknown>
+    )?.['marketplace'] as Record<string, unknown> | undefined;
     if (isFcaIncoming && marketplace?.sourceId) {
       await this.upsertFcaMarketplaceLead({
         sourceId: String(marketplace.sourceId),
@@ -164,16 +164,23 @@ export class IncomingMessagePersistenceService {
         actorExternalId: env.actorExternalId,
         sourceUrl: marketplace.itemUrl ? String(marketplace.itemUrl) : null,
         title: marketplace.title ? String(marketplace.title) : null,
-        description: marketplace.description ? String(marketplace.description) : null,
+        description: marketplace.description
+          ? String(marketplace.description)
+          : null,
         imageUrl: marketplace.imageUrl ? String(marketplace.imageUrl) : null,
         firstMessageText: contentText,
-        metadata: { externalEventId: env.externalEventId, occurredAt: env.occurredAt },
+        metadata: {
+          externalEventId: env.externalEventId,
+          occurredAt: env.occurredAt,
+        },
       });
       await this.setThreadMarketplaceMetadata(sessionId, {
         sourceId: String(marketplace.sourceId),
         itemUrl: marketplace.itemUrl ? String(marketplace.itemUrl) : null,
         title: marketplace.title ? String(marketplace.title) : null,
-        description: marketplace.description ? String(marketplace.description) : null,
+        description: marketplace.description
+          ? String(marketplace.description)
+          : null,
         imageUrl: marketplace.imageUrl ? String(marketplace.imageUrl) : null,
       });
     }
