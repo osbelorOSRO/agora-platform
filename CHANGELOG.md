@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.9.0
+
+### Added
+- `fb-backend`: nuevo microservicio Node.js que conecta a Facebook Messenger personal vía `@dongdev/fca-unofficial` (equivalente a Baileys para Messenger)
+- Integración FCA completa: mensajes de texto y adjuntos (imagen, audio, video) entrantes y salientes desde el panel
+- Soporte de Facebook Marketplace: detección automática del contexto del artículo (título vía thread name) al primer mensaje; persistencia en `threads.metadata` y tabla `fca_marketplace_leads`
+- Panel: card "Marketplace" en info de contacto con título, descripción, imagen y link al artículo
+- Panel: tag con título del artículo en la lista de threads para hilos de Facebook Marketplace
+- Panel: sección "Marketplace Facebook" en la página de Ads con estadísticas por publicación
+- `fca-config`: módulo NestJS para gestionar la configuración de FCA (app_state cifrado AES-256-GCM, habilitación, URL del fb-backend)
+- Migraciones: `fca_app_config`, enum `FCA`/`FACEBOOK`, tabla `fca_marketplace_leads`
+- CI/CD: fb-backend agregado al path trigger, build y restart del pipeline
+
+### Changed
+- `delegation-gate.service.ts`: proveedor FCA habilitado en la whitelist de eventos delegables
+- `message-send.service.ts`: routing de mensajes salientes hacia FCA (texto y media) con patrón fire-and-forget
+- `docker-compose.yml`: servicio `fb-backend` agregado al stack
+
 ## 2.8.0
 
 ### Added

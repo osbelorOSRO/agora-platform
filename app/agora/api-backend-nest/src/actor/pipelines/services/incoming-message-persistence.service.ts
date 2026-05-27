@@ -152,6 +152,32 @@ export class IncomingMessagePersistenceService {
       });
     }
 
+    const isFcaIncoming =
+      String(env.provider || '').toUpperCase() === 'FCA' && direction === 'INCOMING';
+    const marketplace = (payload as Record<string, unknown>)?.['marketplace'] as
+      | Record<string, unknown>
+      | undefined;
+    if (isFcaIncoming && marketplace?.sourceId) {
+      await this.upsertFcaMarketplaceLead({
+        sourceId: String(marketplace.sourceId),
+        sessionId,
+        actorExternalId: env.actorExternalId,
+        sourceUrl: marketplace.itemUrl ? String(marketplace.itemUrl) : null,
+        title: marketplace.title ? String(marketplace.title) : null,
+        description: marketplace.description ? String(marketplace.description) : null,
+        imageUrl: marketplace.imageUrl ? String(marketplace.imageUrl) : null,
+        firstMessageText: contentText,
+        metadata: { externalEventId: env.externalEventId, occurredAt: env.occurredAt },
+      });
+      await this.setThreadMarketplaceMetadata(sessionId, {
+        sourceId: String(marketplace.sourceId),
+        itemUrl: marketplace.itemUrl ? String(marketplace.itemUrl) : null,
+        title: marketplace.title ? String(marketplace.title) : null,
+        description: marketplace.description ? String(marketplace.description) : null,
+        imageUrl: marketplace.imageUrl ? String(marketplace.imageUrl) : null,
+      });
+    }
+
     await this.websocketNotifier.notificarMetaInboxMessageNew({
       sessionId,
       actorExternalId: env.actorExternalId,
@@ -554,6 +580,66 @@ export class IncomingMessagePersistenceService {
       payload?.wa?.addressingMode ? String(payload.wa.addressingMode) : null,
       identity.preferredBlockJid,
       adContext ? JSON.stringify(adContext) : null,
+    );
+  }
+
+  private async upsertFcaMarketplaceLead(input: {
+    sourceId: string;
+    sessionId: string;
+    actorExternalId: string;
+    sourceUrl: string | null;
+    title: string | null;
+    description: string | null;
+    imageUrl: string | null;
+    firstMessageText: string | null;
+    metadata: Record<string, unknown>;
+  }): Promise<void> {
+    await this.prisma.$executeRawUnsafe(
+      `INSERT INTO fca_marketplace_leads (
+        source_id, session_id, actor_external_id,
+        source_url, title, description, image_url,
+        first_message_text, metadata, first_seen_at, last_seen_at, seen_count
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, now(), now(), 1)
+      ON CONFLICT (source_id, session_id)
+      DO UPDATE SET
+        source_url  = COALESCE(fca_marketplace_leads.source_url, EXCLUDED.source_url),
+        title       = COALESCE(fca_marketplace_leads.title, EXCLUDED.title),
+        description = COALESCE(fca_marketplace_leads.description, EXCLUDED.description),
+        image_url   = COALESCE(fca_marketplace_leads.image_url, EXCLUDED.image_url),
+        last_seen_at = now(),
+        seen_count  = fca_marketplace_leads.seen_count + 1,
+        metadata    = COALESCE(fca_marketplace_leads.metadata, '{}'::jsonb) || EXCLUDED.metadata`,
+      input.sourceId,
+      input.sessionId,
+      input.actorExternalId,
+      input.sourceUrl,
+      input.title,
+      input.description,
+      input.imageUrl,
+      input.firstMessageText,
+      JSON.stringify(input.metadata),
+    );
+  }
+
+  private async setThreadMarketplaceMetadata(
+    sessionId: string,
+    marketplace: {
+      sourceId: string | null;
+      itemUrl: string | null;
+      title: string | null;
+      description: string | null;
+      imageUrl: string | null;
+    },
+  ): Promise<void> {
+    // Solo escribe si aún no hay contexto de marketplace en el thread
+    await this.prisma.$executeRawUnsafe(
+      `UPDATE threads
+       SET metadata = metadata || $1::jsonb, updated_at = now()
+       WHERE session_id = $2
+         AND (metadata->>'marketplace') IS NULL`,
+      JSON.stringify({ marketplace }),
+      sessionId,
     );
   }
 

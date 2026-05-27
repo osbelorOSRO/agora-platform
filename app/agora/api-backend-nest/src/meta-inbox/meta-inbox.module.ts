@@ -18,6 +18,7 @@ import { N8nAuthGuard } from '../shared/guards/n8n-auth.guard';
 import { MetaGraphApiService } from './services/meta-graph-api.service';
 import { AudioConversionService } from './services/audio-conversion.service';
 import { CacheConfigModule } from '../cache/cache.module';
+import { FcaModule } from '../fca/fca.module';
 import { META_GRAPH_GATEWAY } from './interfaces/meta-graph-api-gateway.interface';
 import { THREAD_GATEWAY } from './interfaces/thread-gateway.interface';
 import { META_INBOX_GATEWAY } from './interfaces/meta-inbox-gateway.interface';
@@ -29,6 +30,7 @@ import { META_INBOX_GATEWAY } from './interfaces/meta-inbox-gateway.interface';
     AuthModule,
     MinioModule,
     CacheConfigModule,
+    FcaModule,
   ],
   controllers: [MetaInboxController],
   providers: [

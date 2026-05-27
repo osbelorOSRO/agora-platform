@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Download, ExternalLink, Megaphone, UsersRound } from "lucide-react";
-import { listWhatsappAdLeadStats } from "@/services/metaInbox.service";
-import type { WhatsappAdLeadRow, WhatsappAdLeadStatsItem } from "@/types/metaInbox";
+import { listWhatsappAdLeadStats, listFcaMarketplaceLeadStats } from "@/services/metaInbox.service";
+import type { WhatsappAdLeadRow, WhatsappAdLeadStatsItem, FcaMarketplaceLeadStatsItem, FcaMarketplaceLeadRow } from "@/types/metaInbox";
 
 const formatDate = (value?: string | null) => {
   if (!value) return "sin registro";
@@ -56,18 +56,28 @@ export default function WhatsappAdsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [fcaAds, setFcaAds] = useState<FcaMarketplaceLeadStatsItem[]>([]);
+  const [fcaLeads, setFcaLeads] = useState<FcaMarketplaceLeadRow[]>([]);
+  const [fcaPage, setFcaPage] = useState(0);
+
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       setError("");
       try {
-        const data = await listWhatsappAdLeadStats();
-        setAds(data.items || []);
-        setLeads(data.leads || []);
+        const [waData, fcaData] = await Promise.all([
+          listWhatsappAdLeadStats(),
+          listFcaMarketplaceLeadStats(),
+        ]);
+        setAds(waData.items || []);
+        setLeads(waData.leads || []);
         setPage(0);
+        setFcaAds(fcaData.items || []);
+        setFcaLeads(fcaData.leads || []);
+        setFcaPage(0);
       } catch (err) {
-        console.error("Error cargando ads WhatsApp:", err);
-        setError("No se pudo cargar la estadística de anuncios WhatsApp.");
+        console.error("Error cargando ads:", err);
+        setError("No se pudo cargar la estadística de anuncios.");
       } finally {
         setLoading(false);
       }
@@ -82,6 +92,12 @@ export default function WhatsappAdsPage() {
   );
   const totalUnique = ads.reduce((acc, item) => acc + Number(item.uniqueSessions || 0), 0);
   const totalSeen = ads.reduce((acc, item) => acc + Number(item.seenCount || 0), 0);
+
+  const fcaCurrent = fcaAds[fcaPage] || null;
+  const fcaCurrentLeads = useMemo(
+    () => fcaLeads.filter((lead) => lead.sourceId === fcaCurrent?.sourceId),
+    [fcaCurrent?.sourceId, fcaLeads],
+  );
 
   return (
     <div className="mx-auto flex min-h-[calc(100vh-120px)] w-full max-w-7xl flex-col gap-4 md:gap-6 text-foreground">
@@ -251,6 +267,84 @@ export default function WhatsappAdsPage() {
           </section>
         </main>
       )}
+
+      {/* ── Sección Marketplace Facebook ── */}
+      <div className="rounded-3xl border border-border bg-card p-4 md:p-6">
+        <div className="mb-4 flex items-center gap-3 text-blue-400">
+          <UsersRound size={18} />
+          <span className="text-xs font-black uppercase tracking-[0.28em]">Marketplace Facebook</span>
+        </div>
+        {fcaAds.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Sin artículos detectados aún. Los artículos aparecen cuando un comprador inicia una conversación desde un listing de Marketplace.</p>
+        ) : (
+          <div className="flex flex-col gap-4 lg:flex-row">
+            {/* Lista de artículos */}
+            <div className="flex w-full flex-col gap-2 lg:w-56 lg:shrink-0">
+              {fcaAds.map((ad, i) => (
+                <button
+                  key={ad.sourceId}
+                  type="button"
+                  onClick={() => setFcaPage(i)}
+                  className={`rounded-xl border p-3 text-left transition-colors ${i === fcaPage ? "border-blue-400/60 bg-blue-500/10" : "border-border bg-background hover:border-blue-400/30"}`}
+                >
+                  <div className="truncate text-xs font-semibold text-foreground">{ad.title || ad.sourceId}</div>
+                  <div className="mt-0.5 text-[10px] text-muted-foreground">{ad.uniqueSessions} conv · {ad.seenCount} msgs</div>
+                </button>
+              ))}
+            </div>
+
+            {/* Detalle del artículo */}
+            {fcaCurrent && (
+              <div className="flex min-w-0 flex-1 flex-col gap-4">
+                <div className="flex gap-4 rounded-2xl border border-border bg-background p-4">
+                  {fcaCurrent.imageUrl && (
+                    <img src={fcaCurrent.imageUrl} alt={fcaCurrent.title || "Artículo"} className="h-24 w-24 shrink-0 rounded-lg object-cover" />
+                  )}
+                  <div className="min-w-0">
+                    <div className="font-semibold text-foreground">{fcaCurrent.title || "Sin título"}</div>
+                    {fcaCurrent.description && <div className="mt-1 text-sm text-muted-foreground">{fcaCurrent.description}</div>}
+                    {fcaCurrent.sourceUrl && (
+                      <a href={fcaCurrent.sourceUrl} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-1 text-xs text-blue-400 hover:underline">
+                        <ExternalLink size={12} /> Ver en Marketplace
+                      </a>
+                    )}
+                    <div className="mt-3 flex gap-4 text-xs text-muted-foreground">
+                      <span>{fcaCurrent.uniqueSessions} conversaciones únicas</span>
+                      <span>Primera vista: {formatDate(fcaCurrent.firstSeenAt)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between px-1">
+                  <button type="button" onClick={() => setFcaPage((p) => Math.max(0, p - 1))} disabled={fcaPage === 0} className="rounded-lg border border-border bg-card p-1.5 hover:bg-accent disabled:opacity-30"><ChevronLeft size={16} /></button>
+                  <span className="text-xs text-muted-foreground">{fcaPage + 1} / {fcaAds.length}</span>
+                  <button type="button" onClick={() => setFcaPage((p) => Math.min(fcaAds.length - 1, p + 1))} disabled={fcaPage === fcaAds.length - 1} className="rounded-lg border border-border bg-card p-1.5 hover:bg-accent disabled:opacity-30"><ChevronRight size={16} /></button>
+                </div>
+
+                <div className="rounded-2xl border border-border bg-card">
+                  <div className="border-b border-border p-4">
+                    <h3 className="text-xs font-bold uppercase tracking-[0.22em] text-blue-400">Conversaciones asociadas</h3>
+                  </div>
+                  <div className="max-h-[280px] overflow-auto">
+                    {fcaCurrentLeads.map((lead) => (
+                      <div key={`${lead.sourceId}-${lead.sessionId}`} className="border-b border-border/50 p-4 last:border-b-0">
+                        <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+                          <div className="min-w-0">
+                            <div className="break-all font-mono text-xs text-blue-400/70">{lead.actorExternalId || "sin actor"}</div>
+                            <div className="mt-1 truncate text-sm text-foreground/80">{lead.firstMessageText || "(sin texto inicial)"}</div>
+                          </div>
+                          <div className="shrink-0 text-xs text-muted-foreground">{formatDate(lead.firstSeenAt)}</div>
+                        </div>
+                      </div>
+                    ))}
+                    {fcaCurrentLeads.length === 0 && <div className="p-6 text-center text-sm text-muted-foreground">Sin conversaciones para este artículo.</div>}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

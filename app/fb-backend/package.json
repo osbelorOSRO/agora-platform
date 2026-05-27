@@ -1,0 +1,22 @@
+{
+  "name": "fb-backend",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/main.js",
+    "dev": "ts-node --project tsconfig.json src/main.ts"
+  },
+  "dependencies": {
+    "@dongdev/fca-unofficial": "latest",
+    "axios": "^1.9.0",
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}

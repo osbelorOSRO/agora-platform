@@ -34,7 +34,7 @@ export class MessagesProcessor extends WorkerHost {
   }
 
   async process(job: Job<any>): Promise<void> {
-    if (job.name !== 'meta.message' && job.name !== 'baileys.message') {
+    if (job.name !== 'meta.message' && job.name !== 'baileys.message' && job.name !== 'fca.message') {
       this.logger.warn(
         `Job ignorado en ${Q_META_MESSAGES}: name=${job.name}, id=${job.id}`,
       );

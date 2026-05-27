@@ -23,6 +23,8 @@ import { UserProfileModule } from './user-profile/user-profile.module';
 import { AccessModule } from './accesos/accesos.module';
 import { SettingsModule } from './settings/settings.module';
 import { SalesRecordModule } from './sales-record/sales-record.module';
+import { FcaModule } from './fca/fca.module';
+import { FcaConfigModule } from './fca-config/fca-config.module';
 
 @Global()
 @Module({
@@ -52,6 +54,8 @@ import { SalesRecordModule } from './sales-record/sales-record.module';
     OffersModule,
     MetaConfigModule,
     UserProfileModule,
+    FcaConfigModule,
+    FcaModule,
   ],
   providers: [PrismaService],
   exports: [PrismaService],

@@ -64,7 +64,11 @@ export class DelegationGateService {
     direction: 'INCOMING' | 'OUTGOING' | 'SYSTEM',
   ): boolean {
     const normalizedProvider = String(provider || 'META').toUpperCase();
-    if (normalizedProvider !== 'META' && normalizedProvider !== 'BAILEYS')
+    if (
+      normalizedProvider !== 'META' &&
+      normalizedProvider !== 'BAILEYS' &&
+      normalizedProvider !== 'FCA'
+    )
       return false;
     const eventKind = String(eventType || '').replace(/^messaging\./, '');
     return eventKind === 'message' && direction === 'INCOMING';

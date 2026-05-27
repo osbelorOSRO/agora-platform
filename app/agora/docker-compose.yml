@@ -71,6 +71,9 @@ services:
       - WS_SERVER=${WS_INTERNAL_URL}
       - BOT_BASE_URL=${WA_INTERNAL_URL}
       - BAILEYS_INTERNAL_TOKEN=${BAILEYS_INTERNAL_TOKEN}
+      - FCA_INTERNAL_TOKEN=${FCA_INTERNAL_TOKEN}
+      - FCA_CONFIG_ENCRYPTION_KEY=${FCA_CONFIG_ENCRYPTION_KEY}
+      - FCA_BACKEND_URL=http://fb-backend:3001
       - N8N_MSG_DELEGATION_WEBHOOK_URL=${N8N_INTERNAL_URL}/webhook/flujo-eventos
       - N8N_THREAD_MSG_DELEGATION_WEBHOOK_URL=${N8N_INTERNAL_URL}/webhook/meta-thread-messages-delegation
       - VAULT_ADDR=${VAULT_ADDR}
@@ -88,6 +91,29 @@ services:
       timeout: 10s
       retries: 5
       start_period: 25s
+
+  fb-backend:
+    build:
+      context: ../fb-backend
+      dockerfile: Dockerfile
+    container_name: fb-backend
+    restart: unless-stopped
+    ports:
+      - "${HOST_BIND_IP:-127.0.0.1}:3001:3001"
+    networks:
+      - npm_network
+    environment:
+      - PORT=3001
+      - NESTJS_INTERNAL_URL=http://backend:4001
+      - FCA_INTERNAL_TOKEN=${FCA_INTERNAL_TOKEN}
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/health >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
 networks:
   npm_network:

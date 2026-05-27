@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { KeyRound, Users, Activity, Wrench, LayoutList, PackageOpen, Plug, GitMerge, Zap, TrendingUp } from "lucide-react";
+import { KeyRound, Users, Activity, Wrench, LayoutList, PackageOpen, Plug, GitMerge, Zap, TrendingUp, Facebook } from "lucide-react";
 import { getTokenData } from "@/utils/getTokenData";
 import { hasPermission } from "@/utils/permissions";
 
@@ -75,6 +75,14 @@ const toolCards = [
     title: "Integrations",
     description: "Conexiones externas y configuración de canales.",
     Icon: Plug,
+    permission: null,
+    superadmin: true,
+  },
+  {
+    to: "/integraciones/fca",
+    title: "Facebook / Marketplace",
+    description: "Integración de perfil personal de Facebook vía fca-unofficial.",
+    Icon: Facebook,
     permission: null,
     superadmin: true,
   },

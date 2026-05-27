@@ -32,6 +32,7 @@ export type MetaInboxThread = {
   lastMessageText: string | null;
   lastDirection: string;
   lastMessageAt: string;
+  metadata?: Record<string, unknown> | null;
 };
 
 export type MetaInboxMessage = {
@@ -140,5 +141,33 @@ export type WhatsappAdLeadRow = {
 export type WhatsappAdLeadStatsResponse = {
   items: WhatsappAdLeadStatsItem[];
   leads: WhatsappAdLeadRow[];
+  total: number;
+};
+
+export type FcaMarketplaceLeadStatsItem = {
+  sourceId: string;
+  uniqueSessions: number;
+  seenCount: number;
+  firstSeenAt: string | null;
+  lastSeenAt: string | null;
+  title: string | null;
+  description: string | null;
+  sourceUrl: string | null;
+  imageUrl: string | null;
+};
+
+export type FcaMarketplaceLeadRow = {
+  sourceId: string;
+  sessionId: string;
+  actorExternalId: string | null;
+  firstMessageText: string | null;
+  firstSeenAt: string | null;
+  lastSeenAt: string | null;
+  seenCount: number;
+};
+
+export type FcaMarketplaceLeadStatsResponse = {
+  items: FcaMarketplaceLeadStatsItem[];
+  leads: FcaMarketplaceLeadRow[];
   total: number;
 };

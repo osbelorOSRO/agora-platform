@@ -261,6 +261,48 @@ export class WhatsappIdentityService {
     return { items, leads, total: items.length };
   }
 
+  async listFcaMarketplaceLeadStats(input: { sourceId?: string; limit?: number }) {
+    const sourceId = String(input.sourceId || '').trim();
+    const limit = Math.max(1, Math.min(Number(input.limit) || 500, 1000));
+
+    const items = await this.prisma.$queryRawUnsafe<Array<any>>(
+      `SELECT
+         source_id AS "sourceId",
+         COUNT(*)::int AS "uniqueSessions",
+         COALESCE(SUM(seen_count), 0)::int AS "seenCount",
+         MIN(first_seen_at) AS "firstSeenAt",
+         MAX(last_seen_at) AS "lastSeenAt",
+         (ARRAY_AGG(title        ORDER BY last_seen_at DESC))[1] AS title,
+         (ARRAY_AGG(description  ORDER BY last_seen_at DESC))[1] AS description,
+         (ARRAY_AGG(source_url   ORDER BY last_seen_at DESC))[1] AS "sourceUrl",
+         (ARRAY_AGG(image_url    ORDER BY last_seen_at DESC))[1] AS "imageUrl"
+       FROM fca_marketplace_leads
+       WHERE ($1::text = '' OR source_id = $1)
+       GROUP BY source_id
+       ORDER BY MAX(last_seen_at) DESC
+       LIMIT ${limit}`,
+      sourceId,
+    );
+
+    const leads = await this.prisma.$queryRawUnsafe<Array<any>>(
+      `SELECT
+         source_id AS "sourceId",
+         session_id AS "sessionId",
+         actor_external_id AS "actorExternalId",
+         first_message_text AS "firstMessageText",
+         first_seen_at AS "firstSeenAt",
+         last_seen_at AS "lastSeenAt",
+         seen_count AS "seenCount"
+       FROM fca_marketplace_leads
+       WHERE ($1::text = '' OR source_id = $1)
+       ORDER BY last_seen_at DESC
+       LIMIT 5000`,
+      sourceId,
+    );
+
+    return { items, leads, total: items.length };
+  }
+
   normalizeWhatsappPhone(value: string): string {
     const digits = String(value || '').replace(/\D/g, '');
     if (!digits) throw new BadRequestException('phone_required');

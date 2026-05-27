@@ -93,6 +93,12 @@ export class MetaInboxController {
     return this.metaInbox.listWhatsappAdLeadStats(query);
   }
 
+  @Get('fca/marketplace-leads/stats')
+  @UseGuards(PanelJwtAuthGuard)
+  async listFcaMarketplaceLeadStats(@Query() query: ListAdLeadStatsQueryDto) {
+    return this.metaInbox.listFcaMarketplaceLeadStats(query);
+  }
+
   @Get('threads/:sessionId/messages')
   @UseGuards(PanelJwtAuthGuard)
   async listMessages(

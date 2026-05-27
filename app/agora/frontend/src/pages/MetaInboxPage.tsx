@@ -17,6 +17,7 @@ import {
   Search,
   Send,
   ShieldCheck,
+  ShoppingBag,
   Workflow,
   X,
   Zap,
@@ -116,10 +117,12 @@ const THREAD_STAGE_OPTIONS = [
   "rut_no_factible",
 ] as const;
 
+const RENDERABLE_MEDIA = new Set(["audio", "image", "video", "document"]);
+
 const extractMedia = (contentJson: MetaInboxContentJson | null | undefined) => {
   const mediaType = String(contentJson?.mediaType || "").toLowerCase();
   const mediaUrl = normalizeMediaUrl(contentJson?.mediaUrl ? String(contentJson.mediaUrl) : "");
-  if (mediaUrl && (mediaType === "audio" || mediaType === "image")) {
+  if (mediaUrl && RENDERABLE_MEDIA.has(mediaType)) {
     return { mediaType, mediaUrl } as const;
   }
   const fallbackAttachments = Array.isArray((contentJson as any)?.message?.attachments)
@@ -127,8 +130,13 @@ const extractMedia = (contentJson: MetaInboxContentJson | null | undefined) => {
     : [];
   const first = fallbackAttachments[0];
   const fallbackType = String(first?.type || "").toLowerCase();
-  const fallbackUrl = normalizeMediaUrl(first?.payload?.url ? String(first.payload.url) : "");
-  if (fallbackUrl && (fallbackType === "audio" || fallbackType === "image")) {
+  const fallbackUrl = normalizeMediaUrl(
+    first?.payload?.url ? String(first.payload.url) :
+    (Array.isArray((contentJson as any)?.message?.attachmentUrls) && (contentJson as any).message.attachmentUrls[0])
+      ? String((contentJson as any).message.attachmentUrls[0])
+      : ""
+  );
+  if (fallbackUrl && RENDERABLE_MEDIA.has(fallbackType)) {
     return { mediaType: fallbackType, mediaUrl: fallbackUrl } as const;
   }
   return null;
@@ -185,6 +193,9 @@ const ChannelIcon: React.FC<{ objectType?: string; className?: string }> = ({ ob
   if (normalized === "WHATSAPP") {
     return <MessageCircle className={className} />;
   }
+  if (normalized === "FACEBOOK") {
+    return <ShoppingBag className={className} />;
+  }
   return <Facebook className={className} />;
 };
 
@@ -207,6 +218,7 @@ const channelClass = (objectType?: string) => {
   const normalized = String(objectType || "").toUpperCase();
   if (normalized === "WHATSAPP") return "border-emerald-300/60 bg-[#173038] text-emerald-300";
   if (normalized === "INSTAGRAM") return "border-fuchsia-300/60 bg-[#322247] text-fuchsia-300";
+  if (normalized === "FACEBOOK") return "border-blue-400/60 bg-[#1A2A3A] text-blue-300";
   return "border-sky-300/60 bg-[#182D46] text-sky-300";
 };
 
@@ -954,7 +966,11 @@ const MetaInboxPage: React.FC = () => {
                 <option value="ALL">Todos</option>
                 {providers.map((provider) => (
                   <option key={provider} value={provider}>
-                    {provider}
+                    {provider === "FACEBOOK" ? "Facebook" :
+                     provider === "PAGE" ? "Fan Page" :
+                     provider === "INSTAGRAM" ? "Instagram" :
+                     provider === "WHATSAPP" ? "WhatsApp" :
+                     provider}
                   </option>
                 ))}
               </select>
@@ -986,7 +1002,19 @@ const MetaInboxPage: React.FC = () => {
             const title = hasUsefulName ? thread.displayName : actorLabel || "Nuevo";
             const subtitle = hasUsefulName && actorLabel ? actorLabel : "";
             const stage = stageLabel(thread.threadStage);
-            const channelTitle = String(thread.objectType || "PAGE").toUpperCase();
+            const marketplaceTitle = (() => {
+              if (String(thread.objectType || "").toUpperCase() !== "FACEBOOK") return null;
+              const mp = (thread.metadata as Record<string, unknown> | null | undefined)?.["marketplace"] as Record<string, unknown> | undefined;
+              return typeof mp?.title === "string" ? mp.title : null;
+            })();
+            const channelTitle = (() => {
+              const t = String(thread.objectType || "PAGE").toUpperCase();
+              if (t === "FACEBOOK") return "Facebook";
+              if (t === "WHATSAPP") return "WhatsApp";
+              if (t === "INSTAGRAM") return "Instagram";
+              if (t === "PAGE") return "Fan Page";
+              return t;
+            })();
             return (
               <div
                 key={thread.sessionId}
@@ -1023,6 +1051,12 @@ const MetaInboxPage: React.FC = () => {
                         <div className={`${s.threadPreview} mt-1 truncate`}>
                           {thread.lastMessageText || "(sin texto)"}
                         </div>
+                        {marketplaceTitle && (
+                          <div className="mt-1 flex min-w-0 items-center gap-1">
+                            <ShoppingBag className="h-3 w-3 shrink-0 text-blue-400" />
+                            <span className="min-w-0 truncate text-[10px] text-blue-300">{marketplaceTitle}</span>
+                          </div>
+                        )}
                         <div className="mt-2 flex min-w-0 items-center gap-1.5">
                           <span
                             className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${attentionClass(attentionMode)}`}
@@ -1124,7 +1158,7 @@ const MetaInboxPage: React.FC = () => {
                     <div className={`${s.chatChannel} mt-2 flex items-center gap-2.5`}>
                       <span
                         className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${channelClass(selectedThread.objectType)}`}
-                        title={String(selectedThread.objectType || "PAGE").toUpperCase()}
+                        title={(() => { const t = String(selectedThread.objectType || "PAGE").toUpperCase(); return t === "FACEBOOK" ? "Facebook" : t === "WHATSAPP" ? "WhatsApp" : t === "INSTAGRAM" ? "Instagram" : t === "PAGE" ? "Fan Page" : t; })()}
                       >
                         <ChannelIcon
                           objectType={selectedThread.objectType}
@@ -1521,6 +1555,26 @@ const MetaInboxPage: React.FC = () => {
               <Save size={16} />
               Guardar contacto
             </button>
+
+            {(() => {
+              const mp = (selectedThread?.metadata as Record<string, unknown> | null)?.["marketplace"] as Record<string, string | null> | undefined;
+              if (!mp?.title && !mp?.itemUrl) return null;
+              return (
+                <div className="mt-4 rounded-lg border border-blue-400/30 bg-[#1A2A3A] p-3">
+                  <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-blue-400">Marketplace</p>
+                  {mp.imageUrl && (
+                    <img src={mp.imageUrl} alt={mp.title || "Artículo"} className="mb-2 w-full rounded-md object-cover" style={{ maxHeight: 140 }} />
+                  )}
+                  {mp.title && <p className="text-sm font-semibold text-foreground">{mp.title}</p>}
+                  {mp.description && <p className="mt-0.5 text-xs text-muted-foreground">{mp.description}</p>}
+                  {mp.itemUrl && (
+                    <a href={mp.itemUrl} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-1 text-xs text-blue-400 hover:underline">
+                      Ver artículo
+                    </a>
+                  )}
+                </div>
+              );
+            })()}
           </aside>
         )}
       </main>

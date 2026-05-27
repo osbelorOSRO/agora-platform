@@ -20,6 +20,7 @@ import SignalScoringRules from "./modules/accesos/pages/SignalScoringRules";
 import StageTemplatesPage from "./pages/StageTemplatesPage";
 import OffersPage from "./pages/OffersPage";
 import MetaConfigPage from "./pages/MetaConfigPage";
+import FcaConfigPage from "./pages/FcaConfigPage";
 import ProfilePage from "./pages/ProfilePage";
 import VentasPage from "./modules/accesos/pages/VentasPage";
 
@@ -168,6 +169,14 @@ function App() {
             element={
               <ProtectedRoute requiredRole="superadmin">
                 <MetaConfigPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/integraciones/fca"
+            element={
+              <ProtectedRoute requiredRole="superadmin">
+                <FcaConfigPage />
               </ProtectedRoute>
             }
           />

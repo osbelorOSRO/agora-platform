@@ -178,6 +178,10 @@ export class MetaInboxService implements OnModuleInit, IMetaInboxGateway {
     return this.whatsappIdentity.listWhatsappAdLeadStats(input);
   }
 
+  async listFcaMarketplaceLeadStats(input: { sourceId?: string; limit?: number }) {
+    return this.whatsappIdentity.listFcaMarketplaceLeadStats(input);
+  }
+
   async updateWhatsappBlockStatus(input: {
     action: 'block' | 'unblock';
     sessionId?: string;

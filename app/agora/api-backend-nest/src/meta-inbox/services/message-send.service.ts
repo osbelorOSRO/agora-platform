@@ -30,6 +30,7 @@ import {
   ThreadMessageMediaType,
 } from '../interfaces/meta-graph-api-gateway.interface';
 import { MediaSendService } from './media-send.service';
+import { FcaSenderService } from '../../fca/fca-sender.service';
 
 type ThreadMessageSenderType = 'HUMAN' | 'N8N' | 'SYSTEM';
 type BaileysMessageType = 'text' | 'image' | 'audio' | 'document' | 'video';
@@ -48,6 +49,7 @@ export class MessageSendService {
     @Inject(META_GRAPH_GATEWAY)
     private readonly metaGraph: IMetaGraphApiGateway,
     private readonly mediaSend: MediaSendService,
+    private readonly fcaSender: FcaSenderService,
   ) {}
 
   async sendText(
@@ -159,6 +161,18 @@ export class MessageSendService {
       const inReplyToExternalEventId =
         await this.getLastIncomingExternalEventId(sessionId);
       return this.sendTextViaBaileys(
+        sessionId,
+        threadIdentity,
+        text,
+        senderType,
+        inReplyToExternalEventId,
+      );
+    }
+
+    if (this.isFacebookThread(threadIdentity.objectType)) {
+      const inReplyToExternalEventId =
+        await this.getLastIncomingExternalEventId(sessionId);
+      return this.sendTextViaFca(
         sessionId,
         threadIdentity,
         text,
@@ -299,6 +313,20 @@ export class MessageSendService {
       const inReplyToExternalEventId =
         await this.getLastIncomingExternalEventId(sessionId);
       return this.sendMediaByUrlViaBaileys(
+        sessionId,
+        threadIdentity,
+        mediaUrl,
+        mediaType,
+        senderType,
+        inReplyToExternalEventId,
+        extra,
+      );
+    }
+
+    if (this.isFacebookThread(threadIdentity.objectType)) {
+      const inReplyToExternalEventId =
+        await this.getLastIncomingExternalEventId(sessionId);
+      return this.sendMediaViaFca(
         sessionId,
         threadIdentity,
         mediaUrl,
@@ -516,7 +544,7 @@ export class MessageSendService {
     externalEventId: string;
     messageExternalId: string | null;
     actorExternalId: string;
-    provider: 'META' | 'BAILEYS';
+    provider: 'META' | 'BAILEYS' | 'FCA';
     objectType: string;
     sourceChannel: string | null;
     contentText: string;
@@ -651,6 +679,130 @@ export class MessageSendService {
 
   private isWhatsAppThread(objectType: string): boolean {
     return (objectType || '').toUpperCase() === 'WHATSAPP';
+  }
+
+  private isFacebookThread(objectType: string): boolean {
+    return (objectType || '').toUpperCase() === 'FACEBOOK';
+  }
+
+  private async resolveFcaThreadID(actorExternalId: string): Promise<string> {
+    const rows = (await this.prisma.$queryRawUnsafe(
+      `SELECT payload->>'threadID' AS thread_id
+       FROM event_history
+       WHERE actor_external_id = $1
+         AND provider = 'FCA'
+         AND object_type = 'FACEBOOK'
+       ORDER BY occurred_at DESC
+       LIMIT 1`,
+      actorExternalId,
+    )) as Array<{ thread_id: string | null }>;
+    return rows[0]?.thread_id || actorExternalId;
+  }
+
+  private async sendTextViaFca(
+    sessionId: string,
+    threadIdentity: ThreadIdentity,
+    text: string,
+    senderType: ThreadMessageSenderType,
+    inReplyToExternalEventId: string | null,
+  ): Promise<{
+    ok: boolean;
+    externalEventId: string;
+    messageExternalId: string | null;
+    occurredAt: string;
+    inReplyToExternalEventId: string | null;
+    provider: string;
+  }> {
+    const messengerThreadID = await this.resolveFcaThreadID(threadIdentity.actorExternalId);
+    const occurredAt = new Date();
+    const externalEventId = `fca_out_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
+    const contentJson = {
+      senderType,
+      messageType: 'text',
+      sourceChannel: threadIdentity.sourceChannel,
+      structuredPayload: null,
+    };
+
+    await this.persistOutgoingThreadMessage({
+      sessionId,
+      externalEventId,
+      messageExternalId: null,
+      actorExternalId: threadIdentity.actorExternalId,
+      provider: 'FCA',
+      objectType: threadIdentity.objectType,
+      sourceChannel: threadIdentity.sourceChannel,
+      contentText: text,
+      contentJson,
+      inReplyToExternalEventId,
+      occurredAt,
+      senderType,
+      messageType: 'text',
+    });
+
+    // Fire-and-forget: no bloqueamos la respuesta al frontend esperando a Facebook
+    this.fcaSender.sendMessage(messengerThreadID, text).catch((err: unknown) => {
+      this.logger.error(
+        `[FCA] Error al enviar mensaje a Facebook threadID=${messengerThreadID}: ${String(err)}`,
+      );
+    });
+
+    return {
+      ok: true,
+      externalEventId,
+      messageExternalId: null,
+      occurredAt: occurredAt.toISOString(),
+      inReplyToExternalEventId,
+      provider: 'FCA',
+    };
+  }
+
+  private async sendMediaViaFca(
+    sessionId: string,
+    threadIdentity: ThreadIdentity,
+    mediaUrl: string,
+    mediaType: ThreadMessageMediaType,
+    senderType: ThreadMessageSenderType,
+    inReplyToExternalEventId: string | null,
+    extra?: { caption?: string },
+  ): Promise<Record<string, unknown>> {
+    const messengerThreadID = await this.resolveFcaThreadID(threadIdentity.actorExternalId);
+    const occurredAt = new Date();
+    const externalEventId = `fca_out_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
+    const contentText = extra?.caption || this.resolveMediaPlaceholder(mediaType);
+    const contentJson = {
+      senderType,
+      messageType: mediaType,
+      mediaType,
+      mediaUrl,
+      caption: extra?.caption || null,
+      sourceChannel: threadIdentity.sourceChannel,
+      structuredPayload: null,
+    };
+
+    await this.persistOutgoingThreadMessage({
+      sessionId,
+      externalEventId,
+      messageExternalId: null,
+      actorExternalId: threadIdentity.actorExternalId,
+      provider: 'FCA',
+      objectType: threadIdentity.objectType,
+      sourceChannel: threadIdentity.sourceChannel,
+      contentText,
+      contentJson,
+      inReplyToExternalEventId,
+      occurredAt,
+      senderType,
+      messageType: mediaType,
+    });
+
+    // Fire-and-forget: no bloqueamos el frontend esperando la subida a Facebook
+    this.fcaSender.sendAttachment(messengerThreadID, mediaUrl, extra?.caption).catch((err: unknown) => {
+      this.logger.error(
+        `[FCA] Error al enviar adjunto a Facebook threadID=${messengerThreadID}: ${String(err)}`,
+      );
+    });
+
+    return { ok: true, externalEventId, messageExternalId: null, occurredAt: occurredAt.toISOString() };
   }
 
   private resolveMediaPlaceholder(mediaType: ThreadMessageMediaType): string {

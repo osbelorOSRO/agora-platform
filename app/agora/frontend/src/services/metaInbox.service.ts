@@ -8,6 +8,7 @@ import type {
   MetaInboxThread,
   MetaInboxThreadControlUpdate,
   WhatsappAdLeadStatsResponse,
+  FcaMarketplaceLeadStatsResponse,
 } from "@/types/metaInbox";
 
 const API_URL = import.meta.env.VITE_API_URL as string;
@@ -142,6 +143,14 @@ export const listWhatsappAdLeadStats = async (): Promise<WhatsappAdLeadStatsResp
     headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error("No se pudo cargar estadísticas de anuncios WhatsApp");
+  return res.json();
+};
+
+export const listFcaMarketplaceLeadStats = async (): Promise<FcaMarketplaceLeadStatsResponse> => {
+  const res = await fetch(`${API_URL}/meta-inbox/fca/marketplace-leads/stats?limit=1000`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error("No se pudo cargar estadísticas de Marketplace Facebook");
   return res.json();
 };
 

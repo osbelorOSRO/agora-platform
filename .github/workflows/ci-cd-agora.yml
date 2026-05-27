@@ -5,10 +5,12 @@ on:
     branches: [main]
     paths:
       - 'app/agora/**'
+      - 'app/fb-backend/**'
   pull_request:
     branches: [main]
     paths:
       - 'app/agora/**'
+      - 'app/fb-backend/**'
 
 jobs:
   ci:
@@ -62,7 +64,7 @@ jobs:
           docker compose -p stack_agora \
             --env-file "$ENV_FILE" \
             -f app/agora/docker-compose.yml \
-            build backend frontend
+            build backend frontend fb-backend
 
       - name: Aplicar migraciones DB
         env:
@@ -85,4 +87,4 @@ jobs:
           docker compose -p stack_agora \
             --env-file "$ENV_FILE" \
             -f app/agora/docker-compose.yml \
-            up -d --no-build --force-recreate frontend backend websocket
+            up -d --no-build --force-recreate frontend backend websocket fb-backend
