@@ -31,6 +31,7 @@ import { MetaGraphApiService } from './meta-graph-api.service';
 import { MediaSendService } from './media-send.service';
 import { ThreadEventService } from './thread-event.service';
 import { getRuntimeSecret } from '../../shared/runtime-secrets';
+import { FcaSenderService } from '../../fca/fca-sender.service';
 
 // ─── Identities ──────────────────────────────────────────────────────────────
 
@@ -105,6 +106,11 @@ const mockMediaSend = {
   }),
 };
 
+const mockFca = {
+  sendMessage: jest.fn().mockResolvedValue({}),
+  sendAttachment: jest.fn().mockResolvedValue({}),
+};
+
 async function buildService(): Promise<MessageSendService> {
   const module: TestingModule = await Test.createTestingModule({
     providers: [
@@ -116,6 +122,7 @@ async function buildService(): Promise<MessageSendService> {
       { provide: ThreadEventService, useValue: mockThreadEvent },
       { provide: META_GRAPH_GATEWAY, useValue: mockMetaGraph },
       { provide: MediaSendService, useValue: mockMediaSend },
+      { provide: FcaSenderService, useValue: mockFca },
     ],
   }).compile();
   return module.get(MessageSendService);
