@@ -18,11 +18,14 @@ const FCA_OPTIONS = {
   logLevel: 'warn' as const,
 };
 
+const MQTT_CYCLE_MS = 30 * 60 * 1000; // 30 minutos — por debajo del idle-timeout de ~50 min de Facebook
+
 export class FacebookGateway {
   private api: FcaApi | null = null;
   private mqtt: MqttEmitter | null = null;
   private sendUseCase: SendMessageUseCase | null = null;
   private myUserID: string | null = null;
+  private cycleTimer: ReturnType<typeof setInterval> | null = null;
 
   async connect(): Promise<void> {
     const config = await this.fetchConfigWithRetry();
@@ -95,6 +98,7 @@ export class FacebookGateway {
           console.log(`[FCA] Login exitoso uid=${this.myUserID}`);
 
           this.startMqttListener();
+          this.startCycleTimer();
           resolve();
         },
       );
@@ -103,6 +107,10 @@ export class FacebookGateway {
 
   private startMqttListener(): void {
     if (!this.api) return;
+
+    if (this.mqtt) {
+      this.mqtt.removeAllListeners();
+    }
 
     this.mqtt = this.api.listenMqtt() as MqttEmitter;
 
@@ -132,6 +140,24 @@ export class FacebookGateway {
       }
       console.error('[FCA] MQTT error:', err);
     });
+  }
+
+  private startCycleTimer(): void {
+    if (this.cycleTimer) {
+      clearInterval(this.cycleTimer);
+    }
+    this.cycleTimer = setInterval(() => {
+      if (!this.api) return;
+      console.log('[FCA] Ciclo MQTT preventivo (30 min) — reconectando...');
+      const stop = this.api.stopListening as ((cb?: () => void) => void) | undefined;
+      if (typeof stop === 'function') {
+        stop(() => {
+          setTimeout(() => this.startMqttListener(), 2000);
+        });
+      } else {
+        this.startMqttListener();
+      }
+    }, MQTT_CYCLE_MS);
   }
 
   private async reportStatus(): Promise<void> {
