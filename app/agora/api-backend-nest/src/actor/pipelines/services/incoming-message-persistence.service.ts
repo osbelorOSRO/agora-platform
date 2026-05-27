@@ -158,32 +158,38 @@ export class IncomingMessagePersistenceService {
     const marketplace = (payload as Record<string, unknown>)?.[
       'marketplace'
     ] as Record<string, unknown> | undefined;
-    if (isFcaIncoming && marketplace?.sourceId) {
-      await this.upsertFcaMarketplaceLead({
-        sourceId: String(marketplace.sourceId),
-        sessionId,
-        actorExternalId: env.actorExternalId,
-        sourceUrl: marketplace.itemUrl ? String(marketplace.itemUrl) : null,
-        title: marketplace.title ? String(marketplace.title) : null,
-        description: marketplace.description
-          ? String(marketplace.description)
-          : null,
-        imageUrl: marketplace.imageUrl ? String(marketplace.imageUrl) : null,
-        firstMessageText: contentText,
-        metadata: {
-          externalEventId: env.externalEventId,
-          occurredAt: env.occurredAt,
-        },
-      });
-      await this.setThreadMarketplaceMetadata(sessionId, {
-        sourceId: String(marketplace.sourceId),
-        itemUrl: marketplace.itemUrl ? String(marketplace.itemUrl) : null,
-        title: marketplace.title ? String(marketplace.title) : null,
-        description: marketplace.description
-          ? String(marketplace.description)
-          : null,
-        imageUrl: marketplace.imageUrl ? String(marketplace.imageUrl) : null,
-      });
+    if (isFcaIncoming && marketplace) {
+      if (marketplace.sourceId) {
+        await this.upsertFcaMarketplaceLead({
+          sourceId: String(marketplace.sourceId),
+          sessionId,
+          actorExternalId: env.actorExternalId,
+          sourceUrl: marketplace.itemUrl ? String(marketplace.itemUrl) : null,
+          title: marketplace.title ? String(marketplace.title) : null,
+          description: marketplace.description
+            ? String(marketplace.description)
+            : null,
+          imageUrl: marketplace.imageUrl ? String(marketplace.imageUrl) : null,
+          firstMessageText: contentText,
+          metadata: {
+            externalEventId: env.externalEventId,
+            occurredAt: env.occurredAt,
+          },
+        });
+      }
+      if (marketplace.sourceId || marketplace.title) {
+        await this.setThreadMarketplaceMetadata(sessionId, {
+          sourceId: marketplace.sourceId
+            ? String(marketplace.sourceId)
+            : null,
+          itemUrl: marketplace.itemUrl ? String(marketplace.itemUrl) : null,
+          title: marketplace.title ? String(marketplace.title) : null,
+          description: marketplace.description
+            ? String(marketplace.description)
+            : null,
+          imageUrl: marketplace.imageUrl ? String(marketplace.imageUrl) : null,
+        });
+      }
     }
 
     await this.websocketNotifier.notificarMetaInboxMessageNew({

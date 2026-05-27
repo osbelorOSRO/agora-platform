@@ -24,6 +24,7 @@ export class ConversationBootstrapService {
     const objectType = String(input.objectType || 'PAGE').toUpperCase();
     const enabled =
       provider === 'META' ||
+      provider === 'FCA' ||
       (provider === 'BAILEYS' && objectType === 'WHATSAPP');
 
     if (!enabled) {
