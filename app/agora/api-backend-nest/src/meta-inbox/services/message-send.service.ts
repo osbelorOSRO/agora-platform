@@ -713,7 +713,9 @@ export class MessageSendService {
     inReplyToExternalEventId: string | null;
     provider: string;
   }> {
-    const messengerThreadID = await this.resolveFcaThreadID(threadIdentity.actorExternalId);
+    const messengerThreadID = await this.resolveFcaThreadID(
+      threadIdentity.actorExternalId,
+    );
     const occurredAt = new Date();
     const externalEventId = `fca_out_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
     const contentJson = {
@@ -740,11 +742,13 @@ export class MessageSendService {
     });
 
     // Fire-and-forget: no bloqueamos la respuesta al frontend esperando a Facebook
-    this.fcaSender.sendMessage(messengerThreadID, text).catch((err: unknown) => {
-      this.logger.error(
-        `[FCA] Error al enviar mensaje a Facebook threadID=${messengerThreadID}: ${String(err)}`,
-      );
-    });
+    this.fcaSender
+      .sendMessage(messengerThreadID, text)
+      .catch((err: unknown) => {
+        this.logger.error(
+          `[FCA] Error al enviar mensaje a Facebook threadID=${messengerThreadID}: ${String(err)}`,
+        );
+      });
 
     return {
       ok: true,
@@ -765,10 +769,13 @@ export class MessageSendService {
     inReplyToExternalEventId: string | null,
     extra?: { caption?: string },
   ): Promise<Record<string, unknown>> {
-    const messengerThreadID = await this.resolveFcaThreadID(threadIdentity.actorExternalId);
+    const messengerThreadID = await this.resolveFcaThreadID(
+      threadIdentity.actorExternalId,
+    );
     const occurredAt = new Date();
     const externalEventId = `fca_out_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
-    const contentText = extra?.caption || this.resolveMediaPlaceholder(mediaType);
+    const contentText =
+      extra?.caption || this.resolveMediaPlaceholder(mediaType);
     const contentJson = {
       senderType,
       messageType: mediaType,
@@ -796,13 +803,20 @@ export class MessageSendService {
     });
 
     // Fire-and-forget: no bloqueamos el frontend esperando la subida a Facebook
-    this.fcaSender.sendAttachment(messengerThreadID, mediaUrl, extra?.caption).catch((err: unknown) => {
-      this.logger.error(
-        `[FCA] Error al enviar adjunto a Facebook threadID=${messengerThreadID}: ${String(err)}`,
-      );
-    });
+    this.fcaSender
+      .sendAttachment(messengerThreadID, mediaUrl, extra?.caption)
+      .catch((err: unknown) => {
+        this.logger.error(
+          `[FCA] Error al enviar adjunto a Facebook threadID=${messengerThreadID}: ${String(err)}`,
+        );
+      });
 
-    return { ok: true, externalEventId, messageExternalId: null, occurredAt: occurredAt.toISOString() };
+    return {
+      ok: true,
+      externalEventId,
+      messageExternalId: null,
+      occurredAt: occurredAt.toISOString(),
+    };
   }
 
   private resolveMediaPlaceholder(mediaType: ThreadMessageMediaType): string {

@@ -43,8 +43,13 @@ export class FcaSenderService {
       return response.data;
     } catch (error: unknown) {
       const err = error as { message: string; response?: { status: number } };
-      this.logger.error(`Error al enviar adjunto FCA: ${err.message}`, { threadID, status: err.response?.status });
-      throw new InternalServerErrorException('No se pudo enviar el adjunto por Facebook');
+      this.logger.error(`Error al enviar adjunto FCA: ${err.message}`, {
+        threadID,
+        status: err.response?.status,
+      });
+      throw new InternalServerErrorException(
+        'No se pudo enviar el adjunto por Facebook',
+      );
     }
   }
 

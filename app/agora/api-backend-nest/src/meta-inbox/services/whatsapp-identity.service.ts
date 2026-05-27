@@ -261,7 +261,10 @@ export class WhatsappIdentityService {
     return { items, leads, total: items.length };
   }
 
-  async listFcaMarketplaceLeadStats(input: { sourceId?: string; limit?: number }) {
+  async listFcaMarketplaceLeadStats(input: {
+    sourceId?: string;
+    limit?: number;
+  }) {
     const sourceId = String(input.sourceId || '').trim();
     const limit = Math.max(1, Math.min(Number(input.limit) || 500, 1000));
 

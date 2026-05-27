@@ -153,10 +153,11 @@ export class IncomingMessagePersistenceService {
     }
 
     const isFcaIncoming =
-      String(env.provider || '').toUpperCase() === 'FCA' && direction === 'INCOMING';
-    const marketplace = (
-      payload as Record<string, unknown>
-    )?.['marketplace'] as Record<string, unknown> | undefined;
+      String(env.provider || '').toUpperCase() === 'FCA' &&
+      direction === 'INCOMING';
+    const marketplace = (payload as Record<string, unknown>)?.[
+      'marketplace'
+    ] as Record<string, unknown> | undefined;
     if (isFcaIncoming && marketplace?.sourceId) {
       await this.upsertFcaMarketplaceLead({
         sourceId: String(marketplace.sourceId),
