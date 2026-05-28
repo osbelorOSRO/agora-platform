@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.11.0
+
+### Added
+- E2E tests etapas 1-3: infraestructura (`test/helpers/test-app.factory.ts` con mocks de VAULT_GATEWAY, CacheService y MinioService), tests de auth guard (5 escenarios: sin token, token malformado, clave incorrecta, JWT válido, JWT con filtro de mes), script `npm run test:e2e`
+- `coverageThreshold` en jest config — CI falla si cobertura baja de 44% líneas / 39% funciones (baseline actual, se sube incrementalmente)
+- Plan de implementación completo en `docs/DOC-PLAN-E2E-TESTS.md` para continuar con etapas 4-5 (CRUD sales-record + integración CI)
+
+### Changed
+- `test/app.e2e-spec.ts` reemplazado — el placeholder que esperaba "Hello World!" ahora verifica que la app arranca sin errores
+- `test/jest-e2e.json` actualizado con `forceExit: true`, `testTimeout: 30000` y alias de módulos
+
 ## 2.10.0
 
 ### Added

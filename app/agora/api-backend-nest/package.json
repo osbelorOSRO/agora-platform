@@ -14,6 +14,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
+    "test:e2e": "jest --config test/jest-e2e.json",
     "prisma:validate": "prisma validate",
     "prisma:generate": "prisma generate"
   },
@@ -107,6 +108,12 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "coverageThreshold": {
+      "global": {
+        "lines": 44,
+        "functions": 39
+      }
+    }
   }
 }
