@@ -6,11 +6,13 @@ on:
     paths:
       - 'app/agora/**'
       - 'app/fb-backend/**'
+      - '.github/workflows/ci-cd-agora.yml'
   pull_request:
     branches: [main]
     paths:
       - 'app/agora/**'
       - 'app/fb-backend/**'
+      - '.github/workflows/ci-cd-agora.yml'
 
 jobs:
   ci:
