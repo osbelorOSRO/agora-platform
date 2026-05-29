@@ -51,7 +51,7 @@ jobs:
             -e POSTGRES_USER=ci \
             -e POSTGRES_PASSWORD=ci \
             -e POSTGRES_DB=ci \
-            -p 5432:5432 \
+            -p 5433:5432 \
             postgres:15-alpine
           for i in $(seq 1 30); do
             docker exec pg_ci pg_isready -U ci && break
@@ -61,12 +61,12 @@ jobs:
       - name: Aplicar schema en CI DB
         run: npx prisma migrate deploy
         env:
-          DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
+          DATABASE_URL: "postgresql://ci:ci@localhost:5433/ci"
 
       - name: Tests E2E
         run: npm run test:e2e
         env:
-          DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
+          DATABASE_URL: "postgresql://ci:ci@localhost:5433/ci"
 
       - name: Detener Postgres CI
         if: always()
