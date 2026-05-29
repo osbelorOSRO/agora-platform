@@ -13,7 +13,13 @@ describe('Sales Record CRUD (e2e)', () => {
     token = ctx.signToken({
       id: 1,
       rol: 'superadmin',
-      permisos: ['gestion_ventas'],
+      permisos: [
+        'gestion_ventas',
+        'ver_reportes',
+        'editar_configuracion',
+        'gestion_integraciones',
+        'gestion_conexiones',
+      ],
     });
   });
 

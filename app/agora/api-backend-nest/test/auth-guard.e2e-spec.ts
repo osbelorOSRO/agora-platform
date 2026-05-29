@@ -46,7 +46,13 @@ describe('Auth Guard (e2e)', () => {
       const token = ctx.signToken({
         id: 1,
         rol: 'superadmin',
-        permisos: ['gestion_ventas'],
+        permisos: [
+          'gestion_ventas',
+          'ver_reportes',
+          'editar_configuracion',
+          'gestion_integraciones',
+          'gestion_conexiones',
+        ],
       });
       await request(ctx.app.getHttpServer())
         .get('/sales-record')
@@ -61,7 +67,13 @@ describe('Auth Guard (e2e)', () => {
       const token = ctx.signToken({
         id: 1,
         rol: 'superadmin',
-        permisos: ['gestion_ventas'],
+        permisos: [
+          'gestion_ventas',
+          'ver_reportes',
+          'editar_configuracion',
+          'gestion_integraciones',
+          'gestion_conexiones',
+        ],
       });
       await request(ctx.app.getHttpServer())
         .get('/sales-record?year=2026&month=5')

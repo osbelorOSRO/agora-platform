@@ -92,11 +92,21 @@ export async function createTestApp(): Promise<TestAppContext> {
   );
   await app.init();
 
-  const signToken = (payload: object, expiresIn = '1h') =>
-    jwt.sign(payload, privateKey, {
+  const ALL_PERMISOS = [
+    'gestion_ventas',
+    'ver_reportes',
+    'editar_configuracion',
+    'gestion_integraciones',
+    'gestion_conexiones',
+  ];
+
+  const signToken = (payload: Record<string, unknown>, expiresIn = '1h') => {
+    const merged = { permisos: ALL_PERMISOS, ...payload };
+    return jwt.sign(merged, privateKey, {
       algorithm: 'RS256',
       expiresIn,
     } as jwt.SignOptions);
+  };
 
   cached = {
     app,
