@@ -43,6 +43,19 @@ jobs:
       - name: Tests
         run: npm test
 
+      - name: Iniciar Postgres CI
+        run: |
+          docker run -d --name pg_ci \
+            -e POSTGRES_USER=ci \
+            -e POSTGRES_PASSWORD=ci \
+            -e POSTGRES_DB=ci \
+            -p 5432:5432 \
+            postgres:15-alpine
+          for i in $(seq 1 30); do
+            docker exec pg_ci pg_isready -U ci && break
+            sleep 1
+          done
+
       - name: Aplicar schema en CI DB
         run: npx prisma migrate deploy
         env:
@@ -52,6 +65,10 @@ jobs:
         run: npm run test:e2e
         env:
           DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
+
+      - name: Detener Postgres CI
+        if: always()
+        run: docker rm -f pg_ci || true
 
       - name: Build
         run: npm run build
