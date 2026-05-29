@@ -1,20 +1,24 @@
 import { Module } from '@nestjs/common';
 import { CacheModule as NestCacheModule } from '@nestjs/cache-manager';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { redisStore } from 'cache-manager-redis-yet';
 import { CacheService } from './cache.service';
 
-// Cambia el nombre de tu módulo para no colisionar
 @Module({
   imports: [
-    NestCacheModule.register({
-      store: redisStore,
-      socket: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379'),
-        password: process.env.REDIS_PASSWORD,
-      },
-      ttl: 600,
+    NestCacheModule.registerAsync({
       isGlobal: true,
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        store: redisStore,
+        socket: {
+          host: config.get<string>('REDIS_HOST') ?? 'localhost',
+          port: config.get<number>('REDIS_PORT') ?? 6379,
+          password: config.get<string>('REDIS_PASSWORD'),
+        },
+        ttl: 600,
+      }),
     }),
   ],
   providers: [CacheService],

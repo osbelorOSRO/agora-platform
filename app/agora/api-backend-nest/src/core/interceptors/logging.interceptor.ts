@@ -5,6 +5,7 @@ import {
   Logger,
   NestInterceptor,
 } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { Request, Response } from 'express';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -17,12 +18,18 @@ export class LoggingInterceptor implements NestInterceptor {
     const req = context.switchToHttp().getRequest<Request>();
     const res = context.switchToHttp().getResponse<Response>();
     const { method, url } = req;
+    const requestId = randomUUID();
     const start = Date.now();
+
+    (req as unknown as Record<string, unknown>)['requestId'] = requestId;
+    res.setHeader('X-Request-Id', requestId);
 
     return next.handle().pipe(
       tap(() => {
         const ms = Date.now() - start;
-        this.logger.log(`${method} ${url} ${res.statusCode} +${ms}ms`);
+        this.logger.log(
+          `[${requestId}] ${method} ${url} ${res.statusCode} +${ms}ms`,
+        );
       }),
     );
   }

@@ -7,16 +7,22 @@ import {
   ParseIntPipe,
   Post,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { Request as Req } from '@nestjs/common';
 import type { Request } from 'express';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { TransformInterceptor } from '../../core/interceptors/transform.interceptor';
 import { SessionsService } from './sessions.service';
 import { PanelJwtAuthGuard } from '../../auth/panel-jwt-auth.guard';
-import { RequireRolesGuard } from '../guards/require-roles.guard';
-import { RequiereRoles } from '../decorators/roles.decorator';
+import { RequirePermissionGuard } from '../guards/require-permission.guard';
+import { RequirePermission } from '../decorators/permission.decorator';
 
+@ApiTags('Autenticación')
+@ApiBearerAuth('panel-jwt')
 @Controller('api/auth')
 @UseGuards(PanelJwtAuthGuard)
+@UseInterceptors(TransformInterceptor)
 export class SessionsController {
   constructor(private readonly service: SessionsService) {}
 
@@ -45,16 +51,16 @@ export class SessionsController {
   }
 
   @Get('sesiones-activas-admin')
-  @UseGuards(RequireRolesGuard)
-  @RequiereRoles('superadmin', 'admin', 'supervisor')
+  @UseGuards(RequirePermissionGuard)
+  @RequirePermission('gestion_conexiones')
   listarTodasSesionesActivas() {
     return this.service.listarTodasSesionesActivas();
   }
 
   @Delete('sesiones/:id')
   @HttpCode(200)
-  @UseGuards(RequireRolesGuard)
-  @RequiereRoles('superadmin', 'admin', 'supervisor')
+  @UseGuards(RequirePermissionGuard)
+  @RequirePermission('gestion_conexiones')
   cerrarSesionAdmin(@Param('id', ParseIntPipe) id: number) {
     return this.service.cerrarSesionAdmin(id);
   }

@@ -1,3 +1,4 @@
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -7,16 +8,24 @@ import {
   Patch,
   Post,
   UseGuards,
+  UseInterceptors,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { SuperadminJwtGuard } from '../auth/superadmin-jwt.guard';
+import { TransformInterceptor } from '../core/interceptors/transform.interceptor';
+import { PanelJwtAuthGuard } from '../auth/panel-jwt-auth.guard';
+import { RequirePermissionGuard } from '../accesos/guards/require-permission.guard';
+import { RequirePermission } from '../accesos/decorators/permission.decorator';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { UpdateOfferDto } from './dto/update-offer.dto';
 import { OffersService } from './offers.service';
 
+@ApiTags('Ofertas')
+@ApiBearerAuth('panel-jwt')
 @Controller('offers')
-@UseGuards(SuperadminJwtGuard)
+@UseGuards(PanelJwtAuthGuard, RequirePermissionGuard)
+@RequirePermission('gestion_integraciones')
+@UseInterceptors(TransformInterceptor)
 @UsePipes(
   new ValidationPipe({
     whitelist: true,

@@ -205,7 +205,73 @@ describe('AccessAuthService', () => {
         service.registrarUsuario('testuser', 'token', 'pass1', 'pass1'),
       ).rejects.toThrow(BadRequestException);
     });
-  });
+
+    it('lanza ForbiddenException si la invitación expiró', async () => {
+      prisma.usuarios.findUnique.mockResolvedValue({
+        ...baseUsuario,
+        password: null,
+        invitation_token: 'hashed',
+        invitation_expires_at: new Date(Date.now() - 1000),
+        invitation_attempts: 0,
+      });
+      await expect(
+        service.registrarUsuario('u', 'tok', 'pass', 'pass'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('lanza ForbiddenException si se supera MAX_INVITATION_ATTEMPTS', async () => {
+      prisma.usuarios.findUnique.mockResolvedValue({
+        ...baseUsuario,
+        password: null,
+        invitation_token: 'hashed',
+        invitation_expires_at: new Date(Date.now() + 86400000),
+        invitation_attempts: 5,
+      });
+      await expect(
+        service.registrarUsuario('u', 'tok', 'pass', 'pass'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('lanza ForbiddenException con token incorrecto e incrementa intentos', async () => {
+      prisma.usuarios.findUnique.mockResolvedValue({
+        ...baseUsuario,
+        password: null,
+        invitation_token: 'hashed',
+        invitation_expires_at: new Date(Date.now() + 86400000),
+        invitation_attempts: 0,
+      });
+      bcrypt.default.compare.mockResolvedValue(false);
+
+      await expect(
+        service.registrarUsuario('u', 'bad', 'pass', 'pass'),
+      ).rejects.toThrow(ForbiddenException);
+      expect(prisma.usuarios.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { invitation_attempts: { increment: 1 } },
+        }),
+      );
+    });
+
+    it('registro exitoso devuelve secret_base32 y otpauth_url', async () => {
+      prisma.usuarios.findUnique.mockResolvedValue({
+        ...baseUsuario,
+        password: null,
+        invitation_token: 'hashed',
+        invitation_expires_at: new Date(Date.now() + 86400000),
+        invitation_attempts: 0,
+      });
+      bcrypt.default.compare.mockResolvedValue(true);
+      bcrypt.default.hash.mockResolvedValue('new-hashed');
+      speakeasy.default.generateSecret.mockReturnValue({
+        base32: 'NEWSECRET',
+        otpauth_url: 'otpauth://totp/test',
+      });
+
+      const result = await service.registrarUsuario('u', 'tok', 'pass', 'pass');
+      expect(result.secret_base32).toBe('NEWSECRET');
+      expect(result.secret_otpauth_url).toBe('otpauth://totp/test');
+    });
+  }); // cierra describe('registrarUsuario')
 
   describe('resetPassword', () => {
     it('lanza BadRequestException cuando las contraseñas no coinciden', async () => {
@@ -220,10 +286,164 @@ describe('AccessAuthService', () => {
         reset_token: null,
         reset_token_expires: null,
       });
-
       await expect(
         service.resetPassword('testuser', 'token', 'pass1', 'pass1'),
       ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('lanza ForbiddenException cuando el token expiró', async () => {
+      prisma.usuarios.findUnique.mockResolvedValue({
+        id: 1,
+        reset_token: 'hashed',
+        reset_token_expires: new Date(Date.now() - 1000),
+      });
+      await expect(
+        service.resetPassword('u', 'tok', 'pass', 'pass'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('lanza ForbiddenException con token incorrecto', async () => {
+      prisma.usuarios.findUnique.mockResolvedValue({
+        id: 1,
+        reset_token: 'hashed',
+        reset_token_expires: new Date(Date.now() + 86400000),
+      });
+      bcrypt.default.compare.mockResolvedValue(false);
+      await expect(
+        service.resetPassword('u', 'bad', 'pass', 'pass'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('resetPassword exitoso devuelve mensaje', async () => {
+      prisma.usuarios.findUnique.mockResolvedValue({
+        id: 1,
+        reset_token: 'hashed',
+        reset_token_expires: new Date(Date.now() + 86400000),
+      });
+      bcrypt.default.compare.mockResolvedValue(true);
+      bcrypt.default.hash.mockResolvedValue('new-hashed');
+
+      const result = await service.resetPassword('u', 'tok', 'pass', 'pass');
+      expect(result.message).toContain('actualizada');
+    });
+  });
+
+  describe('setup2FAInit', () => {
+    const base2FA = {
+      id: 1,
+      password: 'hashed',
+      mfa_bypass_token: 'hashed-bypass',
+      mfa_new_secret: 'NEW_SECRET',
+      mfa_reset_expires: new Date(Date.now() + 86400000),
+    };
+
+    it('lanza ForbiddenException si el usuario no existe', async () => {
+      prisma.usuarios.findUnique.mockResolvedValue(null);
+      await expect(service.setup2FAInit('u', 'p', 't')).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('lanza ForbiddenException si no hay mfa_bypass_token', async () => {
+      prisma.usuarios.findUnique.mockResolvedValue({
+        ...base2FA,
+        mfa_bypass_token: null,
+      });
+      await expect(service.setup2FAInit('u', 'p', 't')).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('lanza ForbiddenException si el token expiró', async () => {
+      prisma.usuarios.findUnique.mockResolvedValue({
+        ...base2FA,
+        mfa_reset_expires: new Date(Date.now() - 1000),
+      });
+      await expect(service.setup2FAInit('u', 'p', 't')).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('lanza ForbiddenException con contraseña incorrecta', async () => {
+      prisma.usuarios.findUnique.mockResolvedValue(base2FA);
+      bcrypt.default.compare.mockResolvedValueOnce(false);
+      await expect(service.setup2FAInit('u', 'wrong', 't')).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('lanza ForbiddenException con bypass token incorrecto', async () => {
+      prisma.usuarios.findUnique.mockResolvedValue(base2FA);
+      bcrypt.default.compare
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(false);
+      await expect(service.setup2FAInit('u', 'p', 'bad')).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('setup2FAInit exitoso devuelve otpauth_url', async () => {
+      prisma.usuarios.findUnique.mockResolvedValue(base2FA);
+      bcrypt.default.compare.mockResolvedValue(true);
+      speakeasy.default.otpauthURL.mockReturnValue('otpauth://totp/test');
+
+      const result = await service.setup2FAInit('u', 'pass', 'bypass');
+      expect(result.otpauth_url).toBeDefined();
+    });
+  });
+
+  describe('setup2FAConfirmar', () => {
+    const base2FA = {
+      id: 1,
+      mfa_bypass_token: 'hashed-bypass',
+      mfa_new_secret: 'NEW_SECRET',
+      mfa_reset_expires: new Date(Date.now() + 86400000),
+    };
+
+    it('lanza ForbiddenException si no hay mfa_bypass_token', async () => {
+      prisma.usuarios.findUnique.mockResolvedValue({
+        ...base2FA,
+        mfa_bypass_token: null,
+      });
+      await expect(
+        service.setup2FAConfirmar('u', 't', '123456'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('lanza ForbiddenException si el token expiró', async () => {
+      prisma.usuarios.findUnique.mockResolvedValue({
+        ...base2FA,
+        mfa_reset_expires: new Date(Date.now() - 1000),
+      });
+      await expect(
+        service.setup2FAConfirmar('u', 't', '123456'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('lanza ForbiddenException con bypass token incorrecto', async () => {
+      prisma.usuarios.findUnique.mockResolvedValue(base2FA);
+      bcrypt.default.compare.mockResolvedValue(false);
+      await expect(
+        service.setup2FAConfirmar('u', 'bad', '123456'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('lanza ForbiddenException si el TOTP es incorrecto', async () => {
+      prisma.usuarios.findUnique.mockResolvedValue(base2FA);
+      bcrypt.default.compare.mockResolvedValue(true);
+      speakeasy.default.totp.verify.mockReturnValue(false);
+      await expect(
+        service.setup2FAConfirmar('u', 'bypass', 'bad'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('setup2FAConfirmar exitoso devuelve mensaje', async () => {
+      prisma.usuarios.findUnique.mockResolvedValue(base2FA);
+      bcrypt.default.compare.mockResolvedValue(true);
+      speakeasy.default.totp.verify.mockReturnValue(true);
+
+      const result = await service.setup2FAConfirmar('u', 'bypass', '123456');
+      expect(result.message).toContain('2FA');
     });
   });
 });

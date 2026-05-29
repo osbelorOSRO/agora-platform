@@ -45,6 +45,44 @@ function checkGuarda(
     );
 }
 
+type UsuarioRow = {
+  id: number;
+  username: string;
+  nombre: string | null;
+  apellido: string | null;
+  run: string | null;
+  telefono: string | null;
+  email: string | null;
+  creado_en: Date | null;
+  actualizado_en: Date | null;
+  rol_usuarios_rol_idTorol: { id: number | null; nombre: string | null } | null;
+  usuarios_usuarios_creado_por_idTousuarios: { username: string } | null;
+  usuarios_usuarios_actualizado_por_idTousuarios: { username: string } | null;
+};
+
+function mapUsuarioRow(u: UsuarioRow) {
+  const rolObj = u.rol_usuarios_rol_idTorol;
+  return {
+    id: u.id,
+    username: u.username,
+    nombre: u.nombre,
+    apellido: u.apellido,
+    run: u.run,
+    telefono: u.telefono,
+    email: u.email,
+    creado_en: u.creado_en,
+    actualizado_en: u.actualizado_en,
+    creado_por_username:
+      u.usuarios_usuarios_creado_por_idTousuarios?.username ?? null,
+    actualizado_por_username:
+      u.usuarios_usuarios_actualizado_por_idTousuarios?.username ?? null,
+    rol: rolObj
+      ? { id: rolObj.id ?? null, nombre: rolObj.nombre ?? null }
+      : null,
+    oficina: null as null,
+  };
+}
+
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
@@ -61,48 +99,47 @@ export class UsersService {
     if (typeof username !== 'string' || username.length > 100)
       throw new BadRequestException('username inválido');
 
-    const rol = await this.prisma.rol.findUnique({
-      where: { id: Number(rolId) },
-    });
-    if (!rol) throw new BadRequestException('Rol no válido');
-
-    const existente = await this.prisma.usuarios.findUnique({
-      where: { username },
-    });
-    if (existente) {
-      const msg = existente.cancelado
-        ? 'Ese nombre de usuario no está disponible'
-        : 'Ya existe un usuario activo con ese nombre de usuario';
-      throw new ConflictException(msg);
-    }
-
     const { plain, hash } = generarTokenUnico();
+
     try {
-      await this.prisma.usuarios.create({
-        data: {
-          username,
-          password: '',
-          token_2fa: '',
-          nombre: '',
-          apellido: '',
-          run: '',
-          telefono: '',
-          email: '',
-          invitation_token: hash,
-          invitation_expires_at: expiracionEn(24),
-          invitation_attempts: 0,
-          rol_usuarios_rol_idTorol: { connect: { id: Number(rolId) } },
-          creado_en: new Date(),
-          actualizado_en: new Date(),
-          ...(actorId && {
-            usuarios_usuarios_creado_por_idTousuarios: {
-              connect: { id: actorId },
-            },
-            usuarios_usuarios_actualizado_por_idTousuarios: {
-              connect: { id: actorId },
-            },
-          }),
-        },
+      await this.prisma.$transaction(async (tx) => {
+        const rol = await tx.rol.findUnique({ where: { id: Number(rolId) } });
+        if (!rol) throw new BadRequestException('Rol no válido');
+
+        const existente = await tx.usuarios.findUnique({ where: { username } });
+        if (existente) {
+          const msg = existente.cancelado
+            ? 'Ese nombre de usuario no está disponible'
+            : 'Ya existe un usuario activo con ese nombre de usuario';
+          throw new ConflictException(msg);
+        }
+
+        await tx.usuarios.create({
+          data: {
+            username,
+            password: '',
+            token_2fa: '',
+            nombre: '',
+            apellido: '',
+            run: '',
+            telefono: '',
+            email: '',
+            invitation_token: hash,
+            invitation_expires_at: expiracionEn(24),
+            invitation_attempts: 0,
+            rol_usuarios_rol_idTorol: { connect: { id: Number(rolId) } },
+            creado_en: new Date(),
+            actualizado_en: new Date(),
+            ...(actorId && {
+              usuarios_usuarios_creado_por_idTousuarios: {
+                connect: { id: actorId },
+              },
+              usuarios_usuarios_actualizado_por_idTousuarios: {
+                connect: { id: actorId },
+              },
+            }),
+          },
+        });
       });
     } catch (err) {
       if (
@@ -135,29 +172,10 @@ export class UsersService {
         },
       },
     });
-    return usuarios.map((u) => {
-      const rolObj = u.rol_usuarios_rol_idTorol;
-      return {
-        id: u.id,
-        username: u.username,
-        nombre: u.nombre,
-        apellido: u.apellido,
-        run: u.run,
-        telefono: u.telefono,
-        email: u.email,
-        creado_en: u.creado_en,
-        actualizado_en: u.actualizado_en,
-        creado_por_username:
-          u.usuarios_usuarios_creado_por_idTousuarios?.username ?? null,
-        actualizado_por_username:
-          u.usuarios_usuarios_actualizado_por_idTousuarios?.username ?? null,
-        rol: rolObj
-          ? { id: rolObj.id ?? null, nombre: rolObj.nombre ?? null }
-          : null,
-        oficina: null,
-        estado: calcularEstado(u),
-      };
-    });
+    return usuarios.map((u) => ({
+      ...mapUsuarioRow(u),
+      estado: calcularEstado(u),
+    }));
   }
 
   async actualizarUsuario(
@@ -221,26 +239,7 @@ export class UsersService {
         },
       },
     });
-    const rolObj = u.rol_usuarios_rol_idTorol;
-    return {
-      id: u.id,
-      username: u.username,
-      nombre: u.nombre,
-      apellido: u.apellido,
-      run: u.run,
-      telefono: u.telefono,
-      email: u.email,
-      creado_en: u.creado_en,
-      actualizado_en: u.actualizado_en,
-      creado_por_username:
-        u.usuarios_usuarios_creado_por_idTousuarios?.username ?? null,
-      actualizado_por_username:
-        u.usuarios_usuarios_actualizado_por_idTousuarios?.username ?? null,
-      rol: rolObj
-        ? { id: rolObj.id ?? null, nombre: rolObj.nombre ?? null }
-        : null,
-      oficina: null,
-    };
+    return mapUsuarioRow(u);
   }
 
   async adminResetPassword(id: number, selfId?: number) {

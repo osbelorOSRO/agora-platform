@@ -1,3 +1,4 @@
+import { unwrapEnvelope } from "@/lib/apiClient";
 import { getAuthHeaders } from "@/utils/getAuthHeaders";
 import type {
   CreateStageTemplateInput,
@@ -13,7 +14,7 @@ export const listStageTemplates = async (stageActual?: string): Promise<StageTem
     headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error("No se pudieron cargar los stage templates");
-  return res.json();
+  return (await res.json()).data;
 };
 
 export const getStageTemplate = async (id: string): Promise<StageTemplate> => {
@@ -21,7 +22,7 @@ export const getStageTemplate = async (id: string): Promise<StageTemplate> => {
     headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error("Stage template no encontrado");
-  return res.json();
+  return (await res.json()).data;
 };
 
 export const createStageTemplate = async (
@@ -36,7 +37,7 @@ export const createStageTemplate = async (
     const err = await res.json().catch(() => ({}));
     throw new Error(err?.message ?? "Error al crear stage template");
   }
-  return res.json();
+  return (await res.json()).data;
 };
 
 export const updateStageTemplate = async (
@@ -52,7 +53,7 @@ export const updateStageTemplate = async (
     const err = await res.json().catch(() => ({}));
     throw new Error(err?.message ?? "Error al actualizar stage template");
   }
-  return res.json();
+  return (await res.json()).data;
 };
 
 export const deleteStageTemplate = async (id: string): Promise<void> => {

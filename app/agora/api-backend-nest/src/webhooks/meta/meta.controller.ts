@@ -1,3 +1,4 @@
+import { ApiTags } from '@nestjs/swagger';
 import {
   Controller,
   Get,
@@ -6,21 +7,18 @@ import {
   Res,
   Body,
   Logger,
-  Headers,
-  Req,
-  UnauthorizedException,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { RawBodyRequest } from '@nestjs/common';
 import { Response } from 'express';
-import { Request } from 'express';
-import { createHmac, timingSafeEqual } from 'crypto';
 import { MetaService } from './meta.service';
+import { MetaWebhookHmacGuard } from './meta-webhook-hmac.guard';
 import { getRuntimeSecret } from '../../shared/runtime-secrets';
 import { VerifyMetaWebhookQueryDto } from './dto/verify-meta-webhook-query.dto';
 import { MetaWebhookPayload } from './dto/meta-webhook-payload.interface';
 
+@ApiTags('Webhooks Meta')
 @Controller('webhooks/meta')
 export class MetaController {
   private readonly logger = new Logger(MetaController.name);
@@ -67,13 +65,8 @@ export class MetaController {
    * =========================
    */
   @Post()
-  async receive(
-    @Body() body: MetaWebhookPayload,
-    @Headers('x-hub-signature-256') signature: string | undefined,
-    @Req() req: RawBodyRequest<Request>,
-  ) {
-    await this.assertMetaSignature(signature, req.rawBody);
-
+  @UseGuards(MetaWebhookHmacGuard)
+  async receive(@Body() body: MetaWebhookPayload) {
     this.logger.debug(
       `Webhook Meta recibido: object=${body?.object} entries=${Array.isArray(body?.entry) ? body.entry.length : 0}`,
     );
@@ -83,30 +76,5 @@ export class MetaController {
     });
 
     return 'EVENT_RECEIVED';
-  }
-
-  private async assertMetaSignature(
-    signature: string | undefined,
-    rawBody?: Buffer,
-  ) {
-    if (!signature?.startsWith('sha256=') || !rawBody?.length) {
-      throw new UnauthorizedException('Firma Meta requerida');
-    }
-
-    const appSecret = await getRuntimeSecret('META_APP_SECRET');
-    const expected = createHmac('sha256', appSecret)
-      .update(rawBody)
-      .digest('hex');
-    const provided = signature.slice('sha256='.length);
-
-    const expectedBuffer = Buffer.from(expected, 'hex');
-    const providedBuffer = Buffer.from(provided, 'hex');
-
-    if (
-      expectedBuffer.length !== providedBuffer.length ||
-      !timingSafeEqual(expectedBuffer, providedBuffer)
-    ) {
-      throw new UnauthorizedException('Firma Meta inválida');
-    }
   }
 }

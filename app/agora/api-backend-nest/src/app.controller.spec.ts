@@ -4,6 +4,13 @@ import request from 'supertest';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
+describe('AppService', () => {
+  it('getHello devuelve Hello World!', () => {
+    const svc = new AppService();
+    expect(svc.getHello()).toBe('Hello World!');
+  });
+});
+
 describe('AppController', () => {
   let app: INestApplication;
 

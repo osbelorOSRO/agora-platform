@@ -1,4 +1,5 @@
 import { getAuthHeaders } from "@/utils/getAuthHeaders";
+import { unwrapEnvelope } from "@/lib/apiClient";
 import type {
   CreateWhatsappContactInput,
   MetaInboxDirectoryContact,
@@ -27,7 +28,7 @@ export const listMetaInboxThreads = async (
     headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error("No se pudieron cargar las conversaciones");
-  return res.json();
+  return unwrapEnvelope(await res.json());
 };
 
 export const listMetaInboxContacts = async (input: {
@@ -47,7 +48,7 @@ export const listMetaInboxContacts = async (input: {
     headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error("No se pudo cargar la agenda");
-  return res.json();
+  return unwrapEnvelope(await res.json());
 };
 
 export const createWhatsappContact = async (
@@ -59,7 +60,7 @@ export const createWhatsappContact = async (
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error("No se pudo crear el contacto WhatsApp");
-  return res.json();
+  return unwrapEnvelope(await res.json());
 };
 
 export const ensureWhatsappThread = async (actorExternalId: string): Promise<MetaInboxThread> => {
@@ -69,7 +70,7 @@ export const ensureWhatsappThread = async (actorExternalId: string): Promise<Met
     body: JSON.stringify({ actorExternalId }),
   });
   if (!res.ok) throw new Error("No se pudo preparar el thread WhatsApp");
-  return res.json();
+  return unwrapEnvelope(await res.json());
 };
 
 export const listMetaInboxMessages = async (
@@ -81,7 +82,7 @@ export const listMetaInboxMessages = async (
     { headers: getAuthHeaders() },
   );
   if (!res.ok) throw new Error("No se pudieron cargar los mensajes");
-  return res.json();
+  return unwrapEnvelope(await res.json());
 };
 
 export const sendMetaInboxText = async (sessionId: string, text: string) => {
@@ -91,7 +92,7 @@ export const sendMetaInboxText = async (sessionId: string, text: string) => {
     body: JSON.stringify({ text }),
   });
   if (!res.ok) throw new Error("No se pudo enviar el mensaje");
-  return res.json();
+  return unwrapEnvelope(await res.json());
 };
 
 export const updateMetaInboxContact = async (sessionId: string, payload: MetaInboxContactUpdate) => {
@@ -101,7 +102,7 @@ export const updateMetaInboxContact = async (sessionId: string, payload: MetaInb
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error("No se pudo actualizar el contacto");
-  return res.json();
+  return unwrapEnvelope(await res.json());
 };
 
 export const updateMetaInboxThreadControl = async (sessionId: string, payload: MetaInboxThreadControlUpdate) => {
@@ -111,7 +112,7 @@ export const updateMetaInboxThreadControl = async (sessionId: string, payload: M
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error("No se pudo actualizar el thread");
-  return res.json();
+  return unwrapEnvelope(await res.json());
 };
 
 export const reopenMetaInboxThread = async (sessionId: string): Promise<MetaInboxThread> => {
@@ -120,7 +121,7 @@ export const reopenMetaInboxThread = async (sessionId: string): Promise<MetaInbo
     headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error("No se pudo abrir una nueva atencion");
-  return res.json();
+  return unwrapEnvelope(await res.json());
 };
 
 export const updateWhatsappBlockStatus = async (payload: {
@@ -135,7 +136,7 @@ export const updateWhatsappBlockStatus = async (payload: {
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error("No se pudo actualizar el bloqueo de WhatsApp");
-  return res.json();
+  return unwrapEnvelope(await res.json());
 };
 
 export const listWhatsappAdLeadStats = async (): Promise<WhatsappAdLeadStatsResponse> => {
@@ -143,7 +144,7 @@ export const listWhatsappAdLeadStats = async (): Promise<WhatsappAdLeadStatsResp
     headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error("No se pudo cargar estadísticas de anuncios WhatsApp");
-  return res.json();
+  return unwrapEnvelope(await res.json());
 };
 
 export const listFcaMarketplaceLeadStats = async (): Promise<FcaMarketplaceLeadStatsResponse> => {
@@ -151,7 +152,7 @@ export const listFcaMarketplaceLeadStats = async (): Promise<FcaMarketplaceLeadS
     headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error("No se pudo cargar estadísticas de Marketplace Facebook");
-  return res.json();
+  return unwrapEnvelope(await res.json());
 };
 
 export const sendMetaInboxMedia = async (sessionId: string, file: File, caption?: string) => {
@@ -168,5 +169,5 @@ export const sendMetaInboxMedia = async (sessionId: string, file: File, caption?
     body: formData,
   });
   if (!res.ok) throw new Error("No se pudo enviar el archivo");
-  return res.json();
+  return unwrapEnvelope(await res.json());
 };

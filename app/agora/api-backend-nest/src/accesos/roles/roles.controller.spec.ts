@@ -81,7 +81,7 @@ describe('RolesController', () => {
       const res = await request(app.getHttpServer())
         .get('/api/roles')
         .expect(200);
-      expect(Array.isArray(res.body)).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
     });
 
     it('returns 403 when permission is missing', async () => {
@@ -111,7 +111,7 @@ describe('RolesController', () => {
       const res = await request(app.getHttpServer())
         .get('/api/roles/4')
         .expect(200);
-      expect(res.body).toHaveProperty('id', 4);
+      expect(res.body.data).toHaveProperty('id', 4);
       expect(mockService.obtenerRolPorId).toHaveBeenCalledWith(4);
     });
 
@@ -146,7 +146,7 @@ describe('RolesController', () => {
         .post('/api/roles')
         .send(validBody)
         .expect(201);
-      expect(res.body).toHaveProperty('nombre', 'supervisor');
+      expect(res.body.data).toHaveProperty('nombre', 'supervisor');
       expect(mockService.crearRol).toHaveBeenCalledWith(
         'supervisor',
         [1, 2, 3],
@@ -194,7 +194,7 @@ describe('RolesController', () => {
         .put('/api/roles/5')
         .send(validBody)
         .expect(200);
-      expect(res.body).toHaveProperty('nombre', 'supervisor-v2');
+      expect(res.body.data).toHaveProperty('nombre', 'supervisor-v2');
       expect(mockService.actualizarRol).toHaveBeenCalledWith(
         5,
         'supervisor-v2',

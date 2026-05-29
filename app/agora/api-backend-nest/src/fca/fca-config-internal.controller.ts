@@ -1,3 +1,4 @@
+import { ApiTags } from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -14,6 +15,7 @@ import {
   WEBSOCKET_NOTIFIER_GATEWAY,
 } from '../websocket-notifier/interfaces/websocket-notifier-gateway.interface';
 
+@ApiTags('Interno')
 @Controller('internal/fca')
 @UseGuards(FcaInternalTokenGuard)
 export class FcaConfigInternalController {

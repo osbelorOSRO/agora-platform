@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma/prisma.service';
 import {
   parseDate,
@@ -57,37 +58,26 @@ export class ReportsService {
     ];
   }
 
-  async procesos(q: Record<string, any>): Promise<ReportResult> {
+  async procesos(q: Record<string, string>): Promise<ReportResult> {
     const desde = parseDate(q.desde);
     const hasta = parseDate(q.hasta);
     if ((q.desde && !desde) || (q.hasta && !hasta))
       throw new BadRequestException('Parámetros de fecha inválidos');
 
-    const where: any = {
-      ...(desde || hasta
-        ? {
-            occurred_at: {
-              ...(desde ? { gte: desde } : {}),
-              ...(hasta ? { lte: hasta } : {}),
-            },
-          }
-        : {}),
-      ...(q.session_id ? { session_id: String(q.session_id) } : {}),
-      ...(q.actor_external_id
-        ? { actor_external_id: String(q.actor_external_id) }
-        : {}),
-      ...(q.object_type
-        ? { object_type: String(q.object_type).toUpperCase() }
-        : {}),
-      ...(q.event_type
-        ? { event_type: String(q.event_type).toUpperCase() }
-        : {}),
-      ...(q.event_source
-        ? { event_source: String(q.event_source).toUpperCase() }
-        : {}),
-      ...(q.direction ? { direction: String(q.direction).toUpperCase() } : {}),
-      ...(q.provider ? { provider: String(q.provider).toUpperCase() } : {}),
-    };
+    const where: Prisma.thread_eventsWhereInput = {};
+    if (desde || hasta) {
+      where.occurred_at = {
+        ...(desde ? { gte: desde } : {}),
+        ...(hasta ? { lte: hasta } : {}),
+      };
+    }
+    if (q.session_id) where.session_id = q.session_id;
+    if (q.actor_external_id) where.actor_external_id = q.actor_external_id;
+    if (q.object_type) where.object_type = q.object_type.toUpperCase();
+    if (q.event_type) where.event_type = q.event_type.toUpperCase();
+    if (q.event_source) where.event_source = q.event_source.toUpperCase();
+    if (q.direction) where.direction = q.direction.toUpperCase();
+    if (q.provider) where.provider = q.provider.toUpperCase();
 
     const events = await this.prisma.thread_events.findMany({
       where,
@@ -161,7 +151,7 @@ export class ReportsService {
     };
   }
 
-  async desempeno(q: Record<string, any>): Promise<ReportResult> {
+  async desempeno(q: Record<string, string>): Promise<ReportResult> {
     const desde = parseDate(q.desde);
     const hasta = parseDate(q.hasta);
     if (!desde || !hasta)
@@ -209,7 +199,7 @@ export class ReportsService {
     };
   }
 
-  async procesosSemanales(q: Record<string, any>): Promise<ReportResult> {
+  async procesosSemanales(q: Record<string, string>): Promise<ReportResult> {
     const desde = parseDate(q.desde);
     const hasta = parseDate(q.hasta);
     if (!desde || !hasta)
@@ -231,6 +221,7 @@ export class ReportsService {
         AND occurred_at <= ${hasta}
       GROUP BY 1, 2
       ORDER BY 1 ASC
+      LIMIT 5000
     `;
 
     return {
@@ -254,7 +245,7 @@ export class ReportsService {
     };
   }
 
-  async preciosPlanes(q: Record<string, any>): Promise<ReportResult> {
+  async preciosPlanes(q: Record<string, string>): Promise<ReportResult> {
     const rows = await this.prisma.precios_planes.findMany({
       where: {
         ...(q.codigo ? { codigo: String(q.codigo) } : {}),
@@ -285,7 +276,7 @@ export class ReportsService {
     };
   }
 
-  async clientesInfo(q: Record<string, any>): Promise<ReportResult> {
+  async clientesInfo(q: Record<string, string>): Promise<ReportResult> {
     const desde = parseDate(q.desde);
     const hasta = parseDate(q.hasta);
     if ((q.desde && !desde) || (q.hasta && !hasta))

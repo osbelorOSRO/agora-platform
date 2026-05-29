@@ -148,8 +148,128 @@ describe('OfferContextService', () => {
 
       await svc.listOfferEvents({});
       const args = (prisma.$queryRawUnsafe as jest.Mock).mock.calls[0];
-      // sessionId, codigo, decision, stageActual, tipo → todos null cuando se omite
       expect(args.slice(1)).toEqual([null, null, null, null, null]);
+    });
+  });
+
+  describe('updateOfferEventForAutomation', () => {
+    it('lanza BadRequest si el evento no existe', async () => {
+      const prisma = buildPrisma({
+        queryRawUnsafe: jest.fn().mockResolvedValueOnce([]), // getOfferEventById → not found
+      });
+      const svc = await buildService(prisma);
+
+      await expect(
+        svc.updateOfferEventForAutomation('no-existe', { decision: 'acepta' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('lanza BadRequest si no hay cambios reales', async () => {
+      const prisma = buildPrisma({
+        queryRawUnsafe: jest.fn().mockResolvedValueOnce([EVENT_STUB]), // getOfferEventById
+      });
+      const svc = await buildService(prisma);
+
+      await expect(
+        svc.updateOfferEventForAutomation('uuid-1', {}),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('actualiza el evento y devuelve la fila modificada', async () => {
+      const updated = { ...EVENT_STUB, decision: 'acepta' };
+      const prisma = buildPrisma({
+        queryRawUnsafe: jest
+          .fn()
+          .mockResolvedValueOnce([EVENT_STUB]) // getOfferEventById
+          .mockResolvedValueOnce([updated]), // UPDATE RETURNING
+      });
+      const svc = await buildService(prisma);
+
+      const result = await svc.updateOfferEventForAutomation('uuid-1', {
+        decision: 'acepta',
+      });
+
+      expect(result.decision).toBe('acepta');
+    });
+
+    it('actualiza el codigo del plan cuando se envía input.codigo', async () => {
+      const updated = { ...EVENT_STUB, codigo: 'PLAN_B' };
+      const prisma = buildPrisma({
+        queryRawUnsafe: jest
+          .fn()
+          .mockResolvedValueOnce([EVENT_STUB]) // getOfferEventById
+          .mockResolvedValueOnce([PLAN_STUB]) // getOfferPlanByCode
+          .mockResolvedValueOnce([updated]), // UPDATE RETURNING
+      });
+      const svc = await buildService(prisma);
+
+      const result = await svc.updateOfferEventForAutomation('uuid-1', {
+        codigo: 'PLAN_B',
+      });
+
+      expect(result.codigo).toBe('PLAN_B');
+    });
+  });
+
+  describe('getOfferContextForAutomation', () => {
+    it('lanza BadRequest si no se envía sessionId', async () => {
+      const prisma = buildPrisma();
+      const svc = await buildService(prisma);
+
+      await expect(
+        svc.getOfferContextForAutomation({ sessionId: '' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('devuelve contexto con catalog vacío si no hay planes', async () => {
+      const prisma = buildPrisma({
+        queryRawUnsafe: jest
+          .fn()
+          .mockResolvedValueOnce([]) // listOfferEvents
+          .mockResolvedValueOnce([]), // listOfferCatalogPlans
+      });
+      const svc = await buildService(prisma);
+
+      const result = await svc.getOfferContextForAutomation({
+        sessionId: 'sess-1',
+      });
+
+      expect(result.sessionId).toBe('sess-1');
+      expect(result.catalog).toEqual([]);
+      expect(result.currentOffer).toBeNull();
+    });
+
+    it('devuelve currentOffer del evento más reciente si no se especifica currentOfferId', async () => {
+      const prisma = buildPrisma({
+        queryRawUnsafe: jest
+          .fn()
+          .mockResolvedValueOnce([EVENT_STUB]) // listOfferEvents
+          .mockResolvedValueOnce([]), // listOfferCatalogPlans
+      });
+      const svc = await buildService(prisma);
+
+      const result = await svc.getOfferContextForAutomation({
+        sessionId: 'sess-1',
+      });
+
+      expect(result.currentOffer?.id).toBe('uuid-1');
+    });
+
+    it('normaliza modo inválido a portabilidad por defecto', async () => {
+      const prisma = buildPrisma({
+        queryRawUnsafe: jest
+          .fn()
+          .mockResolvedValueOnce([])
+          .mockResolvedValueOnce([]),
+      });
+      const svc = await buildService(prisma);
+
+      const result = await svc.getOfferContextForAutomation({
+        sessionId: 'sess-1',
+        modo: 'invalido',
+      });
+
+      expect(result.modo).toBe('portabilidad');
     });
   });
 });

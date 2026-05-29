@@ -1,4 +1,4 @@
-import axios from "axios";
+import apiClient from "../../../lib/apiClient";
 
 const API_URL = import.meta.env.VITE_API_URL_ACCESOS;
 
@@ -23,14 +23,14 @@ export interface SesionActiva {
 }
 
 export const obtenerSesionesActivas = async (): Promise<SesionActiva[]> => {
-  const response = await axios.get(`${API_URL}/api/auth/sesiones-activas-admin`, {
+  const response = await apiClient.get(`${API_URL}/api/auth/sesiones-activas-admin`, {
     headers: getAuthHeaders(),
   });
   return response.data;
 };
 
 export const cerrarSesion = async (id: number): Promise<void> => {
-  await axios.delete(`${API_URL}/api/auth/sesiones/${id}`, {
+  await apiClient.delete(`${API_URL}/api/auth/sesiones/${id}`, {
     headers: getAuthHeaders(),
   });
 };

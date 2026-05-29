@@ -73,7 +73,7 @@ describe('PermissionsController', () => {
       const res = await request(app.getHttpServer())
         .get('/api/permisos')
         .expect(200);
-      expect(Array.isArray(res.body)).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
       expect(mockService.obtenerPermisos).toHaveBeenCalledTimes(1);
     });
 

@@ -10,13 +10,15 @@ import { SalesCatalogService } from './sales-catalog.service';
 import { SalesPriceLevelService } from './sales-price-level.service';
 import { SalesService } from './sales.service';
 import { PanelJwtAuthGuard } from '../auth/panel-jwt-auth.guard';
+import { RequirePermissionGuard } from '../accesos/guards/require-permission.guard';
+import { Reflector } from '@nestjs/core';
 
 const panelGuard = {
   canActivate: (ctx: any) => {
     ctx.switchToHttp().getRequest().userPayload = {
       id: 1,
       rol: 'superadmin',
-      permisos: [],
+      permisos: ['gestion_ventas'],
     };
     return true;
   },
@@ -58,6 +60,8 @@ async function buildApp(authGuard: object): Promise<INestApplication> {
       { provide: SalesCatalogService, useValue: mockCatalog },
       { provide: SalesPriceLevelService, useValue: mockPriceLevel },
       { provide: SalesService, useValue: mockSales },
+      RequirePermissionGuard,
+      Reflector,
     ],
   })
     .overrideGuard(PanelJwtAuthGuard)
@@ -117,7 +121,7 @@ describe('SalesRecordController — /sales-record/catalog', () => {
       const res = await request(app.getHttpServer())
         .get('/sales-record/catalog')
         .expect(200);
-      expect(Array.isArray(res.body)).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
       expect(mockCatalog.listCatalog).toHaveBeenCalledTimes(1);
     });
 
@@ -137,7 +141,7 @@ describe('SalesRecordController — /sales-record/catalog', () => {
         .post('/sales-record/catalog')
         .send(VALID_CATALOG)
         .expect(201);
-      expect(res.body).toHaveProperty('id');
+      expect(res.body.data).toHaveProperty('id');
       expect(mockCatalog.createCatalog).toHaveBeenCalledWith(
         expect.objectContaining({ code: '4FU', modality: 'POST_A_POST' }),
       );
@@ -221,7 +225,7 @@ describe('SalesRecordController — /sales-record/catalog', () => {
         .patch('/sales-record/catalog/1')
         .send({ level: 7 })
         .expect(200);
-      expect(res.body).toHaveProperty('level', 7);
+      expect(res.body.data).toHaveProperty('level', 7);
       expect(mockCatalog.updateCatalog).toHaveBeenCalledWith(1, { level: 7 });
     });
 
@@ -270,7 +274,7 @@ describe('SalesRecordController — /sales-record/catalog', () => {
       const res = await request(app.getHttpServer())
         .delete('/sales-record/catalog/1')
         .expect(200);
-      expect(res.body).toHaveProperty('ok', true);
+      expect(res.body.data).toHaveProperty('ok', true);
       expect(mockCatalog.deleteCatalog).toHaveBeenCalledWith(1);
     });
 
@@ -298,7 +302,7 @@ describe('SalesRecordController — /sales-record/price-matrix', () => {
       const res = await request(app.getHttpServer())
         .get('/sales-record/price-matrix')
         .expect(200);
-      expect(Array.isArray(res.body)).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
     });
 
     it('devuelve 401 sin token', async () => {
@@ -320,7 +324,7 @@ describe('SalesRecordController — /sales-record/price-matrix', () => {
         .post('/sales-record/price-matrix')
         .send(VALID_PRICE_LEVEL)
         .expect(201);
-      expect(res.body).toHaveProperty('id');
+      expect(res.body.data).toHaveProperty('id');
       expect(mockPriceLevel.createPriceLevel).toHaveBeenCalledWith(
         expect.objectContaining({ level: 9, range: 3, price: 1500 }),
       );
@@ -395,7 +399,7 @@ describe('SalesRecordController — /sales-record/price-matrix', () => {
         .patch('/sales-record/price-matrix/1')
         .send({ price: 2000 })
         .expect(200);
-      expect(res.body).toHaveProperty('price', 2000);
+      expect(res.body.data).toHaveProperty('price', 2000);
       expect(mockPriceLevel.updatePriceLevel).toHaveBeenCalledWith(1, {
         price: 2000,
       });
@@ -433,7 +437,7 @@ describe('SalesRecordController — /sales-record/price-matrix', () => {
       const res = await request(app.getHttpServer())
         .delete('/sales-record/price-matrix/1')
         .expect(200);
-      expect(res.body).toHaveProperty('ok', true);
+      expect(res.body.data).toHaveProperty('ok', true);
       expect(mockPriceLevel.deletePriceLevel).toHaveBeenCalledWith(1);
     });
 
@@ -463,7 +467,7 @@ describe('SalesRecordController — /sales-record/monthly-points', () => {
       const res = await request(app.getHttpServer())
         .get('/sales-record/monthly-points')
         .expect(200);
-      expect(Array.isArray(res.body)).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
     });
 
     it('devuelve 401 sin token', async () => {
@@ -486,8 +490,8 @@ describe('SalesRecordController — /sales-record/monthly-points', () => {
       const res = await request(app.getHttpServer())
         .get('/sales-record/monthly-points/2026/5')
         .expect(200);
-      expect(res.body).toHaveProperty('active_range', 2);
-      expect(res.body).toHaveProperty('total_points', 22.5);
+      expect(res.body.data).toHaveProperty('active_range', 2);
+      expect(res.body.data).toHaveProperty('total_points', 22.5);
       expect(mockSales.getMonthlyPoints).toHaveBeenCalledWith(2026, 5);
     });
 
@@ -502,7 +506,7 @@ describe('SalesRecordController — /sales-record/monthly-points', () => {
       const res = await request(app.getHttpServer())
         .get('/sales-record/monthly-points/2026/6')
         .expect(200);
-      expect(res.body).toHaveProperty('active_range', 1);
+      expect(res.body.data).toHaveProperty('active_range', 1);
     });
 
     it('devuelve 401 sin token', async () => {
@@ -529,7 +533,7 @@ describe('SalesRecordController — /sales-record', () => {
       const res = await request(app.getHttpServer())
         .get('/sales-record')
         .expect(200);
-      expect(Array.isArray(res.body)).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
       expect(mockSales.listSales).toHaveBeenCalledWith(undefined, undefined);
     });
 
@@ -562,9 +566,9 @@ describe('SalesRecordController — /sales-record', () => {
         .post('/sales-record')
         .send(VALID_SALE)
         .expect(201);
-      expect(res.body).toHaveProperty('id');
-      expect(res.body).toHaveProperty('level_price');
-      expect(res.body).toHaveProperty('offers_price');
+      expect(res.body.data).toHaveProperty('id');
+      expect(res.body.data).toHaveProperty('level_price');
+      expect(res.body.data).toHaveProperty('offers_price');
       expect(mockSales.createSale).toHaveBeenCalledWith(
         expect.objectContaining({
           offers_code: '4FU',
@@ -652,7 +656,7 @@ describe('SalesRecordController — /sales-record', () => {
         .patch('/sales-record/1')
         .send({ full_name: 'Juan Actualizado' })
         .expect(200);
-      expect(res.body).toHaveProperty('full_name', 'Juan Actualizado');
+      expect(res.body.data).toHaveProperty('full_name', 'Juan Actualizado');
       expect(mockSales.updateSale).toHaveBeenCalledWith(1, {
         full_name: 'Juan Actualizado',
       });
@@ -698,7 +702,7 @@ describe('SalesRecordController — /sales-record', () => {
       const res = await request(app.getHttpServer())
         .delete('/sales-record/1')
         .expect(200);
-      expect(res.body).toHaveProperty('ok', true);
+      expect(res.body.data).toHaveProperty('ok', true);
       expect(mockSales.deleteSale).toHaveBeenCalledWith(1);
     });
 

@@ -16,6 +16,9 @@ API REST principal de la plataforma Agora. Gestiona el pipeline de mensajería W
 | Secretos | HashiCorp Vault — AppRole |
 | Auth | JWT + bcrypt + TOTP (2FA) |
 | Rate limiting | express-rate-limit v8 + rate-limit-redis |
+| Logger | nestjs-pino (JSON estructurado, requestId por request) |
+| Health | @nestjs/terminus — PrismaHealthIndicator + RedisHealthIndicator |
+| Docs | @nestjs/swagger — OpenAPI en `/api-docs` (condicional `SWAGGER_ENABLED=true`) |
 
 ## Módulos
 
@@ -30,7 +33,13 @@ API REST principal de la plataforma Agora. Gestiona el pipeline de mensajería W
 | `actor-events/` | Procesamiento de eventos de estado del actor |
 | `meta-inbox/` | Ciclo de vida de threads y contactos WhatsApp/Meta |
 | `meta-inbox/services/` | ThreadService, ContactService, MessageSendService, OfferContextService, WhatsappIdentityService, ThreadEventService |
+| `meta-inbox/meta-inbox-thread.module` | Sub-módulo: ThreadService, ThreadEventService, MetaInboxSchemaService |
+| `meta-inbox/meta-inbox-contact.module` | Sub-módulo: ContactService, WhatsappIdentityService |
+| `meta-inbox/meta-inbox-messaging.module` | Sub-módulo: MessageSendService, MediaSendService, MetaGraphApiService, AudioConversionService |
+| `meta-inbox/meta-inbox-offers.module` | Sub-módulo: OfferContextService |
+| `meta-inbox/meta-inbox-n8n.controller` | Endpoints N8N bajo `meta-inbox/n8n/*` con N8nAuthGuard a nivel de clase |
 | `webhooks/meta/` | Recepción y verificación de webhooks de Meta Platform |
+| `webhooks/meta/MetaWebhookHmacGuard` | Guard dedicado para verificación HMAC sha256 del webhook Meta |
 | `baileys/` | Ingreso de mensajes vía Baileys + envío por wa-backend |
 
 ### Acceso y configuración
@@ -51,13 +60,13 @@ API REST principal de la plataforma Agora. Gestiona el pipeline de mensajería W
 | Módulo | Responsabilidad |
 |---|---|
 | `auth/` | Validación JWT y extracción de secretos desde Vault |
-| `core/` | HttpExceptionFilter y LoggingInterceptor globales |
+| `core/` | HttpExceptionFilter (con mapeo Prisma P2025/P2002/P2003/P2014), LoggingInterceptor y TransformInterceptor globales |
 | `cache/` | Configuración del cache Redis |
 | `queues/` | Constantes y módulo BullMQ |
 | `media/` | Upload y retrieval de archivos con validación de tipo |
 | `minio/` | Operaciones S3: put, get, delete |
 | `websocket-notifier/` | Emisión de eventos al panel WebSocket (panel_websocket) |
-| `health/` | Endpoint `/health` |
+| `health/` | Endpoints `/ping` y `/ping/db` — health checks con @nestjs/terminus (DB + Redis) |
 
 ### Otros
 
@@ -101,6 +110,7 @@ Variables clave:
 | `META_VERIFY_TOKEN` | Token de verificación de webhook Meta |
 | `MINIO_ENDPOINT / MINIO_ACCESS_KEY / MINIO_SECRET_KEY` | MinIO |
 | `MEDIA_BASE_URL` | URL base para servir media |
+| `SWAGGER_ENABLED` | `true` para habilitar `/api-docs` (OpenAPI). No habilitar en prod salvo acceso restringido |
 | `WS_SERVER` | URL interna del panel WebSocket |
 | `API_KEY_WS` | Clave de comunicación interna con panel_websocket |
 

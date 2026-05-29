@@ -1,3 +1,4 @@
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import {
   Controller,
   Delete,
@@ -10,12 +11,16 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { TransformInterceptor } from '../core/interceptors/transform.interceptor';
 import { PanelJwtAuthGuard } from '../auth/panel-jwt-auth.guard';
 import { secureMediaMulterOptions } from '../media/media-security';
 import { UserProfileService } from './user-profile.service';
 
+@ApiTags('Perfil')
+@ApiBearerAuth('panel-jwt')
 @Controller('user-profile')
 @UseGuards(PanelJwtAuthGuard)
+@UseInterceptors(TransformInterceptor)
 export class UserProfileController {
   constructor(private readonly service: UserProfileService) {}
 

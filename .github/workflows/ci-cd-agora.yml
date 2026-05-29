@@ -43,6 +43,16 @@ jobs:
       - name: Tests
         run: npm test
 
+      - name: Aplicar schema en CI DB
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
+
+      - name: Tests E2E
+        run: npm run test:e2e
+        env:
+          DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
+
       - name: Build
         run: npm run build
 

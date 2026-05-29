@@ -7,11 +7,17 @@ import {
 import request from 'supertest';
 import { OffersController } from './offers.controller';
 import { OffersService } from './offers.service';
-import { SuperadminJwtGuard } from '../auth/superadmin-jwt.guard';
+import { PanelJwtAuthGuard } from '../auth/panel-jwt-auth.guard';
+import { RequirePermissionGuard } from '../accesos/guards/require-permission.guard';
+import { Reflector } from '@nestjs/core';
 
 const superadminGuard = {
   canActivate: (ctx: any) => {
-    ctx.switchToHttp().getRequest().userPayload = { id: 12, rol: 'superadmin' };
+    ctx.switchToHttp().getRequest().userPayload = {
+      id: 12,
+      rol: 'superadmin',
+      permisos: ['gestion_integraciones'],
+    };
     return true;
   },
 };
@@ -27,9 +33,13 @@ const mockService = {
 async function buildApp(authGuard: object): Promise<INestApplication> {
   const module: TestingModule = await Test.createTestingModule({
     controllers: [OffersController],
-    providers: [{ provide: OffersService, useValue: mockService }],
+    providers: [
+      RequirePermissionGuard,
+      Reflector,
+      { provide: OffersService, useValue: mockService },
+    ],
   })
-    .overrideGuard(SuperadminJwtGuard)
+    .overrideGuard(PanelJwtAuthGuard)
     .useValue(authGuard)
     .compile();
 
@@ -51,7 +61,7 @@ describe('OffersController', () => {
       app = await buildApp(superadminGuard);
       mockService.findAll.mockResolvedValue([{ codigo: 'PLN-50' }]);
       const res = await request(app.getHttpServer()).get('/offers').expect(200);
-      expect(Array.isArray(res.body)).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
     });
 
     it('returns 401 when token is absent', async () => {
@@ -76,7 +86,7 @@ describe('OffersController', () => {
       const res = await request(app.getHttpServer())
         .get('/offers/PLN-50')
         .expect(200);
-      expect(res.body).toHaveProperty('codigo', 'PLN-50');
+      expect(res.body.data).toHaveProperty('codigo', 'PLN-50');
       expect(mockService.findOne).toHaveBeenCalledWith('PLN-50');
     });
 
@@ -103,7 +113,7 @@ describe('OffersController', () => {
         .post('/offers')
         .send(validBody)
         .expect(201);
-      expect(res.body).toHaveProperty('codigo', 'PLN-100');
+      expect(res.body.data).toHaveProperty('codigo', 'PLN-100');
     });
 
     it('returns 400 when codigo is missing', async () => {
@@ -148,7 +158,7 @@ describe('OffersController', () => {
         .patch('/offers/PLN-50')
         .send({ nombre: 'Plan 50GB v2' })
         .expect(200);
-      expect(res.body).toHaveProperty('nombre', 'Plan 50GB v2');
+      expect(res.body.data).toHaveProperty('nombre', 'Plan 50GB v2');
       expect(mockService.update).toHaveBeenCalledWith('PLN-50', {
         nombre: 'Plan 50GB v2',
       });

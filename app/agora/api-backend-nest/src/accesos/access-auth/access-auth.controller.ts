@@ -1,4 +1,5 @@
 import { Body, Controller, HttpCode, Post } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { Request as Req } from '@nestjs/common';
 import type { Request } from 'express';
 import { AccessAuthService } from './access-auth.service';
@@ -8,6 +9,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { Setup2FAInitDto } from './dto/setup-2fa-init.dto';
 import { Setup2FAConfirmDto } from './dto/setup-2fa-confirm.dto';
 
+@ApiTags('Autenticación')
 @Controller('api/auth')
 export class AccessAuthController {
   constructor(private readonly service: AccessAuthService) {}

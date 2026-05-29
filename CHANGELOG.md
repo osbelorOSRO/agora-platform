@@ -1,5 +1,32 @@
 # Changelog
 
+## 3.0.0
+
+### Added
+- `TransformInterceptor` — envelope `{ data, message, statusCode }` aplicado a 15 controllers del panel (meta-inbox, roles, usuarios, sesiones, ofertas, shortcuts, stage-templates, settings, meta-config, fca-config, sales-record, user-profile, permissions y otros)
+- `lib/apiClient.ts` (frontend) — helper `unwrapEnvelope<T>` + instancia axios con interceptor que unwrapea el envelope automáticamente; compatible con y sin interceptor
+- `@nestjs/swagger` — documentación OpenAPI disponible en `/api-docs` (condicional con `SWAGGER_ENABLED=true`); `@ApiTags` en todos los controllers, `@ApiBearerAuth` en endpoints del panel
+- `@nestjs/terminus` — health checks de DB (Prisma) y Redis en `GET /ping/db`, reemplaza check raw SQL custom; `RedisHealthIndicator` custom con ioredis
+- `nestjs-pino` — logger estructurado JSON integrado en NestJS (`bufferLogs: true`); reemplaza Logger default de NestJS
+- `MetaWebhookHmacGuard` — verificación HMAC (sha256, timingSafeEqual) del webhook Meta extraída del controller a guard dedicado en `webhooks/meta/`
+- `MetaInboxN8nController` — todos los endpoints N8N de meta-inbox extraídos a controller separado con `@Controller('meta-inbox/n8n')` y `N8nAuthGuard` a nivel de clase; rutas preservadas sin breaking change
+- 4 sub-módulos de `meta-inbox`: `MetaInboxThreadModule`, `MetaInboxContactModule`, `MetaInboxMessagingModule`, `MetaInboxOffersModule` — desacopla dependencias por dominio
+- Mapeo global de errores Prisma en `HttpExceptionFilter` — P2025 → `NotFoundException`, P2002/P2003/P2014 → `ConflictException`
+- `crearLimitadores(host, port, password)` — factory de rate limiters; recibe config desde `ConfigService` en `main.ts` en lugar de singletons de módulo con `process.env` directo
+- `mapUsuarioRow` — mapper explícito con tipo `UsuarioRow` en `users.service.ts`; reemplaza construcción inline de respuesta
+- Migraciones: `gestion_integraciones` y `gestion_conexiones_ventas` — nuevos permisos en el sistema de acceso
+- E2E en CI — `prisma migrate deploy` + `npm run test:e2e` integrados en `ci-cd-agora.yml`
+- `husky` — git hooks configurados en el repo
+- Tests: cobertura expandida — nuevos specs para `auth.service`, `vault.service`, `cache.service`, `rate-limiter`, `roles.service`, `sessions.service`, `users.service`, `baileys-ingress.service`, `meta-inbox.service`, `thread-event.service`, `offer-context.service`, guards (n8n, baileys, fca, jwt, superadmin), `HttpExceptionFilter`, `LoggingInterceptor`, `PrismaService`, `WebsocketNotifierService`, `MetaWebhookHmacGuard` y 3 tests E2E (sales-record)
+- `MetaInboxPage.tsx` — campos `firstName`, `lastName`, `rut`, `address`, `region` incluidos en la actualización de contacto desde el panel
+
+### Changed
+- `reports.controller.ts` — `@Query() q: any` → `@Query() q: Record<string, string>` en los 5 endpoints de reportes
+- `reports.service.ts` — firmas `Record<string, any>` → `Record<string, string>`; `where: any` → `Prisma.thread_eventsWhereInput` con construcción imperativa; `LIMIT 5000` en query `procesosSemanales`
+- `main.ts` — reestructurado: `bufferLogs`, pino logger, Swagger condicional, `crearLimitadores` desde config, `setVaultService` en bootstrap
+- Frontend: todos los services del panel actualizados para consumir envelope `{ data }` del TransformInterceptor (`metaInbox`, `metaConfig`, `fcaConfig`, `offers`, `shortcut`, `stageTemplates`, `profileService`, `usuarioService`, `rolService`, `sesionesService`, `settingsService`, `permisoService`, `salesRecordService`, `authService`)
+- `abackend` services (Express) actualizados para consumir el nuevo formato de respuesta del backend NestJS
+
 ## 2.11.0
 
 ### Added

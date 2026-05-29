@@ -74,11 +74,13 @@ describe('SettingsController', () => {
   describe('GET /settings/transition-rules', () => {
     it('returns 200 with transition rules list', async () => {
       app = await buildApp(makeAuthGuard(WITH_PERM));
-      mockService.listTransitionRules.mockResolvedValue([{ id: 'rule-1' }]);
+      mockService.listTransitionRules.mockResolvedValue([
+        { id: 'a1b2c3d4-e5f6-4789-8012-abcdef012345' },
+      ]);
       const res = await request(app.getHttpServer())
         .get('/settings/transition-rules')
         .expect(200);
-      expect(Array.isArray(res.body)).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
     });
 
     it('returns 403 when permission is missing', async () => {
@@ -106,16 +108,18 @@ describe('SettingsController', () => {
     it('returns 200 on valid threshold update', async () => {
       app = await buildApp(makeAuthGuard(WITH_PERM));
       mockService.updateTransitionThreshold.mockResolvedValue({
-        id: 'rule-1',
+        id: 'a1b2c3d4-e5f6-4789-8012-abcdef012345',
         score_threshold: 75,
       });
       const res = await request(app.getHttpServer())
-        .patch('/settings/transition-rules/rule-1')
+        .patch(
+          '/settings/transition-rules/a1b2c3d4-e5f6-4789-8012-abcdef012345',
+        )
         .send({ score_threshold: 75 })
         .expect(200);
-      expect(res.body).toHaveProperty('score_threshold', 75);
+      expect(res.body.data).toHaveProperty('score_threshold', 75);
       expect(mockService.updateTransitionThreshold).toHaveBeenCalledWith(
-        'rule-1',
+        'a1b2c3d4-e5f6-4789-8012-abcdef012345',
         75,
       );
     });
@@ -123,7 +127,9 @@ describe('SettingsController', () => {
     it('returns 400 when score_threshold is missing', async () => {
       app = await buildApp(makeAuthGuard(WITH_PERM));
       await request(app.getHttpServer())
-        .patch('/settings/transition-rules/rule-1')
+        .patch(
+          '/settings/transition-rules/a1b2c3d4-e5f6-4789-8012-abcdef012345',
+        )
         .send({})
         .expect(400);
     });
@@ -131,7 +137,9 @@ describe('SettingsController', () => {
     it('returns 400 when score_threshold is not a number', async () => {
       app = await buildApp(makeAuthGuard(WITH_PERM));
       await request(app.getHttpServer())
-        .patch('/settings/transition-rules/rule-1')
+        .patch(
+          '/settings/transition-rules/a1b2c3d4-e5f6-4789-8012-abcdef012345',
+        )
         .send({ score_threshold: 'alto' })
         .expect(400);
     });
@@ -139,7 +147,9 @@ describe('SettingsController', () => {
     it('returns 403 when permission is missing', async () => {
       app = await buildApp(makeAuthGuard(WITHOUT_PERM));
       await request(app.getHttpServer())
-        .patch('/settings/transition-rules/rule-1')
+        .patch(
+          '/settings/transition-rules/a1b2c3d4-e5f6-4789-8012-abcdef012345',
+        )
         .send({ score_threshold: 75 })
         .expect(403);
     });
@@ -150,11 +160,13 @@ describe('SettingsController', () => {
   describe('GET /settings/signal-scoring-rules', () => {
     it('returns 200 with scoring rules list', async () => {
       app = await buildApp(makeAuthGuard(WITH_PERM));
-      mockService.listSignalScoringRules.mockResolvedValue([{ id: 'sig-1' }]);
+      mockService.listSignalScoringRules.mockResolvedValue([
+        { id: 'b2c3d4e5-f6a1-4890-9123-bcdef0123456' },
+      ]);
       const res = await request(app.getHttpServer())
         .get('/settings/signal-scoring-rules')
         .expect(200);
-      expect(Array.isArray(res.body)).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
     });
 
     it('returns 403 when permission is missing', async () => {
@@ -171,21 +183,28 @@ describe('SettingsController', () => {
     it('returns 200 on valid delta update', async () => {
       app = await buildApp(makeAuthGuard(WITH_PERM));
       mockService.updateSignalDelta.mockResolvedValue({
-        id: 'sig-1',
+        id: 'b2c3d4e5-f6a1-4890-9123-bcdef0123456',
         delta: 10,
       });
       const res = await request(app.getHttpServer())
-        .patch('/settings/signal-scoring-rules/sig-1')
+        .patch(
+          '/settings/signal-scoring-rules/b2c3d4e5-f6a1-4890-9123-bcdef0123456',
+        )
         .send({ delta: 10 })
         .expect(200);
-      expect(res.body).toHaveProperty('delta', 10);
-      expect(mockService.updateSignalDelta).toHaveBeenCalledWith('sig-1', 10);
+      expect(res.body.data).toHaveProperty('delta', 10);
+      expect(mockService.updateSignalDelta).toHaveBeenCalledWith(
+        'b2c3d4e5-f6a1-4890-9123-bcdef0123456',
+        10,
+      );
     });
 
     it('returns 400 when delta is missing', async () => {
       app = await buildApp(makeAuthGuard(WITH_PERM));
       await request(app.getHttpServer())
-        .patch('/settings/signal-scoring-rules/sig-1')
+        .patch(
+          '/settings/signal-scoring-rules/b2c3d4e5-f6a1-4890-9123-bcdef0123456',
+        )
         .send({})
         .expect(400);
     });
@@ -193,7 +212,9 @@ describe('SettingsController', () => {
     it('returns 400 when delta is not a number', async () => {
       app = await buildApp(makeAuthGuard(WITH_PERM));
       await request(app.getHttpServer())
-        .patch('/settings/signal-scoring-rules/sig-1')
+        .patch(
+          '/settings/signal-scoring-rules/b2c3d4e5-f6a1-4890-9123-bcdef0123456',
+        )
         .send({ delta: 'mucho' })
         .expect(400);
     });
@@ -201,7 +222,9 @@ describe('SettingsController', () => {
     it('returns 403 when permission is missing', async () => {
       app = await buildApp(makeAuthGuard(WITHOUT_PERM));
       await request(app.getHttpServer())
-        .patch('/settings/signal-scoring-rules/sig-1')
+        .patch(
+          '/settings/signal-scoring-rules/b2c3d4e5-f6a1-4890-9123-bcdef0123456',
+        )
         .send({ delta: 10 })
         .expect(403);
     });

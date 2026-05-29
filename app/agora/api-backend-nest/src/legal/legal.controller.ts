@@ -1,5 +1,7 @@
+import { ApiTags } from '@nestjs/swagger';
 import { Controller, Get, Header } from '@nestjs/common';
 
+@ApiTags('Legal')
 @Controller('legal')
 export class LegalController {
   @Get('privacy')

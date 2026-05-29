@@ -19,7 +19,8 @@ export interface MeProfile {
 export async function getMe(): Promise<MeProfile> {
   const res = await fetch(`${BASE_URL}/me`, { headers: authHeader() });
   if (!res.ok) throw new Error("No se pudo cargar el perfil");
-  return res.json();
+  const json = await res.json();
+  return json?.data ?? json;
 }
 
 export async function updateMe(
@@ -33,14 +34,14 @@ export async function updateMe(
   });
   const json = await res.json();
   if (!res.ok) throw new Error(json.error || "No se pudo actualizar el perfil");
-  return json;
+  return json?.data ?? json;
 }
 
 export async function getPhotoUrl(): Promise<string | null> {
   const res = await fetch(`${API_URL}/user-profile/photo`, { headers: authHeader() });
   if (!res.ok) return null;
-  const data = await res.json();
-  return data.photoUrl ?? null;
+  const json = await res.json();
+  return json.data?.photoUrl ?? null;
 }
 
 export async function uploadPhoto(file: File): Promise<string> {
@@ -53,7 +54,7 @@ export async function uploadPhoto(file: File): Promise<string> {
   });
   const json = await res.json();
   if (!res.ok) throw new Error(json.message || json.error || "Error al subir la foto");
-  return json.photoUrl;
+  return json.data?.photoUrl;
 }
 
 export async function removePhoto(): Promise<void> {

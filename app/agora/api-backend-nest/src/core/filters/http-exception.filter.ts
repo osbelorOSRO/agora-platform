@@ -1,11 +1,14 @@
 import {
+  ConflictException,
   ExceptionFilter,
   Catch,
   ArgumentsHost,
   HttpException,
   HttpStatus,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { Request, Response } from 'express';
 
 @Catch()
@@ -55,6 +58,31 @@ export class HttpExceptionFilter implements ExceptionFilter {
           : String(b['message'] ?? exception.message);
         const error = String(b['error'] ?? exception.name);
         return { statusCode, message, error };
+      }
+    }
+
+    if (exception instanceof Prisma.PrismaClientKnownRequestError) {
+      if (exception.code === 'P2025') {
+        return this.resolveResponse(
+          new NotFoundException('Recurso no encontrado'),
+        );
+      }
+      if (exception.code === 'P2002') {
+        return this.resolveResponse(
+          new ConflictException('Ya existe un registro con esos datos'),
+        );
+      }
+      if (exception.code === 'P2003') {
+        return this.resolveResponse(
+          new ConflictException(
+            'Referencia inválida: el registro relacionado no existe',
+          ),
+        );
+      }
+      if (exception.code === 'P2014') {
+        return this.resolveResponse(
+          new ConflictException('La relación requerida no puede eliminarse'),
+        );
       }
     }
 

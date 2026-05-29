@@ -1,3 +1,4 @@
+import { unwrapEnvelope } from "@/lib/apiClient";
 const BASE_URL = import.meta.env.VITE_AUTH_API_URL || "/api/auth";
 
 async function fetchJSON(url: string, body: object) {

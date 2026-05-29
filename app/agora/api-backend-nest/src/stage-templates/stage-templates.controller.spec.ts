@@ -7,11 +7,17 @@ import {
 import request from 'supertest';
 import { StageTemplatesController } from './stage-templates.controller';
 import { StageTemplatesService } from './stage-templates.service';
-import { SuperadminJwtGuard } from '../auth/superadmin-jwt.guard';
+import { PanelJwtAuthGuard } from '../auth/panel-jwt-auth.guard';
+import { RequirePermissionGuard } from '../accesos/guards/require-permission.guard';
+import { Reflector } from '@nestjs/core';
 
 const superadminGuard = {
   canActivate: (ctx: any) => {
-    ctx.switchToHttp().getRequest().userPayload = { id: 12, rol: 'superadmin' };
+    ctx.switchToHttp().getRequest().userPayload = {
+      id: 12,
+      rol: 'superadmin',
+      permisos: ['gestion_integraciones'],
+    };
     return true;
   },
 };
@@ -27,9 +33,13 @@ const mockService = {
 async function buildApp(authGuard: object): Promise<INestApplication> {
   const module: TestingModule = await Test.createTestingModule({
     controllers: [StageTemplatesController],
-    providers: [{ provide: StageTemplatesService, useValue: mockService }],
+    providers: [
+      RequirePermissionGuard,
+      Reflector,
+      { provide: StageTemplatesService, useValue: mockService },
+    ],
   })
-    .overrideGuard(SuperadminJwtGuard)
+    .overrideGuard(PanelJwtAuthGuard)
     .useValue(authGuard)
     .compile();
 
@@ -55,7 +65,7 @@ describe('StageTemplatesController', () => {
       const res = await request(app.getHttpServer())
         .get('/stage-templates')
         .expect(200);
-      expect(Array.isArray(res.body)).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
       expect(mockService.findAll).toHaveBeenCalledWith(undefined);
     });
 
@@ -87,7 +97,7 @@ describe('StageTemplatesController', () => {
       const res = await request(app.getHttpServer())
         .get('/stage-templates/1')
         .expect(200);
-      expect(res.body).toHaveProperty('id', 1);
+      expect(res.body.data).toHaveProperty('id', 1);
       expect(mockService.findOne).toHaveBeenCalledWith(1);
     });
 
@@ -124,7 +134,7 @@ describe('StageTemplatesController', () => {
         .post('/stage-templates')
         .send(validBody)
         .expect(201);
-      expect(res.body).toHaveProperty('id', 10);
+      expect(res.body.data).toHaveProperty('id', 10);
     });
 
     it('returns 400 when stage_actual is missing', async () => {
@@ -173,7 +183,7 @@ describe('StageTemplatesController', () => {
         .patch('/stage-templates/1')
         .send({ stage_actual: 'inicio-v2' })
         .expect(200);
-      expect(res.body).toHaveProperty('stage_actual', 'inicio-v2');
+      expect(res.body.data).toHaveProperty('stage_actual', 'inicio-v2');
       expect(mockService.update).toHaveBeenCalledWith(1, {
         stage_actual: 'inicio-v2',
       });

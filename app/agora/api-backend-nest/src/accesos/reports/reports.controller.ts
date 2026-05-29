@@ -1,3 +1,4 @@
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Controller, Get, Query, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import { ReportsService } from './reports.service';
@@ -5,6 +6,8 @@ import { PanelJwtAuthGuard } from '../../auth/panel-jwt-auth.guard';
 import { RequirePermissionGuard } from '../guards/require-permission.guard';
 import { RequirePermission } from '../decorators/permission.decorator';
 
+@ApiTags('Reportes')
+@ApiBearerAuth('panel-jwt')
 @Controller('api/reportes')
 @UseGuards(PanelJwtAuthGuard, RequirePermissionGuard)
 @RequirePermission('ver_reportes')
@@ -29,12 +32,12 @@ export class ReportsController {
   }
 
   @Get('procesos')
-  async procesos(@Query() q: any, @Res() res: Response) {
+  async procesos(@Query() q: Record<string, string>, @Res() res: Response) {
     this.send(this.service.formatResponse(await this.service.procesos(q)), res);
   }
 
   @Get('desempeno')
-  async desempeno(@Query() q: any, @Res() res: Response) {
+  async desempeno(@Query() q: Record<string, string>, @Res() res: Response) {
     this.send(
       this.service.formatResponse(await this.service.desempeno(q)),
       res,
@@ -42,7 +45,10 @@ export class ReportsController {
   }
 
   @Get('procesos-semanales')
-  async procesosSemanales(@Query() q: any, @Res() res: Response) {
+  async procesosSemanales(
+    @Query() q: Record<string, string>,
+    @Res() res: Response,
+  ) {
     this.send(
       this.service.formatResponse(await this.service.procesosSemanales(q)),
       res,
@@ -50,7 +56,10 @@ export class ReportsController {
   }
 
   @Get('precios-planes')
-  async preciosPlanes(@Query() q: any, @Res() res: Response) {
+  async preciosPlanes(
+    @Query() q: Record<string, string>,
+    @Res() res: Response,
+  ) {
     this.send(
       this.service.formatResponse(await this.service.preciosPlanes(q)),
       res,
@@ -58,7 +67,7 @@ export class ReportsController {
   }
 
   @Get('clientes-info')
-  async clientesInfo(@Query() q: any, @Res() res: Response) {
+  async clientesInfo(@Query() q: Record<string, string>, @Res() res: Response) {
     this.send(
       this.service.formatResponse(await this.service.clientesInfo(q)),
       res,

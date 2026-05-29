@@ -448,6 +448,36 @@ const MetaInboxPage: React.FC = () => {
               ? String(payload.city)
               : null
             : current.city,
+        firstName:
+          payload.firstName !== undefined
+            ? payload.firstName
+              ? String(payload.firstName)
+              : null
+            : current.firstName,
+        lastName:
+          payload.lastName !== undefined
+            ? payload.lastName
+              ? String(payload.lastName)
+              : null
+            : current.lastName,
+        rut:
+          payload.rut !== undefined
+            ? payload.rut
+              ? String(payload.rut)
+              : null
+            : current.rut,
+        address:
+          payload.address !== undefined
+            ? payload.address
+              ? String(payload.address)
+              : null
+            : current.address,
+        region:
+          payload.region !== undefined
+            ? payload.region
+              ? String(payload.region)
+              : null
+            : current.region,
         whatsappBlockStatus:
           payload.whatsappBlockStatus !== undefined
             ? payload.whatsappBlockStatus

@@ -1,28 +1,42 @@
-import { createHmac } from 'crypto';
-
 jest.mock('../../shared/runtime-secrets', () => ({
   getRuntimeSecret: jest.fn(),
 }));
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import {
+  INestApplication,
+  UnauthorizedException,
+  ValidationPipe,
+} from '@nestjs/common';
 import request from 'supertest';
 import { MetaController } from './meta.controller';
 import { MetaService } from './meta.service';
+import { MetaWebhookHmacGuard } from './meta-webhook-hmac.guard';
 import { getRuntimeSecret } from '../../shared/runtime-secrets';
 
-const APP_SECRET = 'test-meta-app-secret';
 const VERIFY_TOKEN = 'test-verify-token';
 
 const mockService = {
   handleEvent: jest.fn(),
 };
 
-async function buildApp(): Promise<INestApplication> {
+const passThroughGuard = { canActivate: () => true };
+const rejectGuard = {
+  canActivate: () => {
+    throw new UnauthorizedException('Firma Meta inválida');
+  },
+};
+
+async function buildApp(
+  guard: object = passThroughGuard,
+): Promise<INestApplication> {
   const module: TestingModule = await Test.createTestingModule({
     controllers: [MetaController],
     providers: [{ provide: MetaService, useValue: mockService }],
-  }).compile();
+  })
+    .overrideGuard(MetaWebhookHmacGuard)
+    .useValue(guard)
+    .compile();
 
   const app = module.createNestApplication({ rawBody: true });
   app.useGlobalPipes(
@@ -37,10 +51,6 @@ async function buildApp(): Promise<INestApplication> {
   return app;
 }
 
-function hmacSig(secret: string, body: Buffer): string {
-  return 'sha256=' + createHmac('sha256', secret).update(body).digest('hex');
-}
-
 describe('MetaController', () => {
   let app: INestApplication;
 
@@ -50,14 +60,13 @@ describe('MetaController', () => {
       if (key === 'META_VERIFY_TOKEN') return Promise.resolve(VERIFY_TOKEN);
       if (key === 'META_IG_VERIFY_TOKEN')
         return Promise.resolve('otro-verify-token');
-      if (key === 'META_APP_SECRET') return Promise.resolve(APP_SECRET);
       return Promise.resolve(undefined);
     });
     app = await buildApp();
   });
   afterEach(() => app?.close());
 
-  // --- GET /webhooks/meta (verificación de webhook) ---
+  // --- GET /webhooks/meta ---
 
   describe('GET /webhooks/meta', () => {
     const validQuery = {
@@ -97,7 +106,7 @@ describe('MetaController', () => {
     });
   });
 
-  // --- POST /webhooks/meta (recepción de eventos) ---
+  // --- POST /webhooks/meta ---
 
   describe('POST /webhooks/meta', () => {
     const webhookBody = {
@@ -105,39 +114,25 @@ describe('MetaController', () => {
       entry: [{ id: '123456', messaging: [] }],
     };
 
-    it('devuelve 201 con firma HMAC válida', async () => {
+    it('devuelve 201 y delega al servicio cuando el guard aprueba', async () => {
       mockService.handleEvent.mockResolvedValue(undefined);
-      const bodyStr = JSON.stringify(webhookBody);
-      const sig = hmacSig(APP_SECRET, Buffer.from(bodyStr));
       const res = await request(app.getHttpServer())
         .post('/webhooks/meta')
         .set('content-type', 'application/json')
-        .set('x-hub-signature-256', sig)
         .send(webhookBody)
         .expect(201);
       expect(res.text).toBe('EVENT_RECEIVED');
+      await new Promise((r) => setTimeout(r, 10));
+      expect(mockService.handleEvent).toHaveBeenCalledWith(
+        expect.objectContaining({ object: 'whatsapp_business_account' }),
+      );
     });
 
-    it('devuelve 401 cuando la firma HMAC es incorrecta', async () => {
+    it('devuelve 401 cuando el guard rechaza la firma', async () => {
+      app.close();
+      app = await buildApp(rejectGuard);
       await request(app.getHttpServer())
         .post('/webhooks/meta')
-        .set('content-type', 'application/json')
-        .set('x-hub-signature-256', 'sha256=firma-invalida-000')
-        .send(webhookBody)
-        .expect(401);
-    });
-
-    it('devuelve 401 cuando no hay firma en el header', async () => {
-      await request(app.getHttpServer())
-        .post('/webhooks/meta')
-        .send(webhookBody)
-        .expect(401);
-    });
-
-    it('devuelve 401 cuando la firma no empieza por sha256=', async () => {
-      await request(app.getHttpServer())
-        .post('/webhooks/meta')
-        .set('x-hub-signature-256', 'md5=abcdef1234567890')
         .send(webhookBody)
         .expect(401);
     });

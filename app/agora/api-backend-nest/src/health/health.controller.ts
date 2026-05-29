@@ -1,9 +1,23 @@
-import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import { Controller, Get } from '@nestjs/common';
+import {
+  HealthCheck,
+  HealthCheckResult,
+  HealthCheckService,
+  PrismaHealthIndicator,
+} from '@nestjs/terminus';
 import { PrismaService } from '../database/prisma/prisma.service';
+import { RedisHealthIndicator } from './redis-health.indicator';
 
-@Controller('ping') // Esto define la ruta /ping
+@ApiTags('Health')
+@Controller('ping')
 export class HealthController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly health: HealthCheckService,
+    private readonly prismaIndicator: PrismaHealthIndicator,
+    private readonly redisIndicator: RedisHealthIndicator,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @Get()
   getPing(): string {
@@ -11,12 +25,11 @@ export class HealthController {
   }
 
   @Get('db')
-  async getDbPing() {
-    try {
-      await this.prisma.$queryRawUnsafe('SELECT 1');
-      return { ok: true, db: 'up' };
-    } catch {
-      throw new ServiceUnavailableException({ ok: false, db: 'down' });
-    }
+  @HealthCheck()
+  check(): Promise<HealthCheckResult> {
+    return this.health.check([
+      () => this.prismaIndicator.pingCheck('database', this.prisma),
+      () => this.redisIndicator.isHealthy('redis'),
+    ]);
   }
 }

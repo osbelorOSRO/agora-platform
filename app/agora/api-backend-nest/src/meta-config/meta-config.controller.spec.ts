@@ -3,11 +3,17 @@ import { INestApplication, UnauthorizedException } from '@nestjs/common';
 import request from 'supertest';
 import { MetaConfigController } from './meta-config.controller';
 import { MetaConfigService } from './meta-config.service';
-import { SuperadminJwtGuard } from '../auth/superadmin-jwt.guard';
+import { PanelJwtAuthGuard } from '../auth/panel-jwt-auth.guard';
+import { RequirePermissionGuard } from '../accesos/guards/require-permission.guard';
+import { Reflector } from '@nestjs/core';
 
 const superadminGuard = {
   canActivate: (ctx: any) => {
-    ctx.switchToHttp().getRequest().userPayload = { id: 12, rol: 'superadmin' };
+    ctx.switchToHttp().getRequest().userPayload = {
+      id: 12,
+      rol: 'superadmin',
+      permisos: ['gestion_integraciones'],
+    };
     return true;
   },
 };
@@ -21,9 +27,13 @@ const mockService = {
 async function buildApp(authGuard: object): Promise<INestApplication> {
   const module: TestingModule = await Test.createTestingModule({
     controllers: [MetaConfigController],
-    providers: [{ provide: MetaConfigService, useValue: mockService }],
+    providers: [
+      RequirePermissionGuard,
+      Reflector,
+      { provide: MetaConfigService, useValue: mockService },
+    ],
   })
-    .overrideGuard(SuperadminJwtGuard)
+    .overrideGuard(PanelJwtAuthGuard)
     .useValue(authGuard)
     .compile();
 
@@ -51,7 +61,7 @@ describe('MetaConfigController', () => {
       const res = await request(app.getHttpServer())
         .get('/meta-config')
         .expect(200);
-      expect(res.body).toHaveProperty('app_id');
+      expect(res.body.data).toHaveProperty('app_id');
     });
 
     it('returns 401 when token is absent', async () => {
@@ -73,7 +83,7 @@ describe('MetaConfigController', () => {
       const res = await request(app.getHttpServer())
         .get('/meta-config/reveal/app_secret')
         .expect(200);
-      expect(res.body).toHaveProperty('value', 'secret_value_xyz');
+      expect(res.body.data).toHaveProperty('value', 'secret_value_xyz');
       expect(mockService.reveal).toHaveBeenCalledWith('app_secret');
     });
 
@@ -99,7 +109,7 @@ describe('MetaConfigController', () => {
         .patch('/meta-config')
         .send({ display_name: 'Agora V2' })
         .expect(200);
-      expect(res.body).toHaveProperty('display_name', 'Agora V2');
+      expect(res.body.data).toHaveProperty('display_name', 'Agora V2');
       expect(mockService.upsert).toHaveBeenCalledWith(
         expect.objectContaining({ display_name: 'Agora V2' }),
       );

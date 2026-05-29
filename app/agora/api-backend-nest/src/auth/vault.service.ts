@@ -1,22 +1,23 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import Vault from 'node-vault';
 import { IVaultGateway } from './interfaces/vault-gateway.interface';
 
 @Injectable()
 export class VaultService implements IVaultGateway {
   private readonly logger = new Logger(VaultService.name);
-  private endpoint: string;
+  private readonly endpoint: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private vault: any; // node-vault no tiene tipos completos publicados
   private tokenExpiresAt: number = 0;
 
-  constructor() {
-    this.endpoint = process.env.VAULT_ADDR || 'http://vault:8200';
+  constructor(private readonly config: ConfigService) {
+    this.endpoint = config.get<string>('VAULT_ADDR') ?? 'http://vault:8200';
   }
 
   private async authenticate(): Promise<string> {
-    const roleId = process.env.VAULT_ROLE_ID;
-    const secretId = process.env.VAULT_SECRET_ID;
+    const roleId = this.config.get<string>('VAULT_ROLE_ID');
+    const secretId = this.config.get<string>('VAULT_SECRET_ID');
 
     if (!roleId || !secretId) {
       throw new Error('VAULT_ROLE_ID o VAULT_SECRET_ID no están definidos');

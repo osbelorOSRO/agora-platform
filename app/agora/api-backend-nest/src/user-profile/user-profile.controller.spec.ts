@@ -75,7 +75,7 @@ describe('UserProfileController', () => {
       const res = await request(app.getHttpServer())
         .get('/user-profile/photo')
         .expect(200);
-      expect(res.body).toHaveProperty(
+      expect(res.body.data).toHaveProperty(
         'photoUrl',
         'https://cdn.example.com/photo.jpg',
       );
@@ -88,7 +88,7 @@ describe('UserProfileController', () => {
       const res = await request(app.getHttpServer())
         .get('/user-profile/photo')
         .expect(200);
-      expect(res.body).toHaveProperty('photoUrl', null);
+      expect(res.body.data).toHaveProperty('photoUrl', null);
     });
 
     it('devuelve 401 sin token', async () => {
@@ -116,7 +116,7 @@ describe('UserProfileController', () => {
           contentType: 'image/png',
         })
         .expect(201);
-      expect(res.body).toHaveProperty(
+      expect(res.body.data).toHaveProperty(
         'photoUrl',
         'https://cdn.example.com/new-photo.jpg',
       );
@@ -151,7 +151,7 @@ describe('UserProfileController', () => {
       const res = await request(app.getHttpServer())
         .delete('/user-profile/photo')
         .expect(200);
-      expect(res.body).toHaveProperty('ok', true);
+      expect(res.body.data).toHaveProperty('ok', true);
       expect(mockService.removePhoto).toHaveBeenCalledWith(7);
     });
 

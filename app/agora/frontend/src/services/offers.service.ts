@@ -1,3 +1,4 @@
+import { unwrapEnvelope } from "@/lib/apiClient";
 import { getAuthHeaders } from "@/utils/getAuthHeaders";
 import type { CreateOfferInput, Offer, UpdateOfferInput } from "@/types/offers";
 
@@ -6,7 +7,7 @@ const API_URL = import.meta.env.VITE_API_URL as string;
 export const listOffers = async (): Promise<Offer[]> => {
   const res = await fetch(`${API_URL}/offers`, { headers: getAuthHeaders() });
   if (!res.ok) throw new Error("No se pudieron cargar las ofertas");
-  return res.json();
+  return (await res.json()).data;
 };
 
 export const getOffer = async (codigo: string): Promise<Offer> => {
@@ -14,7 +15,7 @@ export const getOffer = async (codigo: string): Promise<Offer> => {
     headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error("Oferta no encontrada");
-  return res.json();
+  return (await res.json()).data;
 };
 
 export const createOffer = async (payload: CreateOfferInput): Promise<Offer> => {
@@ -27,7 +28,7 @@ export const createOffer = async (payload: CreateOfferInput): Promise<Offer> => 
     const err = await res.json().catch(() => ({}));
     throw new Error(err?.message ?? "Error al crear oferta");
   }
-  return res.json();
+  return (await res.json()).data;
 };
 
 export const updateOffer = async (codigo: string, payload: UpdateOfferInput): Promise<Offer> => {
@@ -40,7 +41,7 @@ export const updateOffer = async (codigo: string, payload: UpdateOfferInput): Pr
     const err = await res.json().catch(() => ({}));
     throw new Error(err?.message ?? "Error al actualizar oferta");
   }
-  return res.json();
+  return (await res.json()).data;
 };
 
 export const deleteOffer = async (codigo: string): Promise<void> => {

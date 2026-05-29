@@ -6,13 +6,13 @@ const API_URL = `${import.meta.env.VITE_API_URL}/shortcut`;
 export async function fetchShortcuts(): Promise<Shortcut[]> {
   const response = await fetch(API_URL, { headers: getAuthHeaders() });
   if (!response.ok) throw new Error('Error al obtener atajos');
-  return response.json();
+  return (await response.json()).data;
 }
 
 export async function fetchShortcut(uuid: string): Promise<Shortcut> {
   const response = await fetch(`${API_URL}/${uuid}`, { headers: getAuthHeaders() });
   if (!response.ok) throw new Error('Atajo no encontrado');
-  return response.json();
+  return (await response.json()).data;
 }
 
 export async function createShortcut(data: Omit<Shortcut, 'uuid'>): Promise<Shortcut> {
@@ -22,7 +22,7 @@ export async function createShortcut(data: Omit<Shortcut, 'uuid'>): Promise<Shor
     body: JSON.stringify(data),
   });
   if (!response.ok) throw new Error('Error al crear atajo');
-  return response.json();
+  return (await response.json()).data;
 }
 
 export async function updateShortcut(uuid: string, data: Partial<Omit<Shortcut, 'uuid'>>): Promise<Shortcut> {
@@ -32,7 +32,7 @@ export async function updateShortcut(uuid: string, data: Partial<Omit<Shortcut, 
     body: JSON.stringify(data),
   });
   if (!response.ok) throw new Error('Error al actualizar atajo');
-  return response.json();
+  return (await response.json()).data;
 }
 
 export async function deleteShortcut(uuid: string): Promise<{ message: string }> {
@@ -41,5 +41,5 @@ export async function deleteShortcut(uuid: string): Promise<{ message: string }>
     headers: getAuthHeaders(),
   });
   if (!response.ok) throw new Error('Error al eliminar atajo');
-  return response.json();
+  return (await response.json()).data;
 }

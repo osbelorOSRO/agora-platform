@@ -1,3 +1,4 @@
+import { ApiTags } from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -10,6 +11,7 @@ import { FcaIngressService } from './fca-ingress.service';
 import { FcaIngressEnvelopeDto } from './dto/fca-ingress-envelope.dto';
 import { FcaInternalTokenGuard } from '../shared/guards/fca-internal-token.guard';
 
+@ApiTags('Interno')
 @Controller('internal/fca')
 @UsePipes(
   new ValidationPipe({

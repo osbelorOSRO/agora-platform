@@ -1,0 +1,15 @@
+{
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.5"
+  },
+  "scripts": {
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "app/agora/api-backend-nest/{src,test}/**/*.ts": [
+      "./app/agora/api-backend-nest/node_modules/.bin/eslint --fix",
+      "./app/agora/api-backend-nest/node_modules/.bin/prettier --write"
+    ]
+  }
+}

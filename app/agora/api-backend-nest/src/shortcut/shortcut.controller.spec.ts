@@ -58,12 +58,15 @@ describe('ShortcutController', () => {
 
     it('returns 201 on successful creation', async () => {
       app = await buildApp(panelGuard);
-      mockService.create.mockResolvedValue({ uuid: 'uuid-1', ...validBody });
+      mockService.create.mockResolvedValue({
+        uuid: 'a1b2c3d4-e5f6-4789-8012-abcdef012345',
+        ...validBody,
+      });
       const res = await request(app.getHttpServer())
         .post('/shortcut')
         .send(validBody)
         .expect(201);
-      expect(res.body).toHaveProperty('uuid');
+      expect(res.body.data).toHaveProperty('uuid');
     });
 
     it('returns 400 when atajo is missing', async () => {
@@ -109,12 +112,12 @@ describe('ShortcutController', () => {
     it('returns 200 with all respuestas', async () => {
       app = await buildApp(panelGuard);
       mockService.findAll.mockResolvedValue([
-        { uuid: 'uuid-1', atajo: '/saludo' },
+        { uuid: 'a1b2c3d4-e5f6-4789-8012-abcdef012345', atajo: '/saludo' },
       ]);
       const res = await request(app.getHttpServer())
         .get('/shortcut')
         .expect(200);
-      expect(Array.isArray(res.body)).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
     });
 
     it('returns 401 when token is absent', async () => {
@@ -133,21 +136,24 @@ describe('ShortcutController', () => {
     it('returns 200 with the respuesta', async () => {
       app = await buildApp(panelGuard);
       mockService.findOne.mockResolvedValue({
-        uuid: 'uuid-1',
+        uuid: 'a1b2c3d4-e5f6-4789-8012-abcdef012345',
         atajo: '/saludo',
         texto: 'Hola',
       });
       const res = await request(app.getHttpServer())
-        .get('/shortcut/uuid-1')
+        .get('/shortcut/a1b2c3d4-e5f6-4789-8012-abcdef012345')
         .expect(200);
-      expect(res.body).toHaveProperty('uuid', 'uuid-1');
+      expect(res.body.data).toHaveProperty(
+        'uuid',
+        'a1b2c3d4-e5f6-4789-8012-abcdef012345',
+      );
     });
 
     it('returns 404 when respuesta does not exist', async () => {
       app = await buildApp(panelGuard);
       mockService.findOne.mockRejectedValue(new NotFoundException());
       await request(app.getHttpServer())
-        .get('/shortcut/inexistente')
+        .get('/shortcut/00000000-0000-4000-8000-000000000000')
         .expect(404);
     });
   });
@@ -158,17 +164,17 @@ describe('ShortcutController', () => {
     it('returns 200 on valid update', async () => {
       app = await buildApp(panelGuard);
       mockService.update.mockResolvedValue({
-        uuid: 'uuid-1',
+        uuid: 'a1b2c3d4-e5f6-4789-8012-abcdef012345',
         atajo: '/hola',
         texto: 'Hola actualizado',
       });
       const res = await request(app.getHttpServer())
-        .put('/shortcut/uuid-1')
+        .put('/shortcut/a1b2c3d4-e5f6-4789-8012-abcdef012345')
         .send({ atajo: '/hola', texto: 'Hola actualizado' })
         .expect(200);
-      expect(res.body).toHaveProperty('atajo', '/hola');
+      expect(res.body.data).toHaveProperty('atajo', '/hola');
       expect(mockService.update).toHaveBeenCalledWith(
-        'uuid-1',
+        'a1b2c3d4-e5f6-4789-8012-abcdef012345',
         expect.objectContaining({ atajo: '/hola' }),
       );
     });
@@ -176,7 +182,7 @@ describe('ShortcutController', () => {
     it('returns 400 when atajo exceeds 50 chars', async () => {
       app = await buildApp(panelGuard);
       await request(app.getHttpServer())
-        .put('/shortcut/uuid-1')
+        .put('/shortcut/a1b2c3d4-e5f6-4789-8012-abcdef012345')
         .send({ atajo: 'a'.repeat(51) })
         .expect(400);
     });
@@ -188,7 +194,7 @@ describe('ShortcutController', () => {
         },
       });
       await request(app.getHttpServer())
-        .put('/shortcut/uuid-1')
+        .put('/shortcut/a1b2c3d4-e5f6-4789-8012-abcdef012345')
         .send({ texto: 'X' })
         .expect(401);
     });
@@ -200,15 +206,19 @@ describe('ShortcutController', () => {
     it('returns 200 on successful delete', async () => {
       app = await buildApp(panelGuard);
       mockService.remove.mockResolvedValue({ message: 'eliminado' });
-      await request(app.getHttpServer()).delete('/shortcut/uuid-1').expect(200);
-      expect(mockService.remove).toHaveBeenCalledWith('uuid-1');
+      await request(app.getHttpServer())
+        .delete('/shortcut/a1b2c3d4-e5f6-4789-8012-abcdef012345')
+        .expect(200);
+      expect(mockService.remove).toHaveBeenCalledWith(
+        'a1b2c3d4-e5f6-4789-8012-abcdef012345',
+      );
     });
 
     it('returns 404 when respuesta does not exist', async () => {
       app = await buildApp(panelGuard);
       mockService.remove.mockRejectedValue(new NotFoundException());
       await request(app.getHttpServer())
-        .delete('/shortcut/inexistente')
+        .delete('/shortcut/00000000-0000-4000-8000-000000000000')
         .expect(404);
     });
 
@@ -218,7 +228,9 @@ describe('ShortcutController', () => {
           throw new UnauthorizedException();
         },
       });
-      await request(app.getHttpServer()).delete('/shortcut/uuid-1').expect(401);
+      await request(app.getHttpServer())
+        .delete('/shortcut/a1b2c3d4-e5f6-4789-8012-abcdef012345')
+        .expect(401);
     });
   });
 });

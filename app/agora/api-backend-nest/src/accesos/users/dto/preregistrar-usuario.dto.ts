@@ -1,6 +1,8 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { IsInt, IsString, MaxLength, Min, Matches } from 'class-validator';
 
 export class PreregistrarUsuarioDto {
+  @ApiProperty()
   @IsString()
   @MaxLength(100)
   @Matches(/^[a-zA-Z0-9_.-]+$/, {
@@ -8,6 +10,7 @@ export class PreregistrarUsuarioDto {
   })
   username: string;
 
+  @ApiProperty()
   @IsInt()
   @Min(1)
   rolId: number;

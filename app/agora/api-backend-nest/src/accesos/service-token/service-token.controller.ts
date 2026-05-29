@@ -1,3 +1,4 @@
+import { ApiTags } from '@nestjs/swagger';
 import { Body, Controller, HttpCode, Post } from '@nestjs/common';
 import { IsString } from 'class-validator';
 import { ServiceTokenService } from './service-token.service';
@@ -7,6 +8,7 @@ class IssueServiceTokenDto {
   @IsString() secretKey: string;
 }
 
+@ApiTags('Tokens de Servicio')
 @Controller('api/service-auth')
 export class ServiceTokenController {
   constructor(private readonly service: ServiceTokenService) {}

@@ -9,13 +9,13 @@ import request from 'supertest';
 import { SessionsController } from './sessions.controller';
 import { SessionsService } from './sessions.service';
 import { PanelJwtAuthGuard } from '../../auth/panel-jwt-auth.guard';
-import { RequireRolesGuard } from '../guards/require-roles.guard';
+import { RequirePermissionGuard } from '../guards/require-permission.guard';
 
 const SUPERADMIN_PAYLOAD = {
   id: 12,
   username: 'obeltran',
   rol: 'superadmin',
-  permisos: [],
+  permisos: ['gestion_conexiones'],
 };
 const AGENTE_PAYLOAD = {
   id: 19,
@@ -52,7 +52,7 @@ async function buildApp(authGuard: object): Promise<INestApplication> {
     providers: [
       { provide: SessionsService, useValue: mockService },
       Reflector,
-      RequireRolesGuard,
+      RequirePermissionGuard,
     ],
   })
     .overrideGuard(PanelJwtAuthGuard)
@@ -86,7 +86,7 @@ describe('SessionsController', () => {
       const res = await request(app.getHttpServer())
         .get('/api/auth/me')
         .expect(200);
-      expect(res.body).toHaveProperty('id', 12);
+      expect(res.body.data).toHaveProperty('id', 12);
       expect(mockService.me).toHaveBeenCalledWith(12);
     });
 
@@ -105,7 +105,7 @@ describe('SessionsController', () => {
       const res = await request(app.getHttpServer())
         .post('/api/auth/registrar-sesion')
         .expect(200);
-      expect(res.body).toHaveProperty('sessionId');
+      expect(res.body.data).toHaveProperty('sessionId');
       expect(mockService.registrarSesion).toHaveBeenCalledWith(
         12,
         expect.any(String),
@@ -130,7 +130,7 @@ describe('SessionsController', () => {
       const res = await request(app.getHttpServer())
         .get('/api/auth/sesiones-activas')
         .expect(200);
-      expect(Array.isArray(res.body)).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
     });
 
     it('returns 401 when token is absent', async () => {

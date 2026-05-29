@@ -9,9 +9,12 @@ import {
   Patch,
   Post,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { Request as Req } from '@nestjs/common';
 import type { Request } from 'express';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { TransformInterceptor } from '../../core/interceptors/transform.interceptor';
 import { UsersService } from './users.service';
 import { PanelJwtAuthGuard } from '../../auth/panel-jwt-auth.guard';
 import { RequirePermissionGuard } from '../guards/require-permission.guard';
@@ -19,8 +22,11 @@ import { RequirePermission } from '../decorators/permission.decorator';
 import { PreregistrarUsuarioDto } from './dto/preregistrar-usuario.dto';
 import { ActualizarUsuarioDto } from './dto/actualizar-usuario.dto';
 
+@ApiTags('Usuarios')
+@ApiBearerAuth('panel-jwt')
 @Controller('api/auth')
 @UseGuards(PanelJwtAuthGuard, RequirePermissionGuard)
+@UseInterceptors(TransformInterceptor)
 @RequirePermission('editar_configuracion')
 export class UsersController {
   constructor(private readonly service: UsersService) {}

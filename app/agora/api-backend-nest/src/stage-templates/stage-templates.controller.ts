@@ -1,3 +1,4 @@
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -9,16 +10,24 @@ import {
   Post,
   Query,
   UseGuards,
+  UseInterceptors,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { SuperadminJwtGuard } from '../auth/superadmin-jwt.guard';
+import { TransformInterceptor } from '../core/interceptors/transform.interceptor';
+import { PanelJwtAuthGuard } from '../auth/panel-jwt-auth.guard';
+import { RequirePermissionGuard } from '../accesos/guards/require-permission.guard';
+import { RequirePermission } from '../accesos/decorators/permission.decorator';
 import { CreateStageTemplateDto } from './dto/create-stage-template.dto';
 import { UpdateStageTemplateDto } from './dto/update-stage-template.dto';
 import { StageTemplatesService } from './stage-templates.service';
 
+@ApiTags('Etapas')
+@ApiBearerAuth('panel-jwt')
 @Controller('stage-templates')
-@UseGuards(SuperadminJwtGuard)
+@UseGuards(PanelJwtAuthGuard, RequirePermissionGuard)
+@RequirePermission('gestion_integraciones')
+@UseInterceptors(TransformInterceptor)
 @UsePipes(
   new ValidationPipe({
     whitelist: true,

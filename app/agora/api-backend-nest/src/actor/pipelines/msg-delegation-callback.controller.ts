@@ -1,3 +1,4 @@
+import { ApiTags } from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -12,6 +13,7 @@ import { MsgDelegationFailedDto } from './dto/msg-delegation-failed.dto';
 import { MsgDelegationCompletionService } from './msg-delegation-completion.service';
 import { N8nCallbackAuthGuard } from '../../shared/guards/n8n-callback-auth.guard';
 
+@ApiTags('Automatización N8N')
 @Controller('actor/msg-delegation')
 @UsePipes(
   new ValidationPipe({

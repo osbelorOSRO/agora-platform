@@ -201,6 +201,26 @@ describe('WhatsappIdentityService', () => {
     });
   });
 
+  // --- updateBlockStatus ---
+
+  describe('updateBlockStatus', () => {
+    it('lanza BadRequestException si action no es block ni unblock', async () => {
+      await expect(
+        service.updateBlockStatus({
+          action: 'kick' as any,
+          sessionId: 'sess-1',
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('lanza BadRequestException si no se puede resolver identidad de WhatsApp', async () => {
+      prisma.$queryRawUnsafe.mockResolvedValue([]);
+      await expect(
+        service.updateBlockStatus({ action: 'block', sessionId: 'sess-1' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
   // --- resolveWhatsappIdentity ---
 
   describe('resolveWhatsappIdentity', () => {

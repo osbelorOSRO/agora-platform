@@ -1,3 +1,4 @@
+import { ApiTags } from '@nestjs/swagger';
 import {
   Controller,
   Post,
@@ -15,6 +16,7 @@ import { BaileysInternalTokenGuard } from '../shared/guards/baileys-internal-tok
 
 const TIPOS_MEDIA_VALIDOS = new Set(['imagen', 'audio', 'video', 'documento']);
 
+@ApiTags('Media')
 @Controller('media')
 export class MediaController {
   constructor(private readonly mediaService: MediaService) {}

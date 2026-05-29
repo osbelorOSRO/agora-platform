@@ -1,8 +1,12 @@
 import { VaultService } from '../auth/vault.service';
 import { MetaConfigService } from '../meta-config/meta-config.service';
 
-const vault = new VaultService();
+let vault: VaultService | null = null;
 const cache = new Map<string, string>();
+
+export function setVaultService(service: VaultService): void {
+  vault = service;
+}
 
 // Campos Meta que se resuelven desde DB/Redis, nunca desde Vault
 const META_DB_FIELDS = new Set([
@@ -65,6 +69,8 @@ export async function getRuntimeSecret(
     return cache.get(cacheKey)!;
   }
 
+  if (!vault)
+    throw new Error('VaultService no inicializado en runtime-secrets');
   const value = await vault.getSecretField(path, field);
   cache.set(cacheKey, value);
   return value;

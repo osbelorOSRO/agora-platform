@@ -92,7 +92,7 @@ describe('MetaInboxController — panel endpoints', () => {
       const res = await request(app.getHttpServer())
         .get('/meta-inbox/threads')
         .expect(200);
-      expect(Array.isArray(res.body)).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
       expect(mockService.listThreads).toHaveBeenCalledWith(
         expect.objectContaining({
           limit: 100,
@@ -141,7 +141,7 @@ describe('MetaInboxController — panel endpoints', () => {
       const res = await request(app.getHttpServer())
         .get('/meta-inbox/contacts')
         .expect(200);
-      expect(Array.isArray(res.body)).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
     });
 
     it('passes search query param', async () => {
@@ -181,7 +181,7 @@ describe('MetaInboxController — panel endpoints', () => {
         .post('/meta-inbox/contacts/whatsapp')
         .send(validBody)
         .expect(201);
-      expect(res.body).toHaveProperty('actorExternalId');
+      expect(res.body.data).toHaveProperty('actorExternalId');
     });
 
     it('returns 400 when phone is missing', async () => {
@@ -217,7 +217,7 @@ describe('MetaInboxController — panel endpoints', () => {
         .post('/meta-inbox/contacts/whatsapp/thread')
         .send({ actorExternalId: '56911223344@s.whatsapp.net' })
         .expect(201);
-      expect(res.body).toHaveProperty('sessionId');
+      expect(res.body.data).toHaveProperty('sessionId');
     });
 
     it('returns 400 when actorExternalId is missing', async () => {
@@ -241,7 +241,7 @@ describe('MetaInboxController — panel endpoints', () => {
         .post('/meta-inbox/whatsapp/identity/resolve')
         .send({ phone: '+56911223344' })
         .expect(201);
-      expect(res.body).toHaveProperty('actorExternalId');
+      expect(res.body.data).toHaveProperty('actorExternalId');
     });
 
     it('returns 401 when token is absent', async () => {
@@ -295,7 +295,7 @@ describe('MetaInboxController — panel endpoints', () => {
       const res = await request(app.getHttpServer())
         .get('/meta-inbox/whatsapp/ad-leads/stats')
         .expect(200);
-      expect(Array.isArray(res.body)).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
     });
 
     it('returns 400 when limit exceeds max', async () => {
@@ -315,7 +315,7 @@ describe('MetaInboxController — panel endpoints', () => {
       const res = await request(app.getHttpServer())
         .get('/meta-inbox/threads/sess-abc/messages')
         .expect(200);
-      expect(Array.isArray(res.body)).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
       expect(mockService.listMessages).toHaveBeenCalledWith('sess-abc', false);
     });
 
@@ -341,7 +341,7 @@ describe('MetaInboxController — panel endpoints', () => {
       const res = await request(app.getHttpServer())
         .get('/meta-inbox/stage-templates/inicio')
         .expect(200);
-      expect(res.body).toHaveProperty('stageActual', 'inicio');
+      expect(res.body.data).toHaveProperty('stageActual', 'inicio');
       expect(mockService.getStageTemplatePaths).toHaveBeenCalledWith('inicio');
     });
   });
@@ -356,7 +356,7 @@ describe('MetaInboxController — panel endpoints', () => {
         .post('/meta-inbox/threads/sess-abc/send-text')
         .send({ text: 'Hola!' })
         .expect(201);
-      expect(res.body).toHaveProperty('messageId');
+      expect(res.body.data).toHaveProperty('messageId');
       expect(mockService.sendText).toHaveBeenCalledWith('sess-abc', 'Hola!');
     });
 
@@ -431,7 +431,7 @@ describe('MetaInboxController — panel endpoints', () => {
           contentType: 'image/png',
         })
         .expect(201);
-      expect(res.body).toHaveProperty('mediaUrl');
+      expect(res.body.data).toHaveProperty('mediaUrl');
     });
 
     it('returns 400 when no file is sent', async () => {
@@ -455,7 +455,7 @@ describe('MetaInboxController — panel endpoints', () => {
         .patch('/meta-inbox/threads/sess-abc/contact')
         .send({ displayName: 'Juan Actualizado', phone: '+56911223344' })
         .expect(200);
-      expect(res.body).toHaveProperty('displayName');
+      expect(res.body.data).toHaveProperty('displayName');
     });
 
     it('returns 400 when unknown field is sent', async () => {
@@ -479,7 +479,7 @@ describe('MetaInboxController — panel endpoints', () => {
         .patch('/meta-inbox/threads/sess-abc/control')
         .send({ threadStatus: 'PAUSED', attentionMode: 'HUMAN' })
         .expect(200);
-      expect(res.body).toHaveProperty('threadStatus');
+      expect(res.body.data).toHaveProperty('threadStatus');
     });
 
     it('returns 400 when threadStatus has invalid value', async () => {
@@ -522,7 +522,7 @@ describe('MetaInboxController — panel endpoints', () => {
       const res = await request(app.getHttpServer())
         .post('/meta-inbox/threads/sess-abc/reopen')
         .expect(201);
-      expect(res.body).toHaveProperty('threadStatus', 'OPEN');
+      expect(res.body.data).toHaveProperty('threadStatus', 'OPEN');
       expect(mockService.reopenThread).toHaveBeenCalledWith('sess-abc');
     });
 

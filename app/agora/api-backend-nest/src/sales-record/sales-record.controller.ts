@@ -1,3 +1,4 @@
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -9,10 +10,14 @@ import {
   Post,
   Query,
   UseGuards,
+  UseInterceptors,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
+import { TransformInterceptor } from '../core/interceptors/transform.interceptor';
 import { PanelJwtAuthGuard } from '../auth/panel-jwt-auth.guard';
+import { RequirePermissionGuard } from '../accesos/guards/require-permission.guard';
+import { RequirePermission } from '../accesos/decorators/permission.decorator';
 import { CreateCatalogDto } from './dto/create-catalog.dto';
 import { UpdateCatalogDto } from './dto/update-catalog.dto';
 import { CreatePriceLevelDto } from './dto/create-price-level.dto';
@@ -24,8 +29,12 @@ import { SalesCatalogService } from './sales-catalog.service';
 import { SalesPriceLevelService } from './sales-price-level.service';
 import { SalesService } from './sales.service';
 
+@ApiTags('Ventas')
+@ApiBearerAuth('panel-jwt')
 @Controller('sales-record')
-@UseGuards(PanelJwtAuthGuard)
+@UseGuards(PanelJwtAuthGuard, RequirePermissionGuard)
+@RequirePermission('gestion_ventas')
+@UseInterceptors(TransformInterceptor)
 @UsePipes(
   new ValidationPipe({
     whitelist: true,

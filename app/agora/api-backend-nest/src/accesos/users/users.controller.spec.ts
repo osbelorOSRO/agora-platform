@@ -95,7 +95,7 @@ describe('UsersController', () => {
         .post('/api/auth/preregistrar-usuario')
         .send(validBody)
         .expect(201);
-      expect(res.body).toHaveProperty('invitationToken');
+      expect(res.body.data).toHaveProperty('invitationToken');
       expect(mockService.preregistrarUsuario).toHaveBeenCalledWith(
         'newuser',
         4,
@@ -153,7 +153,7 @@ describe('UsersController', () => {
       const res = await request(app.getHttpServer())
         .get('/api/auth/usuarios')
         .expect(200);
-      expect(Array.isArray(res.body)).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
     });
 
     it('returns 403 when permission is missing', async () => {
@@ -189,7 +189,7 @@ describe('UsersController', () => {
         .patch('/api/auth/usuarios/19')
         .send(validBody)
         .expect(200);
-      expect(res.body).toHaveProperty('id', 19);
+      expect(res.body.data).toHaveProperty('id', 19);
       expect(mockService.actualizarUsuario).toHaveBeenCalledWith(
         19,
         expect.objectContaining({ nombre: 'Felipe' }),
@@ -233,7 +233,7 @@ describe('UsersController', () => {
       const res = await request(app.getHttpServer())
         .post('/api/auth/usuarios/19/reset-password')
         .expect(200);
-      expect(res.body).toHaveProperty('resetToken');
+      expect(res.body.data).toHaveProperty('resetToken');
     });
 
     it('returns 403 when permission is missing', async () => {
@@ -256,7 +256,7 @@ describe('UsersController', () => {
       const res = await request(app.getHttpServer())
         .post('/api/auth/usuarios/19/reset-2fa')
         .expect(200);
-      expect(res.body).toHaveProperty('bypassToken');
+      expect(res.body.data).toHaveProperty('bypassToken');
     });
 
     it('returns 403 when permission is missing', async () => {
@@ -278,7 +278,7 @@ describe('UsersController', () => {
       const res = await request(app.getHttpServer())
         .post('/api/auth/usuarios/19/desbloquear')
         .expect(200);
-      expect(res.body).toHaveProperty('message');
+      expect(res.body.data).toHaveProperty('message');
     });
 
     it('returns 403 when permission is missing', async () => {
@@ -301,7 +301,7 @@ describe('UsersController', () => {
       const res = await request(app.getHttpServer())
         .post('/api/auth/usuarios/19/regenerar-invitacion')
         .expect(200);
-      expect(res.body).toHaveProperty('invitationToken');
+      expect(res.body.data).toHaveProperty('invitationToken');
     });
 
     it('returns 403 when permission is missing', async () => {

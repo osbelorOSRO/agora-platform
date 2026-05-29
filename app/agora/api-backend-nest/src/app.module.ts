@@ -1,5 +1,8 @@
+import { randomUUID } from 'crypto';
 import { Module, Global } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { LoggerModule } from 'nestjs-pino';
+import * as Joi from 'joi';
 import { PrismaService } from './database/prisma/prisma.service';
 import { CoreModule } from './core/core.module';
 import { HealthModule } from './health/health.module';
@@ -31,6 +34,49 @@ import { FcaConfigModule } from './fca-config/fca-config.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      validationSchema: Joi.object({
+        VAULT_ROLE_ID: Joi.string().required(),
+        VAULT_SECRET_ID: Joi.string().required(),
+        VAULT_ADDR: Joi.string().uri().default('http://vault:8200'),
+        REDIS_HOST: Joi.string().required(),
+        REDIS_PORT: Joi.number().integer().default(6379),
+        DATABASE_URL: Joi.string().required(),
+        PORT: Joi.number().integer().default(4001),
+        CORS_ALLOWED_ORIGINS: Joi.string().optional(),
+        NODE_ENV: Joi.string().default('production'),
+      }),
+    }),
+    LoggerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        const isDev = config.get<string>('NODE_ENV') === 'development';
+        return {
+          pinoHttp: {
+            level: isDev ? 'debug' : 'info',
+            transport: isDev
+              ? {
+                  target: 'pino-pretty',
+                  options: { colorize: true, singleLine: true },
+                }
+              : undefined,
+            genReqId: (req, res) => {
+              const id = randomUUID();
+              res.setHeader('X-Request-Id', id);
+              return id;
+            },
+            redact: [
+              'req.headers.authorization',
+              'req.headers["x-internal-token"]',
+            ],
+            serializers: {
+              req(req: { id: string; method: string; url: string }) {
+                return { id: req.id, method: req.method, url: req.url };
+              },
+            },
+          },
+        };
+      },
     }),
     CoreModule,
     HealthModule,

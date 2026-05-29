@@ -4,6 +4,7 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   IVaultGateway,
   VAULT_GATEWAY,
@@ -20,13 +21,15 @@ export class AuthService {
   constructor(
     @Inject(VAULT_GATEWAY) private readonly vaultService: IVaultGateway,
     private readonly cache: CacheService,
+    private readonly config: ConfigService,
   ) {}
 
   private async getPrivateKey(): Promise<string> {
     const cached = await this.cache.get<string>('auth:jwt:privateKey');
     if (cached) return cached;
     const vaultPath =
-      process.env.VAULT_JWT_PRIVATE_KEY_PATH || 'accesos/keys/private';
+      this.config.get<string>('VAULT_JWT_PRIVATE_KEY_PATH') ||
+      'accesos/keys/private';
     const key = await this.vaultService.getSecretKey(vaultPath);
     await this.cache.set('auth:jwt:privateKey', key, CACHE_TTL_JWT_KEY);
     return key;
@@ -47,7 +50,8 @@ export class AuthService {
     const cached = await this.cache.get<string>('auth:jwt:publicKey');
     if (cached) return cached;
     const vaultPath =
-      process.env.VAULT_JWT_PUBLIC_KEY_PATH || 'accesos/keys/public';
+      this.config.get<string>('VAULT_JWT_PUBLIC_KEY_PATH') ||
+      'accesos/keys/public';
     const key = await this.vaultService.getSecretKey(vaultPath);
     await this.cache.set('auth:jwt:publicKey', key, CACHE_TTL_JWT_KEY);
     return key;
@@ -57,7 +61,8 @@ export class AuthService {
     const cached = await this.cache.get<string>('auth:jwt:publicKeyBot');
     if (cached) return cached;
     const vaultPath =
-      process.env.VAULT_JWT_BOT_PUBLIC_KEY_PATH || 'accesos/keys/public_bot';
+      this.config.get<string>('VAULT_JWT_BOT_PUBLIC_KEY_PATH') ||
+      'accesos/keys/public_bot';
     const key = await this.vaultService.getSecretKey(vaultPath);
     await this.cache.set('auth:jwt:publicKeyBot', key, CACHE_TTL_JWT_KEY);
     return key;

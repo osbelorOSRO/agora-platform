@@ -1,3 +1,4 @@
+import { ApiTags } from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -10,6 +11,7 @@ import { BaileysIngressService } from './baileys-ingress.service';
 import { BaileysIngressEnvelopeDto } from './dto/baileys-ingress-envelope.dto';
 import { BaileysInternalTokenGuard } from '../shared/guards/baileys-internal-token.guard';
 
+@ApiTags('Interno')
 @Controller('internal/baileys')
 @UsePipes(
   new ValidationPipe({
