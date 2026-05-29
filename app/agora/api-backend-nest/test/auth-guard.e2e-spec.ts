@@ -59,7 +59,7 @@ describe('Auth Guard (e2e)', () => {
         .set('Authorization', `Bearer ${token}`)
         .expect(200)
         .expect((res) => {
-          expect(Array.isArray(res.body)).toBe(true);
+          expect(Array.isArray(res.body.data)).toBe(true);
         });
     });
 
@@ -80,7 +80,7 @@ describe('Auth Guard (e2e)', () => {
         .set('Authorization', `Bearer ${token}`)
         .expect(200)
         .expect((res) => {
-          expect(Array.isArray(res.body)).toBe(true);
+          expect(Array.isArray(res.body.data)).toBe(true);
         });
     });
   });

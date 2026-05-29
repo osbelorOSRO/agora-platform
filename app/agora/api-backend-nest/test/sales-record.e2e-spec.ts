@@ -10,17 +10,7 @@ describe('Sales Record CRUD (e2e)', () => {
 
   beforeAll(async () => {
     ctx = await createTestApp();
-    token = ctx.signToken({
-      id: 1,
-      rol: 'superadmin',
-      permisos: [
-        'gestion_ventas',
-        'ver_reportes',
-        'editar_configuracion',
-        'gestion_integraciones',
-        'gestion_conexiones',
-      ],
-    });
+    token = ctx.signToken({ id: 1, rol: 'superadmin' });
   });
 
   afterAll(async () => {
@@ -39,12 +29,12 @@ describe('Sales Record CRUD (e2e)', () => {
         .send({ code: 'E2E1', modality: 'ALTA', level: 5, points: 0.5 })
         .expect(201);
 
-      expect(res.body).toMatchObject({
+      expect(res.body.data).toMatchObject({
         code: 'E2E1',
         modality: 'ALTA',
         level: 5,
       });
-      ofertaId = res.body.id;
+      ofertaId = res.body.data.id;
     });
 
     it('duplicado code+modality → 409', async () => {
@@ -63,32 +53,33 @@ describe('Sales Record CRUD (e2e)', () => {
         .set(auth())
         .expect(200);
 
-      expect(Array.isArray(res.body)).toBe(true);
-      expect(res.body.some((o: { id: number }) => o.id === ofertaId)).toBe(
+      expect(Array.isArray(res.body.data)).toBe(true);
+      expect(res.body.data.some((o: { id: number }) => o.id === ofertaId)).toBe(
         true,
       );
     });
   });
 
   // ─── Matriz de precios ─────────────────────────────────────────────────────
+  // level debe coincidir con el de la oferta (5) y range=1 (computeRange(0 pts))
 
   describe('POST /sales-record/price-matrix', () => {
     it('crea precio para level/range → 201', async () => {
       const res = await request(ctx.app.getHttpServer())
         .post('/sales-record/price-matrix')
         .set(auth())
-        .send({ level: 1, range: 1, price: 9999 })
+        .send({ level: 5, range: 1, price: 9999 })
         .expect(201);
 
-      expect(res.body).toMatchObject({ level: 1, range: 1, price: 9999 });
-      precioId = res.body.id;
+      expect(res.body.data).toMatchObject({ level: 5, range: 1, price: 9999 });
+      precioId = res.body.data.id;
     });
 
     it('duplicado level+range → 409', async () => {
       await request(ctx.app.getHttpServer())
         .post('/sales-record/price-matrix')
         .set(auth())
-        .send({ level: 1, range: 1, price: 9999 })
+        .send({ level: 5, range: 1, price: 9999 })
         .expect(409);
     });
   });
@@ -115,13 +106,13 @@ describe('Sales Record CRUD (e2e)', () => {
         })
         .expect(201);
 
-      expect(res.body).toMatchObject({
+      expect(res.body.data).toMatchObject({
         run: '12345678-9',
         modality: 'ALTA',
         offers_code: 'E2E1',
-        offers_price: 1900,
+        offers_price: 9999,
       });
-      ventaId = res.body.id;
+      ventaId = res.body.data.id;
     });
 
     it('oferta inexistente → 404', async () => {
@@ -152,8 +143,10 @@ describe('Sales Record CRUD (e2e)', () => {
         .set(auth())
         .expect(200);
 
-      expect(Array.isArray(res.body)).toBe(true);
-      expect(res.body.some((v: { id: number }) => v.id === ventaId)).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
+      expect(res.body.data.some((v: { id: number }) => v.id === ventaId)).toBe(
+        true,
+      );
     });
   });
 
@@ -164,7 +157,7 @@ describe('Sales Record CRUD (e2e)', () => {
         .set(auth())
         .expect(200);
 
-      expect(res.body).toEqual({ ok: true, id: ventaId });
+      expect(res.body.data).toEqual({ ok: true, id: ventaId });
     });
 
     it('id inexistente → 404', async () => {
