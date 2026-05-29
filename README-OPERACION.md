@@ -1,7 +1,7 @@
 # Operacion de Stack por Perfil
 
 ## Version
-- Actual: `v3.0.0` (2026-05-29)
+- Actual: `v3.1.0` (2026-05-29)
 - Al hacer release: actualizar versión aquí y en `README.md`, y crear tag `vX.Y.Z`.
 
 Scripts:

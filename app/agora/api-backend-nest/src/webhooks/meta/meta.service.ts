@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { Q_META_MESSAGES, Q_META_CHANGES } from '../../queues/queues.constants';
+import { injectOtelToJob } from '../../shared/otel-bullmq';
 import {
   MetaWebhookPayload,
   MetaMessagingEvent,
@@ -167,6 +168,7 @@ export class MetaService {
         occurredAt,
         receivedAt: new Date().toISOString(),
         payload: normalizedMessage,
+        _otel: injectOtelToJob(),
       },
       {
         jobId: externalEventId,

@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { Q_META_MESSAGES } from '../queues/queues.constants';
+import { injectOtelToJob } from '../shared/otel-bullmq';
 
 type FcaEnvelope = {
   externalEventId?: unknown;
@@ -27,9 +28,11 @@ export class FcaIngressService {
   async ingestEnvelope(input: FcaEnvelope) {
     const envelope = this.normalizeEnvelope(input);
 
-    await this.messagesQueue.add('fca.message', envelope, {
-      jobId: this.queueJobId(envelope.externalEventId),
-    });
+    await this.messagesQueue.add(
+      'fca.message',
+      { ...envelope, _otel: injectOtelToJob() },
+      { jobId: this.queueJobId(envelope.externalEventId) },
+    );
 
     this.logger.log(
       `FLOW[QUEUE] fca.message enqueued externalEventId=${envelope.externalEventId}`,

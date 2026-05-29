@@ -16,6 +16,9 @@ services:
       - ABACKEND_INTERNAL_URL=${ABACKEND_INTERNAL_URL}
       - MEDIA_BASE_URL=${MEDIA_BASE_URL}
       - BAILEYS_INTERNAL_TOKEN=${BAILEYS_INTERNAL_TOKEN}
+      - OTEL_ENABLED=${OTEL_ENABLED:-false}
+      - OTEL_SERVICE_NAME=wa-backend
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318/v1/traces}
     volumes:
       - ./auth:/app/auth
       - ./config-bot.json:/app/config-bot.json

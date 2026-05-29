@@ -1,5 +1,27 @@
 # Changelog
 
+## 3.1.0
+
+### Added
+- **OpenTelemetry — Fases 1-5 completas**: instrumentación distribuida end-to-end sobre todo el stack
+- `api-backend-nest/src/tracing.ts` — bootstrap del SDK OTel (`NodeSDK` + `BatchSpanProcessor`, auto-instrumentaciones HTTP/Express/Prisma/NestJS); cargado vía `node --require ./dist/tracing.js` antes de que levante NestJS
+- `api-backend-nest/src/shared/otel-bullmq.ts` — helpers `injectOtelToJob()` y `withJobSpan()` para propagación de contexto W3C entre jobs BullMQ; no-op transparente cuando `OTEL_ENABLED=false`
+- Propagación de contexto en el pipeline de mensajes: `BaileysIngressService`, `FcaIngressService` y `MetaService` inyectan `_otel` al encolar; `MessagesProcessor`, `MsgDelegationProcessor` y `ThreadMsgDelegationProcessor` envuelven `process()` en un span hijo
+- `wa-backend/src/tracing.ts` — bootstrap OTel para Express/ESM; cargado vía `node --import ./dist/tracing.js` (sintaxis ESM)
+- `app/agora/config/otel-collector.yml` — OTel Collector contrib con receptor OTLP HTTP, `probabilistic_sampler` configurable por env var (`OTEL_SAMPLING_PERCENTAGE`) y exportador OTLP gRPC a Jaeger
+- `docs/PLAN_OBSERVABILIDAD.md` — plan completo de 6 fases con decisiones, implementación y runbook de validación
+
+### Changed
+- `app/agora/docker-compose.yml` — nuevo servicio `otel-collector`; Jaeger ahora usa volumen `jaeger_badger` persistente con `JAEGER_BADGER_EPHEMERAL` condicional (dev: memoria, prod: volumen); backend apunta a `otel-collector:4318` en lugar de Jaeger directo
+- `app/wa-backend/docker-compose.yml` — agregadas variables `OTEL_ENABLED`, `OTEL_SERVICE_NAME`, `OTEL_EXPORTER_OTLP_ENDPOINT`
+- `app/wa-backend/Dockerfile` — CMD actualizado a `node --import ./dist/tracing.js dist/main.js`
+- `api-backend-nest/entrypoint.sh` — CMD actualizado a `node --require ./dist/tracing.js dist/main.js`
+- `dev.local1.secrets.env` — agregadas `OTEL_SAMPLING_PERCENTAGE=100`, `JAEGER_BADGER_EPHEMERAL=true`
+
+### Infrastructure
+- VPS prod: volumen `stack_agora_jaeger_badger` creado con permisos `10001:10001` (usuario Jaeger); listo para `JAEGER_BADGER_EPHEMERAL=false`
+- `prod.vps1.secrets.env` — agregadas `OTEL_ENABLED=true`, `OTEL_SAMPLING_PERCENTAGE=20`, `JAEGER_BADGER_EPHEMERAL=false`
+
 ## 3.0.0
 
 ### Added

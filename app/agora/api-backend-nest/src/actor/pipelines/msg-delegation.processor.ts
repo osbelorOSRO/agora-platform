@@ -6,6 +6,7 @@ import { Job, Queue } from 'bullmq';
 import { MsgDelegationStateService } from './msg-delegation-state.service';
 import { MsgDelegationCompletionService } from './msg-delegation-completion.service';
 import { getRuntimeSecret } from '../../shared/runtime-secrets';
+import { withJobSpan } from '../../shared/otel-bullmq';
 
 @Injectable()
 @Processor(Q_MSG_DELEGATION, { concurrency: 1 })
@@ -21,6 +22,14 @@ export class MsgDelegationProcessor extends WorkerHost {
   }
 
   async process(job: Job<any>) {
+    return withJobSpan(
+      job.data._otel,
+      `bullmq.${Q_MSG_DELEGATION}.process`,
+      () => this.processInner(job),
+    );
+  }
+
+  private async processInner(job: Job<any>) {
     if (job.name === 'msg.delegation.timeout') {
       const data = job.data || {};
       const result = await this.completion.completeWithoutSignal({

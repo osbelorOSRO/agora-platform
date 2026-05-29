@@ -1,4 +1,4 @@
 #!/bin/sh
 set -e
 
-exec node dist/main.js
+exec node --require ./dist/tracing.js dist/main.js

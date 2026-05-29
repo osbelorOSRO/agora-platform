@@ -85,12 +85,47 @@ services:
       - MINIO_BUCKET=${MINIO_BUCKET:-agora-media}
       - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
       - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - OTEL_ENABLED=${OTEL_ENABLED:-false}
+      - OTEL_SERVICE_NAME=api-backend-nest
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318/v1/traces}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:4001/ping/db >/dev/null || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 25s
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.118.0
+    container_name: otel-collector
+    restart: unless-stopped
+    volumes:
+      - ./config/otel-collector.yml:/etc/otel/config.yml
+    command: ["--config=/etc/otel/config.yml"]
+    environment:
+      - OTEL_SAMPLING_PERCENTAGE=${OTEL_SAMPLING_PERCENTAGE:-100}
+    networks:
+      - npm_network
+    depends_on:
+      - jaeger
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    restart: unless-stopped
+    environment:
+      SPAN_STORAGE_TYPE: badger
+      # Dev: JAEGER_BADGER_EPHEMERAL=true (memoria, sin volumen)
+      # Prod: JAEGER_BADGER_EPHEMERAL=false (volumen persistente; ver runbook permisos)
+      BADGER_EPHEMERAL: "${JAEGER_BADGER_EPHEMERAL:-true}"
+      BADGER_DIRECTORY_VALUE: /badger/data
+      BADGER_DIRECTORY_KEY: /badger/key
+    volumes:
+      - jaeger_badger:/badger
+    ports:
+      - "127.0.0.1:16686:16686"   # UI — solo localhost; en prod acceder vía SSH tunnel Tailscale
+    networks:
+      - npm_network
 
   fb-backend:
     build:
@@ -118,3 +153,7 @@ services:
 networks:
   npm_network:
     external: true
+
+volumes:
+  jaeger_badger:
+

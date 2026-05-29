@@ -13,6 +13,7 @@ import {
 import { MessageNormalizerService } from './services/message-normalizer.service';
 import { DelegationGateService } from './services/delegation-gate.service';
 import { IncomingMessagePersistenceService } from './services/incoming-message-persistence.service';
+import { injectOtelToJob, withJobSpan } from '../../shared/otel-bullmq';
 
 @Processor(Q_META_MESSAGES, { concurrency: 1 })
 export class MessagesProcessor extends WorkerHost {
@@ -45,6 +46,14 @@ export class MessagesProcessor extends WorkerHost {
       return;
     }
 
+    return withJobSpan(
+      job.data._otel,
+      `bullmq.${Q_META_MESSAGES}.process`,
+      () => this.processInner(job),
+    );
+  }
+
+  private async processInner(job: Job<any>): Promise<void> {
     const env = job.data;
     this.logger.log(
       `FLOW[MESSAGE] start externalEventId=${env.externalEventId}`,
@@ -161,7 +170,7 @@ export class MessagesProcessor extends WorkerHost {
           );
         await this.threadDelegationQueue.add(
           'thread.msg.delegation',
-          threadDelegationPayload,
+          { ...threadDelegationPayload, _otel: injectOtelToJob() },
           {
             jobId: `thread_${env.externalEventId}`,
             attempts: 5,
@@ -215,6 +224,7 @@ export class MessagesProcessor extends WorkerHost {
           payload: env.payload,
           provider: env.provider,
           objectType: env.objectType,
+          _otel: injectOtelToJob(),
         },
         {
           jobId: env.externalEventId,

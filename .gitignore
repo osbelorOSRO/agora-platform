@@ -64,6 +64,8 @@ ops/docs/DOC-PLAN-MITIGACION-SUPERFICIES-ATAQUE.md
 ops/docs/DOC-VAULT-POLICY-NEST-REFACTOR.md
 ops/scripts/restore-dropped-columns.sql
 ops/private/
+docs/PLAN_OBSERVABILIDAD.md
+docs/Pruebas/
 
 # Claude Code / agentes AI (configuración local, no versionar)
 .claude/

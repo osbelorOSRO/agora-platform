@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { Q_META_MESSAGES } from '../queues/queues.constants';
+import { injectOtelToJob } from '../shared/otel-bullmq';
 
 type BaileysEnvelope = {
   externalEventId?: unknown;
@@ -27,9 +28,11 @@ export class BaileysIngressService {
   async ingestEnvelope(input: BaileysEnvelope) {
     const envelope = this.normalizeEnvelope(input);
 
-    await this.messagesQueue.add('baileys.message', envelope, {
-      jobId: this.queueJobId(envelope.externalEventId),
-    });
+    await this.messagesQueue.add(
+      'baileys.message',
+      { ...envelope, _otel: injectOtelToJob() },
+      { jobId: this.queueJobId(envelope.externalEventId) },
+    );
 
     this.logger.log(
       `FLOW[QUEUE] baileys.message enqueued externalEventId=${envelope.externalEventId}`,

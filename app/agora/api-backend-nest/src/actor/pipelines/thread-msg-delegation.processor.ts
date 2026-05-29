@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Job } from 'bullmq';
 import { Q_THREAD_MSG_DELEGATION } from '../../queues/queues.constants';
 import { getRuntimeSecret } from '../../shared/runtime-secrets';
+import { withJobSpan } from '../../shared/otel-bullmq';
 
 @Injectable()
 @Processor(Q_THREAD_MSG_DELEGATION, { concurrency: 1 })
@@ -11,6 +12,14 @@ export class ThreadMsgDelegationProcessor extends WorkerHost {
   private readonly logger = new Logger(ThreadMsgDelegationProcessor.name);
 
   async process(job: Job<any>) {
+    return withJobSpan(
+      job.data._otel,
+      `bullmq.${Q_THREAD_MSG_DELEGATION}.process`,
+      () => this.processInner(job),
+    );
+  }
+
+  private async processInner(job: Job<any>) {
     if (job.name !== 'thread.msg.delegation') {
       this.logger.warn(
         `Job ignorado en ${Q_THREAD_MSG_DELEGATION}: name=${job.name}, id=${job.id}`,
