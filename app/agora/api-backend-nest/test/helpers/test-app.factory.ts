@@ -98,6 +98,10 @@ export async function createTestApp(): Promise<TestAppContext> {
     'editar_configuracion',
     'gestion_integraciones',
     'gestion_conexiones',
+    'gestionar_usuarios',
+    'vista_bot',
+    'control_bot',
+    'control_agenda',
   ];
 
   const signToken = (payload: Record<string, unknown>, expiresIn = '1h') => {
