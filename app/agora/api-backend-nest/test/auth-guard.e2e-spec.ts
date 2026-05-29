@@ -43,7 +43,11 @@ describe('Auth Guard (e2e)', () => {
     });
 
     it('con JWT válido de test → 200', async () => {
-      const token = ctx.signToken({ id: 1, rol: 'superadmin', permisos: [] });
+      const token = ctx.signToken({
+        id: 1,
+        rol: 'superadmin',
+        permisos: ['gestion_ventas'],
+      });
       await request(ctx.app.getHttpServer())
         .get('/sales-record')
         .set('Authorization', `Bearer ${token}`)
@@ -54,7 +58,11 @@ describe('Auth Guard (e2e)', () => {
     });
 
     it('con JWT válido y filtro de mes → 200', async () => {
-      const token = ctx.signToken({ id: 1, rol: 'superadmin', permisos: [] });
+      const token = ctx.signToken({
+        id: 1,
+        rol: 'superadmin',
+        permisos: ['gestion_ventas'],
+      });
       await request(ctx.app.getHttpServer())
         .get('/sales-record?year=2026&month=5')
         .set('Authorization', `Bearer ${token}`)

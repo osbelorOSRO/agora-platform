@@ -10,7 +10,11 @@ describe('Sales Record CRUD (e2e)', () => {
 
   beforeAll(async () => {
     ctx = await createTestApp();
-    token = ctx.signToken({ id: 1, rol: 'superadmin', permisos: [] });
+    token = ctx.signToken({
+      id: 1,
+      rol: 'superadmin',
+      permisos: ['gestion_ventas'],
+    });
   });
 
   afterAll(async () => {
