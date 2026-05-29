@@ -119,4 +119,4 @@ jobs:
           docker compose -p stack_agora \
             --env-file "$ENV_FILE" \
             -f app/agora/docker-compose.yml \
-            up -d --no-build --force-recreate frontend backend websocket fb-backend
+            up -d --no-build --force-recreate frontend backend websocket fb-backend jaeger otel-collector
