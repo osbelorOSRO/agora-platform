@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import QRCode from "react-qr-code";
 import { Eye, EyeOff } from "lucide-react";
+import { storage } from "@/lib/storage";
 
 const EscaneoQR: React.FC = () => {
   const navigate = useNavigate();
@@ -10,7 +11,7 @@ const EscaneoQR: React.FC = () => {
   const [passwordInput, setPasswordInput] = useState("");
 
   useEffect(() => {
-    const otpauthUrl = localStorage.getItem("otpauth_url");
+    const otpauthUrl = storage.getOtpUrl();
     if (!otpauthUrl) {
       navigate("/login");
     } else {

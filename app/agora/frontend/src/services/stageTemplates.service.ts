@@ -6,7 +6,8 @@ import type {
   UpdateStageTemplateInput,
 } from "@/types/stageTemplates";
 
-const API_URL = import.meta.env.VITE_API_URL as string;
+import { env } from "@/lib/env";
+const API_URL = env.apiUrl;
 
 export const listStageTemplates = async (stageActual?: string): Promise<StageTemplate[]> => {
   const params = stageActual ? `?stageActual=${encodeURIComponent(stageActual)}` : "";

@@ -70,6 +70,18 @@ export class AccessAuthService {
     const rol = usuario.rol_usuarios_rol_idTorol;
     const permisos = rol ? rol.rol_permiso.map((rp) => rp.permiso.nombre) : [];
     const nombreRol = rol?.nombre ?? null;
+    const isSuperadmin = nombreRol === 'superadmin';
+
+    const features = {
+      conversations: permisos.includes('gestionar_usuarios'),
+      reports: permisos.includes('ver_reportes'),
+      settings: permisos.includes('editar_configuracion'),
+      botView: permisos.includes('vista_bot'),
+      botControl: permisos.includes('control_bot'),
+      scheduleControl: permisos.includes('control_agenda'),
+      salesManagement: permisos.includes('gestion_ventas'),
+      superadmin: isSuperadmin,
+    };
 
     const tokenJwt = await this.authService.firmarToken({
       id: usuario.id,
@@ -79,6 +91,7 @@ export class AccessAuthService {
       email: usuario.email,
       rol: nombreRol,
       permisos,
+      features,
     });
 
     await this.prisma.sesion

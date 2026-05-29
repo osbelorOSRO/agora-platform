@@ -111,15 +111,15 @@ function OfferModal({
           </div>
 
           <div className="col-span-2 flex items-center gap-6">
-            <label className="flex items-center gap-2 text-xs text-foreground/80 cursor-pointer">
+            <label className="flex items-center gap-2 text-xs text-secondary-foreground cursor-pointer">
               <input type="checkbox" checked={form.excluye_alta ?? false} onChange={(e) => f("excluye_alta", e.target.checked)} />
               excluye_alta
             </label>
-            <label className="flex items-center gap-2 text-xs text-foreground/80 cursor-pointer">
+            <label className="flex items-center gap-2 text-xs text-secondary-foreground cursor-pointer">
               <input type="checkbox" checked={form.excluye_portabilidad_postpago ?? false} onChange={(e) => f("excluye_portabilidad_postpago", e.target.checked)} />
               excluye_portabilidad_postpago
             </label>
-            <label className="flex items-center gap-2 text-xs text-foreground/80 cursor-pointer">
+            <label className="flex items-center gap-2 text-xs text-secondary-foreground cursor-pointer">
               <input type="checkbox" checked={form.tiene_redes_libres ?? false} onChange={(e) => f("tiene_redes_libres", e.target.checked)} />
               tiene_redes_libres
             </label>
@@ -224,7 +224,7 @@ export default function OffersPage() {
   });
 
   const tipoBadge = (tipo: string | null) => {
-    if (!tipo) return <span className="text-muted-foreground/50">—</span>;
+    if (!tipo) return <span className="text-muted-foreground">—</span>;
     const colors: Record<string, string> = {
       individual: "text-sky-400 bg-sky-400/10",
       multilineas: "text-violet-400 bg-violet-400/10",
@@ -234,8 +234,8 @@ export default function OffersPage() {
   };
 
   const bool = (val: boolean | null, colorTrue = "text-emerald-400") =>
-    val === null ? <span className="text-muted-foreground/50">—</span>
-      : <span className={val ? colorTrue : "text-muted-foreground/50"}>{val ? "sí" : "no"}</span>;
+    val === null ? <span className="text-muted-foreground">—</span>
+      : <span className={val ? colorTrue : "text-muted-foreground"}>{val ? "sí" : "no"}</span>;
 
   return (
     <div className="flex h-full flex-col bg-background text-foreground gap-6 p-6">
@@ -289,10 +289,10 @@ export default function OffersPage() {
               <tbody>
                 {rows.map((row) => (
                   <tr key={row.codigo} className="border-b border-border hover:bg-card transition-colors">
-                    <td className="py-2 pr-4 font-mono text-foreground/80 whitespace-nowrap">{row.codigo}</td>
+                    <td className="py-2 pr-4 font-mono text-secondary-foreground whitespace-nowrap">{row.codigo}</td>
                     <td className="py-2 pr-4 text-foreground whitespace-nowrap">{row.nombre ?? "—"}</td>
                     <td className="py-2 pr-4 whitespace-nowrap">{tipoBadge(row.tipo)}</td>
-                    <td className="py-2 pr-4 text-foreground/80 whitespace-nowrap">{row.precio_base ? `$${Number(row.precio_base).toLocaleString("es-CL")}` : "—"}</td>
+                    <td className="py-2 pr-4 text-secondary-foreground whitespace-nowrap">{row.precio_base ? `$${Number(row.precio_base).toLocaleString("es-CL")}` : "—"}</td>
                     <td className="py-2 pr-4 text-muted-foreground whitespace-nowrap">{row.precio_normal ? `$${row.precio_normal.toLocaleString("es-CL")}` : "—"}</td>
                     <td className="py-2 pr-4 text-muted-foreground whitespace-nowrap">{row.duracion_precio ?? "—"}</td>
                     <td className="py-2 pr-4 text-muted-foreground whitespace-nowrap">{row.lineas ?? "—"}</td>
@@ -310,7 +310,7 @@ export default function OffersPage() {
                             className="h-10 w-10 rounded object-cover border border-border cursor-zoom-in"
                             onDoubleClick={() => setLightbox({ url: row.url_archivo!, nombre: row.nombre })}
                           />
-                        : <span className="text-muted-foreground/50">—</span>}
+                        : <span className="text-muted-foreground">—</span>}
                     </td>
                     <td className="py-2 pr-4 text-[11px] text-muted-foreground max-w-[180px] truncate" title={row.url_archivo ?? ""}>{row.url_archivo ?? "—"}</td>
                     <td className="py-2 pr-4 text-[11px] text-muted-foreground max-w-[220px] truncate" title={row.descripcion ?? ""}>{row.descripcion ?? "—"}</td>
@@ -326,7 +326,7 @@ export default function OffersPage() {
                 ))}
                 {rows.length === 0 && (
                   <tr>
-                    <td colSpan={16} className="py-8 text-center text-muted-foreground/50">Sin registros</td>
+                    <td colSpan={16} className="py-8 text-center text-muted-foreground">Sin registros</td>
                   </tr>
                 )}
               </tbody>
@@ -351,7 +351,7 @@ export default function OffersPage() {
               <X size={16} />
             </button>
             {lightbox.nombre && (
-              <p className="mb-3 text-xs font-semibold text-foreground/80">{lightbox.nombre}</p>
+              <p className="mb-3 text-xs font-semibold text-secondary-foreground">{lightbox.nombre}</p>
             )}
             <img
               src={lightbox.url}

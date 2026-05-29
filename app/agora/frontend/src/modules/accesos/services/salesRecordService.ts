@@ -7,13 +7,10 @@ import type {
   CreateSaleDto,
   ModalidadVenta,
 } from "../types/salesRecord";
+import { getAuthHeaders } from "@/utils/getAuthHeaders";
+import { env } from "@/lib/env";
 
-const API_URL = (import.meta.env.VITE_API_URL as string).replace(/\/+$/, "");
-
-const getAuthHeaders = () => ({
-  Authorization: `Bearer ${localStorage.getItem("token")}`,
-  "Content-Type": "application/json",
-});
+const API_URL = env.apiUrl;
 
 // ─── Ventas ───────────────────────────────────────────────────────────────────
 

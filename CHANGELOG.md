@@ -1,5 +1,27 @@
 # Changelog
 
+## 3.2.0
+
+### Added
+- **Homologación Frontend completa** — todas las categorías ✅
+- `src/lib/storage.ts` — centraliza todo acceso a `localStorage` (token, OTP URL, notificaciones); única fuente de keys
+- `src/lib/env.ts` — centraliza todas las variables `VITE_*`; falla en startup si falta una requerida
+- **Feature flags en JWT** — backend (`access-auth.service.ts`) embebe `features: { conversations, reports, settings, botView, botControl, scheduleControl, salesManagement, superadmin }` en el token. Frontend nunca lee strings de permisos/roles
+- `ProtectedRoute` usa `requiredFeature: keyof UserFeatures` — validado por TypeScript
+- **261 tests Vitest** en 21 archivos: servicios, hooks React Query, componentes (ThreadItem, MessageBubble, ComposerView, PuntosCard, CatalogoTable, RegistrarVentaModal, CsvImportBanner), `useMetaInbox` (socket lifecycle, filtros, filteredThreads)
+
+### Changed
+- Variables de entorno del frontend reducidas de 7 a 4: solo `VITE_API_URL`, `VITE_WEBSOCKET_URL`, `VITE_MEDIA_BASE_URL`, `VITE_WA_PUBLIC_URL`. Eliminadas `VITE_AUTH_API_URL`, `VITE_API_URL_ACCESOS`, `VITE_ESTADO_BOT_URL` de Dockerfile, docker-compose, .env.example y .env.production
+- `NotificacionContext.tsx` — localStorage vía `storage.ts`; keys centralizadas
+- Modificadores de opacidad rotos (`/40`–`/80`) eliminados en 20+ archivos. Tokens CSS del sistema están en hex, no RGB — los `/n` generan CSS inválido. Reemplazados por tokens base (`text-muted-foreground`, `text-secondary-foreground`, `border-border-primary`)
+- Colores hex hardcodeados en `Roles.tsx`, `SignalScoringRules.tsx`, `PuntosCard.tsx`, `ThreadItem.tsx`, `ChunkErrorPage.tsx`, `SidePanel.tsx` → tokens Tailwind del sistema
+- `catch (e: any)` → `catch (e: unknown)` con `e instanceof Error` en `useMetaInbox` (5 handlers) y `useContactForm`
+- `permissions.ts` (`hasPermission`, `hasAnyPermission`) eliminado — código muerto desde migración a feature flags
+
+### Fixed
+- `Dockerfile` — warning `SecretsUsedInArgOrEnv` eliminado al quitar `VITE_AUTH_API_URL` obsoleta
+- Errores TypeScript en tests: `SaleRecord` campos faltantes, `Mock<Fn>` tipado correcto, `total_points: number` en `SaleMonthlyPoints`
+
 ## 3.1.0
 
 ### Added

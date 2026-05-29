@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { KeyRound, Users, Activity, Wrench, LayoutList, PackageOpen, Plug, GitMerge, Zap, TrendingUp, Facebook } from "lucide-react";
 import { getTokenData } from "@/utils/getTokenData";
-import { hasPermission } from "@/utils/permissions";
 
 const adminCards = [
   {
@@ -51,59 +50,48 @@ const toolCards = [
     title: "Bot",
     description: "Control del bot de WhatsApp y reglas de automatización.",
     Icon: Wrench,
-    permission: "vista_bot" as const,
-    superadmin: false,
+    feature: "botView" as const,
   },
   {
     to: "/stage-templates",
     title: "Stages",
     description: "Plantillas de etapas del ciclo de vida de conversaciones.",
     Icon: LayoutList,
-    permission: null,
-    superadmin: true,
+    feature: "superadmin" as const,
   },
   {
     to: "/offers",
     title: "Offers",
     description: "Gestión de ofertas y planes comerciales.",
     Icon: PackageOpen,
-    permission: null,
-    superadmin: true,
+    feature: "superadmin" as const,
   },
   {
     to: "/integraciones",
     title: "Integrations",
     description: "Conexiones externas y configuración de canales.",
     Icon: Plug,
-    permission: null,
-    superadmin: true,
+    feature: "superadmin" as const,
   },
   {
     to: "/integraciones/fca",
     title: "Facebook / Marketplace",
     description: "Integración de perfil personal de Facebook vía fca-unofficial.",
     Icon: Facebook,
-    permission: null,
-    superadmin: true,
+    feature: "superadmin" as const,
   },
 ];
 
 export default function Ajustes() {
-  const user = getTokenData();
-  const permissions = user?.permisos ?? [];
-  const isSuperadmin = user?.rol === "superadmin";
+  const features = getTokenData()?.features;
 
-  const visibleTools = toolCards.filter(({ permission, superadmin }) => {
-    if (superadmin) return isSuperadmin;
-    if (permission) return hasPermission(permission, permissions);
-    return false;
-  });
+  const visibleTools = toolCards.filter(({ feature }) => features?.[feature]);
 
   return (
     <section className="space-y-8 text-white">
       <div>
         <h1 className="text-3xl font-bold">Ajustes</h1>
-        <p className="mt-2 max-w-2xl text-sm text-[#CCCCCC]">
+        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
           Administración de accesos, herramientas operativas e integraciones.
         </p>
       </div>
@@ -114,17 +102,17 @@ export default function Ajustes() {
             <Link
               key={to}
               to={to}
-              className="rounded-2xl border border-[#2D2D2D] bg-[#141414] p-6 transition hover:bg-[#1A1A1A]"
+              className="rounded-2xl border border-border bg-muted p-6 transition hover:bg-card"
             >
               <Icon className="mb-4 h-8 w-8 text-white" />
               <h2 className="text-xl font-semibold">{title}</h2>
-              <p className="mt-2 text-sm text-[#BFBFBF]">{description}</p>
+              <p className="mt-2 text-sm text-muted-foreground">{description}</p>
             </Link>
           ))}
         </div>
 
         <>
-          <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#666666]">
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-muted-foreground">
             Scoring & Ciclo de vida
           </p>
           <div className="grid gap-4 md:grid-cols-2">
@@ -132,11 +120,11 @@ export default function Ajustes() {
               <Link
                 key={to}
                 to={to}
-                className="rounded-2xl border border-[#2D2D2D] bg-[#141414] p-6 transition hover:bg-[#1A1A1A]"
+                className="rounded-2xl border border-border bg-muted p-6 transition hover:bg-card"
               >
                 <Icon className="mb-4 h-8 w-8 text-white" />
                 <h2 className="text-xl font-semibold">{title}</h2>
-                <p className="mt-2 text-sm text-[#BFBFBF]">{description}</p>
+                <p className="mt-2 text-sm text-muted-foreground">{description}</p>
               </Link>
             ))}
           </div>
@@ -144,7 +132,7 @@ export default function Ajustes() {
 
         {visibleTools.length > 0 && (
           <>
-            <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#666666]">
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-muted-foreground">
               Herramientas
             </p>
             <div className="grid gap-4 md:grid-cols-2">
@@ -152,11 +140,11 @@ export default function Ajustes() {
                 <Link
                   key={to}
                   to={to}
-                  className="rounded-2xl border border-[#2D2D2D] bg-[#141414] p-6 transition hover:bg-[#1A1A1A]"
+                  className="rounded-2xl border border-border bg-muted p-6 transition hover:bg-card"
                 >
                   <Icon className="mb-4 h-8 w-8 text-white" />
                   <h2 className="text-xl font-semibold">{title}</h2>
-                  <p className="mt-2 text-sm text-[#BFBFBF]">{description}</p>
+                  <p className="mt-2 text-sm text-muted-foreground">{description}</p>
                 </Link>
               ))}
             </div>

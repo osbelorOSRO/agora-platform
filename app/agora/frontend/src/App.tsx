@@ -1,32 +1,52 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Login from "./pages/Login";
+import { Suspense, lazy } from "react";
+import Lottie from "lottie-react";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import loadingAnimation from "./assets/animations/loading.json";
+
+// Carga síncrona — rutas públicas y layout base (siempre necesarios)
+import Login from "./pages/Login";
 import EscaneoQR from "./pages/EscaneoQR";
 import ResetPassword from "./pages/ResetPassword";
 import Setup2FA from "./pages/Setup2FA";
 import BaseLayout from "./modules/accesos/layouts/BaseLayout";
-import Welcome from "./modules/accesos/pages/Welcome";
-import Agenda from "./modules/accesos/pages/Agenda";
-import Usuarios from "./modules/accesos/pages/Usuarios";
-import Roles from "./modules/accesos/pages/Roles";
-import MetaInboxPage from "./pages/MetaInboxPage";
-import WhatsappAdsPage from "./pages/WhatsappAdsPage";
-import Ajustes from "./modules/accesos/pages/Ajustes";
-import Sesiones from "./modules/accesos/pages/Sesiones";
-import Reportes from "./modules/accesos/pages/Reportes";
-import WaControlPage from "./modules/wa/pages/WaControlPage";
-import TransitionRules from "./modules/accesos/pages/TransitionRules";
-import SignalScoringRules from "./modules/accesos/pages/SignalScoringRules";
-import StageTemplatesPage from "./pages/StageTemplatesPage";
-import OffersPage from "./pages/OffersPage";
-import MetaConfigPage from "./pages/MetaConfigPage";
-import FcaConfigPage from "./pages/FcaConfigPage";
-import ProfilePage from "./pages/ProfilePage";
-import VentasPage from "./modules/accesos/pages/VentasPage";
+
+// Lazy — páginas protegidas (se cargan solo al navegar a la ruta)
+const Welcome            = lazy(() => import("./modules/accesos/pages/Welcome"));
+const Agenda             = lazy(() => import("./modules/accesos/pages/Agenda"));
+const Usuarios           = lazy(() => import("./modules/accesos/pages/Usuarios"));
+const Roles              = lazy(() => import("./modules/accesos/pages/Roles"));
+const MetaInboxPage      = lazy(() => import("./pages/MetaInboxPage"));
+const WhatsappAdsPage    = lazy(() => import("./pages/WhatsappAdsPage"));
+const Ajustes            = lazy(() => import("./modules/accesos/pages/Ajustes"));
+const Sesiones           = lazy(() => import("./modules/accesos/pages/Sesiones"));
+const Reportes           = lazy(() => import("./modules/accesos/pages/Reportes"));
+const WaControlPage      = lazy(() => import("./modules/wa/pages/WaControlPage"));
+const TransitionRules    = lazy(() => import("./modules/accesos/pages/TransitionRules"));
+const SignalScoringRules = lazy(() => import("./modules/accesos/pages/SignalScoringRules"));
+const StageTemplatesPage = lazy(() => import("./pages/StageTemplatesPage"));
+const OffersPage         = lazy(() => import("./pages/OffersPage"));
+const MetaConfigPage     = lazy(() => import("./pages/MetaConfigPage"));
+const FcaConfigPage      = lazy(() => import("./pages/FcaConfigPage"));
+const ProfilePage        = lazy(() => import("./pages/ProfilePage"));
+const VentasPage         = lazy(() => import("./modules/accesos/pages/VentasPage"));
+
+const PageLoader = () => (
+  <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-background">
+    <div className="w-20">
+      <Lottie animationData={loadingAnimation} loop style={{ width: "100%" }} />
+    </div>
+    <span className="text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground">
+      Agora
+    </span>
+  </div>
+);
 
 function App() {
   return (
     <BrowserRouter>
+      <Suspense fallback={<PageLoader />}>
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
 
@@ -43,100 +63,101 @@ function App() {
           }
         >
           <Route path="/accesos" element={<Navigate to="/accesos/welcome" replace />} />
-          <Route path="/accesos/welcome" element={<Welcome />} />
+          <Route path="/accesos/welcome" element={<ErrorBoundary variant="section"><Welcome /></ErrorBoundary>} />
+
           <Route
             path="/agenda"
             element={
-              <ProtectedRoute requiredPermissions={["gestionar_usuarios"]}>
-                <Agenda />
+              <ProtectedRoute requiredFeature="conversations">
+                <ErrorBoundary variant="section"><Agenda /></ErrorBoundary>
               </ProtectedRoute>
             }
           />
           <Route
             path="/meta-inbox"
             element={
-              <ProtectedRoute requiredPermissions={["gestionar_usuarios"]}>
-                <MetaInboxPage />
+              <ProtectedRoute requiredFeature="conversations">
+                <ErrorBoundary variant="section"><MetaInboxPage /></ErrorBoundary>
               </ProtectedRoute>
             }
           />
           <Route
             path="/meta-ads"
             element={
-              <ProtectedRoute requiredPermissions={["gestionar_usuarios"]}>
-                <WhatsappAdsPage />
+              <ProtectedRoute requiredFeature="conversations">
+                <ErrorBoundary variant="section"><WhatsappAdsPage /></ErrorBoundary>
               </ProtectedRoute>
             }
           />
           <Route
             path="/accesos/reportes"
             element={
-              <ProtectedRoute requiredPermissions={["ver_reportes"]}>
-                <Reportes />
+              <ProtectedRoute requiredFeature="reports">
+                <ErrorBoundary variant="section"><Reportes /></ErrorBoundary>
               </ProtectedRoute>
             }
           />
           <Route
             path="/wa-control"
             element={
-              <ProtectedRoute requiredPermissions={["vista_bot"]}>
-                <WaControlPage />
+              <ProtectedRoute requiredFeature="botView">
+                <ErrorBoundary variant="section"><WaControlPage /></ErrorBoundary>
               </ProtectedRoute>
             }
           />
           <Route
             path="/accesos/ajustes"
             element={
-              <ProtectedRoute requiredPermissions={["editar_configuracion"]}>
-                <Ajustes />
+              <ProtectedRoute requiredFeature="settings">
+                <ErrorBoundary variant="section"><Ajustes /></ErrorBoundary>
               </ProtectedRoute>
             }
           />
           <Route
             path="/accesos/ajustes/usuarios"
             element={
-              <ProtectedRoute requiredPermissions={["editar_configuracion"]}>
-                <Usuarios />
+              <ProtectedRoute requiredFeature="settings">
+                <ErrorBoundary variant="section"><Usuarios /></ErrorBoundary>
               </ProtectedRoute>
             }
           />
           <Route
             path="/accesos/ajustes/roles"
             element={
-              <ProtectedRoute requiredPermissions={["editar_configuracion"]}>
-                <Roles />
+              <ProtectedRoute requiredFeature="settings">
+                <ErrorBoundary variant="section"><Roles /></ErrorBoundary>
               </ProtectedRoute>
             }
           />
           <Route
             path="/accesos/ajustes/sesiones"
             element={
-              <ProtectedRoute requiredPermissions={["editar_configuracion"]}>
-                <Sesiones />
+              <ProtectedRoute requiredFeature="settings">
+                <ErrorBoundary variant="section"><Sesiones /></ErrorBoundary>
               </ProtectedRoute>
             }
           />
           <Route
             path="/accesos/ajustes/transicion"
             element={
-              <ProtectedRoute requiredPermissions={["editar_configuracion"]}>
-                <TransitionRules />
+              <ProtectedRoute requiredFeature="settings">
+                <ErrorBoundary variant="section"><TransitionRules /></ErrorBoundary>
               </ProtectedRoute>
             }
           />
           <Route
             path="/accesos/ajustes/senales"
             element={
-              <ProtectedRoute requiredPermissions={["editar_configuracion"]}>
-                <SignalScoringRules />
+              <ProtectedRoute requiredFeature="settings">
+                <ErrorBoundary variant="section"><SignalScoringRules /></ErrorBoundary>
               </ProtectedRoute>
             }
           />
           <Route
             path="/accesos/ajustes/ventas"
             element={
-              <ProtectedRoute requiredPermissions={["editar_configuracion"]}>
-                <VentasPage />
+              <ProtectedRoute requiredFeature="settings">
+                <ErrorBoundary variant="section"><VentasPage /></ErrorBoundary>
               </ProtectedRoute>
             }
           />
@@ -151,38 +172,39 @@ function App() {
           <Route
             path="/stage-templates"
             element={
-              <ProtectedRoute requiredRole="superadmin">
-                <StageTemplatesPage />
+              <ProtectedRoute requiredFeature="superadmin">
+                <ErrorBoundary variant="section"><StageTemplatesPage /></ErrorBoundary>
               </ProtectedRoute>
             }
           />
           <Route
             path="/offers"
             element={
-              <ProtectedRoute requiredRole="superadmin">
-                <OffersPage />
+              <ProtectedRoute requiredFeature="superadmin">
+                <ErrorBoundary variant="section"><OffersPage /></ErrorBoundary>
               </ProtectedRoute>
             }
           />
           <Route
             path="/integraciones"
             element={
-              <ProtectedRoute requiredRole="superadmin">
-                <MetaConfigPage />
+              <ProtectedRoute requiredFeature="superadmin">
+                <ErrorBoundary variant="section"><MetaConfigPage /></ErrorBoundary>
               </ProtectedRoute>
             }
           />
           <Route
             path="/integraciones/fca"
             element={
-              <ProtectedRoute requiredRole="superadmin">
-                <FcaConfigPage />
+              <ProtectedRoute requiredFeature="superadmin">
+                <ErrorBoundary variant="section"><FcaConfigPage /></ErrorBoundary>
               </ProtectedRoute>
             }
           />
-          <Route path="/perfil" element={<ProfilePage />} />
+          <Route path="/perfil" element={<ErrorBoundary variant="section"><ProfilePage /></ErrorBoundary>} />
         </Route>
       </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

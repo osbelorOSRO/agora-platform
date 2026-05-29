@@ -1,30 +1,18 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { Home, Settings, FileSpreadsheet, MessagesSquare, UserCircle, ContactRound, Megaphone } from "lucide-react";
 import { getTokenData } from "@/utils/getTokenData";
-import { hasPermission } from "@/utils/permissions";
 
 export default function SidebarCompacto() {
   const location = useLocation();
-  const user = getTokenData();
-  const permissions = user?.permisos ?? [];
+  const features = getTokenData()?.features;
 
   const menuItems = [
     { to: "/accesos/welcome", icon: Home, label: "Home" },
-    hasPermission("gestionar_usuarios", permissions)
-      ? { to: "/agenda", icon: ContactRound, label: "Contacts" }
-      : null,
-    hasPermission("gestionar_usuarios", permissions)
-      ? { to: "/meta-inbox", icon: MessagesSquare, label: "Threads" }
-      : null,
-    hasPermission("gestionar_usuarios", permissions)
-      ? { to: "/meta-ads", icon: Megaphone, label: "Ads WA" }
-      : null,
-    hasPermission("ver_reportes", permissions)
-      ? { to: "/accesos/reportes", icon: FileSpreadsheet, label: "Reports" }
-      : null,
-    hasPermission("editar_configuracion", permissions)
-      ? { to: "/accesos/ajustes", icon: Settings, label: "Settings" }
-      : null,
+    features?.conversations ? { to: "/agenda",        icon: ContactRound,   label: "Contacts" } : null,
+    features?.conversations ? { to: "/meta-inbox",    icon: MessagesSquare, label: "Threads"  } : null,
+    features?.conversations ? { to: "/meta-ads",      icon: Megaphone,      label: "Ads WA"   } : null,
+    features?.reports       ? { to: "/accesos/reportes", icon: FileSpreadsheet, label: "Reports" } : null,
+    features?.settings      ? { to: "/accesos/ajustes",  icon: Settings,    label: "Settings" } : null,
     { to: "/perfil", icon: UserCircle, label: "Profile" },
   ].filter(Boolean) as Array<{
     to: string;
@@ -56,7 +44,7 @@ export default function SidebarCompacto() {
             className={({ isActive }) =>
               `flex items-center justify-center md:justify-start px-0 md:px-6 py-3 md:py-4 transition-all duration-200 ${
                 isActive || location.pathname.startsWith(`${to}/`)
-                  ? "border-l-2 border-primary bg-[#1E1108] text-primary"
+                  ? "border-l-2 border-primary bg-accent text-primary"
                   : "text-muted-foreground hover:bg-card hover:text-foreground"
               }`
             }

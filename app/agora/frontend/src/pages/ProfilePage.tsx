@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Camera, Check, ChevronLeft, Eye, EyeOff, KeyRound, LogOut, Pencil, Shield, User, X } from "lucide-react";
 import QRCode from "react-qr-code";
 import { getTokenData } from "@/utils/getTokenData";
-import { hasPermission } from "@/utils/permissions";
 import { getMe, logoutSession, removePhoto, updateMe, uploadPhoto, type MeProfile } from "@/services/profileService";
 import { useProfilePhoto } from "@/context/ProfilePhotoContext";
 import { resetPassword, setup2FAConfirmar, setup2FAInit } from "@/services/authService";
@@ -61,7 +60,7 @@ function ProfileAvatar({
           {uploading ? (
             <span className="text-xs text-muted-foreground">...</span>
           ) : photoUrl ? (
-            <img src={photoUrl} alt="Foto de perfil" className="h-full w-full object-cover" />
+            <img src={photoUrl} alt="Foto de perfil" loading="lazy" className="h-full w-full object-cover" />
           ) : (
             <span className="text-2xl font-black text-primary">{initials}</span>
           )}
@@ -191,18 +190,17 @@ function DatosTab({ profile, canEdit }: { profile: MeProfile; canEdit: boolean }
 }
 
 // ─── Sección Permisos ────────────────────────────────────────────────────────
-function PermisosTab({ permisos, rol }: { permisos: string[]; rol: string }) {
-  const isSuperadmin = rol === "superadmin";
-  const has = (p: string) => hasPermission(p, permisos);
+function PermisosTab({ rol }: { rol: string }) {
+  const features = getTokenData()?.features;
 
   const items: [string, boolean][] = [
-    ["Contacts / Threads / Ads WA", has("gestionar_usuarios")],
-    ["Reportes CSV", has("ver_reportes")],
-    ["Ajustes y config.", has("editar_configuracion")],
-    ["Vista bot WA", has("vista_bot")],
-    ["Control bot WA", has("control_bot")],
-    ["Control agenda", has("control_agenda")],
-    ...(isSuperadmin ? ([["Stages / Offers / Integrations", true]] as [string, boolean][]) : []),
+    ["Contacts / Threads / Ads WA", !!features?.conversations],
+    ["Reportes CSV",                 !!features?.reports],
+    ["Ajustes y config.",            !!features?.settings],
+    ["Vista bot WA",                 !!features?.botView],
+    ["Control bot WA",               !!features?.botControl],
+    ["Control agenda",               !!features?.scheduleControl],
+    ...(features?.superadmin ? ([["Stages / Offers / Integrations", true]] as [string, boolean][]) : []),
   ];
 
   return (
@@ -453,8 +451,7 @@ export default function ProfilePage() {
   const { photoUrl, setPhotoUrl } = useProfilePhoto();
   const [uploading, setUploading] = useState(false);
 
-  const permisos = tokenData?.permisos ?? [];
-  const canEdit = hasPermission("editar_configuracion", permisos);
+  const canEdit = tokenData?.features?.settings ?? false;
 
   useEffect(() => {
     getMe()
@@ -544,7 +541,7 @@ export default function ProfilePage() {
           ) : activeTab === "datos" && profile ? (
             <DatosTab profile={profile} canEdit={canEdit} />
           ) : activeTab === "permisos" ? (
-            <PermisosTab permisos={permisos} rol={tokenData?.rol ?? "—"} />
+            <PermisosTab rol={tokenData?.rol ?? "—"} />
           ) : activeTab === "seguridad" ? (
             <SeguridadTab username={profile?.username ?? tokenData?.username ?? ""} />
           ) : null}

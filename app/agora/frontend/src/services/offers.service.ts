@@ -2,7 +2,8 @@ import { unwrapEnvelope } from "@/lib/apiClient";
 import { getAuthHeaders } from "@/utils/getAuthHeaders";
 import type { CreateOfferInput, Offer, UpdateOfferInput } from "@/types/offers";
 
-const API_URL = import.meta.env.VITE_API_URL as string;
+import { env } from "@/lib/env";
+const API_URL = env.apiUrl;
 
 export const listOffers = async (): Promise<Offer[]> => {
   const res = await fetch(`${API_URL}/offers`, { headers: getAuthHeaders() });

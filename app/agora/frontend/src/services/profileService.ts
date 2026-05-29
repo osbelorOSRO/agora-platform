@@ -1,8 +1,11 @@
-const BASE_URL = import.meta.env.VITE_AUTH_API_URL || "/api/auth";
-const API_URL = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
+import { storage } from "@/lib/storage";
+import { env } from "@/lib/env";
+
+const BASE_URL = `${env.apiUrl}/api/auth`;
+const API_URL = env.apiUrl;
 
 function authHeader(): Record<string, string> {
-  const token = localStorage.getItem("token");
+  const token = storage.getToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
@@ -69,5 +72,5 @@ export async function logoutSession(): Promise<void> {
     method: "DELETE",
     headers: authHeader(),
   }).catch(() => {});
-  localStorage.removeItem("token");
+  storage.removeToken();
 }

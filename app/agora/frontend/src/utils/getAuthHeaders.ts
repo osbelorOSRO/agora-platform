@@ -1,7 +1,6 @@
-export const getAuthHeaders = () => {
-  const token = localStorage.getItem("token");
-  return {
-    Authorization: `Bearer ${token}`,
-    "Content-Type": "application/json",
-  };
-};
+import { storage } from "@/lib/storage";
+
+export const getAuthHeaders = () => ({
+  Authorization: `Bearer ${storage.getToken()}`,
+  "Content-Type": "application/json",
+});

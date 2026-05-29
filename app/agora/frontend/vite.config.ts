@@ -1,6 +1,8 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
+// @ts-ignore — vitest types only available after install
+/// <reference types="vitest" />
 
 const devAllowedHost = process.env.VITE_DEV_ALLOWED_HOST || "localhost";
 const devApiTarget = process.env.VITE_DEV_API_TARGET || "http://localhost:4001";
@@ -10,6 +12,24 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
+    },
+  },
+  // @ts-ignore
+  test: {
+    environment: "jsdom",
+    globals: true,
+    setupFiles: ["src/test/setup.ts"],
+    env: {
+      VITE_API_URL: "http://localhost:4001",
+      VITE_WEBSOCKET_URL: "ws://localhost:5050",
+      VITE_MEDIA_BASE_URL: "http://localhost:4001",
+      VITE_WA_PUBLIC_URL: "http://localhost:3000",
+    },
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "lcov"],
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: ["src/test/**", "src/main.tsx", "src/**/*.d.ts"],
     },
   },
   build: {

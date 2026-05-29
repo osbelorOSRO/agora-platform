@@ -112,7 +112,7 @@ export default function RespuestasRapidasView({ onSend, onClose }: Props) {
         <button
           type="button"
           onClick={onClose}
-          className="flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-input text-muted-foreground transition hover:border-[#6E3709] hover:text-primary"
+          className="flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-input text-muted-foreground transition hover:border-border-primary hover:text-primary"
         >
           <X className="h-4 w-4" />
         </button>
@@ -133,7 +133,7 @@ export default function RespuestasRapidasView({ onSend, onClose }: Props) {
           <button
             type="button"
             onClick={startCreate}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-input px-3 py-2 text-xs font-bold text-foreground transition hover:border-[#6E3709] hover:text-primary"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-input px-3 py-2 text-xs font-bold text-foreground transition hover:border-border-primary hover:text-primary"
           >
             <Plus className="h-4 w-4" />
             Nueva respuesta
@@ -252,7 +252,7 @@ export default function RespuestasRapidasView({ onSend, onClose }: Props) {
                     <button
                       type="button"
                       onClick={() => startEdit(uuid)}
-                      className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-bold text-foreground transition hover:border-[#6E3709] hover:text-primary"
+                      className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-bold text-foreground transition hover:border-border-primary hover:text-primary"
                     >
                       <Edit2 className="h-3 w-3" />
                       Editar

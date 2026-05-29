@@ -108,10 +108,10 @@ function BaseLayoutInner() {
               type="button"
               onClick={() => navigate("/perfil")}
               title="Ver perfil"
-              className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-full border border-[#6E3709] bg-[#1E1108] text-xs font-bold text-primary hover:bg-[#321C0C] transition-colors overflow-hidden"
+              className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-full border border-border-primary bg-accent text-xs font-bold text-primary hover:bg-accent transition-colors overflow-hidden"
             >
               {photoUrl ? (
-                <img src={photoUrl} alt="perfil" className="h-full w-full object-cover" />
+                <img src={photoUrl} alt="perfil" loading="lazy" className="h-full w-full object-cover" />
               ) : (
                 (user?.nombre?.[0] ?? user?.username?.[0] ?? "U").toUpperCase()
               )}

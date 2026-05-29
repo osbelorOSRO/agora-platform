@@ -11,7 +11,8 @@ const ENCRYPTED_FIELDS = new Set([
   "admin_access_token",
 ]);
 
-const WEBHOOK_URL = `${import.meta.env.VITE_API_URL ?? ""}/webhooks/meta`;
+import { env } from "@/lib/env";
+const WEBHOOK_URL = `${env.apiUrl}/webhooks/meta`;
 
 // ─── Componente campo editable ───────────────────────────────────────────────
 function ConfigField({
@@ -81,7 +82,7 @@ function ConfigField({
   };
 
   return (
-    <div className="py-3 border-b border-border/50 last:border-0">
+    <div className="py-3 border-b border-border last:border-0">
       <label className="block text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground mb-1">{label}</label>
       {editing ? (
         <div className="flex items-center gap-2 mt-1">
@@ -106,12 +107,12 @@ function ConfigField({
         </div>
       ) : (
         <div className="flex items-center gap-2 mt-1">
-          <div className="flex-1 rounded border border-border bg-input px-3 py-1.5 text-xs text-foreground/80 min-h-[30px] break-all">
+          <div className="flex-1 rounded border border-border bg-input px-3 py-1.5 text-xs text-secondary-foreground min-h-[30px] break-all">
             {sensitive
               ? showValue
-                ? (revealedValue || <span className="text-muted-foreground/50">No configurado</span>)
-                : (displayValue || <span className="text-muted-foreground/50">No configurado</span>)
-              : (displayValue || <span className="text-muted-foreground/50">No configurado</span>)
+                ? (revealedValue || <span className="text-muted-foreground">No configurado</span>)
+                : (displayValue || <span className="text-muted-foreground">No configurado</span>)
+              : (displayValue || <span className="text-muted-foreground">No configurado</span>)
             }
           </div>
           {sensitive && displayValue && (

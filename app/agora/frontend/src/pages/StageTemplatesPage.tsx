@@ -117,15 +117,15 @@ function TemplateModal({
           </div>
 
           <div className="flex items-center gap-4 col-span-2">
-            <label className="flex items-center gap-2 text-xs text-foreground/80 cursor-pointer">
+            <label className="flex items-center gap-2 text-xs text-secondary-foreground cursor-pointer">
               <input type="checkbox" checked={form.es_fallback ?? false} onChange={(e) => field("es_fallback", e.target.checked)} />
               es_fallback
             </label>
-            <label className="flex items-center gap-2 text-xs text-foreground/80 cursor-pointer">
+            <label className="flex items-center gap-2 text-xs text-secondary-foreground cursor-pointer">
               <input type="checkbox" checked={form.procesa_datos ?? false} onChange={(e) => field("procesa_datos", e.target.checked)} />
               procesa_datos
             </label>
-            <label className="flex items-center gap-2 text-xs text-foreground/80 cursor-pointer">
+            <label className="flex items-center gap-2 text-xs text-secondary-foreground cursor-pointer">
               <input type="checkbox" checked={form.activo ?? true} onChange={(e) => field("activo", e.target.checked)} />
               activo
             </label>
@@ -265,7 +265,7 @@ export default function StageTemplatesPage() {
   });
 
   const badge = (val: string | null | boolean | undefined) => {
-    if (val === null || val === undefined || val === "") return <span className="text-muted-foreground/50">—</span>;
+    if (val === null || val === undefined || val === "") return <span className="text-muted-foreground">—</span>;
     const colors: Record<string, string> = {
       enviar: "text-emerald-400 bg-emerald-400/10",
       delegar: "text-amber-400 bg-amber-400/10",
@@ -341,8 +341,8 @@ export default function StageTemplatesPage() {
               <tbody>
                 {rows.map((row) => (
                   <tr key={row.id} className="border-b border-border hover:bg-card transition-colors">
-                    <td className="py-2 pr-4 text-muted-foreground/50 whitespace-nowrap">{row.id}</td>
-                    <td className="py-2 pr-4 text-[11px] text-foreground/80 whitespace-nowrap">{row.stage_actual}</td>
+                    <td className="py-2 pr-4 text-muted-foreground whitespace-nowrap">{row.id}</td>
+                    <td className="py-2 pr-4 text-[11px] text-secondary-foreground whitespace-nowrap">{row.stage_actual}</td>
                     <td className="py-2 pr-4 text-muted-foreground whitespace-nowrap">{row.posicion ?? "—"}</td>
                     <td className="py-2 pr-4 text-[11px] text-muted-foreground whitespace-nowrap">{row.nuevo_stage}</td>
                     <td className="py-2 pr-4 whitespace-nowrap">{badge(row.decision)}</td>
@@ -351,17 +351,17 @@ export default function StageTemplatesPage() {
                     <td className="py-2 pr-4 text-muted-foreground whitespace-nowrap">{row.stage_route ?? "—"}</td>
                     <td className="py-2 pr-4 text-muted-foreground whitespace-nowrap">{row.dato_esperado ?? "—"}</td>
                     <td className="py-2 pr-4 whitespace-nowrap">
-                      {row.factible === null ? <span className="text-muted-foreground/50">—</span>
+                      {row.factible === null ? <span className="text-muted-foreground">—</span>
                         : <span className={row.factible ? "text-emerald-400" : "text-rose-400"}>{String(row.factible)}</span>}
                     </td>
                     <td className="py-2 pr-4 whitespace-nowrap">
-                      <span className={row.activo ? "text-emerald-400" : "text-muted-foreground/50"}>{row.activo ? "sí" : "no"}</span>
+                      <span className={row.activo ? "text-emerald-400" : "text-muted-foreground"}>{row.activo ? "sí" : "no"}</span>
                     </td>
                     <td className="py-2 pr-4 whitespace-nowrap">
-                      <span className={row.es_fallback ? "text-amber-400" : "text-muted-foreground/50"}>{row.es_fallback ? "sí" : "no"}</span>
+                      <span className={row.es_fallback ? "text-amber-400" : "text-muted-foreground"}>{row.es_fallback ? "sí" : "no"}</span>
                     </td>
                     <td className="py-2 pr-4 whitespace-nowrap">
-                      <span className={row.procesa_datos ? "text-sky-400" : "text-muted-foreground/50"}>{row.procesa_datos ? "sí" : "no"}</span>
+                      <span className={row.procesa_datos ? "text-sky-400" : "text-muted-foreground"}>{row.procesa_datos ? "sí" : "no"}</span>
                     </td>
                     <td className="py-2 pr-4 text-[11px] text-muted-foreground max-w-[220px] truncate" title={row.posibles_match}>{row.posibles_match}</td>
                     <td className="py-2 pr-4 text-[11px] text-muted-foreground max-w-[220px] truncate" title={row.tipo_respuesta}>{row.tipo_respuesta}</td>
@@ -386,7 +386,7 @@ export default function StageTemplatesPage() {
                 ))}
                 {rows.length === 0 && (
                   <tr>
-                    <td colSpan={16} className="py-8 text-center text-muted-foreground/50">
+                    <td colSpan={16} className="py-8 text-center text-muted-foreground">
                       {filter ? `Sin resultados para "${filter}"` : "Sin registros"}
                     </td>
                   </tr>

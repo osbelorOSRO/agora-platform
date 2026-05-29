@@ -1,11 +1,8 @@
 import apiClient from "../../../lib/apiClient";
+import { getAuthHeaders } from "@/utils/getAuthHeaders";
+import { env } from "@/lib/env";
 
-const API_URL = import.meta.env.VITE_API_URL_ACCESOS;
-
-const getAuthHeaders = () => ({
-  Authorization: `Bearer ${localStorage.getItem("token")}`,
-  "Content-Type": "application/json",
-});
+const API_URL = env.apiUrl;
 
 export interface SesionActiva {
   id: number;

@@ -4,8 +4,9 @@ import { Eye, EyeOff } from "lucide-react";
 import BackgroundAnimation from "@/components/BackgroundAnimation";
 import { login, registrarUsuario } from "@/services/authService";
 import { guardarToken } from "@/utils/getTokenData";
+import { storage } from "@/lib/storage";
 
-const inp = "w-full rounded-full border border-border bg-input px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/60 transition-all";
+const inp = "w-full rounded-full border border-border bg-input px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-all";
 const btnPrimary = "w-full rounded-full border-2 border-primary py-2.5 text-sm font-bold text-foreground transition-all hover:bg-primary/30 hover:border-primary active:scale-[0.98] focus:outline-none";
 const btnSecondary = "w-full text-center text-sm text-muted-foreground hover:text-foreground underline transition-colors";
 
@@ -49,7 +50,7 @@ export default function Login() {
         registerData.password,
         registerData.confirmarPassword
       );
-      localStorage.setItem("otpauth_url", res.secret_otpauth_url);
+      storage.setOtpUrl(res.secret_otpauth_url);
       navigate("/escaneo-qr");
     } catch (err: any) {
       setError(err.message || "Error al registrarse");
@@ -108,7 +109,7 @@ export default function Login() {
               {error && <p className="text-rose-400 text-sm">{error}</p>}
               {mensaje && <p className="text-emerald-400 text-sm">{mensaje}</p>}
               {estaBloqueado && (
-                <p className="text-xs text-muted-foreground/60 text-center">
+                <p className="text-xs text-muted-foreground text-center">
                   Tu cuenta fue bloqueada por intentos fallidos. Contacta al administrador para reactivarla.
                 </p>
               )}

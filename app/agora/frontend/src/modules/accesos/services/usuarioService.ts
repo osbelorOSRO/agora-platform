@@ -1,12 +1,9 @@
 import apiClient from "../../../lib/apiClient";
 import type { Usuario } from "../types/usuario";
+import { env } from "@/lib/env";
+import { getAuthHeaders } from "@/utils/getAuthHeaders";
 
-const API_URL = import.meta.env.VITE_API_URL_ACCESOS;
-
-const getAuthHeaders = () => ({
-  Authorization: `Bearer ${localStorage.getItem("token")}`,
-  "Content-Type": "application/json",
-});
+const API_URL = env.apiUrl;
 
 export const obtenerUsuarios = async (): Promise<Usuario[]> => {
   const response = await apiClient.get(`${API_URL}/api/auth/usuarios`, { headers: getAuthHeaders() });

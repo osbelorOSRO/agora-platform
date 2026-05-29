@@ -1,6 +1,7 @@
 import { getAuthHeaders } from "@/utils/getAuthHeaders";
+import { env } from "@/lib/env";
 
-const API_URL = `${import.meta.env.VITE_API_URL_ACCESOS}/api/reportes`;
+const API_URL = `${env.apiUrl}/api/reportes`;
 
 export type ReportCatalogItem = {
   id: string;

@@ -1,5 +1,6 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL;
-const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL;
+import { env } from "@/lib/env";
+const API_BASE_URL = env.apiUrl;
+const MEDIA_BASE_URL = env.mediaUrl;
 
 export function normalizeMediaUrl(raw?: string | null): string | undefined {
   if (!raw) return undefined;

@@ -1,5 +1,7 @@
 import { getAuthHeaders } from "@/utils/getAuthHeaders";
 import { unwrapEnvelope } from "@/lib/apiClient";
+import { storage } from "@/lib/storage";
+import { env } from "@/lib/env";
 import type {
   CreateWhatsappContactInput,
   MetaInboxDirectoryContact,
@@ -12,7 +14,7 @@ import type {
   FcaMarketplaceLeadStatsResponse,
 } from "@/types/metaInbox";
 
-const API_URL = import.meta.env.VITE_API_URL as string;
+const API_URL = env.apiUrl;
 
 export const listMetaInboxThreads = async (
   limit = 100,
@@ -156,7 +158,7 @@ export const listFcaMarketplaceLeadStats = async (): Promise<FcaMarketplaceLeadS
 };
 
 export const sendMetaInboxMedia = async (sessionId: string, file: File, caption?: string) => {
-  const token = localStorage.getItem("token");
+  const token = storage.getToken();
   const formData = new FormData();
   formData.append("file", file);
   if (caption?.trim()) formData.append("caption", caption.trim());

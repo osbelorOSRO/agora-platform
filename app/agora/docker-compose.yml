@@ -7,9 +7,6 @@ services:
         VITE_WEBSOCKET_URL: "${WS_PUBLIC_URL}"
         VITE_API_URL: "${API_PUBLIC_URL}"
         VITE_MEDIA_BASE_URL: "${MEDIA_BASE_URL}"
-        VITE_AUTH_API_URL: "${API_PUBLIC_URL}/api/auth"
-        VITE_ESTADO_BOT_URL: "${SOCKET_HTTP_PUBLIC_URL}"
-        VITE_API_URL_ACCESOS: "${API_PUBLIC_URL}"
         VITE_WA_PUBLIC_URL: "${WA_PUBLIC_URL}"
     container_name: panel_frontend
     restart: always

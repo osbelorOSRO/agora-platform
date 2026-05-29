@@ -39,7 +39,7 @@ export default function Usuarios() {
 
   const handleEdit   = (u: Usuario) => { setEditandoId(u.id); setForm(u); };
   const handleCancel = () => { setEditandoId(null); setForm({}); };
-  const handleChange = (campo: keyof Usuario, valor: any) => setForm({ ...form, [campo]: valor });
+  const handleChange = (campo: keyof Usuario, valor: Usuario[keyof Usuario]) => setForm({ ...form, [campo]: valor });
 
   const handleGuardar = async () => {
     if (!form.username || !form.rol?.id) return;

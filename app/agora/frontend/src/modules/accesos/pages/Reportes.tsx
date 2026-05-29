@@ -81,18 +81,18 @@ export default function Reportes() {
     <section className="space-y-6 text-white">
       <div>
         <h1 className="text-3xl font-bold">Reportes</h1>
-        <p className="mt-2 max-w-3xl text-sm text-[#CCCCCC]">
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
           Selecciona un reporte, define filtros y descarga el resultado en CSV.
           Esta vista no genera gráficos; solo extrae datos desde Postgres.
         </p>
       </div>
 
-      {loading ? <div className="text-[#CCCCCC]">Cargando catálogo...</div> : null}
-      {error ? <div className="rounded-xl border border-[#5C1A1A] bg-[#1A0A0A] p-4 text-sm">{error}</div> : null}
+      {loading ? <div className="text-muted-foreground">Cargando catálogo...</div> : null}
+      {error ? <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm">{error}</div> : null}
 
       {!loading && reporteActual ? (
         <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-          <aside className="rounded-2xl border border-[#2D2D2D] bg-[#141414] p-4">
+          <aside className="rounded-2xl border border-border bg-muted p-4">
             <h2 className="mb-4 text-lg font-semibold">Lista de reportes</h2>
             <div className="space-y-2">
               {reportes.map((reporte) => {
@@ -104,23 +104,23 @@ export default function Reportes() {
                     onClick={() => setSelectedId(reporte.id)}
                     className={`w-full rounded-xl border px-4 py-3 text-left transition ${
                       active
-                        ? "border-[#4D4D4D] bg-[#222222]"
-                        : "border-[#2D2D2D] bg-[#141414] hover:bg-[#1A1A1A]"
+                        ? "border-secondary bg-card"
+                        : "border-border bg-muted hover:bg-card"
                     }`}
                   >
                     <div className="font-medium">{reporte.nombre}</div>
-                    <div className="mt-1 text-xs text-[#999999]">{reporte.id}</div>
+                    <div className="mt-1 text-xs text-muted-foreground">{reporte.id}</div>
                   </button>
                 );
               })}
             </div>
           </aside>
 
-          <div className="rounded-2xl border border-[#2D2D2D] bg-[#141414] p-6">
+          <div className="rounded-2xl border border-border bg-muted p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <h2 className="text-2xl font-semibold">{reporteActual.nombre}</h2>
-                <p className="mt-2 text-sm text-[#B3B3B3]">
+                <p className="mt-2 text-sm text-muted-foreground">
                   Formatos disponibles: {reporteActual.formatos.join(", ").toUpperCase()}
                 </p>
               </div>
@@ -129,7 +129,7 @@ export default function Reportes() {
                 type="button"
                 onClick={handleDownload}
                 disabled={downloading}
-                className="inline-flex items-center gap-2 rounded-xl border border-[#3D3D3D] bg-[#1A1A1A] px-4 py-2 text-sm font-medium transition hover:bg-[#222222] disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm font-medium transition hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Download className="h-4 w-4" />
                 {downloading ? "Generando CSV..." : "Descargar CSV"}
@@ -139,7 +139,7 @@ export default function Reportes() {
             <div className="mt-6 grid gap-4 md:grid-cols-2">
               {reporteActual.filtros.map((field) => (
                 <label key={field} className="flex flex-col gap-2 text-sm">
-                  <span className="text-[#CCCCCC]">{labelize(field)}</span>
+                  <span className="text-muted-foreground">{labelize(field)}</span>
                   <input
                     type={inferFieldType(field)}
                     value={formState[field] ?? ""}
@@ -149,7 +149,7 @@ export default function Reportes() {
                         [field]: event.target.value,
                       }))
                     }
-                    className="rounded-xl border border-[#333333] bg-[#282828] px-3 py-2 text-white placeholder:text-[#525252]"
+                    className="rounded-xl border border-border bg-input px-3 py-2 text-foreground placeholder:text-muted-foreground"
                     placeholder={`Filtrar por ${labelize(field).toLowerCase()}`}
                   />
                 </label>
@@ -157,7 +157,7 @@ export default function Reportes() {
             </div>
 
             {reporteActual.filtros.length === 0 ? (
-              <div className="mt-6 flex items-center gap-3 rounded-xl border border-[#2D2D2D] bg-[#1B1B1B] p-4 text-sm text-[#BFBFBF]">
+              <div className="mt-6 flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
                 <FileSearch2 className="h-5 w-5" />
                 Este reporte no requiere filtros obligatorios.
               </div>

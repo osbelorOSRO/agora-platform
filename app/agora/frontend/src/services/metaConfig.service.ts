@@ -1,7 +1,8 @@
 import { unwrapEnvelope } from "@/lib/apiClient";
 import { getAuthHeaders } from "@/utils/getAuthHeaders";
 
-const API_URL = import.meta.env.VITE_API_URL as string;
+import { env } from "@/lib/env";
+const API_URL = env.apiUrl;
 
 export type MetaConfig = {
   app_id?: string | null;

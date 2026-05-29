@@ -5,7 +5,7 @@ import QRCode from "react-qr-code";
 import BackgroundAnimation from "@/components/BackgroundAnimation";
 import { setup2FAInit, setup2FAConfirmar } from "@/services/authService";
 
-const inp = "w-full rounded-full border border-border bg-input px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/60 transition-all";
+const inp = "w-full rounded-full border border-border bg-input px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-all";
 const btnPrimary = "w-full rounded-full border-2 border-primary py-2.5 text-sm font-bold text-foreground transition-all hover:bg-primary/30 hover:border-primary active:scale-[0.98] focus:outline-none";
 const btnSecondary = "w-full text-center text-sm text-muted-foreground hover:text-foreground underline transition-colors";
 

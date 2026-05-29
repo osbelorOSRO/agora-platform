@@ -3,7 +3,7 @@ import { Pencil, Save, X } from "lucide-react";
 import { obtenerTransitionRules, actualizarTransitionThreshold } from "../services/settingsService";
 import type { TransitionRule } from "../types/settings";
 
-const INPUT_CLS = "w-24 bg-transparent border border-[#3D3D3D] rounded px-2 py-0.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary";
+const INPUT_CLS = "w-24 bg-transparent border border-border rounded px-2 py-0.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary";
 
 const OPERATOR_LABEL: Record<string, string> = {
   lt: "<", lte: "≤", gt: ">", gte: "≥", eq: "=",
@@ -13,7 +13,7 @@ const STATE_COLOR: Record<string, string> = {
   QUALIFIED: "text-emerald-400",
   CHURNED:   "text-red-400",
   BLOCKED:   "text-orange-400",
-  NEW:       "text-[#B3B3B3]",
+  NEW:       "text-muted-foreground",
 };
 
 export default function TransitionRules() {
@@ -52,7 +52,7 @@ export default function TransitionRules() {
     <section className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-white">Reglas de transición</h1>
-        <p className="mt-2 text-sm text-[#999999]">
+        <p className="mt-2 text-sm text-muted-foreground">
           Umbrales de score que determinan el estado del actor en el ciclo de vida.
         </p>
       </div>
@@ -116,7 +116,7 @@ export default function TransitionRules() {
                         >
                           <Save size={16} />
                         </button>
-                        <button type="button" onClick={cancelar} title="Cancelar" className="text-[#666666] hover:text-[#B3B3B3] transition">
+                        <button type="button" onClick={cancelar} title="Cancelar" className="text-[#666666] hover:text-muted-foreground transition">
                           <X size={16} />
                         </button>
                       </div>

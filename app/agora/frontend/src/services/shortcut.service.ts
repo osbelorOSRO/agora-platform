@@ -1,7 +1,8 @@
 import { Shortcut } from '../types/shortcut';
 import { getAuthHeaders } from '../utils/getAuthHeaders';
 
-const API_URL = `${import.meta.env.VITE_API_URL}/shortcut`;
+import { env } from "@/lib/env";
+const API_URL = `${env.apiUrl}/shortcut`;
 
 export async function fetchShortcuts(): Promise<Shortcut[]> {
   const response = await fetch(API_URL, { headers: getAuthHeaders() });

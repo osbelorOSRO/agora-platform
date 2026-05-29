@@ -8,26 +8,16 @@ import {
   UserCircle,
 } from "lucide-react";
 import { getTokenData } from "@/utils/getTokenData";
-import { hasPermission } from "@/utils/permissions";
 
 export default function BottomNav() {
-  const user = getTokenData();
-  const permissions = user?.permisos ?? [];
+  const features = getTokenData()?.features;
 
   const navItems = [
     { to: "/accesos/welcome", icon: Home, label: "Home" },
-    hasPermission("gestionar_usuarios", permissions)
-      ? { to: "/meta-inbox", icon: MessagesSquare, label: "Threads" }
-      : null,
-    hasPermission("gestionar_usuarios", permissions)
-      ? { to: "/agenda", icon: ContactRound, label: "Contacts" }
-      : null,
-    hasPermission("ver_reportes", permissions)
-      ? { to: "/accesos/reportes", icon: FileSpreadsheet, label: "Reports" }
-      : null,
-    hasPermission("editar_configuracion", permissions)
-      ? { to: "/accesos/ajustes", icon: Settings, label: "Settings" }
-      : null,
+    features?.conversations ? { to: "/meta-inbox",       icon: MessagesSquare,  label: "Threads"  } : null,
+    features?.conversations ? { to: "/agenda",           icon: ContactRound,    label: "Contacts" } : null,
+    features?.reports       ? { to: "/accesos/reportes", icon: FileSpreadsheet, label: "Reports"  } : null,
+    features?.settings      ? { to: "/accesos/ajustes",  icon: Settings,        label: "Settings" } : null,
   ]
     .filter(Boolean)
     .slice(0, 4) as Array<{

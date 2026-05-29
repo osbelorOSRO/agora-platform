@@ -1,4 +1,16 @@
 import { jwtDecode } from "jwt-decode";
+import { storage } from "@/lib/storage";
+
+export interface UserFeatures {
+  conversations:   boolean;
+  reports:         boolean;
+  settings:        boolean;
+  botView:         boolean;
+  botControl:      boolean;
+  scheduleControl: boolean;
+  salesManagement: boolean;
+  superadmin:      boolean;
+}
 
 interface TokenPayload {
   id: number;
@@ -8,28 +20,29 @@ interface TokenPayload {
   email: string;
   rol: string;
   permisos: string[];
+  features: UserFeatures;
   exp: number;
 }
 
 export const getTokenData = (): TokenPayload | null => {
-  const token = localStorage.getItem("token"); // 🟢 CAMBIO CLAVE
+  const token = storage.getToken();
   if (!token) return null;
 
   try {
     const decoded: TokenPayload = jwtDecode(token);
     const now = Math.floor(Date.now() / 1000);
     if (decoded.exp < now) {
-      localStorage.removeItem("token");
+      storage.removeToken();
       return null;
     }
     return decoded;
   } catch (error) {
     console.error("Error al decodificar token:", error);
-    localStorage.removeItem("token");
+    storage.removeToken();
     return null;
   }
 };
 
 export const guardarToken = (token: string): void => {
-  localStorage.setItem("token", token); // 🟢 CAMBIO CLAVE
+  storage.setToken(token);
 };

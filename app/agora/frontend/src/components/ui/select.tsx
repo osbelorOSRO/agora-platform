@@ -1,6 +1,12 @@
 import * as React from "react";
 
-export const Select = ({ children, value, onValueChange }: any) => {
+interface SelectProps {
+  children: React.ReactNode;
+  value?: string;
+  onValueChange: (value: string) => void;
+}
+
+export const Select = ({ children, value, onValueChange }: SelectProps) => {
   return (
     <select
       className="w-full border rounded-md p-2 shadow-sm"

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { Bot, Clock3, Lock, LogOut, PauseCircle, PlayCircle, QrCode, RefreshCw, ShieldBan, Wrench } from "lucide-react";
-import { hasPermission } from "@/utils/permissions";
 import { getTokenData } from "@/utils/getTokenData";
 import { useWaDashboard } from "../hooks/useWaDashboard";
 
@@ -30,9 +29,8 @@ const formatDuration = (ms?: number | null) => {
 };
 
 export default function WaControlPage() {
-  const user = getTokenData();
-  const permissions = user?.permisos ?? [];
-  const canManageBot = hasPermission("control_bot", permissions);
+  const features = getTokenData()?.features;
+  const canManageBot = features?.botControl ?? false;
   const [numeroBloqueo, setNumeroBloqueo] = useState("");
   const [nowTick, setNowTick] = useState(() => Date.now());
 
@@ -109,7 +107,7 @@ export default function WaControlPage() {
             <span>{estatus.label}</span>
             <span className="text-[#525252]">/</span>
             <span className="text-muted-foreground">{socketDetail}</span>
-            {lastSyncAt ? <span className="text-muted-foreground/60">· sync {relativeTime(lastSyncAt)}</span> : null}
+            {lastSyncAt ? <span className="text-muted-foreground">· sync {relativeTime(lastSyncAt)}</span> : null}
           </div>
         </div>
       </header>

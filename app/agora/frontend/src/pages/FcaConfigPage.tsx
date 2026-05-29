@@ -69,10 +69,10 @@ function ConfigField({
   };
 
   return (
-    <div className="py-3 border-b border-border/50 last:border-0">
+    <div className="py-3 border-b border-border last:border-0">
       <label className="block text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground mb-1">{label}</label>
       {hint && !editing && (
-        <p className="text-[10px] text-muted-foreground/60 mb-1">{hint}</p>
+        <p className="text-[10px] text-muted-foreground mb-1">{hint}</p>
       )}
       {editing ? (
         <div className="flex flex-col gap-2 mt-1">
@@ -109,12 +109,12 @@ function ConfigField({
         </div>
       ) : (
         <div className="flex items-center gap-2 mt-1">
-          <div className={`flex-1 rounded border border-border bg-input px-3 py-1.5 text-xs text-foreground/80 min-h-[30px] ${multiline ? "font-mono break-all" : ""}`}>
+          <div className={`flex-1 rounded border border-border bg-input px-3 py-1.5 text-xs text-secondary-foreground min-h-[30px] ${multiline ? "font-mono break-all" : ""}`}>
             {sensitive
               ? showValue
-                ? (revealedValue || <span className="text-muted-foreground/50">No configurado</span>)
-                : (displayValue || <span className="text-muted-foreground/50">No configurado</span>)
-              : (displayValue || <span className="text-muted-foreground/50">No configurado</span>)
+                ? (revealedValue || <span className="text-muted-foreground">No configurado</span>)
+                : (displayValue || <span className="text-muted-foreground">No configurado</span>)
+              : (displayValue || <span className="text-muted-foreground">No configurado</span>)
             }
           </div>
           {sensitive && displayValue && (
@@ -154,7 +154,7 @@ function EnabledToggle({
   };
 
   return (
-    <div className="py-3 border-b border-border/50">
+    <div className="py-3 border-b border-border">
       <label className="block text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground mb-2">
         Estado de la integración
       </label>
@@ -315,7 +315,7 @@ export default function FcaConfigPage() {
                   value={config.enabled}
                   onToggle={(val) => handleSave("enabled", val)}
                 />
-                <div className="py-3 border-b border-border/50">
+                <div className="py-3 border-b border-border">
                   <label className="block text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground mb-2">
                     Conexión MQTT
                   </label>

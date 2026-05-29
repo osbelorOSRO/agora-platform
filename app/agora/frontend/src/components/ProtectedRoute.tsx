@@ -1,35 +1,26 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { getTokenData } from "../utils/getTokenData";
-import { hasAnyPermission } from "@/utils/permissions";
+import type { UserFeatures } from "../utils/getTokenData";
 
 interface ProtectedRouteProps {
   children: React.ReactElement;
-  requiredPermissions?: string[];
-  requiredRole?: string;
+  requiredFeature?: keyof UserFeatures;
   redirectTo?: string;
 }
 
 const ProtectedRoute = ({
   children,
-  requiredPermissions = [],
-  requiredRole,
+  requiredFeature,
   redirectTo = "/accesos/welcome",
 }: ProtectedRouteProps) => {
   const user = getTokenData();
 
   if (!user) {
-    console.warn("⚠️ Usuario no autenticado. Redirigiendo a /login");
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredRole && user.rol !== requiredRole) {
-    console.warn("⚠️ Rol insuficiente. Redirigiendo.");
-    return <Navigate to={redirectTo} replace />;
-  }
-
-  if (!hasAnyPermission(requiredPermissions, user.permisos)) {
-    console.warn("⚠️ Usuario sin permisos suficientes. Redirigiendo.");
+  if (requiredFeature && !user.features?.[requiredFeature]) {
     return <Navigate to={redirectTo} replace />;
   }
 

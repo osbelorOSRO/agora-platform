@@ -205,7 +205,7 @@ export default function WhatsappAdsPage() {
                 type="button"
                 onClick={() => setPage((prev) => Math.max(0, prev - 1))}
                 disabled={page === 0}
-                className="rounded-xl border border-border bg-input p-3 text-foreground/80 hover:bg-card disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-xl border border-border bg-input p-3 text-secondary-foreground hover:bg-card disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <ChevronLeft />
               </button>
@@ -217,7 +217,7 @@ export default function WhatsappAdsPage() {
                 type="button"
                 onClick={() => setPage((prev) => Math.min(ads.length - 1, prev + 1))}
                 disabled={page >= ads.length - 1}
-                className="rounded-xl border border-border bg-input p-3 text-foreground/80 hover:bg-card disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-xl border border-border bg-input p-3 text-secondary-foreground hover:bg-card disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <ChevronRight />
               </button>
@@ -232,7 +232,7 @@ export default function WhatsappAdsPage() {
                 <div className="mt-2 md:mt-3 text-3xl md:text-5xl font-black text-primary">{current.uniqueSessions}</div>
               </div>
               <div className="rounded-2xl border border-foreground/20 bg-foreground/5 p-3 md:p-5">
-                <div className="text-[10px] md:text-xs font-medium uppercase tracking-[0.14em] md:tracking-[0.18em] text-foreground/60">Eventos</div>
+                <div className="text-[10px] md:text-xs font-medium uppercase tracking-[0.14em] md:tracking-[0.18em] text-muted-foreground">Eventos</div>
                 <div className="mt-2 md:mt-3 text-3xl md:text-5xl font-black text-foreground">{current.seenCount}</div>
               </div>
               <div className="rounded-2xl border border-border bg-card p-3 md:p-5">
@@ -251,11 +251,11 @@ export default function WhatsappAdsPage() {
               </div>
               <div className="max-h-[340px] overflow-auto">
                 {currentLeads.map((lead) => (
-                  <div key={`${lead.sourceId}-${lead.sessionId}`} className="border-b border-border/50 p-4 last:border-b-0">
+                  <div key={`${lead.sourceId}-${lead.sessionId}`} className="border-b border-border p-4 last:border-b-0">
                     <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
                       <div className="min-w-0">
                         <div className="break-all font-mono text-xs text-primary/70">{lead.actorExternalId || lead.pnJid || lead.lidJid || "sin actor"}</div>
-                        <div className="mt-1 truncate text-sm text-foreground/80">{lead.firstMessageText || "(sin texto inicial)"}</div>
+                        <div className="mt-1 truncate text-sm text-secondary-foreground">{lead.firstMessageText || "(sin texto inicial)"}</div>
                       </div>
                       <div className="shrink-0 text-xs text-muted-foreground">{formatDate(lead.firstSeenAt)}</div>
                     </div>
@@ -298,7 +298,7 @@ export default function WhatsappAdsPage() {
               <div className="flex min-w-0 flex-1 flex-col gap-4">
                 <div className="flex gap-4 rounded-2xl border border-border bg-background p-4">
                   {fcaCurrent.imageUrl && (
-                    <img src={fcaCurrent.imageUrl} alt={fcaCurrent.title || "Artículo"} className="h-24 w-24 shrink-0 rounded-lg object-cover" />
+                    <img src={fcaCurrent.imageUrl} alt={fcaCurrent.title || "Artículo"} loading="lazy" className="h-24 w-24 shrink-0 rounded-lg object-cover" />
                   )}
                   <div className="min-w-0">
                     <div className="font-semibold text-foreground">{fcaCurrent.title || "Sin título"}</div>
@@ -327,11 +327,11 @@ export default function WhatsappAdsPage() {
                   </div>
                   <div className="max-h-[280px] overflow-auto">
                     {fcaCurrentLeads.map((lead) => (
-                      <div key={`${lead.sourceId}-${lead.sessionId}`} className="border-b border-border/50 p-4 last:border-b-0">
+                      <div key={`${lead.sourceId}-${lead.sessionId}`} className="border-b border-border p-4 last:border-b-0">
                         <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
                           <div className="min-w-0">
                             <div className="break-all font-mono text-xs text-blue-400/70">{lead.actorExternalId || "sin actor"}</div>
-                            <div className="mt-1 truncate text-sm text-foreground/80">{lead.firstMessageText || "(sin texto inicial)"}</div>
+                            <div className="mt-1 truncate text-sm text-secondary-foreground">{lead.firstMessageText || "(sin texto inicial)"}</div>
                           </div>
                           <div className="shrink-0 text-xs text-muted-foreground">{formatDate(lead.firstSeenAt)}</div>
                         </div>

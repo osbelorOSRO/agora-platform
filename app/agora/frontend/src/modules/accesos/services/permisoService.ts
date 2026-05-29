@@ -1,14 +1,9 @@
 import apiClient from "../../../lib/apiClient";
 import type { Permiso } from "../types/permiso";
+import { env } from "@/lib/env";
+import { getAuthHeaders } from "@/utils/getAuthHeaders";
 
-const API_URL = import.meta.env.VITE_API_URL_ACCESOS + "/api";
-
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("token");
-  return {
-    Authorization: `Bearer ${token}`,
-  };
-};
+const API_URL = `${env.apiUrl}/api`;
 
 export const obtenerPermisos = async (): Promise<Permiso[]> => {
   const res = await apiClient.get(`${API_URL}/permisos`, {

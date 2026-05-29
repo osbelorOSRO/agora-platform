@@ -1,5 +1,6 @@
+import { env } from "@/lib/env";
 export const openBotDashboard = (): void => {
-  const waPublicUrl = import.meta.env.VITE_WA_PUBLIC_URL;
+  const waPublicUrl = env.waPublicUrl;
   if (!waPublicUrl) return;
 
   const url = new URL('/ui', waPublicUrl).toString();

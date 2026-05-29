@@ -2,6 +2,7 @@ import { createContext, useEffect, useMemo, useState, useContext } from "react";
 import { Notificacion } from "../types/Notificacion";
 import { connectSocket, getSocket } from "../services/socket";
 import { getTokenData } from "../utils/getTokenData";
+import { storage } from "../lib/storage";
 
 const NotificacionContext = createContext<{
   notificaciones: Notificacion[];
@@ -19,8 +20,6 @@ export const useNotificaciones = () => {
   return ctx;
 };
 
-const STORAGE_KEY = "agora.notificaciones";
-const READ_CUTOFF_KEY = "agora.notificaciones.lastReadAt";
 const NOTIFICATION_TTL_MS = 72 * 60 * 60 * 1000;
 
 const toTimestamp = (value?: string) => {
@@ -43,7 +42,7 @@ const cleanupNotifications = (items: Notificacion[]) => {
 
 const loadStored = (): Notificacion[] => {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = storage.getNotifications();
     if (!raw) return [];
     const parsed = JSON.parse(raw) as unknown;
     return Array.isArray(parsed) ? cleanupNotifications(parsed as Notificacion[]) : [];
@@ -54,7 +53,7 @@ const loadStored = (): Notificacion[] => {
 
 const loadReadCutoff = (): number => {
   try {
-    const raw = localStorage.getItem(READ_CUTOFF_KEY);
+    const raw = storage.getNotificationsReadCutoff();
     if (!raw) return 0;
     const n = Number(raw);
     return Number.isFinite(n) ? n : 0;
@@ -146,7 +145,7 @@ const agregar = (nueva: Notificacion | Record<string, unknown>) => {
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(notificaciones));
+      storage.setNotifications(JSON.stringify(notificaciones));
     } catch {
       // noop
     }
@@ -154,7 +153,7 @@ const agregar = (nueva: Notificacion | Record<string, unknown>) => {
 
   useEffect(() => {
     try {
-      localStorage.setItem(READ_CUTOFF_KEY, String(lastReadAt));
+      storage.setNotificationsReadCutoff(String(lastReadAt));
     } catch {
       // noop
     }

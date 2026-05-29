@@ -1,5 +1,6 @@
-// src/services/socket.ts
 import { io, Socket } from "socket.io-client";
+import { storage } from "@/lib/storage";
+import { env } from "@/lib/env";
 
 let socket: Socket | null = null;
 
@@ -11,14 +12,14 @@ export const connectSocket = () => {
     return;
   }
 
-  const token = localStorage.getItem("token");
+  const token = storage.getToken();
 
   if (!token) {
     console.warn("❌ No se encontró el token JWT en localStorage.");
     return;
   }
 
-  socket = io(import.meta.env.VITE_WEBSOCKET_URL, {
+  socket = io(env.wsUrl, {
     auth: { token },
     transports: ["websocket", "polling"],
   });

@@ -1,8 +1,10 @@
 import { io, type Socket } from "socket.io-client";
+import { storage } from "@/lib/storage";
+import { env } from "@/lib/env";
 
 let waDashboardSocket: Socket | null = null;
 
-export const getWaDashboardUrl = () => import.meta.env.VITE_WA_PUBLIC_URL;
+export const getWaDashboardUrl = () => env.waPublicUrl;
 
 export const getWaDashboardSocket = (): Socket | null => {
   const waUrl = getWaDashboardUrl();
@@ -13,7 +15,7 @@ export const getWaDashboardSocket = (): Socket | null => {
     waDashboardSocket = io(waUrl, {
       autoConnect: false,
       auth: {
-        token: localStorage.getItem("token"),
+        token: storage.getToken(),
       },
       transports: ["websocket", "polling"],
     });
