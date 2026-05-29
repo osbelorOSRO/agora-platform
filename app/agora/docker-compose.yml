@@ -123,7 +123,7 @@ services:
     volumes:
       - jaeger_badger:/badger
     ports:
-      - "127.0.0.1:16686:16686"   # UI — solo localhost; en prod acceder vía SSH tunnel Tailscale
+      - "${HOST_BIND_IP:-127.0.0.1}:16686:16686"   # UI — solo red Tailscale
     networks:
       - npm_network
 
