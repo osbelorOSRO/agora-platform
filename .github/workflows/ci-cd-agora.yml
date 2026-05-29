@@ -58,6 +58,9 @@ jobs:
             sleep 1
           done
 
+      - name: Habilitar extensiones CI DB
+        run: docker exec pg_ci psql -U ci -d ci -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
+
       - name: Aplicar schema en CI DB
         run: npx prisma migrate deploy
         env:
