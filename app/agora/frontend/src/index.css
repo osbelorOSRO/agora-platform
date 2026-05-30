@@ -4,3 +4,18 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@keyframes logo-breathe {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 10px rgba(249, 115, 22, 0.35));
+  }
+  50% {
+    transform: scale(1.07);
+    filter: drop-shadow(0 0 28px rgba(249, 115, 22, 0.75));
+  }
+}
+
+.animate-logo-breathe {
+  animation: logo-breathe 2.2s ease-in-out infinite;
+}
