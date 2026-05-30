@@ -80,6 +80,7 @@ export class AccessAuthService {
       botControl: permisos.includes('control_bot'),
       scheduleControl: permisos.includes('control_agenda'),
       salesManagement: permisos.includes('gestion_ventas'),
+      socialPostings: permisos.includes('gestion_integraciones'),
       superadmin: isSuperadmin,
     };
 

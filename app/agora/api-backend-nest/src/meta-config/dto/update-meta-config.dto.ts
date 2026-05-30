@@ -14,4 +14,5 @@ export class UpdateMetaConfigDto {
   @IsOptional() @IsString() meta_ig_verify_token?: string;
   @IsOptional() @IsString() meta_ig_access_token?: string;
   @IsOptional() @IsString() admin_access_token?: string;
+  @IsOptional() @IsString() fanpage_id?: string;
 }

@@ -1,16 +1,28 @@
-import { ApiTags } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import {
   Controller,
   Post,
+  Get,
+  Delete,
+  Param,
+  ParseIntPipe,
   UploadedFile,
+  UploadedFiles,
   UseGuards,
   UseInterceptors,
   Body,
   BadRequestException,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { TransformInterceptor } from '../core/interceptors/transform.interceptor';
+import { PanelJwtAuthGuard } from '../auth/panel-jwt-auth.guard';
+import { RequirePermissionGuard } from '../accesos/guards/require-permission.guard';
+import { RequirePermission } from '../accesos/decorators/permission.decorator';
 import { MediaService } from './media.service';
-import { secureMediaMulterOptions } from './media-security';
+import {
+  secureMediaMulterOptions,
+  galeriaOfertasMulterOptions,
+} from './media-security';
 import { N8nAuthGuard } from '../shared/guards/n8n-auth.guard';
 import { BaileysInternalTokenGuard } from '../shared/guards/baileys-internal-token.guard';
 
@@ -45,5 +57,37 @@ export class MediaController {
     if (!archivo) throw new BadRequestException('Archivo no recibido');
 
     return this.mediaService.procesarTts(archivo);
+  }
+
+  // ── Galería de imágenes de ofertas ────────────────────────────────────────
+
+  @Get('galeria-ofertas')
+  @ApiBearerAuth('panel-jwt')
+  @UseGuards(PanelJwtAuthGuard, RequirePermissionGuard)
+  @RequirePermission('gestion_integraciones')
+  @UseInterceptors(TransformInterceptor)
+  async listarGaleria() {
+    return this.mediaService.listarGaleria();
+  }
+
+  @Post('galeria-ofertas')
+  @ApiBearerAuth('panel-jwt')
+  @UseGuards(PanelJwtAuthGuard, RequirePermissionGuard)
+  @RequirePermission('gestion_integraciones')
+  @UseInterceptors(TransformInterceptor)
+  @UseInterceptors(FilesInterceptor('files', 10, galeriaOfertasMulterOptions))
+  async subirGaleria(@UploadedFiles() archivos: Express.Multer.File[]) {
+    if (!archivos?.length)
+      throw new BadRequestException('Sin archivos recibidos');
+    return this.mediaService.subirGaleria(archivos);
+  }
+
+  @Delete('galeria-ofertas/:id')
+  @ApiBearerAuth('panel-jwt')
+  @UseGuards(PanelJwtAuthGuard, RequirePermissionGuard)
+  @RequirePermission('gestion_integraciones')
+  @UseInterceptors(TransformInterceptor)
+  async eliminarGaleria(@Param('id', ParseIntPipe) id: number) {
+    return this.mediaService.eliminarGaleria(id);
   }
 }

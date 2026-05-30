@@ -1,5 +1,20 @@
 # Changelog
 
+## 3.3.0
+
+### Added
+- **Módulo Social Postings** — calendario de posteos programados para Fanpage (vistas mes/semana/día), crear/editar/eliminar posteos con imagen y caption
+- Backend: módulo `social-postings` con CRUD panel + 2 endpoints N8N (`GET /social-postings/n8n/pendientes-hoy`, `PATCH /social-postings/n8n/:id/resultado`)
+- Migración: tablas `galeria_imagenes_ofertas`, `posteos_programados`; columna `fanpage_id` en `meta_app_config`
+- Frontend: `src/modules/socialPostings/` — componentes CalendarioMes, CalendarioSemana, CalendarioDia, DayCard, TareaForm, GaleriaImagenes
+- `SocialPostingsPage.tsx` — ruta `/social-postings` protegida por feature flag `socialPostings` (`gestion_integraciones`)
+- `POST /media/galeria-ofertas` — upload múltiple de imágenes (máx 10) al bucket MinIO `ofertas`; `GET` y `DELETE` correspondientes
+- `fanpage_id` en `MetaConfigPage` (tab Graph API) — campo editable para configurar el ID numérico de la Fan Page
+
+### Changed
+- `UpdateMetaConfigDto` — campo `fanpage_id` opcional agregado
+- `SidebarCompacto` — ícono `CalendarDays` para Social Postings
+
 ## 3.2.0
 
 ### Added

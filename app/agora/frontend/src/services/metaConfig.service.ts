@@ -18,6 +18,7 @@ export type MetaConfig = {
   meta_ig_verify_token?: string | null;
   meta_ig_access_token?: string | null;
   admin_access_token?: string | null;
+  fanpage_id?: string | null;
 };
 
 export const getMetaConfig = async (): Promise<MetaConfig> => {

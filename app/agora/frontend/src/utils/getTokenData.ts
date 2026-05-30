@@ -9,6 +9,7 @@ export interface UserFeatures {
   botControl:      boolean;
   scheduleControl: boolean;
   salesManagement: boolean;
+  socialPostings:  boolean;
   superadmin:      boolean;
 }
 

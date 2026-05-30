@@ -51,6 +51,7 @@ const allFeatures: UserFeatures = {
   botControl: true,
   scheduleControl: true,
   salesManagement: true,
+  socialPostings: true,
   superadmin: false,
 };
 
@@ -62,6 +63,7 @@ const noFeatures: UserFeatures = {
   botControl: false,
   scheduleControl: false,
   salesManagement: false,
+  socialPostings: false,
   superadmin: false,
 };
 

@@ -83,6 +83,33 @@ export const secureMediaMulterOptions: MulterOptions = {
   },
 };
 
+// Multer para galería de ofertas: solo imágenes, hasta 10 archivos
+const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp']);
+
+export const galeriaOfertasMulterOptions: MulterOptions = {
+  storage: secureMediaStorage,
+  limits: {
+    fileSize: FAMILY_MAX_BYTES.image,
+    files: 10,
+  },
+  fileFilter: (_req, file, cb) => {
+    const ext = sanitizeExtension(path.extname(file.originalname));
+    const mimeType = String(file.mimetype || '').toLowerCase();
+
+    if (
+      !ext ||
+      BLOCKED_CLIENT_EXTENSIONS.has(ext) ||
+      BLOCKED_CLIENT_MIME_PREFIXES.includes(mimeType) ||
+      !IMAGE_EXTENSIONS.has(ext)
+    ) {
+      cb(null, false);
+      return;
+    }
+
+    cb(null, true);
+  },
+};
+
 export async function validateStoredMediaFile(
   file: Express.Multer.File,
   allowedFamilies: MediaFamily[],

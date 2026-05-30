@@ -28,6 +28,7 @@ import { SettingsModule } from './settings/settings.module';
 import { SalesRecordModule } from './sales-record/sales-record.module';
 import { FcaModule } from './fca/fca.module';
 import { FcaConfigModule } from './fca-config/fca-config.module';
+import { SocialPostingsModule } from './social-postings/social-postings.module';
 
 @Global()
 @Module({
@@ -102,6 +103,7 @@ import { FcaConfigModule } from './fca-config/fca-config.module';
     UserProfileModule,
     FcaConfigModule,
     FcaModule,
+    SocialPostingsModule,
   ],
   providers: [PrismaService],
   exports: [PrismaService],

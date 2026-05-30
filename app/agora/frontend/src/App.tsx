@@ -31,6 +31,7 @@ const MetaConfigPage     = lazy(() => import("./pages/MetaConfigPage"));
 const FcaConfigPage      = lazy(() => import("./pages/FcaConfigPage"));
 const ProfilePage        = lazy(() => import("./pages/ProfilePage"));
 const VentasPage         = lazy(() => import("./modules/accesos/pages/VentasPage"));
+const SocialPostingsPage = lazy(() => import("./pages/SocialPostingsPage"));
 
 const PageLoader = () => (
   <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-background">
@@ -198,6 +199,14 @@ function App() {
             element={
               <ProtectedRoute requiredFeature="superadmin">
                 <ErrorBoundary variant="section"><FcaConfigPage /></ErrorBoundary>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/social-postings"
+            element={
+              <ProtectedRoute requiredFeature="socialPostings">
+                <ErrorBoundary variant="section"><SocialPostingsPage /></ErrorBoundary>
               </ProtectedRoute>
             }
           />

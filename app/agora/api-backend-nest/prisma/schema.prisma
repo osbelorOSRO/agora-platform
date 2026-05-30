@@ -22,7 +22,38 @@ model meta_app_config {
   meta_ig_verify_token  String?
   meta_ig_access_token  String?
   admin_access_token    String?
+  fanpage_id            String?
   updated_at            DateTime? @default(now()) @updatedAt @db.Timestamp(6)
+}
+
+model galeria_imagenes_ofertas {
+  id         Int       @id @default(autoincrement())
+  nombre     String
+  url        String
+  bucket     String    @default("ofertas")
+  mime_type  String?
+  size_bytes Int?
+  deleted_at DateTime? @db.Timestamptz(6)
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+}
+
+model posteos_programados {
+  id            Int       @id @default(autoincrement())
+  fecha         DateTime  @db.Date
+  caption       String?
+  url_imagen    String?
+  imagen_id     Int?
+  estado        String    @default("pendiente")
+  red_social    String    @default("FANPAGE")
+  id_red_social String?
+  id_post       String?
+  raw           Json?
+  deleted_at    DateTime? @db.Timestamptz(6)
+  created_at    DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime  @default(now()) @db.Timestamptz(6) @updatedAt
+
+  @@index([fecha], map: "idx_posteos_programados_fecha")
+  @@index([estado, fecha], map: "idx_posteos_programados_estado_fecha")
 }
 
 model fca_app_config {

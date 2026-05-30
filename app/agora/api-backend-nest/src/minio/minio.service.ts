@@ -43,11 +43,25 @@ export class MinioService implements OnModuleInit, IMinioGateway {
     filename: string,
     mimeType: string,
   ): Promise<string> {
+    return this.uploadFileToBucket(filePath, filename, mimeType, this.bucket);
+  }
+
+  async uploadFileToBucket(
+    filePath: string,
+    filename: string,
+    mimeType: string,
+    bucket: string,
+  ): Promise<string> {
+    const exists = await this.client.bucketExists(bucket);
+    if (!exists) {
+      await this.client.makeBucket(bucket, '');
+      this.logger.log(`Bucket ${bucket} creado automáticamente`);
+    }
     const stream = fs.createReadStream(filePath);
     const { size } = fs.statSync(filePath);
-    await this.client.putObject(this.bucket, filename, stream, size, {
+    await this.client.putObject(bucket, filename, stream, size, {
       'Content-Type': mimeType,
     });
-    return `${this.publicBase}/${this.bucket}/${filename}`;
+    return `${this.publicBase}/${bucket}/${filename}`;
   }
 }

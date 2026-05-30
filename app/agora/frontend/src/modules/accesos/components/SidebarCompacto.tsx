@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Home, Settings, FileSpreadsheet, MessagesSquare, UserCircle, ContactRound, Megaphone } from "lucide-react";
+import { Home, Settings, FileSpreadsheet, MessagesSquare, UserCircle, ContactRound, Megaphone, CalendarDays } from "lucide-react";
 import { getTokenData } from "@/utils/getTokenData";
 
 export default function SidebarCompacto() {
@@ -12,7 +12,8 @@ export default function SidebarCompacto() {
     features?.conversations ? { to: "/meta-inbox",    icon: MessagesSquare, label: "Threads"  } : null,
     features?.conversations ? { to: "/meta-ads",      icon: Megaphone,      label: "Ads WA"   } : null,
     features?.reports       ? { to: "/accesos/reportes", icon: FileSpreadsheet, label: "Reports" } : null,
-    features?.settings      ? { to: "/accesos/ajustes",  icon: Settings,    label: "Settings" } : null,
+    features?.settings      ? { to: "/accesos/ajustes",  icon: Settings,     label: "Settings"  } : null,
+    features?.socialPostings ? { to: "/social-postings", icon: CalendarDays, label: "Posteos"   } : null,
     { to: "/perfil", icon: UserCircle, label: "Profile" },
   ].filter(Boolean) as Array<{
     to: string;

@@ -273,6 +273,12 @@ export default function MetaConfigPage() {
 
       {activeTab === "graph" && (
         <div className="space-y-4">
+          <Card title="Fan Page">
+            <p className="text-[11px] text-muted-foreground mb-4">
+              ID numérico de la Fan Page de Facebook. Se usa en el flujo de posteos programados (Social Postings).
+            </p>
+            {field("Fanpage ID", "fanpage_id")}
+          </Card>
           <Card title="Token de acceso de páginas">
             <p className="text-[11px] text-muted-foreground mb-4">
               Token de larga duración para operaciones con la Graph API de Facebook. No se usa en el flujo de mensajería.

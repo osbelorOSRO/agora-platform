@@ -6,4 +6,11 @@ export interface IMinioGateway {
     filename: string,
     mimeType: string,
   ): Promise<string>;
+
+  uploadFileToBucket(
+    filePath: string,
+    filename: string,
+    mimeType: string,
+    bucket: string,
+  ): Promise<string>;
 }
