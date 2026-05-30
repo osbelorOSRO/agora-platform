@@ -4,6 +4,8 @@ import { ConfigService } from '@nestjs/config';
 import request from 'supertest';
 import { MediaController } from './media.controller';
 import { MediaService } from './media.service';
+import { PanelJwtAuthGuard } from '../auth/panel-jwt-auth.guard';
+import { RequirePermissionGuard } from '../accesos/guards/require-permission.guard';
 
 const INTERNAL_TOKEN = 'test-baileys-token';
 const N8N_TOKEN = 'test-n8n-token';
@@ -38,7 +40,12 @@ async function buildApp(): Promise<INestApplication> {
       { provide: MediaService, useValue: mockService },
       { provide: ConfigService, useValue: mockConfig },
     ],
-  }).compile();
+  })
+    .overrideGuard(PanelJwtAuthGuard)
+    .useValue({ canActivate: () => true })
+    .overrideGuard(RequirePermissionGuard)
+    .useValue({ canActivate: () => true })
+    .compile();
 
   const app = module.createNestApplication();
   app.useGlobalPipes(
