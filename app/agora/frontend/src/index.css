@@ -5,17 +5,17 @@
 @tailwind components;
 @tailwind utilities;
 
-@keyframes logo-breathe {
-  0%, 100% {
-    transform: scale(1);
-    filter: drop-shadow(0 0 10px rgba(249, 115, 22, 0.35));
+@keyframes logo-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.82) translateY(12px);
   }
-  50% {
-    transform: scale(1.07);
-    filter: drop-shadow(0 0 28px rgba(249, 115, 22, 0.75));
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
   }
 }
 
-.animate-logo-breathe {
-  animation: logo-breathe 2.2s ease-in-out infinite;
+.animate-logo-enter {
+  animation: logo-enter 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

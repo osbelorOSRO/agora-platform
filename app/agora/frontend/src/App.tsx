@@ -1,7 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Suspense, lazy } from "react";
+import Lottie from "lottie-react";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import loadingAnimation from "./assets/animations/loading.json";
 
 // Carga síncrona — rutas públicas y layout base (siempre necesarios)
 import Login from "./pages/Login";
@@ -32,12 +34,15 @@ const VentasPage         = lazy(() => import("./modules/accesos/pages/VentasPage
 const SocialPostingsPage = lazy(() => import("./pages/SocialPostingsPage"));
 
 const PageLoader = () => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
+  <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-8 bg-background">
     <img
       src="/logo.svg"
       alt="Agora"
-      className="w-36 animate-logo-breathe"
+      className="w-36 animate-logo-enter"
     />
+    <div className="w-12">
+      <Lottie animationData={loadingAnimation} loop style={{ width: "100%" }} />
+    </div>
   </div>
 );
 
