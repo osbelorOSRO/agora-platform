@@ -40,7 +40,7 @@ const PageLoader = () => (
       alt="Agora"
       className="w-36 animate-logo-enter"
     />
-    <div className="w-12">
+    <div className="w-36">
       <Lottie animationData={loadingAnimation} loop style={{ width: "100%" }} />
     </div>
   </div>
