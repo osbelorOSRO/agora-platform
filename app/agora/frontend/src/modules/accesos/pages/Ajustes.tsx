@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { KeyRound, Users, Activity, Wrench, LayoutList, PackageOpen, Plug, GitMerge, Zap, TrendingUp, Facebook } from "lucide-react";
+import { KeyRound, Users, Activity, Wrench, LayoutList, PackageOpen, Plug, GitMerge, Zap, TrendingUp, Facebook, ListChecks } from "lucide-react";
 import { getTokenData } from "@/utils/getTokenData";
 
 const adminCards = [
@@ -26,6 +26,12 @@ const adminCards = [
     title: "Registro de ventas",
     description: "Ingreso manual de ventas, catálogo de ofertas y matriz de precios por rango.",
     Icon: TrendingUp,
+  },
+  {
+    to: "/accesos/ajustes/lead-catalog",
+    title: "Listas de análisis",
+    description: "Edita los motivos de pérdida, tipos de cliente, modalidades y tags de verbalización del formulario de ventas.",
+    Icon: ListChecks,
   },
 ];
 

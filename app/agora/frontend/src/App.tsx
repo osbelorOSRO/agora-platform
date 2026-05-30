@@ -32,6 +32,7 @@ const FcaConfigPage      = lazy(() => import("./pages/FcaConfigPage"));
 const ProfilePage        = lazy(() => import("./pages/ProfilePage"));
 const VentasPage         = lazy(() => import("./modules/accesos/pages/VentasPage"));
 const SocialPostingsPage = lazy(() => import("./pages/SocialPostingsPage"));
+const LeadCatalogPage    = lazy(() => import("./modules/accesos/pages/LeadCatalogPage"));
 
 const PageLoader = () => (
   <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-8 bg-background">
@@ -161,6 +162,14 @@ function App() {
             element={
               <ProtectedRoute requiredFeature="settings">
                 <ErrorBoundary variant="section"><VentasPage /></ErrorBoundary>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/accesos/ajustes/lead-catalog"
+            element={
+              <ProtectedRoute requiredFeature="settings">
+                <ErrorBoundary variant="section"><LeadCatalogPage /></ErrorBoundary>
               </ProtectedRoute>
             }
           />

@@ -157,6 +157,8 @@ model precios_planes {
   excluye_portabilidad_postpago Boolean? @default(false)
   url_archivo                   String?  @db.VarChar(255)
   precio_normal                 Int?
+
+  lead_sales_analysis lead_sales_analysis[]
 }
 
 model respuestas_rapidas {
@@ -505,6 +507,34 @@ enum offer_modality {
   ALTA
 }
 
+enum lead_type {
+  DESCONOCIDO
+  LEAD
+  ORGANICO
+}
+
+enum lead_age_range {
+  NO_DEFINIDO
+  RANGO_18_24
+  RANGO_25_34
+  RANGO_35_44
+  RANGO_45_54
+  RANGO_55_64
+  RANGO_65_PLUS
+}
+
+enum lead_sex {
+  NO_IDENTIFICADO
+  MASCULINO
+  FEMENINO
+}
+
+enum lead_result {
+  EN_PROCESO
+  GANADO
+  PERDIDO
+}
+
 /// Catálogo de ofertas: (code + modality) determina level (1-9) y points (0–3 en pasos de 0.5)
 model offer {
   id       Int            @id @default(autoincrement())
@@ -611,4 +641,64 @@ model wa_ad_leads {
 
   @@index([source_id, first_seen_at(sort: Desc)], name: "idx_wa_ad_leads_source_seen")
   @@index([session_id], name: "idx_wa_ad_leads_session")
+}
+
+model meta_fanpage_ad_leads {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  session_id         String?   @unique @db.VarChar
+  actor_external_id  String?   @db.VarChar
+  ad_id              String?   @db.VarChar
+  ad_name            String?   @db.VarChar
+  adgroup_id         String?   @db.VarChar
+  ref                String?   @db.VarChar
+  source             String?   @db.VarChar
+  type               String?   @db.VarChar
+  first_message_text String?
+  metadata           Json?
+  first_seen_at      DateTime? @db.Timestamptz(6)
+  last_seen_at       DateTime? @db.Timestamptz(6)
+  seen_count         Int       @default(0)
+  created_at         DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime? @updatedAt @db.Timestamptz(6)
+
+  @@index([session_id], name: "idx_meta_fanpage_ad_leads_session")
+  @@index([ad_id, first_seen_at(sort: Desc)], name: "idx_meta_fanpage_ad_leads_ad_seen")
+}
+
+model lead_sales_analysis {
+  id                 String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  session_id         String      @unique @db.VarChar(255)
+  lead_type          lead_type   @default(DESCONOCIDO)
+  age_range          lead_age_range @default(NO_DEFINIDO)
+  sex                lead_sex    @default(NO_IDENTIFICADO)
+  customer_type      String      @default("NO_DEFINIDO") @db.VarChar(128)
+  purchase_intent    String      @default("NO_DEFINIDO") @db.VarChar(128)
+  result             lead_result @default(EN_PROCESO)
+  plan_contracted    String?     @db.VarChar
+  sale_type          String?     @db.VarChar(128)
+  loss_reason        String?     @db.VarChar(128)
+  verbalization_tags String[]
+  verbalization_text String?
+  created_at         DateTime    @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime?   @updatedAt @db.Timestamptz(6)
+
+  precios_planes precios_planes? @relation(fields: [plan_contracted], references: [codigo])
+
+  @@index([session_id], name: "idx_lead_sales_analysis_session")
+  @@index([result], name: "idx_lead_sales_analysis_result")
+  @@index([lead_type], name: "idx_lead_sales_analysis_lead_type")
+}
+
+model lead_catalog_options {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  category   String    @db.VarChar(64)
+  value      String    @db.VarChar(128)
+  label      String    @db.VarChar(255)
+  sort_order Int       @default(0)
+  active     Boolean   @default(true)
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at DateTime? @updatedAt @db.Timestamptz(6)
+
+  @@unique([category, value], name: "lead_catalog_options_category_value")
+  @@index([category, active, sort_order], name: "idx_lead_catalog_options_category_active")
 }

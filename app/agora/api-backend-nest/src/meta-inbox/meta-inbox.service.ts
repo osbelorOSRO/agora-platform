@@ -14,6 +14,13 @@ import {
   ThreadEventService,
   ThreadEventInput,
 } from './services/thread-event.service';
+import { LeadSalesAnalysisService } from './services/lead-sales-analysis.service';
+import { UpsertSalesAnalysisDto } from './dto/upsert-sales-analysis.dto';
+import { LeadCatalogService } from './services/lead-catalog.service';
+import {
+  CreateCatalogOptionDto,
+  UpdateCatalogOptionDto,
+} from './dto/catalog-option.dto';
 
 @Injectable()
 export class MetaInboxService implements OnModuleInit, IMetaInboxGateway {
@@ -25,6 +32,8 @@ export class MetaInboxService implements OnModuleInit, IMetaInboxGateway {
     private readonly offerContext: OfferContextService,
     private readonly whatsappIdentity: WhatsappIdentityService,
     private readonly threadEvent: ThreadEventService,
+    private readonly salesAnalysis: LeadSalesAnalysisService,
+    private readonly leadCatalog: LeadCatalogService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -275,5 +284,30 @@ export class MetaInboxService implements OnModuleInit, IMetaInboxGateway {
     },
   ) {
     return this.messageSend.sendThreadMessage(input);
+  }
+
+  // --- Sales Analysis ---
+
+  async upsertSalesAnalysis(sessionId: string, dto: UpsertSalesAnalysisDto) {
+    await this.salesAnalysis.assertSessionExists(sessionId);
+    return this.salesAnalysis.upsert(sessionId, dto);
+  }
+
+  async getSalesAnalysis(sessionId: string) {
+    return this.salesAnalysis.findBySession(sessionId);
+  }
+
+  // --- Lead Catalog ---
+
+  async listLeadCatalog() {
+    return this.leadCatalog.listAllRaw();
+  }
+
+  async createLeadCatalogOption(dto: CreateCatalogOptionDto) {
+    return this.leadCatalog.create(dto);
+  }
+
+  async updateLeadCatalogOption(id: string, dto: UpdateCatalogOptionDto) {
+    return this.leadCatalog.update(id, dto);
   }
 }

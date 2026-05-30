@@ -4,6 +4,8 @@ import type { MetaInboxContactUpdate, MetaInboxThread } from "@/types/metaInbox"
 import { ATTENTION_MODE_OPTIONS, THREAD_STAGE_OPTIONS, THREAD_STATUS_OPTIONS } from "../constants";
 import { formatRelativeTs } from "../utils";
 import { s } from "../styles";
+import { SalesAnalysisPanel } from "./SalesAnalysisPanel";
+import { useSalesAnalysis } from "../hooks/useSalesAnalysis";
 
 interface Props {
   thread: MetaInboxThread;
@@ -35,6 +37,7 @@ export const ContactPanel: React.FC<Props> = ({
   onWhatsappBlock,
 }) => {
   const isWhatsapp = String(thread.objectType || "").toUpperCase() === "WHATSAPP";
+  const { form: salesForm, saving: savingSales, saved: salesSaved, handleChange: onSalesChange, handleToggleTag, handleSave: onSaveSales } = useSalesAnalysis(thread.sessionId);
 
   const mp = (thread.metadata as Record<string, unknown> | null)?.["marketplace"] as
     | Record<string, string | null>
@@ -180,7 +183,7 @@ export const ContactPanel: React.FC<Props> = ({
       </button>
 
       {(mp?.title || mp?.itemUrl) && (
-        <div className="mt-4 rounded-lg border border-blue-400/30 bg-[#1A2A3A] p-3">
+        <div className="rounded-lg border border-blue-400/30 bg-[#1A2A3A] p-3">
           <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-blue-400">Marketplace</p>
           {mp.imageUrl && (
             <img
@@ -205,6 +208,15 @@ export const ContactPanel: React.FC<Props> = ({
           )}
         </div>
       )}
+
+      <SalesAnalysisPanel
+        form={salesForm}
+        saving={savingSales}
+        saved={salesSaved}
+        onChange={onSalesChange}
+        onToggleTag={handleToggleTag}
+        onSave={onSaveSales}
+      />
     </aside>
   );
 };

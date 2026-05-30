@@ -56,4 +56,10 @@ export const s = {
     "w-full rounded-md border border-border bg-input px-2 py-1.5 text-sm text-foreground outline-none focus:border-[#994D15] transition disabled:opacity-60 min-h-[72px] resize-none",
   contactSave:
     "flex items-center justify-center gap-2 w-full rounded-md border border-[#8A4412] bg-[#1E1108] px-3 py-2 text-sm font-bold text-primary hover:bg-[#321C0C] transition disabled:cursor-not-allowed disabled:opacity-60",
+  tagActive:
+    "rounded-full border border-[#8A4412] bg-[#1E1108] px-2 py-0.5 text-[11px] font-medium text-primary transition-colors",
+  tagInactive:
+    "rounded-full border border-border bg-input px-2 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:border-[#8A4412] hover:text-foreground",
+  catalogInput:
+    "w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:border-[#994D15] transition",
 };

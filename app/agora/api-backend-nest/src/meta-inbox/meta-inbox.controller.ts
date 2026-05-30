@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
   UploadedFile,
   UseGuards,
@@ -14,6 +15,7 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
+
 import { FileInterceptor } from '@nestjs/platform-express';
 import { MetaInboxService } from './meta-inbox.service';
 import { TransformInterceptor } from '../core/interceptors/transform.interceptor';
@@ -32,6 +34,11 @@ import { ListThreadsQueryDto } from './dto/list-threads-query.dto';
 import { ListContactsQueryDto } from './dto/list-contacts-query.dto';
 import { ListAdLeadStatsQueryDto } from './dto/list-ad-lead-stats-query.dto';
 import { ListMessagesQueryDto } from './dto/list-messages-query.dto';
+import { UpsertSalesAnalysisDto } from './dto/upsert-sales-analysis.dto';
+import {
+  CreateCatalogOptionDto,
+  UpdateCatalogOptionDto,
+} from './dto/catalog-option.dto';
 
 @ApiTags('Bandeja Meta')
 @ApiBearerAuth('panel-jwt')
@@ -152,5 +159,36 @@ export class MetaInboxController {
   @Post('threads/:sessionId/reopen')
   reopenThread(@Param('sessionId') sessionId: string) {
     return this.metaInbox.reopenThread(sessionId);
+  }
+
+  @Put('threads/:sessionId/sales-analysis')
+  upsertSalesAnalysis(
+    @Param('sessionId') sessionId: string,
+    @Body() body: UpsertSalesAnalysisDto,
+  ) {
+    return this.metaInbox.upsertSalesAnalysis(sessionId, body);
+  }
+
+  @Get('threads/:sessionId/sales-analysis')
+  getSalesAnalysis(@Param('sessionId') sessionId: string) {
+    return this.metaInbox.getSalesAnalysis(sessionId);
+  }
+
+  @Get('lead-catalog')
+  listLeadCatalog() {
+    return this.metaInbox.listLeadCatalog();
+  }
+
+  @Post('lead-catalog')
+  createLeadCatalogOption(@Body() body: CreateCatalogOptionDto) {
+    return this.metaInbox.createLeadCatalogOption(body);
+  }
+
+  @Patch('lead-catalog/:id')
+  updateLeadCatalogOption(
+    @Param('id') id: string,
+    @Body() body: UpdateCatalogOptionDto,
+  ) {
+    return this.metaInbox.updateLeadCatalogOption(id, body);
   }
 }

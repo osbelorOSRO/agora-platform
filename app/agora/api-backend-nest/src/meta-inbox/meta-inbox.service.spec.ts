@@ -40,6 +40,18 @@ const mockThreadEvent = {
   listMessages: jest.fn(),
 };
 
+const mockSalesAnalysis = {
+  assertSessionExists: jest.fn(),
+  upsert: jest.fn(),
+  findBySession: jest.fn(),
+};
+
+const mockLeadCatalog = {
+  listAllRaw: jest.fn(),
+  create: jest.fn(),
+  update: jest.fn(),
+};
+
 function buildService() {
   return new MetaInboxService(
     mockSchema as any,
@@ -49,6 +61,8 @@ function buildService() {
     mockOffer as any,
     mockWaIdentity as any,
     mockThreadEvent as any,
+    mockSalesAnalysis as any,
+    mockLeadCatalog as any,
   );
 }
 

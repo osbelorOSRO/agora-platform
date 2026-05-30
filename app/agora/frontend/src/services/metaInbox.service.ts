@@ -12,6 +12,8 @@ import type {
   MetaInboxThreadControlUpdate,
   WhatsappAdLeadStatsResponse,
   FcaMarketplaceLeadStatsResponse,
+  SalesAnalysis,
+  SalesAnalysisUpdate,
 } from "@/types/metaInbox";
 
 const API_URL = env.apiUrl;
@@ -172,4 +174,22 @@ export const sendMetaInboxMedia = async (sessionId: string, file: File, caption?
   });
   if (!res.ok) throw new Error("No se pudo enviar el archivo");
   return unwrapEnvelope(await res.json());
+};
+
+export const getSalesAnalysis = async (sessionId: string): Promise<SalesAnalysis | null> => {
+  const res = await fetch(`${API_URL}/meta-inbox/threads/${encodeURIComponent(sessionId)}/sales-analysis`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error("No se pudo cargar el análisis de ventas");
+  return unwrapEnvelope(await res.json()) as SalesAnalysis | null;
+};
+
+export const upsertSalesAnalysis = async (sessionId: string, payload: SalesAnalysisUpdate): Promise<SalesAnalysis> => {
+  const res = await fetch(`${API_URL}/meta-inbox/threads/${encodeURIComponent(sessionId)}/sales-analysis`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("No se pudo guardar el análisis de ventas");
+  return unwrapEnvelope(await res.json()) as SalesAnalysis;
 };

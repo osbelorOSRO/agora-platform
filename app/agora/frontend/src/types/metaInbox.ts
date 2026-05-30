@@ -171,3 +171,23 @@ export type FcaMarketplaceLeadStatsResponse = {
   leads: FcaMarketplaceLeadRow[];
   total: number;
 };
+
+export type SalesAnalysis = {
+  id: string;
+  sessionId: string;
+  leadType: string;
+  ageRange: string;
+  sex: string;
+  customerType: string;
+  purchaseIntent: string;
+  result: string;
+  planContracted: string | null;
+  saleType: string | null;
+  lossReason: string | null;
+  verbalizationTags: string[];
+  verbalizationText: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+};
+
+export type SalesAnalysisUpdate = Partial<Omit<SalesAnalysis, "id" | "sessionId" | "createdAt" | "updatedAt">>;
