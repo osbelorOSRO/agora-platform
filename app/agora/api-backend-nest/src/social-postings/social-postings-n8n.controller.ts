@@ -42,7 +42,7 @@ export class SocialPostingsN8nController {
   ) {
     const dto: N8nResultadoDto = {
       estado: body['estado'] as string,
-      id_post: body['id_post'] as string | undefined,
+      id_post: (body['id_post'] ?? body['id']) as string | undefined,
       raw: body['raw'] as Record<string, unknown> | undefined,
     };
     return this.service.registrarResultado(id, dto);
