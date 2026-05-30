@@ -38,8 +38,13 @@ export class SocialPostingsN8nController {
   @Patch(':id/resultado')
   registrarResultado(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: N8nResultadoDto,
+    @Body() body: Record<string, unknown>,
   ) {
+    const dto: N8nResultadoDto = {
+      estado: body['estado'] as string,
+      id_post: body['id_post'] as string | undefined,
+      raw: body['raw'] as Record<string, unknown> | undefined,
+    };
     return this.service.registrarResultado(id, dto);
   }
 }
