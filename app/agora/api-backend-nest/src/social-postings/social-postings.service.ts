@@ -115,7 +115,7 @@ export class SocialPostingsService {
     const tareas = await this.prisma.$queryRawUnsafe<Record<string, unknown>[]>(
       `SELECT id, fecha, caption, url_imagen, imagen_id, estado, red_social, id_red_social
        FROM posteos_programados
-       WHERE fecha = CURRENT_DATE
+       WHERE fecha = (CURRENT_TIMESTAMP AT TIME ZONE 'America/Santiago')::date
          AND estado = 'pendiente'
          AND deleted_at IS NULL
        ORDER BY id ASC`,
