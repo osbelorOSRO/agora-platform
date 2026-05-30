@@ -23,7 +23,6 @@ import { SocialPostingsService } from './social-postings.service';
 @UsePipes(
   new ValidationPipe({
     whitelist: true,
-    forbidNonWhitelisted: true,
     transform: true,
     transformOptions: { enableImplicitConversion: true },
   }),
