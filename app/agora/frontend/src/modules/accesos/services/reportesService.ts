@@ -56,6 +56,18 @@ export const obtenerActividadSemanalThreads = async (
   return data.rows || [];
 };
 
+export const obtenerReporteJson = async (
+  reportId: string,
+  filtros: Record<string, string>
+): Promise<{ total: number; rows: Record<string, unknown>[] }> => {
+  const params = new URLSearchParams({ ...filtros, format: "json" });
+  const res = await fetch(`${API_URL}/${reportId}?${params.toString()}`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error("No se pudo obtener el reporte");
+  return res.json();
+};
+
 export const descargarReporteCsv = async (
   reportId: string,
   filtros: Record<string, string>

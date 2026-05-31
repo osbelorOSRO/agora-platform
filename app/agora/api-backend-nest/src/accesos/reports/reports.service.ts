@@ -55,6 +55,19 @@ export class ReportsService {
         formatos: ['json', 'csv'],
         filtros: ['desde', 'hasta', 'rut', 'fono', 'nombre', 'object_type'],
       },
+      {
+        id: 'analisis-ventas',
+        nombre: 'Análisis de ventas (leads)',
+        formatos: ['json', 'csv'],
+        filtros: [
+          'desde',
+          'hasta',
+          'canal',
+          'lead_type',
+          'resultado',
+          'motivo_perdida',
+        ],
+      },
     ];
   }
 
@@ -327,6 +340,79 @@ export class ReportsService {
         fecha_registro: row.created_at?.toISOString() ?? null,
         fecha_actualizacion: row.updated_at?.toISOString() ?? null,
       })),
+    };
+  }
+
+  async analisisVentas(q: Record<string, string>): Promise<ReportResult> {
+    const desde = parseDate(q.desde);
+    const hasta = parseDate(q.hasta);
+    if ((q.desde && !desde) || (q.hasta && !hasta))
+      throw new BadRequestException('Parámetros de fecha inválidos');
+
+    const clauses: string[] = [];
+    const params: unknown[] = [];
+
+    if (desde) {
+      params.push(desde);
+      clauses.push(`lsa.created_at >= $${params.length}`);
+    }
+    if (hasta) {
+      params.push(hasta);
+      clauses.push(`lsa.created_at <= $${params.length}`);
+    }
+    if (q.canal) {
+      params.push(String(q.canal).toUpperCase());
+      clauses.push(`t.object_type = $${params.length}`);
+    }
+    if (q.lead_type) {
+      params.push(String(q.lead_type).toUpperCase());
+      clauses.push(`lsa.lead_type::text = $${params.length}`);
+    }
+    if (q.resultado) {
+      params.push(String(q.resultado).toUpperCase());
+      clauses.push(`lsa.result::text = $${params.length}`);
+    }
+    if (q.motivo_perdida) {
+      params.push(String(q.motivo_perdida));
+      clauses.push(`lsa.loss_reason = $${params.length}`);
+    }
+
+    const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
+
+    const rows = await this.prisma.$queryRawUnsafe<Record<string, unknown>[]>(
+      `SELECT
+        to_char(lsa.created_at AT TIME ZONE '${TIMEZONE}', 'DD/MM/YYYY HH24:MI') AS fecha_registro,
+        t.object_type                                                               AS canal,
+        t.source_channel                                                            AS sub_canal,
+        COALESCE(c.display_name, 'Sin nombre')                                     AS contacto,
+        c.phone                                                                     AS telefono,
+        c.rut                                                                       AS rut,
+        lsa.lead_type::text                                                         AS tipo_lead,
+        lsa.age_range::text                                                         AS rango_edad,
+        lsa.sex::text                                                               AS sexo,
+        lsa.customer_type                                                           AS tipo_cliente,
+        lsa.purchase_intent                                                         AS intencion,
+        lsa.result::text                                                            AS resultado,
+        lsa.plan_contracted                                                         AS plan_contratado,
+        lsa.sale_type                                                               AS modalidad,
+        lsa.loss_reason                                                             AS motivo_perdida,
+        array_to_string(lsa.verbalization_tags, ', ')                              AS tags_verbalizacion,
+        lsa.verbalization_text                                                      AS verbalizacion_textual,
+        lsa.session_id
+       FROM lead_sales_analysis lsa
+       JOIN threads t ON t.session_id = lsa.session_id
+       LEFT JOIN meta_inbox_contacts c
+         ON c.actor_external_id = t.actor_external_id AND c.object_type = t.object_type
+       ${where}
+       ORDER BY lsa.created_at DESC
+       LIMIT 5000`,
+      ...params,
+    );
+
+    return {
+      format: q.format === 'csv' ? 'csv' : 'json',
+      filename: 'reporte_analisis_ventas',
+      rows,
     };
   }
 

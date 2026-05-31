@@ -73,4 +73,15 @@ export class ReportsController {
       res,
     );
   }
+
+  @Get('analisis-ventas')
+  async analisisVentas(
+    @Query() q: Record<string, string>,
+    @Res() res: Response,
+  ) {
+    this.send(
+      this.service.formatResponse(await this.service.analisisVentas(q)),
+      res,
+    );
+  }
 }

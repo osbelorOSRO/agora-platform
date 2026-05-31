@@ -35,15 +35,16 @@ describe('ReportsService', () => {
   // ──────────────────────────────────────────────
 
   describe('catalogo()', () => {
-    it('devuelve los 5 reportes disponibles', () => {
+    it('devuelve los 6 reportes disponibles', () => {
       const result = svc.catalogo();
-      expect(result).toHaveLength(5);
+      expect(result).toHaveLength(6);
       expect(result.map((r) => r.id)).toEqual([
         'procesos',
         'desempeno',
         'procesos-semanales',
         'precios-planes',
         'clientes-info',
+        'analisis-ventas',
       ]);
     });
 
