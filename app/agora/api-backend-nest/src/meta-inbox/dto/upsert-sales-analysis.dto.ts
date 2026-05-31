@@ -17,41 +17,13 @@ const AGE_RANGE = [
   'RANGO_65_PLUS',
 ] as const;
 const SEX = ['NO_IDENTIFICADO', 'MASCULINO', 'FEMENINO'] as const;
-const CUSTOMER_TYPE = [
-  'NO_DEFINIDO',
-  'AUTONOMO',
-  'ASISTIDO',
-  'ABANDONO_BOT',
-  'DIRECTO',
-] as const;
-const PURCHASE_INTENT = ['NO_DEFINIDO', 'LINEA_NUEVA', 'PORTABILIDAD'] as const;
 const RESULT = ['EN_PROCESO', 'GANADO', 'PERDIDO'] as const;
-const SALE_TYPE = [
-  'NO_DEFINIDO',
-  'PORTABILIDAD_POSTPAGO',
-  'PORTABILIDAD_PREPAGO',
-  'ALTA',
-  'SALTA',
-] as const;
-const LOSS_REASON = [
-  'NO_CALIFICO_SCORE',
-  'NUMERO_NO_PORTABLE',
-  'PRECIO_NO_CONVENCIO',
-  'DECIDIO_NO_CONTRATAR',
-  'NO_RESPONDIO_MAS',
-  'DERIVADO_TIENDA_FISICA',
-  'OTRO',
-] as const;
 
 export const SALES_ANALYSIS_ENUMS = {
   LEAD_TYPE,
   AGE_RANGE,
   SEX,
-  CUSTOMER_TYPE,
-  PURCHASE_INTENT,
   RESULT,
-  SALE_TYPE,
-  LOSS_REASON,
 };
 
 export class UpsertSalesAnalysisDto {
@@ -68,11 +40,13 @@ export class UpsertSalesAnalysisDto {
   sex?: string;
 
   @IsOptional()
-  @IsIn(CUSTOMER_TYPE)
+  @IsString()
+  @MaxLength(128)
   customerType?: string;
 
   @IsOptional()
-  @IsIn(PURCHASE_INTENT)
+  @IsString()
+  @MaxLength(128)
   purchaseIntent?: string;
 
   @IsOptional()
@@ -85,11 +59,13 @@ export class UpsertSalesAnalysisDto {
   planContracted?: string | null;
 
   @IsOptional()
-  @IsIn([...SALE_TYPE, null])
+  @IsString()
+  @MaxLength(128)
   saleType?: string | null;
 
   @IsOptional()
-  @IsIn([...LOSS_REASON, null])
+  @IsString()
+  @MaxLength(128)
   lossReason?: string | null;
 
   @IsOptional()
