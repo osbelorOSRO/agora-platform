@@ -75,3 +75,6 @@ AGENTS.md
 skills-lock.json
 .ipynb_checkpoints/
 coverage/
+app/agora/frontend/coverage/
+.codewhale/
+.deepseek/

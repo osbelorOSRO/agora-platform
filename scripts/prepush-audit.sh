@@ -121,6 +121,17 @@ else
 fi
 
 echo ""
+echo "== prepush-audit: npm audit =="
+for PKG_DIR in app/agora/api-backend-nest app/agora/frontend; do
+  if [[ -f "$PKG_DIR/package.json" ]]; then
+    echo "→ audit $PKG_DIR"
+    (cd "$PKG_DIR" && npm audit --audit-level=moderate) || {
+      echo "[WARN] npm audit encontró vulnerabilidades en $PKG_DIR"
+    }
+  fi
+done
+
+echo ""
 if [[ "$FAIL" -eq 1 ]]; then
   echo "prepush-audit: BLOQUEADO (hallazgos arriba). Push cancelado."
   echo "Si es un falso positivo y estas seguro: git push --no-verify"

@@ -1,5 +1,16 @@
 # Changelog
 
+## 3.4.2
+
+### Added
+- CI: triggers para wa-backend y scripts en workflow de Agora
+- CI: auditoría npm audit con `--audit-level=moderate` en backend y frontend
+- CI: nuevo job `audit-frontend` para auditoría de dependencias del frontend
+- prepush-audit: verificación npm audit en api-backend-nest y frontend
+
+### Changed
+- .gitignore: excluir `coverage/` de frontend, `.codewhale/` y `.deepseek/`
+
 ## 3.4.1
 
 ### Changed
