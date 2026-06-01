@@ -1,5 +1,18 @@
 # Changelog
 
+## 3.4.0
+
+### Changed
+- **Refactor visual frontend** — nueva paleta de tokens: fondo oscuro uniforme, texto en escala de grises, naranja reservado exclusivamente para elementos accionables y badges de notificación
+- Eliminados glassmorphism (`backdrop-filter`), glows y animaciones decorativas (`glow-pulse`, `.glow-primary`)
+- Header de página unificado en todas las vistas: `text-3xl font-bold` flat sin tarjeta, patrón igual al de Roles/Usuarios
+- Sidebar desktop con submenú expandible de Settings (Reports, Ads WA, Posts, Users, Roles, Sessions, Sales, Lists, Transition, Signals, Bot, Stages, Offers, Integrations, Facebook)
+- BottomNav móvil: Home, Threads, Contacts, Settings, Profile
+- Home rediseñado: stats (contacts, threads) integrados al header, grilla 1/3 notificaciones + 2/3 chart
+- MetaInbox — panel de contacto sin naranja: título, labels de sección, inputs y botones neutralizados; botón guardar como acción primaria sólida
+- Eliminados textos en naranja en todas las páginas auditadas (Welcome, Agenda, WA Control, Ads WA, MetaInbox)
+- Eliminado abuso de `uppercase` y `tracking-wide` en labels y títulos de sección
+
 ## 3.3.0
 
 ### Added

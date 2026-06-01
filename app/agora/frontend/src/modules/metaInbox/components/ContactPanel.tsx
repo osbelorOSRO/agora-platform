@@ -61,7 +61,7 @@ export const ContactPanel: React.FC<Props> = ({
       </div>
 
       <div className="space-y-2 border-b border-border pb-3">
-        <div className="text-xs uppercase tracking-wide text-muted-foreground">Thread</div>
+        <div className="text-xs font-medium text-muted-foreground">Thread</div>
         <select
           value={thread.threadStatus}
           onChange={(e) => void onThreadControlChange({ threadStatus: e.target.value })}
@@ -104,7 +104,7 @@ export const ContactPanel: React.FC<Props> = ({
       </div>
 
       <div className="space-y-2 border-b border-border pb-3">
-        <div className="text-xs uppercase tracking-wide text-muted-foreground">Actor</div>
+        <div className="text-xs font-medium text-muted-foreground">Actor</div>
         <div className={s.contactInput}>Score: {thread.actorScore ?? "0"}</div>
         <div className={s.contactInput}>Lifecycle: {thread.actorLifecycleState ?? "SIN_ESTADO"}</div>
         <div className={s.contactInput}>
@@ -115,7 +115,7 @@ export const ContactPanel: React.FC<Props> = ({
 
       {isWhatsapp && (
         <div className="space-y-2 border-b border-border pb-3">
-          <div className="text-xs uppercase tracking-wide text-muted-foreground">WhatsApp</div>
+          <div className="text-xs font-medium text-muted-foreground">WhatsApp</div>
           <button
             type="button"
             onClick={() => void onWhatsappBlock("block")}
@@ -183,8 +183,8 @@ export const ContactPanel: React.FC<Props> = ({
       </button>
 
       {(mp?.title || mp?.itemUrl) && (
-        <div className="rounded-lg border border-blue-400/30 bg-[#1A2A3A] p-3">
-          <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-blue-400">Marketplace</p>
+        <div className="rounded-lg border border-border bg-secondary p-3">
+          <p className="mb-2 text-xs font-medium text-muted-foreground">Marketplace</p>
           {mp.imageUrl && (
             <img
               src={mp.imageUrl}

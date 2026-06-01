@@ -42,7 +42,6 @@ const config: Config = {
           DEFAULT:    "var(--primary)",
           foreground: "var(--primary-foreground)",
           hover:      "var(--primary-hover)",
-          glow:       "var(--primary-glow)",
         },
         secondary: {
           DEFAULT:    "var(--secondary)",
@@ -103,9 +102,8 @@ const config: Config = {
 
       // ── Animaciones ──────────────────────────────────────────────
       animation: {
-        "fade-in":    "fadeIn 0.2s ease-out",
-        "slide-up":   "slideUp 0.25s ease-out",
-        "glow-pulse": "glowPulse 2s ease-in-out infinite",
+        "fade-in":  "fadeIn 0.2s ease-out",
+        "slide-up": "slideUp 0.25s ease-out",
       },
       keyframes: {
         fadeIn: {
@@ -115,10 +113,6 @@ const config: Config = {
         slideUp: {
           "0%":   { opacity: "0", transform: "translateY(8px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
-        },
-        glowPulse: {
-          "0%, 100%": { boxShadow: "0 0 8px 2px var(--primary-glow)" },
-          "50%":      { boxShadow: "0 0 16px 6px var(--primary-glow)" },
         },
       },
     },
@@ -130,35 +124,22 @@ const config: Config = {
       addUtilities({
         // Uso: className="glass-sm rounded-xl p-4"
         ".glass-sm": {
-          "backdrop-filter":         "blur(var(--glass-blur-sm))",
-          "-webkit-backdrop-filter": "blur(var(--glass-blur-sm))",
-          "background-color":        "var(--glass-bg-sm)",
-          "border":                  "1px solid var(--glass-border)",
+          "background-color": "var(--glass-bg-sm)",
+          "border":           "1px solid var(--glass-border)",
         },
         ".glass-md": {
-          "backdrop-filter":         "blur(var(--glass-blur-md))",
-          "-webkit-backdrop-filter": "blur(var(--glass-blur-md))",
-          "background-color":        "var(--glass-bg-md)",
-          "border":                  "1px solid var(--glass-border)",
+          "background-color": "var(--glass-bg-md)",
+          "border":           "1px solid var(--glass-border)",
         },
         ".glass-lg": {
-          "backdrop-filter":         "blur(var(--glass-blur-lg))",
-          "-webkit-backdrop-filter": "blur(var(--glass-blur-lg))",
-          "background-color":        "var(--glass-bg-lg)",
-          "border":                  "1px solid var(--glass-border)",
+          "background-color": "var(--glass-bg-lg)",
+          "border":           "1px solid var(--glass-border)",
         },
         // Fondo de app con gradiente radial
         // Uso: className="bg-app min-h-screen"
         ".bg-app": {
           "background":       "var(--gradient-bg)",
           "background-color": "var(--background)",
-        },
-        // Glow del color primario para elementos interactivos
-        ".glow-primary": {
-          "box-shadow": "0 0 12px 3px var(--primary-glow)",
-        },
-        ".hover\\:glow-primary:hover": {
-          "box-shadow": "0 0 16px 6px var(--primary-glow)",
         },
       });
     }),

@@ -10,21 +10,21 @@ const SUPERADMIN_CARDS = [
 
 export const SuperadminSection: React.FC = () => (
   <div className="space-y-3">
-    <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-primary">Superadmin</p>
+    <p className="text-sm font-medium text-muted-foreground">Superadmin</p>
     <div className="grid gap-4 md:grid-cols-3">
       {SUPERADMIN_CARDS.map(({ title, subtitle, to, Icon }) => (
-        <article key={title} className="rounded-xl border border-[#5C2E08] bg-[#1A1A1A] p-5 transition hover:border-[#7B3B10]">
+        <article key={title} className="rounded-xl border border-border bg-card p-5 transition hover:border-border">
           <div className="flex items-start justify-between gap-4">
-            <div className="rounded-xl bg-[#222222] p-3">
-              <Icon className="h-6 w-6 text-primary" />
+            <div className="rounded-xl bg-secondary p-3">
+              <Icon className="h-6 w-6 text-muted-foreground" />
             </div>
-            <span className="rounded-full bg-[#2A2A2A] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
+            <span className="rounded-full bg-secondary px-3 py-1 text-[11px] font-medium text-muted-foreground">
               Superadmin
             </span>
           </div>
           <h2 className="mt-4 text-xl font-bold text-foreground">{title}</h2>
           <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>
-          <Link to={to} className="mt-4 inline-flex items-center gap-2 rounded-xl border border-[#6E3709] bg-[#1E1108] px-4 py-2 text-sm font-bold text-primary transition hover:bg-[#321C0C]">
+          <Link to={to} className="mt-4 inline-flex items-center gap-2 rounded-xl border border-border bg-secondary px-4 py-2 text-sm font-medium text-foreground transition hover:bg-input">
             Ir al módulo
           </Link>
         </article>

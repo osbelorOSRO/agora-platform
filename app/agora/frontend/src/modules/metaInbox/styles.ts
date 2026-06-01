@@ -33,7 +33,7 @@ export const s = {
   bubbleWrapOutgoing: "flex justify-end",
   bubbleWrapIncoming: "flex justify-start",
   bubbleOutgoing:
-    "max-w-[75%] rounded-2xl rounded-tr-sm border border-[#6E3709] bg-[var(--bubble-outgoing)] px-3 py-2 text-sm text-foreground",
+    "max-w-[75%] rounded-2xl rounded-tr-sm border border-border bg-[var(--bubble-outgoing)] px-3 py-2 text-sm text-foreground",
   bubbleIncoming:
     "max-w-[75%] rounded-2xl rounded-tl-sm border border-border bg-card px-3 py-2 text-sm text-foreground",
   bubbleTsOutgoing: "mt-1 text-right text-[10px] text-muted-foreground",
@@ -41,25 +41,25 @@ export const s = {
   composer:
     "flex items-end gap-2 border-t border-border bg-card px-3 py-2",
   composerInput:
-    "min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-[#525252] resize-none overflow-hidden leading-5",
+    "min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground resize-none overflow-hidden leading-5",
   composerSend:
-    "flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground hover:border-[#6E3709] hover:text-primary transition-colors",
+    "flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors",
   composerIcon: "h-4 w-4",
   contactAside:
     "flex flex-col gap-2 overflow-y-auto border-l border-border bg-card p-3 scrollbar-custom",
   contactHead: "flex items-center justify-between pb-2 border-b border-border",
   contactTitle:
-    "text-xs font-bold uppercase tracking-[0.22em] text-primary",
+    "text-sm font-medium text-foreground",
   contactInput:
-    "w-full rounded-md border border-border bg-input px-2 py-1.5 text-sm text-foreground outline-none focus:border-[#994D15] transition disabled:opacity-60",
+    "w-full rounded-md border border-border bg-input px-2 py-1.5 text-sm text-foreground outline-none focus:border-border transition disabled:opacity-60",
   contactTextarea:
-    "w-full rounded-md border border-border bg-input px-2 py-1.5 text-sm text-foreground outline-none focus:border-[#994D15] transition disabled:opacity-60 min-h-[72px] resize-none",
+    "w-full rounded-md border border-border bg-input px-2 py-1.5 text-sm text-foreground outline-none focus:border-border transition disabled:opacity-60 min-h-[72px] resize-none",
   contactSave:
-    "flex items-center justify-center gap-2 w-full rounded-md border border-[#8A4412] bg-[#1E1108] px-3 py-2 text-sm font-bold text-primary hover:bg-[#321C0C] transition disabled:cursor-not-allowed disabled:opacity-60",
+    "flex items-center justify-center gap-2 w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover transition disabled:cursor-not-allowed disabled:opacity-60",
   tagActive:
-    "rounded-full border border-[#8A4412] bg-[#1E1108] px-2 py-0.5 text-[11px] font-medium text-primary transition-colors",
+    "rounded-full border border-border bg-secondary px-2 py-0.5 text-[11px] font-medium text-foreground transition-colors",
   tagInactive:
-    "rounded-full border border-border bg-input px-2 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:border-[#8A4412] hover:text-foreground",
+    "rounded-full border border-border bg-input px-2 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground",
   catalogInput:
-    "w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:border-[#994D15] transition",
+    "w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:border-border transition",
 };

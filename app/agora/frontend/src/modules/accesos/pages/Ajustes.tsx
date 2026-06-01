@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { KeyRound, Users, Activity, Wrench, LayoutList, PackageOpen, Plug, GitMerge, Zap, TrendingUp, Facebook, ListChecks } from "lucide-react";
+import { KeyRound, Users, Activity, Wrench, LayoutList, PackageOpen, Plug, GitMerge, Zap, TrendingUp, Facebook, ListChecks, FileSpreadsheet, Megaphone } from "lucide-react";
 import { getTokenData } from "@/utils/getTokenData";
 
 const adminCards = [
@@ -93,63 +93,66 @@ export default function Ajustes() {
 
   const visibleTools = toolCards.filter(({ feature }) => features?.[feature]);
 
+  const moduleCards = [
+    features?.reports       && { to: "/accesos/reportes", title: "Reportes", description: "Exportación CSV de actividad conversacional.", Icon: FileSpreadsheet },
+    features?.conversations && { to: "/meta-ads",         title: "Ads WA",   description: "Leads y estadísticas de campañas de WhatsApp Ads.", Icon: Megaphone },
+  ].filter(Boolean) as Array<{ to: string; title: string; description: string; Icon: React.ComponentType<{ className?: string }> }>;
+
   return (
-    <section className="space-y-8 text-white">
+    <section className="space-y-8 text-foreground">
       <div>
-        <h1 className="text-3xl font-bold">Ajustes</h1>
+        <h1 className="text-3xl font-bold text-foreground">Ajustes</h1>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
           Administración de accesos, herramientas operativas e integraciones.
         </p>
       </div>
 
       <div className="space-y-6">
+        {moduleCards.length > 0 && (
+          <>
+            <p className="text-sm font-medium text-muted-foreground">Módulos</p>
+            <div className="grid gap-4 md:grid-cols-2">
+              {moduleCards.map(({ to, title, description, Icon }) => (
+                <Link key={to} to={to} className="rounded-2xl border border-border bg-muted p-6 transition hover:bg-card">
+                  <Icon className="mb-4 h-8 w-8 text-foreground" />
+                  <h2 className="text-xl font-semibold text-foreground">{title}</h2>
+                  <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+                </Link>
+              ))}
+            </div>
+          </>
+        )}
+
+        <p className="text-sm font-medium text-muted-foreground">Administración</p>
         <div className="grid gap-4 md:grid-cols-2">
           {adminCards.map(({ to, title, description, Icon }) => (
-            <Link
-              key={to}
-              to={to}
-              className="rounded-2xl border border-border bg-muted p-6 transition hover:bg-card"
-            >
-              <Icon className="mb-4 h-8 w-8 text-white" />
-              <h2 className="text-xl font-semibold">{title}</h2>
+            <Link key={to} to={to} className="rounded-2xl border border-border bg-muted p-6 transition hover:bg-card">
+              <Icon className="mb-4 h-8 w-8 text-foreground" />
+              <h2 className="text-xl font-semibold text-foreground">{title}</h2>
               <p className="mt-2 text-sm text-muted-foreground">{description}</p>
             </Link>
           ))}
         </div>
 
-        <>
-          <p className="text-xs font-bold uppercase tracking-[0.25em] text-muted-foreground">
-            Scoring & Ciclo de vida
-          </p>
-          <div className="grid gap-4 md:grid-cols-2">
-            {scoringCards.map(({ to, title, description, Icon }) => (
-              <Link
-                key={to}
-                to={to}
-                className="rounded-2xl border border-border bg-muted p-6 transition hover:bg-card"
-              >
-                <Icon className="mb-4 h-8 w-8 text-white" />
-                <h2 className="text-xl font-semibold">{title}</h2>
-                <p className="mt-2 text-sm text-muted-foreground">{description}</p>
-              </Link>
-            ))}
-          </div>
-        </>
+        <p className="text-sm font-medium text-muted-foreground">Scoring & Ciclo de vida</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          {scoringCards.map(({ to, title, description, Icon }) => (
+            <Link key={to} to={to} className="rounded-2xl border border-border bg-muted p-6 transition hover:bg-card">
+              <Icon className="mb-4 h-8 w-8 text-foreground" />
+              <h2 className="text-xl font-semibold text-foreground">{title}</h2>
+              <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+            </Link>
+          ))}
+        </div>
 
         {visibleTools.length > 0 && (
           <>
-            <p className="text-xs font-bold uppercase tracking-[0.25em] text-muted-foreground">
-              Herramientas
-            </p>
+            <p className="text-sm font-medium text-muted-foreground">Herramientas</p>
             <div className="grid gap-4 md:grid-cols-2">
               {visibleTools.map(({ to, title, description, Icon }) => (
-                <Link
-                  key={to}
-                  to={to}
-                  className="rounded-2xl border border-border bg-muted p-6 transition hover:bg-card"
-                >
-                  <Icon className="mb-4 h-8 w-8 text-white" />
-                  <h2 className="text-xl font-semibold">{title}</h2>
+                <Link key={to} to={to} className="rounded-2xl border border-border bg-muted p-6 transition hover:bg-card">
+                  <Icon className="mb-4 h-8 w-8 text-foreground" />
+                  <h2 className="text-xl font-semibold text-foreground">{title}</h2>
                   <p className="mt-2 text-sm text-muted-foreground">{description}</p>
                 </Link>
               ))}

@@ -7,33 +7,32 @@
 
 :root {
   /* ── Base ─────────────────────────────────────────────────── */
-  --background:          #0E0E0E;
-  --foreground:          #ffffff;
+  --background:          #0C0C0C;
+  --foreground:          #F2F2F2;
 
   /* ── Superficies — grafito neutro ────────────────────────── */
-  --card:                #1A1A1A;
-  --card-foreground:     #ffffff;
+  --card:                #161616;
+  --card-foreground:     #F2F2F2;
 
-  --popover:             #252525;
-  --popover-foreground:  #ffffff;
+  --popover:             #1E1E1E;
+  --popover-foreground:  #F2F2F2;
 
-  /* ── Acción primaria (naranja) ────────────────────────────── */
+  /* ── Acción primaria (naranja — solo iconos accionables y badges) */
   --primary:             #F97316;
   --primary-foreground:  #ffffff;
   --primary-hover:       #EA580C;
-  --primary-glow:        #7B3B10;
 
   /* ── Acción secundaria ────────────────────────────────────── */
-  --secondary:           #1E1E1E;
-  --secondary-foreground: #CCCCCC;
+  --secondary:           #1A1A1A;
+  --secondary-foreground: #B0B0B0;
 
   /* ── Texto atenuado y superficies neutras ─────────────────── */
-  --muted:               #141414;
-  --muted-foreground:    #A3A3A3;
+  --muted:               #111111;
+  --muted-foreground:    #787878;
 
   /* ── Estado hover/activo de elementos interactivos ───────── */
-  --accent:              #2A1A0A;
-  --accent-foreground:   #ffffff;
+  --accent:              #1E1E1E;
+  --accent-foreground:   #F2F2F2;
 
   /* ── Semánticos de estado ─────────────────────────────────── */
   --destructive:         #dc2626;
@@ -44,22 +43,19 @@
   --warning-foreground:  #000000;
 
   /* ── Bordes e inputs ──────────────────────────────────────── */
-  --border:              #2D2D2D;
-  --border-primary:      #7B3B10;
-  --input:               #2C2C2C;
+  --border:              #242424;
+  --border-primary:      #F97316;
+  --input:               #1A1A1A;
   --ring:                #F97316;
 
-  /* ── Glass (extensión propia) ─────────────────────────────── */
-  --glass-blur-sm:       8px;
-  --glass-blur-md:       12px;
-  --glass-blur-lg:       20px;
-  --glass-bg-sm:         #141414;
+  /* ── Superficies de capa (sin blur — planas) ──────────────── */
+  --glass-bg-sm:         #161616;
   --glass-bg-md:         #1E1E1E;
   --glass-bg-lg:         #252525;
-  --glass-border:        #222222;
+  --glass-border:        #242424;
 
   /* ── Chat bubbles ────────────────────────────────────────── */
-  --bubble-outgoing:     #1E1108;
+  --bubble-outgoing:     #1A1A1A;
 
   /* ── Gradiente de fondo — sin usar, se mantiene como stub ── */
   --gradient-bg:         var(--background);
@@ -153,21 +149,18 @@ a, button {
    Usar estas clases en lugar de repetir grupos de Tailwind.
    ============================================================ */
 
-/* Etiqueta de sección (sobre el H1): "Contacts", "Agora Dashboard" */
+/* Etiqueta de sección (sobre el H1) */
 .page-label {
-  font-size: 0.75rem;       /* text-xs */
-  font-weight: 900;         /* font-black */
-  text-transform: uppercase;
-  letter-spacing: 0.28em;
-  color: var(--primary);
+  font-size: 0.875rem;      /* text-sm */
+  font-weight: 500;
+  color: var(--muted-foreground);
 }
 
 /* Título principal de página */
 .page-title {
-  font-size: 2.25rem;       /* text-4xl */
-  line-height: 1.1;
-  font-weight: 900;         /* font-black */
-  letter-spacing: -0.02em;  /* tracking-tight */
+  font-size: 1.875rem;      /* text-3xl */
+  line-height: 1.2;
+  font-weight: 700;         /* font-bold */
   color: var(--foreground);
 }
 
@@ -180,10 +173,9 @@ a, button {
 /* Título de card/sección interna */
 .section-title {
   font-size: 0.75rem;       /* text-xs */
-  font-weight: 700;         /* font-bold */
-  text-transform: uppercase;
-  letter-spacing: 0.22em;
-  color: var(--primary);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--secondary-foreground);
 }
 
 /* Label de campo de formulario */

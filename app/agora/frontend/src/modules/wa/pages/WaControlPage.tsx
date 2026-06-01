@@ -93,24 +93,21 @@ export default function WaControlPage() {
     <section className="space-y-6 text-foreground">
 
       {/* ── Header ── */}
-      <header className="rounded-xl border border-border bg-card p-4 md:p-6">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <p className="page-label">WA Backend</p>
-            <h1 className="page-title mt-3">Control operativo del bot</h1>
-            <p className="page-subtitle mt-2 max-w-3xl">
-              Integración nativa del dashboard de wa-backend. Aquí se concentran estado, QR, controles y trazas recientes.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 rounded-full border border-border bg-input px-4 py-2 text-sm text-foreground self-start xl:self-auto xl:shrink-0">
-            <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${estatus.color}`} />
-            <span>{estatus.label}</span>
-            <span className="text-[#525252]">/</span>
-            <span className="text-muted-foreground">{socketDetail}</span>
-            {lastSyncAt ? <span className="text-muted-foreground">· sync {relativeTime(lastSyncAt)}</span> : null}
-          </div>
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Control operativo del bot</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Integración nativa del dashboard de wa-backend. Estado, QR, controles y trazas recientes.
+          </p>
         </div>
-      </header>
+        <div className="flex flex-wrap items-center gap-2 rounded-full border border-border bg-input px-4 py-2 text-sm text-foreground self-start xl:self-auto xl:shrink-0">
+          <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${estatus.color}`} />
+          <span>{estatus.label}</span>
+          <span className="text-muted-foreground">/</span>
+          <span className="text-muted-foreground">{socketDetail}</span>
+          {lastSyncAt ? <span className="text-muted-foreground">· sync {relativeTime(lastSyncAt)}</span> : null}
+        </div>
+      </div>
 
       {/* ── Stats ── */}
       <div className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
@@ -123,7 +120,7 @@ export default function WaControlPage() {
           <div key={label} className="rounded-xl border border-border bg-card p-3 md:p-5 shadow-xl">
             <div className="flex items-center gap-2 text-muted-foreground">
               <Icon className="h-4 w-4 shrink-0" />
-              <span className="text-[10px] md:text-xs uppercase tracking-[0.18em] md:tracking-[0.24em] leading-tight">{label}</span>
+              <span className="text-[10px] md:text-xs leading-tight">{label}</span>
             </div>
             <div className="mt-2 md:mt-4 text-lg md:text-2xl font-bold text-foreground">{value}</div>
             {label === "Tiempo conectado" ? (
@@ -157,7 +154,7 @@ export default function WaControlPage() {
             <button
               type="button"
               onClick={refrescarStats}
-              className="inline-flex items-center gap-2 rounded-xl border border-border bg-input px-3 md:px-4 py-2 text-sm font-bold text-foreground transition hover:border-[#6E3709] hover:text-primary shrink-0"
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-input px-3 md:px-4 py-2 text-sm font-medium text-foreground transition hover:bg-secondary shrink-0"
             >
               <RefreshCw className="h-4 w-4" />
               <span className="hidden sm:inline">Refrescar</span>
@@ -205,12 +202,12 @@ export default function WaControlPage() {
                 type="button"
                 onClick={onClick}
                 disabled={!canManageBot}
-                className="rounded-xl border border-border bg-input p-3 md:p-5 text-left transition hover:border-[#6E3709] hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-xl border border-border bg-input p-3 md:p-5 text-left transition hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Icon className="h-5 w-5 md:h-6 md:w-6" />
                 <div className="mt-2 md:mt-4 text-sm md:text-base font-bold text-foreground">{label}</div>
                 {!canManageBot ? (
-                  <div className="mt-2 md:mt-3 inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.18em] text-[#525252]">
+                  <div className="mt-2 md:mt-3 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Lock className="h-3.5 w-3.5" /> Solo lectura
                   </div>
                 ) : null}
@@ -221,7 +218,7 @@ export default function WaControlPage() {
           {/* Bloqueos */}
           <div className="mt-6 rounded-xl border border-border bg-input p-5">
             <div className="flex items-center gap-3">
-              <ShieldBan className="h-5 w-5 text-primary" />
+              <ShieldBan className="h-5 w-5 text-muted-foreground" />
               <h3 className="text-lg font-bold text-foreground">Bloqueos</h3>
             </div>
             <div className="mt-4 flex flex-col gap-3 md:flex-row">
@@ -231,7 +228,7 @@ export default function WaControlPage() {
                 onChange={(e) => setNumeroBloqueo(e.target.value.replace(/\D/g, ""))}
                 placeholder="Ej: 56912345678"
                 disabled={!canManageBot}
-                className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-foreground placeholder:text-[#525252] focus:outline-none focus:border-[#7B3B10] disabled:opacity-50"
+                className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-border disabled:opacity-50"
               />
               <button
                 type="button"
@@ -255,7 +252,7 @@ export default function WaControlPage() {
                       type="button"
                       disabled={!canManageBot}
                       onClick={() => desbloquear(numero)}
-                      className="rounded-lg border border-border bg-input px-3 py-1.5 text-xs font-bold transition hover:border-[#6E3709] hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+                      className="rounded-lg border border-border bg-input px-3 py-1.5 text-xs font-medium transition hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Desbloquear
                     </button>
@@ -270,7 +267,7 @@ export default function WaControlPage() {
           {/* QR */}
           <section className="rounded-xl border border-border bg-card p-4 md:p-6 shadow-2xl">
             <div className="flex items-center gap-3">
-              <QrCode className="h-5 w-5 text-primary" />
+              <QrCode className="h-5 w-5 text-muted-foreground" />
               <h2 className="text-lg md:text-xl font-bold text-foreground">QR de vinculación</h2>
             </div>
             <div className="mt-4 md:mt-5 rounded-xl border border-dashed border-border bg-input p-4 md:p-5">
@@ -290,7 +287,7 @@ export default function WaControlPage() {
           {/* Actividad reciente */}
           <section className="rounded-xl border border-border bg-card p-4 md:p-6 shadow-2xl">
             <div className="flex items-center gap-3">
-              <Wrench className="h-5 w-5 text-primary" />
+              <Wrench className="h-5 w-5 text-muted-foreground" />
               <h2 className="text-lg md:text-xl font-bold text-foreground">Actividad reciente</h2>
             </div>
             <div className="mt-4 md:mt-5 space-y-3">
@@ -301,16 +298,16 @@ export default function WaControlPage() {
               ) : (
                 logs.slice(0, 10).map((log) => (
                   <div key={log.id} className="rounded-xl border border-border bg-input p-4">
-                    <div className="flex items-center justify-between gap-3 text-xs uppercase tracking-[0.18em]">
-                      <span className={`font-bold ${
+                    <div className="flex items-center justify-between gap-3 text-xs">
+                      <span className={`font-medium ${
                         log.type === "success" ? "text-emerald-400"
                           : log.type === "error"   ? "text-rose-400"
                           : log.type === "warning" ? "text-amber-400"
-                          : "text-primary"
+                          : "text-muted-foreground"
                       }`}>
                         {log.type}
                       </span>
-                      <span className="text-[#525252]">{relativeTime(log.timestamp)}</span>
+                      <span className="text-muted-foreground">{relativeTime(log.timestamp)}</span>
                     </div>
                     <p className="mt-2 text-sm text-foreground">{log.message}</p>
                   </div>

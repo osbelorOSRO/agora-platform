@@ -72,10 +72,10 @@ export const ThreadSidebar: React.FC<Props> = ({
               <button
                 key={view}
                 onClick={() => onStatusChange(view)}
-                className={`flex h-9 items-center justify-center gap-1.5 rounded-md border text-[11px] font-bold transition ${
+                className={`flex h-9 items-center justify-center gap-1.5 rounded-md border text-[11px] font-medium transition ${
                   active
-                    ? "border-primary bg-[#28160A] text-primary"
-                    : "border-border bg-input text-muted-foreground hover:border-[#8A4412] hover:text-foreground"
+                    ? "border-primary bg-secondary text-foreground"
+                    : "border-border bg-input text-muted-foreground hover:border-border hover:text-foreground"
                 }`}
                 title={statusLabel(view)}
                 aria-pressed={active}
@@ -94,7 +94,7 @@ export const ThreadSidebar: React.FC<Props> = ({
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Buscar actor, mensaje, etapa..."
-            className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-[#525252]"
+            className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
             aria-label="Buscar conversaciones"
           />
         </div>

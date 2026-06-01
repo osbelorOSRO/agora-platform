@@ -3,7 +3,6 @@ import {
   Home,
   MessagesSquare,
   ContactRound,
-  FileSpreadsheet,
   Settings,
   UserCircle,
 } from "lucide-react";
@@ -16,11 +15,9 @@ export default function BottomNav() {
     { to: "/accesos/welcome", icon: Home, label: "Home" },
     features?.conversations ? { to: "/meta-inbox",       icon: MessagesSquare,  label: "Threads"  } : null,
     features?.conversations ? { to: "/agenda",           icon: ContactRound,    label: "Contacts" } : null,
-    features?.reports       ? { to: "/accesos/reportes", icon: FileSpreadsheet, label: "Reports"  } : null,
     features?.settings      ? { to: "/accesos/ajustes",  icon: Settings,        label: "Settings" } : null,
   ]
-    .filter(Boolean)
-    .slice(0, 4) as Array<{
+    .filter(Boolean) as Array<{
     to: string;
     icon: React.ComponentType<{ size?: number; className?: string }>;
     label: string;
@@ -43,7 +40,7 @@ export default function BottomNav() {
           }
         >
           <Icon size={19} />
-          <span className="text-[9px] font-bold uppercase tracking-[0.14em]">
+          <span className="text-[9px] font-medium">
             {label}
           </span>
         </NavLink>

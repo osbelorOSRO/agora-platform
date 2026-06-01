@@ -30,7 +30,7 @@ export const ModuleCards: React.FC<Props> = ({ cards }) => {
             <button
               type="button"
               onClick={() => navigate(to)}
-              className="mt-3 md:mt-4 inline-flex w-full items-center justify-center gap-1 rounded-xl border border-border bg-input px-2 md:px-4 py-2 text-xs md:text-sm font-bold text-foreground transition-colors hover:border-[#6E3709] hover:text-primary"
+              className="mt-3 md:mt-4 inline-flex w-full items-center justify-center gap-1 rounded-xl border border-border bg-input px-2 md:px-4 py-2 text-xs md:text-sm font-medium text-foreground transition-colors hover:bg-secondary"
             >
               Ir al módulo
             </button>
@@ -39,7 +39,7 @@ export const ModuleCards: React.FC<Props> = ({ cards }) => {
             <button
               type="button"
               onClick={onAction}
-              className="mt-4 inline-flex items-center gap-2 rounded-xl border border-border bg-input px-4 py-2 text-sm font-bold text-foreground transition hover:border-[#6E3709] hover:text-primary"
+              className="mt-4 inline-flex items-center gap-2 rounded-xl border border-border bg-input px-4 py-2 text-sm font-medium text-foreground transition hover:bg-secondary"
             >
               {actionLabel}
             </button>

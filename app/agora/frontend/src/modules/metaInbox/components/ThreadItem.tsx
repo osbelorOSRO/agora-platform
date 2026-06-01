@@ -91,7 +91,7 @@ export const ThreadItem: React.FC<Props> = ({
                   <AttentionIcon mode={attentionMode} className="h-3.5 w-3.5" />
                 </span>
                 <span
-                  className="min-w-0 truncate rounded-md border border-border-primary bg-accent px-1.5 py-1 text-[10px] font-bold text-primary"
+                  className="min-w-0 truncate rounded-md border border-border bg-secondary px-1.5 py-1 text-[10px] font-medium text-muted-foreground"
                   title={thread.threadStage || ""}
                 >
                   {stage}

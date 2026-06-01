@@ -83,24 +83,14 @@ function BaseLayoutInner() {
   return (
     <div className="bg-background flex min-h-[100svh] w-full max-w-full">
       <SidebarCompacto />
-      <header className="fixed left-14 md:left-64 right-0 top-0 z-30 flex h-16 items-center justify-between border-b border-border glass-md px-4 md:px-8">
-        <div className="flex items-center space-x-4">
-          <h2 className="text-xl font-black uppercase tracking-[0.2em] text-primary">
-            AGORA
-          </h2>
-          <div className="h-4 w-px bg-border" />
-          <h3 className="text-sm font-bold uppercase tracking-[0.3em] text-foreground">
-            {currentSection}
-          </h3>
-        </div>
-
+      <header className="fixed left-14 md:left-64 right-0 top-0 z-30 flex h-16 items-center justify-end border-b border-border glass-md px-4 md:px-8">
         <div className="flex items-center space-x-5">
-          <div className="flex items-center gap-2 md:gap-3 border-l border-border pl-3 md:pl-4">
+          <div className="flex items-center gap-2 md:gap-3">
             <div className="hidden md:block text-right">
-              <p className="text-xs font-bold uppercase text-foreground">
+              <p className="text-sm font-medium text-foreground">
                 {user?.nombre || user?.username || "Usuario"}
               </p>
-              <p className="text-[10px] uppercase tracking-[0.22em] text-primary">
+              <p className="text-xs text-muted-foreground">
                 {user?.rol ?? "sin rol"}
               </p>
             </div>
@@ -108,7 +98,7 @@ function BaseLayoutInner() {
               type="button"
               onClick={() => navigate("/perfil")}
               title="Ver perfil"
-              className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-full border border-border-primary bg-accent text-xs font-bold text-primary hover:bg-accent transition-colors overflow-hidden"
+              className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-full border border-border bg-secondary text-xs font-medium text-foreground hover:bg-card transition-colors overflow-hidden"
             >
               {photoUrl ? (
                 <img src={photoUrl} alt="perfil" loading="lazy" className="h-full w-full object-cover" />

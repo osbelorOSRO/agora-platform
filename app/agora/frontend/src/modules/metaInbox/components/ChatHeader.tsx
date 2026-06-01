@@ -45,7 +45,7 @@ export const ChatHeader: React.FC<Props> = ({ thread, blocked, onClose }) => {
             >
               <AttentionIcon mode={thread.attentionMode} className="h-4 w-4" />
             </span>
-            <span className="inline-flex h-8 items-center rounded-md border border-[#7B3B10] bg-[#1E1108] px-2.5 text-xs font-bold text-primary">
+            <span className="inline-flex h-8 items-center rounded-md border border-border bg-secondary px-2.5 text-xs font-medium text-foreground">
               {stageLabel(thread.threadStage)}
             </span>
             {blocked && (

@@ -135,5 +135,6 @@ export function useWelcomeDashboard() {
     scheduleControl: features?.scheduleControl ?? false,
     moduleCards, permisosRows,
     weeklyData, maxWeeklyTotal, loadingChart, chartError,
+    agendaTotal, metaThreadsCount,
   };
 }

@@ -14,7 +14,7 @@ export const WeeklyChart: React.FC<Props> = ({ weeklyData, maxTotal, loading, er
   <section className="rounded-xl border border-border bg-card p-6 shadow-2xl">
     <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
       <div>
-        <p className="text-xs font-black uppercase tracking-[0.3em] text-primary">Actividad semanal</p>
+        <p className="text-sm font-medium text-muted-foreground">Actividad semanal</p>
         <h2 className="mt-2 text-2xl font-bold text-foreground">Threads únicos por semana</h2>
         <p className="mt-2 text-sm text-muted-foreground">Sessions únicas (sin duplicados por origen) en ventana móvil de ocho semanas.</p>
       </div>
@@ -42,7 +42,7 @@ export const WeeklyChart: React.FC<Props> = ({ weeklyData, maxTotal, loading, er
               <div key={item.weekStart} className="flex h-full min-w-[52px] md:min-w-[88px] flex-1 flex-col items-center justify-end gap-1.5 md:gap-3">
                 <div className="text-xs md:text-sm font-bold text-foreground">{item.total}</div>
                 <div className="flex h-28 md:h-44 w-full items-end rounded-xl bg-muted px-1">
-                  <div className="w-full rounded-t-xl bg-primary transition-[height]" style={{ height }} title={`${item.total} threads únicos`} />
+                  <div className="w-full rounded-t-xl bg-muted-foreground transition-[height]" style={{ height }} title={`${item.total} threads únicos`} />
                 </div>
                 <div className="text-center text-[10px] md:text-xs text-muted-foreground">
                   <div>{formatDateLabel(item.weekStart)}</div>

@@ -67,7 +67,7 @@ export const SalesAnalysisPanel: React.FC<Props> = ({ form, saving, saved, onCha
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center justify-between px-3 py-2 text-left"
       >
-        <span className="text-xs font-bold uppercase tracking-[0.18em] text-primary">Análisis de venta</span>
+        <span className="text-xs font-medium text-muted-foreground">Análisis de venta</span>
         {open ? <ChevronUp size={14} className="text-muted-foreground" /> : <ChevronDown size={14} className="text-muted-foreground" />}
       </button>
 
@@ -141,7 +141,7 @@ export const SalesAnalysisPanel: React.FC<Props> = ({ form, saving, saved, onCha
           )}
 
           <div>
-            <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Tags de verbalización</div>
+            <div className="mb-1.5 text-[10px] font-medium text-muted-foreground">Tags de verbalización</div>
             <div className="flex flex-wrap gap-1.5">
               {verbTags.map((o) => {
                 const active = tags.includes(o.value);
@@ -183,7 +183,7 @@ export const SalesAnalysisPanel: React.FC<Props> = ({ form, saving, saved, onCha
 
 const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
   <div>
-    <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>
+    <div className="mb-1 text-[10px] font-medium text-muted-foreground">{label}</div>
     {children}
   </div>
 );

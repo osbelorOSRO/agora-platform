@@ -101,40 +101,36 @@ export default function WhatsappAdsPage() {
 
   return (
     <div className="mx-auto flex min-h-[calc(100vh-120px)] w-full max-w-7xl flex-col gap-4 md:gap-6 text-foreground">
-      <header className="flex flex-col gap-3 rounded-3xl border border-border bg-card p-4 md:p-6 md:shadow-[0_24px_80px_rgba(0,0,0,0.28)] lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <div className="flex items-center gap-3 text-primary">
-            <Megaphone size={20} />
-            <span className="text-xs font-black uppercase tracking-[0.28em]">WhatsApp Ads</span>
-          </div>
-          <h1 className="mt-2 md:mt-3 text-2xl md:text-3xl font-black tracking-tight text-foreground">Leads por anuncio</h1>
-          <p className="mt-1 md:mt-2 max-w-2xl text-sm text-muted-foreground hidden sm:block">
-            Una página por `sourceId` detectado en Baileys. El conteo único usa `sourceId + sessionId`.
+          <h1 className="text-3xl font-bold text-foreground">Leads por anuncio</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Una página por sourceId detectado en Baileys. El conteo único usa sourceId + sessionId.
           </p>
         </div>
         <button
           type="button"
           onClick={() => downloadCsv(leads, ads)}
           disabled={leads.length === 0}
-          className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#6E3709] bg-[#1E1108] px-4 py-2.5 md:px-5 md:py-3 text-sm font-black uppercase tracking-[0.18em] text-primary transition hover:bg-[#321C0C] disabled:cursor-not-allowed disabled:opacity-50 self-start lg:self-auto shrink-0"
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-secondary px-4 py-2 text-sm font-medium text-foreground transition hover:bg-card disabled:cursor-not-allowed disabled:opacity-50 self-start shrink-0"
         >
           <Download size={16} />
-          <span className="hidden sm:inline">Descargar CSV completo</span>
+          <span className="hidden sm:inline">Descargar CSV</span>
           <span className="sm:hidden">CSV</span>
         </button>
-      </header>
+      </div>
 
       <section className="grid grid-cols-3 gap-3 md:gap-4">
         <div className="rounded-2xl border border-border bg-card p-3 md:p-5">
-          <div className="text-[10px] md:text-xs font-medium uppercase tracking-[0.14em] md:tracking-[0.18em] text-muted-foreground">Anuncios</div>
+          <div className="text-[10px] md:text-xs font-medium text-muted-foreground">Anuncios</div>
           <div className="mt-1 md:mt-2 text-2xl md:text-4xl font-black text-foreground">{ads.length}</div>
         </div>
         <div className="rounded-2xl border border-border bg-card p-3 md:p-5">
-          <div className="text-[10px] md:text-xs font-medium uppercase tracking-[0.14em] md:tracking-[0.18em] text-muted-foreground">Únicos</div>
-          <div className="mt-1 md:mt-2 text-2xl md:text-4xl font-black text-primary">{totalUnique}</div>
+          <div className="text-[10px] md:text-xs font-medium text-muted-foreground">Únicos</div>
+          <div className="mt-1 md:mt-2 text-2xl md:text-4xl font-black text-foreground">{totalUnique}</div>
         </div>
         <div className="rounded-2xl border border-border bg-card p-3 md:p-5">
-          <div className="text-[10px] md:text-xs font-medium uppercase tracking-[0.14em] md:tracking-[0.18em] text-muted-foreground">Eventos</div>
+          <div className="text-[10px] md:text-xs font-medium text-muted-foreground">Eventos</div>
           <div className="mt-1 md:mt-2 text-2xl md:text-4xl font-black text-foreground">{totalSeen}</div>
         </div>
       </section>
@@ -153,7 +149,7 @@ export default function WhatsappAdsPage() {
           <article className="overflow-hidden rounded-[2rem] border border-border bg-card md:shadow-[0_30px_80px_rgba(0,0,0,0.35)]">
             <div className="border-b border-border p-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#28160A] text-sm font-black text-primary">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-sm font-medium text-muted-foreground">
                   AD
                 </div>
                 <div>
@@ -179,19 +175,19 @@ export default function WhatsappAdsPage() {
 
             <div className="space-y-4 p-5">
               <div>
-                <div className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Título</div>
+                <div className="text-xs font-medium text-muted-foreground">Título</div>
                 <h2 className="mt-1 text-xl font-black leading-tight text-foreground">{current.title || "Sin título"}</h2>
               </div>
               <div className="rounded-2xl border border-border bg-muted p-3 text-xs">
                 <div className="text-muted-foreground">sourceId</div>
-                <div className="mt-1 break-all font-mono text-primary/70">{current.sourceId}</div>
+                <div className="mt-1 break-all font-mono text-muted-foreground">{current.sourceId}</div>
               </div>
               {current.sourceUrl && (
                 <a
                   href={current.sourceUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:text-primary/70 transition-colors"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary-hover transition-colors"
                 >
                   Abrir origen <ExternalLink size={15} />
                 </a>
@@ -210,7 +206,7 @@ export default function WhatsappAdsPage() {
                 <ChevronLeft />
               </button>
               <div className="text-center">
-                <div className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Página</div>
+                <div className="text-xs font-medium text-muted-foreground">Página</div>
                 <div className="text-lg font-black text-foreground">{page + 1} / {ads.length}</div>
               </div>
               <button
@@ -224,37 +220,37 @@ export default function WhatsappAdsPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3 md:gap-4">
-              <div className="rounded-2xl border border-[#5C2E08] bg-[#1E1108] p-3 md:p-5">
-                <div className="flex items-center gap-1.5 text-[10px] md:text-xs font-medium uppercase tracking-[0.14em] md:tracking-[0.18em] text-primary/80">
+              <div className="rounded-2xl border border-border bg-card p-3 md:p-5">
+                <div className="flex items-center gap-1.5 text-[10px] md:text-xs font-medium text-muted-foreground">
                   <UsersRound size={13} />
                   Únicos
                 </div>
-                <div className="mt-2 md:mt-3 text-3xl md:text-5xl font-black text-primary">{current.uniqueSessions}</div>
+                <div className="mt-2 md:mt-3 text-3xl md:text-5xl font-black text-foreground">{current.uniqueSessions}</div>
               </div>
               <div className="rounded-2xl border border-foreground/20 bg-foreground/5 p-3 md:p-5">
-                <div className="text-[10px] md:text-xs font-medium uppercase tracking-[0.14em] md:tracking-[0.18em] text-muted-foreground">Eventos</div>
+                <div className="text-[10px] md:text-xs font-medium text-muted-foreground">Eventos</div>
                 <div className="mt-2 md:mt-3 text-3xl md:text-5xl font-black text-foreground">{current.seenCount}</div>
               </div>
               <div className="rounded-2xl border border-border bg-card p-3 md:p-5">
-                <div className="text-[10px] md:text-xs font-medium uppercase tracking-[0.14em] md:tracking-[0.18em] text-muted-foreground">Primer lead</div>
+                <div className="text-[10px] md:text-xs font-medium text-muted-foreground">Primer lead</div>
                 <div className="mt-1 md:mt-2 text-xs md:text-sm font-bold text-foreground">{formatDate(current.firstSeenAt)}</div>
               </div>
               <div className="rounded-2xl border border-border bg-card p-3 md:p-5">
-                <div className="text-[10px] md:text-xs font-medium uppercase tracking-[0.14em] md:tracking-[0.18em] text-muted-foreground">Último lead</div>
+                <div className="text-[10px] md:text-xs font-medium text-muted-foreground">Último lead</div>
                 <div className="mt-1 md:mt-2 text-xs md:text-sm font-bold text-foreground">{formatDate(current.lastSeenAt)}</div>
               </div>
             </div>
 
             <div className="min-h-0 rounded-2xl border border-border bg-card">
               <div className="border-b border-border p-4">
-                <h3 className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Conversaciones asociadas</h3>
+                <h3 className="text-xs font-medium text-muted-foreground">Conversaciones asociadas</h3>
               </div>
               <div className="max-h-[340px] overflow-auto">
                 {currentLeads.map((lead) => (
                   <div key={`${lead.sourceId}-${lead.sessionId}`} className="border-b border-border p-4 last:border-b-0">
                     <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
                       <div className="min-w-0">
-                        <div className="break-all font-mono text-xs text-primary/70">{lead.actorExternalId || lead.pnJid || lead.lidJid || "sin actor"}</div>
+                        <div className="break-all font-mono text-xs text-muted-foreground">{lead.actorExternalId || lead.pnJid || lead.lidJid || "sin actor"}</div>
                         <div className="mt-1 truncate text-sm text-secondary-foreground">{lead.firstMessageText || "(sin texto inicial)"}</div>
                       </div>
                       <div className="shrink-0 text-xs text-muted-foreground">{formatDate(lead.firstSeenAt)}</div>
@@ -272,7 +268,7 @@ export default function WhatsappAdsPage() {
       <div className="rounded-3xl border border-border bg-card p-4 md:p-6">
         <div className="mb-4 flex items-center gap-3 text-blue-400">
           <UsersRound size={18} />
-          <span className="text-xs font-black uppercase tracking-[0.28em]">Marketplace Facebook</span>
+          <span className="text-sm font-medium">Marketplace Facebook</span>
         </div>
         {fcaAds.length === 0 ? (
           <p className="text-sm text-muted-foreground">Sin artículos detectados aún. Los artículos aparecen cuando un comprador inicia una conversación desde un listing de Marketplace.</p>
@@ -323,7 +319,7 @@ export default function WhatsappAdsPage() {
 
                 <div className="rounded-2xl border border-border bg-card">
                   <div className="border-b border-border p-4">
-                    <h3 className="text-xs font-bold uppercase tracking-[0.22em] text-blue-400">Conversaciones asociadas</h3>
+                    <h3 className="text-xs font-medium text-muted-foreground">Conversaciones asociadas</h3>
                   </div>
                   <div className="max-h-[280px] overflow-auto">
                     {fcaCurrentLeads.map((lead) => (
