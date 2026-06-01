@@ -58,7 +58,7 @@ export const ThreadSidebar: React.FC<Props> = ({
       className={
         mobileHidden
           ? "hidden"
-          : "flex flex-col overflow-y-auto border-r border-border bg-card scrollbar-custom shrink-0"
+          : `flex flex-col overflow-y-auto border-r border-border bg-card scrollbar-custom ${width !== undefined ? "shrink-0" : "flex-1 min-w-0"}`
       }
       style={width !== undefined ? { width } : undefined}
     >
