@@ -74,3 +74,4 @@ CLAUDE.md
 AGENTS.md
 skills-lock.json
 .ipynb_checkpoints/
+coverage/
