@@ -78,3 +78,6 @@ coverage/
 app/agora/frontend/coverage/
 .codewhale/
 .deepseek/
+
+# Diagnóstico local
+hoja_de_ruta.md

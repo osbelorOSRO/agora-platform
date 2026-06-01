@@ -10,8 +10,14 @@
   },
   "dependencies": {
     "@dongdev/fca-unofficial": "latest",
-    "axios": "^1.9.0",
+    "axios": "^1.16.0",
     "express": "^4.21.0"
+  },
+  "overrides": {
+    "axios": "^1.16.0",
+    "@tootallnate/once": ">=2.0.1",
+    "http-proxy-agent": ">=7.0.0",
+    "uuid": ">=11.1.1"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
