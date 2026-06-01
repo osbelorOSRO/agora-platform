@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.4.1
+
+### Changed
+- Sidebar desktop colapsable por defecto — se expande al clic y empuja el contenido con transición suave
+- Logo SVG en sidebar en lugar de texto
+- Scrollbar global fina con track oscuro acorde al tema dark
+- `SidebarContext` compartido entre sidebar y BaseLayout para sincronizar margen del contenido
+
 ## 3.4.0
 
 ### Changed

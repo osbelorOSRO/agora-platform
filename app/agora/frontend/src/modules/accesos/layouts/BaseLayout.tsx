@@ -6,6 +6,7 @@ import BottomNav from "../components/BottomNav";
 import { ChevronLeft } from "lucide-react";
 import { getTokenData } from "@/utils/getTokenData";
 import { ProfilePhotoProvider, useProfilePhoto } from "@/context/ProfilePhotoContext";
+import { SidebarProvider, useSidebar } from "@/context/SidebarContext";
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(
@@ -22,9 +23,11 @@ function useIsMobile() {
 
 export default function BaseLayout() {
   return (
-    <ProfilePhotoProvider>
-      <BaseLayoutInner />
-    </ProfilePhotoProvider>
+    <SidebarProvider>
+      <ProfilePhotoProvider>
+        <BaseLayoutInner />
+      </ProfilePhotoProvider>
+    </SidebarProvider>
   );
 }
 
@@ -79,11 +82,14 @@ function BaseLayoutInner() {
     );
   }
 
-  // ── Layout desktop — sin cambios ──
+  // ── Layout desktop ──
+  const { expanded } = useSidebar();
+  const sidebarW = expanded ? "w-64 ml-64" : "w-14 ml-14";
+
   return (
     <div className="bg-background flex min-h-[100svh] w-full max-w-full">
       <SidebarCompacto />
-      <header className="fixed left-14 md:left-64 right-0 top-0 z-30 flex h-16 items-center justify-end border-b border-border glass-md px-4 md:px-8">
+      <header className={`fixed ${expanded ? "left-64" : "left-14"} right-0 top-0 z-30 flex h-16 items-center justify-end border-b border-border glass-md px-4 md:px-8 transition-[left] duration-200`}>
         <div className="flex items-center space-x-5">
           <div className="flex items-center gap-2 md:gap-3">
             <div className="hidden md:block text-right">
@@ -110,7 +116,7 @@ function BaseLayoutInner() {
         </div>
       </header>
       <main
-        className={`flex-1 ml-14 md:ml-64 bg-background ${
+        className={`flex-1 ${expanded ? "ml-64" : "ml-14"} bg-background transition-[margin-left] duration-200 ${
           isImmersiveSection
             ? "pt-16 h-[100svh] flex flex-col overflow-hidden"
             : "pt-[88px] px-4 pb-4 md:px-6 md:pb-6"

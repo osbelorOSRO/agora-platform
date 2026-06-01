@@ -98,6 +98,32 @@ html, body {
   overscroll-behavior-y: none;
 }
 
+/* ── Scrollbar global ─────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: #111111;
+}
+::-webkit-scrollbar-thumb {
+  background: #2D2D2D;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #444444;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2D2D2D #111111;
+}
+
+/* Alias para elementos que usan la clase explícita */
+.scrollbar-custom {
+  scrollbar-width: thin;
+  scrollbar-color: #2D2D2D #111111;
+}
+
 /* Eliminar tap-highlight layer sobre <a> y <button> en mobile */
 a, button {
   -webkit-tap-highlight-color: transparent;

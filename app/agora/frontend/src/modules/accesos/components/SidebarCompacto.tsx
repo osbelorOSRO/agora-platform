@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import { useSidebar } from "@/context/SidebarContext";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   Home, Settings, FileSpreadsheet, MessagesSquare, UserCircle,
@@ -11,14 +12,34 @@ import { getTokenData } from "@/utils/getTokenData";
 const SETTINGS_PATHS = [
   "/accesos/ajustes", "/accesos/reportes", "/meta-ads",
   "/wa-control", "/stage-templates", "/offers", "/integraciones",
+  "/social-postings",
 ];
 
 export default function SidebarCompacto() {
   const location = useLocation();
   const features = getTokenData()?.features;
+  const sidebarRef = useRef<HTMLElement>(null);
 
   const isInSettings = SETTINGS_PATHS.some((p) => location.pathname.startsWith(p));
   const [settingsOpen, setSettingsOpen] = useState(isInSettings);
+  const { expanded, setExpanded } = useSidebar();
+
+  // Colapsar al hacer clic fuera del sidebar
+  useEffect(() => {
+    if (!expanded) return;
+    const handler = (e: MouseEvent) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(e.target as Node)) {
+        setExpanded(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [expanded]);
+
+  // Colapsar al cambiar de ruta
+  useEffect(() => {
+    setExpanded(false);
+  }, [location.pathname]);
 
   const mainItems = [
     { to: "/accesos/welcome", icon: Home,          label: "Home"     },
@@ -27,107 +48,127 @@ export default function SidebarCompacto() {
   ].filter(Boolean) as Array<{ to: string; icon: React.ComponentType<{ size?: number; className?: string }>; label: string }>;
 
   const settingsSubItems = [
-    features?.reports        && { to: "/accesos/reportes",           icon: FileSpreadsheet, label: "Reports"     },
-    features?.conversations  && { to: "/meta-ads",                  icon: Megaphone,       label: "Ads WA"      },
-    features?.socialPostings && { to: "/social-postings",           icon: CalendarDays,    label: "Posts"       },
-    features?.settings      && { to: "/accesos/ajustes/usuarios",   icon: Users,           label: "Users"       },
-    features?.settings      && { to: "/accesos/ajustes/roles",      icon: KeyRound,        label: "Roles"       },
-    features?.settings      && { to: "/accesos/ajustes/sesiones",   icon: Activity,        label: "Sessions"    },
-    features?.settings      && { to: "/accesos/ajustes/ventas",     icon: TrendingUp,      label: "Sales"       },
-    features?.settings      && { to: "/accesos/ajustes/lead-catalog",icon: ListChecks,     label: "Lists"       },
-    features?.settings      && { to: "/accesos/ajustes/transicion", icon: GitMerge,        label: "Transition"  },
-    features?.settings      && { to: "/accesos/ajustes/senales",    icon: Zap,             label: "Signals"     },
-    features?.botView       && { to: "/wa-control",                 icon: Wrench,          label: "Bot"         },
-    features?.superadmin    && { to: "/stage-templates",            icon: LayoutList,      label: "Stages"      },
-    features?.superadmin    && { to: "/offers",                     icon: PackageOpen,     label: "Offers"      },
-    features?.superadmin    && { to: "/integraciones",              icon: Plug,            label: "Integrations"},
-    features?.superadmin    && { to: "/integraciones/fca",          icon: Facebook,        label: "Facebook"    },
+    features?.reports        && { to: "/accesos/reportes",            icon: FileSpreadsheet, label: "Reports"     },
+    features?.conversations  && { to: "/meta-ads",                    icon: Megaphone,       label: "Ads WA"      },
+    features?.socialPostings && { to: "/social-postings",             icon: CalendarDays,    label: "Posts"       },
+    features?.settings       && { to: "/accesos/ajustes/usuarios",    icon: Users,           label: "Users"       },
+    features?.settings       && { to: "/accesos/ajustes/roles",       icon: KeyRound,        label: "Roles"       },
+    features?.settings       && { to: "/accesos/ajustes/sesiones",    icon: Activity,        label: "Sessions"    },
+    features?.settings       && { to: "/accesos/ajustes/ventas",      icon: TrendingUp,      label: "Sales"       },
+    features?.settings       && { to: "/accesos/ajustes/lead-catalog",icon: ListChecks,      label: "Lists"       },
+    features?.settings       && { to: "/accesos/ajustes/transicion",  icon: GitMerge,        label: "Transition"  },
+    features?.settings       && { to: "/accesos/ajustes/senales",     icon: Zap,             label: "Signals"     },
+    features?.botView        && { to: "/wa-control",                  icon: Wrench,          label: "Bot"         },
+    features?.superadmin     && { to: "/stage-templates",             icon: LayoutList,      label: "Stages"      },
+    features?.superadmin     && { to: "/offers",                      icon: PackageOpen,     label: "Offers"      },
+    features?.superadmin     && { to: "/integraciones",               icon: Plug,            label: "Integrations"},
+    features?.superadmin     && { to: "/integraciones/fca",           icon: Facebook,        label: "Facebook"    },
   ].filter(Boolean) as Array<{ to: string; icon: React.ComponentType<{ size?: number; className?: string }>; label: string }>;
 
-  const navLink = (to: string, icon: React.ComponentType<{ size?: number; className?: string }>, label: string) => (
-    <NavLink
-      key={to}
-      to={to}
-      title={label}
-      className={({ isActive }) =>
-        `flex items-center justify-center md:justify-start px-0 md:px-6 py-3 md:py-4 transition-all duration-200 ${
-          isActive || location.pathname.startsWith(`${to}/`)
-            ? "border-l-2 border-primary bg-accent text-primary"
-            : "text-muted-foreground hover:bg-card hover:text-foreground"
-        }`
-      }
-    >
-      {(() => { const Icon = icon; return <Icon size={20} className="shrink-0 md:mr-3" />; })()}
-      <span className="hidden md:inline text-sm font-medium">{label}</span>
-    </NavLink>
-  );
-
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-[100svh] w-14 md:w-64 flex-col border-r border-border bg-background md:shadow-[4px_0_24px_#000000]">
-      {/* Desktop logo */}
-      <div className="hidden md:block p-6">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Agora</h1>
-        <p className="mt-1 text-[10px] text-muted-foreground">by zaldio.net</p>
+    <aside
+      ref={sidebarRef}
+      className={`fixed left-0 top-0 z-40 flex h-[100svh] flex-col border-r border-border bg-background shadow-[4px_0_24px_#000000] transition-[width] duration-200 ease-in-out overflow-hidden ${
+        expanded ? "w-64" : "w-14"
+      }`}
+    >
+      {/* Logo — clic aquí expande/colapsa */}
+      <div
+        className="flex h-14 shrink-0 cursor-pointer items-center border-b border-border px-4"
+        onClick={() => setExpanded((v) => !v)}
+      >
+        <img src="/logo.svg" alt="Agora" width={36} height={36} className="shrink-0" />
       </div>
 
-      {/* Mobile logo */}
-      <div className="flex md:hidden h-14 items-center justify-center border-b border-border">
-        <span className="text-lg font-bold text-foreground">A</span>
-      </div>
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden">
+        {/* Items principales */}
+        {mainItems.map(({ to, icon: Icon, label }) => (
+          <NavLink
+            key={to}
+            to={to}
+            title={label}
+            className={({ isActive }) =>
+              `flex h-14 items-center border-l-2 transition-colors ${
+                isActive || location.pathname.startsWith(`${to}/`)
+                  ? "border-primary bg-accent text-primary"
+                  : "border-transparent text-muted-foreground hover:bg-card hover:text-foreground"
+              }`
+            }
+          >
+            <span className="flex w-14 shrink-0 items-center justify-center">
+              <Icon size={20} />
+            </span>
+            {expanded && <span className="text-sm font-medium whitespace-nowrap pr-4">{label}</span>}
+          </NavLink>
+        ))}
 
-      <nav className="mt-0 md:mt-4 flex-1 overflow-y-auto">
-        {mainItems.map(({ to, icon, label }) => navLink(to, icon, label))}
-
-        {/* Settings toggle — desktop expande submenú, mobile va a la página */}
-        <NavLink
-          to="/accesos/ajustes"
+        {/* Settings */}
+        <button
+          type="button"
           title="Settings"
-          onClick={(e) => {
-            if (window.innerWidth >= 768) {
-              e.preventDefault();
+          onClick={() => {
+            if (!expanded) {
+              setExpanded(true);
+              setSettingsOpen(true);
+            } else {
               setSettingsOpen((v) => !v);
             }
           }}
-          className={() =>
-            `flex items-center justify-center md:justify-start px-0 md:px-6 py-3 md:py-4 transition-all duration-200 ${
-              isInSettings
-                ? "border-l-2 border-primary bg-accent text-primary"
-                : "text-muted-foreground hover:bg-card hover:text-foreground"
-            }`
-          }
+          className={`flex h-14 w-full items-center border-l-2 transition-colors ${
+            isInSettings
+              ? "border-primary bg-accent text-primary"
+              : "border-transparent text-muted-foreground hover:bg-card hover:text-foreground"
+          }`}
         >
-          <Settings size={20} className="shrink-0 md:mr-3" />
-          <span className="hidden md:inline text-sm font-medium flex-1">Settings</span>
-          <ChevronDown
-            size={14}
-            className={`hidden md:inline shrink-0 mr-1 transition-transform duration-200 ${settingsOpen ? "rotate-180" : ""}`}
-          />
-        </NavLink>
+          <span className="flex w-14 shrink-0 items-center justify-center">
+            <Settings size={20} />
+          </span>
+          {expanded && (
+            <>
+              <span className="flex-1 text-left text-sm font-medium">Settings</span>
+              <ChevronDown
+                size={14}
+                className={`mr-4 shrink-0 transition-transform duration-200 ${settingsOpen ? "rotate-180" : ""}`}
+              />
+            </>
+          )}
+        </button>
 
-        {/* Submenú Settings — solo desktop */}
-        {settingsOpen && (
-          <div className="hidden md:block border-l border-border ml-6">
-            {settingsSubItems.map(({ to, icon, label }) => (
+        {/* Submenú Settings */}
+        {expanded && settingsOpen && (
+          <div className="border-l border-border ml-6">
+            {settingsSubItems.map(({ to, icon: Icon, label }) => (
               <NavLink
                 key={to}
                 to={to}
-                title={label}
                 className={({ isActive }) =>
                   `flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors ${
-                    isActive
-                      ? "text-foreground font-medium"
-                      : "text-muted-foreground hover:text-foreground"
+                    isActive ? "text-foreground font-medium" : "text-muted-foreground hover:text-foreground"
                   }`
                 }
               >
-                {(() => { const Icon = icon; return <Icon size={15} className="shrink-0" />; })()}
+                <Icon size={15} className="shrink-0" />
                 {label}
               </NavLink>
             ))}
           </div>
         )}
 
-        {navLink("/perfil", UserCircle, "Profile")}
+        {/* Profile */}
+        <NavLink
+          to="/perfil"
+          title="Profile"
+          className={({ isActive }) =>
+            `flex h-14 items-center border-l-2 transition-colors ${
+              isActive ? "border-primary bg-accent text-primary" : "border-transparent text-muted-foreground hover:bg-card hover:text-foreground"
+            }`
+          }
+        >
+          <span className="flex w-14 shrink-0 items-center justify-center">
+            <UserCircle size={20} />
+          </span>
+          {expanded && <span className="text-sm font-medium whitespace-nowrap pr-4">Profile</span>}
+        </NavLink>
       </nav>
     </aside>
   );
