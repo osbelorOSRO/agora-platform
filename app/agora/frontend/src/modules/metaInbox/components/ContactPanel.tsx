@@ -15,6 +15,7 @@ interface Props {
   updatingWhatsappBlock: "block" | "unblock" | null;
   whatsappBlockFeedback: string | null;
   width?: number;
+  className?: string;
   onClose: () => void;
   onContactFormChange: (patch: Partial<MetaInboxContactUpdate>) => void;
   onSaveContact: () => void;
@@ -27,6 +28,7 @@ export const ContactPanel: React.FC<Props> = ({
   contactForm,
   savingContact,
   savingThreadControl,
+  className,
   updatingWhatsappBlock,
   whatsappBlockFeedback,
   width,
@@ -45,7 +47,7 @@ export const ContactPanel: React.FC<Props> = ({
 
   return (
     <aside
-      className={s.contactAside + " shrink-0"}
+      className={`${s.contactAside} ${className ?? "shrink-0"}`}
       style={width !== undefined ? { width } : undefined}
     >
       <div className={s.contactHead}>

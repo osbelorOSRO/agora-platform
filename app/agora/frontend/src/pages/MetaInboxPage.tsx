@@ -81,7 +81,7 @@ const MetaInboxPage: React.FC = () => {
         <section
           className={
             esMovil
-              ? inbox.mobileShowChat
+              ? inbox.mobileShowChat && !inbox.showContactPanel
                 ? "flex flex-col flex-1 overflow-hidden"
                 : "hidden"
               : s.chatPanel
@@ -157,6 +157,7 @@ const MetaInboxPage: React.FC = () => {
             updatingWhatsappBlock={inbox.updatingWhatsappBlock}
             whatsappBlockFeedback={inbox.whatsappBlockFeedback}
             width={esMovil ? undefined : contact.width}
+            className={esMovil ? "flex-1 min-w-0" : undefined}
             onClose={() => inbox.setDetailSessionId(null)}
             onContactFormChange={(patch) =>
               contactForm.setContactForm((prev) => ({ ...prev, ...patch }))
