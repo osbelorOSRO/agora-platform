@@ -1,4 +1,4 @@
-name: CI / CD — Agora # retrigger
+name: CI / CD — Agora
 
 on:
   push:
