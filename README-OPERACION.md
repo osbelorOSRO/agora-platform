@@ -1,7 +1,7 @@
 # Operacion de Stack por Perfil
 
 ## Version
-- Actual: `v3.3.0` (2026-05-30)
+- Actual: `v3.3.1` (2026-05-31)
 - Al hacer release: actualizar versión aquí y en `README.md`, y crear tag `vX.Y.Z`.
 
 Scripts:
@@ -13,12 +13,24 @@ Scripts:
 - `scripts/smoke-core.sh`
 - `scripts/reload-core-with-vault.sh`
 
-Perfiles disponibles:
-- `dev.local1`
-- `dev.vps1`
-- `dev.vps2`
-- `prod.vps1`
-- `prod.vps2`
+## Git hooks (Husky)
+
+| Hook | Acción | Bloquea si |
+|---|---|---|
+| `pre-commit` (`.husky/pre-commit`) | `npx lint-staged` (eslint + prettier sobre el backend NestJS) | lint/format falla |
+| `pre-push` (`.husky/pre-push`) | `bash scripts/prepush-audit.sh` | hay `.git` anidados, archivos sensibles no ignorados, o **secretos/IPs/datos de infraestructura** en archivos versionados |
+
+El **pre-push corre `scripts/prepush-audit.sh` y es bloqueante** (`exit 1`): detecta IPs reales, connection strings con credenciales, JWT, claves privadas/certificados, y API keys (OpenAI `sk-`, AWS `AKIA`, GitHub `ghp_`, Slack, Vault). Si marca un falso positivo y estás seguro, puedes saltarlo con `git push --no-verify`. Requiere `ripgrep` (`rg`) instalado; si falta, el hook bloquea para no dar un OK falso.
+
+Los hooks se instalan solos al correr `npm install` en la raíz (`prepare: husky`).
+
+Perfiles disponibles (solo dos):
+- `dev.local1` — desarrollo en la máquina local
+- `prod.vps1` — **único VPS de deploy; ahí corre solo producción**
+
+> No hay otros perfiles. Hay un solo servidor para deploy (`vps1`) y ahí se ejecuta exclusivamente producción con el perfil `prod.vps1`. Los antiguos perfiles `dev.vps1`, `dev.vps2` y `prod.vps2` fueron eliminados.
+>
+> **Sin IPs ni hosts hardcodeados en el repo.** Los templates `<perfil>.env` solo llevan placeholders (`<host_bind_ip>`, `<minio_endpoint>`, etc.). Las direcciones reales de tu infraestructura se ponen manualmente en `<perfil>.secrets.env` (gitignored) y los scripts las leen con prioridad `*.secrets.env` > `*.env`. Por eso el repo se puede clonar e inicializar desde cualquier host (esté o no en la red Tailscale) sin exponer infraestructura.
 
 ## Modelo de archivos env
 

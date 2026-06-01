@@ -31,9 +31,14 @@ export class WhatsappIdentityService {
     const phone = this.tryNormalizeWhatsappPhone(input.phone);
     const phoneJid = phone ? `${phone}@s.whatsapp.net` : '';
 
-    let threadRow: any = null;
+    type ThreadIdentityRow = {
+      sessionId: string;
+      actorExternalId: string;
+      metadata: unknown;
+    };
+    let threadRow: ThreadIdentityRow | null = null;
     if (sessionId) {
-      const threadRows = await this.prisma.$queryRawUnsafe<Array<any>>(
+      const threadRows = await this.prisma.$queryRawUnsafe<ThreadIdentityRow[]>(
         `
         SELECT session_id AS "sessionId", actor_external_id AS "actorExternalId", metadata
         FROM threads

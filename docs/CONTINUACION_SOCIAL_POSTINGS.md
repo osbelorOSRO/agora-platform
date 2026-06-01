@@ -55,8 +55,8 @@ Sin esto, `fanpage_id` siempre llega `null` al endpoint N8N.
 ### 2. Endpoint callback — verificar funcionamiento
 
 ```bash
-curl -X PATCH "http://100.110.37.17:4001/social-postings/n8n/1/resultado" \
-  -H "Authorization: Bearer U8gTP67zJifGafX01" \
+curl -X PATCH "http://<HOST_BIND_IP>:4001/social-postings/n8n/1/resultado" \
+  -H "Authorization: Bearer <N8N_SECRET_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"estado":"publicado","id_post":"123456789_987654321","raw":{"success":true}}'
 ```
@@ -71,8 +71,8 @@ Debe devolver 200 con el registro actualizado. Si falla, revisar `social-posting
 
 | Variable | Valor dev | Descripción |
 |---|---|---|
-| `N8N_CUSTOM_API_TASK` | `http://apist.zaldio.qzz.io/social-postings/n8n/pendientes-hoy` | GET tareas del día |
-| `N8N_CUSTOM_CALLBACK_TASK` | `http://apist.zaldio.qzz.io/social-postings/n8n` | Base PATCH resultado |
+| `N8N_CUSTOM_API_TASK` | `https://<API_PUBLIC_HOST>/social-postings/n8n/pendientes-hoy` | GET tareas del día |
+| `N8N_CUSTOM_CALLBACK_TASK` | `https://<API_PUBLIC_HOST>/social-postings/n8n` | Base PATCH resultado |
 | `N8N_CUSTOM_API_POSTING` | `https://graph.facebook.com/v25.0` | Base Graph API |
 
 **Lógica del flujo (Schedule 11 PM):**
@@ -122,7 +122,7 @@ Debe devolver 200 con el registro actualizado. Si falla, revisar `social-posting
 | POST | `/media/galeria-ofertas` | Panel JWT | Subir imágenes (multipart, max 10) |
 | DELETE | `/media/galeria-ofertas/:id` | Panel JWT | Soft delete imagen |
 
-**N8N token (dev):** `U8gTP67zJifGafX01`
+**N8N token:** ver `N8N_SECRET_TOKEN` en `<perfil>.secrets.env` (no versionado).
 
 ---
 

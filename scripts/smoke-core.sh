@@ -3,7 +3,7 @@ set -euo pipefail
 
 PROFILE="${1:-}"
 if [[ -z "$PROFILE" ]]; then
-  echo "Uso: $0 <dev.local1|dev.vps1|dev.vps2|prod.vps1|prod.vps2>"
+  echo "Uso: $0 <dev.local1|prod.vps1>"
   exit 1
 fi
 

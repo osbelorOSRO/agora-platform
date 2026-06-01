@@ -85,6 +85,7 @@ services:
       - OTEL_ENABLED=${OTEL_ENABLED:-false}
       - OTEL_SERVICE_NAME=api-backend-nest
       - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318/v1/traces}
+      - SWAGGER_ENABLED=${SWAGGER_ENABLEDL:-true}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:4001/ping/db >/dev/null || exit 1"]
       interval: 30s

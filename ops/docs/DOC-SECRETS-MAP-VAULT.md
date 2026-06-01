@@ -60,12 +60,9 @@ Nota:
 - llaves RSA/socket ya van por Vault y se mantienen ahi.
 
 ### 5) n8n (via bootstrap AppRole)
-Path por perfil:
+Path por perfil (solo dos perfiles):
 - `secret/data/n8n/dev.local1`
-- `secret/data/n8n/dev.vps1`
-- `secret/data/n8n/dev.vps2`
 - `secret/data/n8n/prod.vps1`
-- `secret/data/n8n/prod.vps2`
 
 Keys:
 - `N8N_BASIC_AUTH_USER`

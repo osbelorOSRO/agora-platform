@@ -204,17 +204,23 @@ export class SalesService {
       select: { level_price: true },
       distinct: ['level_price'],
     });
+    const levels = distinctLevels.map((d) => d.level_price);
+    if (levels.length === 0) return;
 
-    for (const { level_price } of distinctLevels) {
-      const priceEntry = await tx.price_level.findUnique({
-        where: { level_range: { level: level_price, range: newRange } },
+    // Una sola consulta para todos los precios del nuevo rango (evita el N+1:
+    // antes era un findUnique por cada nivel distinto).
+    const priceEntries = await tx.price_level.findMany({
+      where: { range: newRange, level: { in: levels } },
+    });
+    const priceByLevel = new Map(priceEntries.map((p) => [p.level, p.price]));
+
+    for (const level of levels) {
+      const price = priceByLevel.get(level);
+      if (price === undefined) continue;
+      await tx.sale_record.updateMany({
+        where: { level_price: level, fecha: { gte: startDate, lt: endDate } },
+        data: { offers_price: price },
       });
-      if (priceEntry) {
-        await tx.sale_record.updateMany({
-          where: { level_price, fecha: { gte: startDate, lt: endDate } },
-          data: { offers_price: priceEntry.price },
-        });
-      }
     }
   }
 }

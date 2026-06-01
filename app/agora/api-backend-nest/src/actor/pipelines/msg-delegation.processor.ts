@@ -141,6 +141,9 @@ export class MsgDelegationProcessor extends WorkerHost {
       {
         jobId: `timeout_${env.externalEventId}`,
         delay: callbackTimeoutMs,
+        // Deadman timer: se dispara una sola vez tras el delay para verificar si
+        // llegó el callback. attempts:1 es intencional — reintentar re-ejecutaría
+        // la lógica de timeout y marcaría como vencidos eventos que sí respondieron.
         attempts: 1,
         removeOnComplete: 5000,
         removeOnFail: 5000,

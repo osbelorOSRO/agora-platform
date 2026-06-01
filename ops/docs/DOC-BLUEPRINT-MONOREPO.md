@@ -97,14 +97,11 @@ Los DDL necesarios para crear las tablas del sistema están en `ops/docs/*.sql`.
 
 ## 10. Ambientes
 
-Perfiles definidos:
+Perfiles definidos (solo dos):
 
 | Perfil | Uso |
 |---|---|
 | `dev.local1` | Desarrollo en máquina local |
-| `dev.vps1` | Desarrollo en VPS1 |
-| `dev.vps2` | Desarrollo en VPS2 |
-| `prod.vps1` | Producción VPS1 |
-| `prod.vps2` | Producción VPS2 |
+| `prod.vps1` | Producción en el único VPS de deploy (`vps1`) |
 
-Cada perfil tiene su propio par `<perfil>.env` (template) + `<perfil>.secrets.env` (valores reales, no versionado).
+Hay un solo servidor para deploy y ahí corre solo producción. Cada perfil tiene su propio par `<perfil>.env` (template versionado) + `<perfil>.secrets.env` (valores reales, no versionado).

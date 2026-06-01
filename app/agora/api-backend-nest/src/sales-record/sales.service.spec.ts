@@ -55,7 +55,7 @@ const CREATE_DTO = {
 const mockTx = {
   offer: { findUnique: jest.fn() },
   points_level: { findUnique: jest.fn(), upsert: jest.fn(), update: jest.fn() },
-  price_level: { findUnique: jest.fn() },
+  price_level: { findUnique: jest.fn(), findMany: jest.fn() },
   sale_record: {
     findMany: jest.fn(),
     findUnique: jest.fn(),
@@ -211,9 +211,17 @@ describe('SalesService', () => {
       mockTx.points_level.findUnique.mockResolvedValue({ total_points: '19' });
       mockTx.points_level.upsert.mockResolvedValue({});
       mockTx.sale_record.findMany.mockResolvedValue([{ level_price: 5 }]);
-      mockTx.price_level.findUnique
-        .mockResolvedValueOnce({ id: 10, level: 5, range: 2, price: 1200 })
-        .mockResolvedValueOnce({ id: 10, level: 5, range: 2, price: 1200 });
+      // findUnique: precio de la venta nueva (flujo principal)
+      mockTx.price_level.findUnique.mockResolvedValue({
+        id: 10,
+        level: 5,
+        range: 2,
+        price: 1200,
+      });
+      // findMany: precios del rango para el recálculo del mes (batch, sin N+1)
+      mockTx.price_level.findMany.mockResolvedValue([
+        { id: 10, level: 5, range: 2, price: 1200 },
+      ]);
       mockTx.sale_record.updateMany.mockResolvedValue({ count: 2 });
       mockTx.sale_record.create.mockResolvedValue(SALE_STUB);
 
@@ -319,12 +327,10 @@ describe('SalesService', () => {
       mockTx.points_level.findUnique.mockResolvedValue({ total_points: '21' });
       mockTx.points_level.update.mockResolvedValue({});
       mockTx.sale_record.findMany.mockResolvedValue([{ level_price: 5 }]);
-      mockTx.price_level.findUnique.mockResolvedValue({
-        id: 11,
-        level: 5,
-        range: 1,
-        price: 500,
-      });
+      // recalc del mes usa findMany (batch de precios del rango, sin N+1)
+      mockTx.price_level.findMany.mockResolvedValue([
+        { id: 11, level: 5, range: 1, price: 500 },
+      ]);
       mockTx.sale_record.updateMany.mockResolvedValue({ count: 3 });
 
       const result = await svc.deleteSale(1);

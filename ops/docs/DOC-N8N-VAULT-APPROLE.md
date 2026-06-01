@@ -5,12 +5,9 @@
 - Usar AppRole con permisos de solo lectura por perfil.
 
 ## 1) Estructura de secretos en Vault
-Recomendado (KV v2):
+Recomendado (KV v2) — un path por perfil (solo dos perfiles):
 - `secret/data/n8n/dev.local1`
-- `secret/data/n8n/dev.vps1`
-- `secret/data/n8n/dev.vps2`
 - `secret/data/n8n/prod.vps1`
-- `secret/data/n8n/prod.vps2`
 
 Keys esperadas dentro de cada secreto:
 - `N8N_BASIC_AUTH_USER`
